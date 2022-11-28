@@ -64,8 +64,6 @@ class TaintedPathAtmConfig extends AtmConfig {
 
   override predicate isKnownSource(DataFlow::Node source) { source instanceof TaintedPath::Source }
 
-  override predicate isKnownSink(DataFlow::Node sink) { sink instanceof TaintedPath::Sink }
-
   override predicate isEffectiveSink(DataFlow::Node sinkCandidate) {
     not exists(SinkEndpointFilter::getAReasonSinkExcluded(sinkCandidate))
   }
@@ -125,6 +123,6 @@ class BarrierGuardNodeAsSanitizerGuardNode extends TaintTracking::LabeledSanitiz
   }
 
   override predicate sanitizes(boolean outcome, Expr e, DataFlow::FlowLabel label) {
-    sanitizes(outcome, e)
+    sanitizes(outcome, e) and exists(label)
   }
 }

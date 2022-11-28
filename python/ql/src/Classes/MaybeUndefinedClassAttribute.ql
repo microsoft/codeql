@@ -11,7 +11,6 @@
  */
 
 import python
-import semmle.python.SelfAttribute
 import ClassAttributes
 
 predicate guarded_by_other_attribute(SelfAttributeRead a, CheckClass c) {
@@ -40,5 +39,5 @@ where
   sa.getName() = a.getName()
 select a,
   "Attribute '" + a.getName() +
-    "' is not defined in the class body nor in the __init__() method, but it is defined $@", sa,
+    "' is not defined in the class body nor in the __init__() method, but it is defined $@.", sa,
   "here"

@@ -7,7 +7,6 @@
 import javascript
 private import semmle.javascript.heuristics.SyntacticHeuristics
 private import semmle.javascript.security.dataflow.NosqlInjectionCustomizations
-private import semmle.javascript.security.TaintedObject
 import AdaptiveThreatModeling
 private import CoreKnowledge as CoreKnowledge
 private import StandardEndpointFilters as StandardEndpointFilters
@@ -43,10 +42,10 @@ module SinkEndpointFilter {
       result = "modeled database access"
       or
       // Remove calls to APIs that aren't relevant to NoSQL injection
-      call.getReceiver().asExpr() instanceof HTTP::RequestExpr and
+      call.getReceiver() instanceof Http::RequestNode and
       result = "receiver is a HTTP request expression"
       or
-      call.getReceiver().asExpr() instanceof HTTP::ResponseExpr and
+      call.getReceiver() instanceof Http::ResponseNode and
       result = "receiver is a HTTP response expression"
     )
     or
@@ -94,8 +93,6 @@ class NosqlInjectionAtmConfig extends AtmConfig {
     source instanceof NosqlInjection::Source or TaintedObject::isSource(source, _)
   }
 
-  override predicate isKnownSink(DataFlow::Node sink) { sink instanceof NosqlInjection::Sink }
-
   override predicate isEffectiveSink(DataFlow::Node sinkCandidate) {
     not exists(SinkEndpointFilter::getAReasonSinkExcluded(sinkCandidate))
   }
@@ -116,7 +113,7 @@ predicate isBaseAdditionalFlowStep(
   inlbl = TaintedObject::label() and
   outlbl = TaintedObject::label() and
   exists(NoSql::Query query, DataFlow::SourceNode queryObj |
-    queryObj.flowsToExpr(query) and
+    queryObj.flowsTo(query) and
     queryObj.flowsTo(trg) and
     src = queryObj.getAPropertyWrite().getRhs()
   )

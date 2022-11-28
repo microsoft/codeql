@@ -15,9 +15,6 @@
  */
 
 import cpp
-// We don't actually use the global value numbering library in this query, but without it we end up
-// recomputing the IR.
-import semmle.code.cpp.valuenumbering.GlobalValueNumbering
 import semmle.code.cpp.ir.IR
 import semmle.code.cpp.ir.dataflow.MustFlow
 import PathGraph
@@ -86,4 +83,4 @@ where
     c.getAMemberFunction().getAnOverriddenFunction() = call.getStaticCallTarget()
   )
 select call.getUnconvertedResultExpression(), source, sink,
-  "Call to pure virtual function during " + msg
+  "Call to pure virtual function during " + msg + "."

@@ -1,7 +1,7 @@
-import ruby
+import codeql.ruby.AST
 
 private string getValueText(MethodName m) {
-  result = m.getConstantValue().getStringOrSymbol()
+  result = m.getConstantValue().getStringlikeValue()
   or
   not exists(m.getConstantValue()) and result = "(none)"
 }

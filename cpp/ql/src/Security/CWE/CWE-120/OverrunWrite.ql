@@ -15,7 +15,6 @@
  */
 
 import semmle.code.cpp.security.BufferWrite
-import semmle.code.cpp.commons.Alloc
 
 /*
  * See CWE-120/UnboundedWrite.ql for a summary of CWE-120 alert cases.
@@ -27,7 +26,7 @@ where
   dest = bw.getDest() and
   destSize = getBufferSize(dest, _) and
   estimated = bw.getMaxDataLimited(reason) and
-  // we exclude ValueFlowAnalysis as it is reported in cpp/very-likely-overruning-write
+  // we exclude ValueFlowAnalysis as it is reported in cpp/very-likely-overrunning-write
   not reason instanceof ValueFlowAnalysis and
   // we can deduce that too much data may be copied (even without
   // long '%f' conversions)

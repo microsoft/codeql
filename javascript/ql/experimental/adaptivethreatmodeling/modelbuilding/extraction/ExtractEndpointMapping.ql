@@ -4,25 +4,25 @@
  * Maps ML-powered queries to their `EndpointType` for clearer labelling while evaluating ML model during training.
  */
 
-import experimental.adaptivethreatmodeling.SqlInjectionATM as SqlInjectionATM
-import experimental.adaptivethreatmodeling.NosqlInjectionATM as NosqlInjectionATM
-import experimental.adaptivethreatmodeling.TaintedPathATM as TaintedPathATM
-import experimental.adaptivethreatmodeling.XssATM as XssATM
+import experimental.adaptivethreatmodeling.SqlInjectionATM as SqlInjectionAtm
+import experimental.adaptivethreatmodeling.NosqlInjectionATM as NosqlInjectionAtm
+import experimental.adaptivethreatmodeling.TaintedPathATM as TaintedPathAtm
+import experimental.adaptivethreatmodeling.XssATM as XssAtm
 import experimental.adaptivethreatmodeling.AdaptiveThreatModeling
 
 from string queryName, AtmConfig c, EndpointType e
 where
   (
-    queryName = "SqlInjectionATM.ql" and
-    c instanceof SqlInjectionATM::SqlInjectionAtmConfig
+    queryName = "SqlInjection" and
+    c instanceof SqlInjectionAtm::SqlInjectionAtmConfig
     or
-    queryName = "NosqlInjectionATM.ql" and
-    c instanceof NosqlInjectionATM::NosqlInjectionAtmConfig
+    queryName = "NosqlInjection" and
+    c instanceof NosqlInjectionAtm::NosqlInjectionAtmConfig
     or
-    queryName = "TaintedPathInjectionATM.ql" and
-    c instanceof TaintedPathATM::TaintedPathAtmConfig
+    queryName = "TaintedPath" and
+    c instanceof TaintedPathAtm::TaintedPathAtmConfig
     or
-    queryName = "XssATM.ql" and c instanceof XssATM::DomBasedXssAtmConfig
+    queryName = "Xss" and c instanceof XssAtm::DomBasedXssAtmConfig
   ) and
   e = c.getASinkEndpointType()
-select queryName, e.getEncoding() as endpointTypeEncoded
+select queryName, e.getEncoding() as label

@@ -324,7 +324,7 @@ Expr configOptionIsSupportingExternalEntities() {
 /**
  * An `XmlInputFactory` specific expression that indicates whether DTD is supported.
  */
-Expr configOptionSupportDTD() {
+Expr configOptionSupportDtd() {
   result.(ConstantStringExpr).getStringValue() = "javax.xml.stream.supportDTD"
   or
   exists(Field f |
@@ -333,6 +333,9 @@ Expr configOptionSupportDTD() {
     f.getDeclaringType() instanceof XmlInputFactory
   )
 }
+
+/** DEPRECATED: Alias for configOptionSupportDtd */
+deprecated Expr configOptionSupportDTD() { result = configOptionSupportDtd() }
 
 /**
  * A safely configured `XmlInputFactory`.
@@ -345,7 +348,7 @@ class SafeXmlInputFactory extends VarAccess {
         config.disables(configOptionIsSupportingExternalEntities())
       ) and
       exists(XmlInputFactoryConfig config | config.getQualifier() = v.getAnAccess() |
-        config.disables(configOptionSupportDTD())
+        config.disables(configOptionSupportDtd())
       )
     )
   }
@@ -454,7 +457,7 @@ class SaxParser extends RefType {
 /** DEPRECATED: Alias for SaxParser */
 deprecated class SAXParser = SaxParser;
 
-/** The class `javax.xml.parsers.SaxParserFactory`. */
+/** The class `javax.xml.parsers.SAXParserFactory`. */
 class SaxParserFactory extends RefType {
   SaxParserFactory() { this.hasQualifiedName("javax.xml.parsers", "SAXParserFactory") }
 }
@@ -462,7 +465,7 @@ class SaxParserFactory extends RefType {
 /** DEPRECATED: Alias for SaxParserFactory */
 deprecated class SAXParserFactory = SaxParserFactory;
 
-/** A call to `SaxParser.parse`. */
+/** A call to `SAXParser.parse`. */
 class SaxParserParse extends XmlParserCall {
   SaxParserParse() {
     exists(Method m |
@@ -590,7 +593,7 @@ class SaxReader extends RefType {
 /** DEPRECATED: Alias for SaxReader */
 deprecated class SAXReader = SaxReader;
 
-/** A call to `SaxReader.read`. */
+/** A call to `SAXReader.read`. */
 class SaxReaderRead extends XmlParserCall {
   SaxReaderRead() {
     exists(Method m |
@@ -668,7 +671,7 @@ class SafeSaxReader extends VarAccess {
 deprecated class SafeSAXReader = SafeSaxReader;
 
 /* https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html#xmlreader */
-/** The class `org.xml.sax.XmlReader`. */
+/** The class `org.xml.sax.XMLReader`. */
 class XmlReader extends RefType {
   XmlReader() { this.hasQualifiedName("org.xml.sax", "XMLReader") }
 }
@@ -676,7 +679,7 @@ class XmlReader extends RefType {
 /** DEPRECATED: Alias for XmlReader */
 deprecated class XMLReader = XmlReader;
 
-/** A call to `XmlReader.read`. */
+/** A call to `XMLReader.read`. */
 class XmlReaderParse extends XmlParserCall {
   XmlReaderParse() {
     exists(Method m |
@@ -827,7 +830,7 @@ deprecated class CreatedSafeXMLReader = CreatedSafeXmlReader;
  * https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html#jaxb-unmarshaller
  */
 
-/** The class `javax.xml.transform.sax.SaxSource` */
+/** The class `javax.xml.transform.sax.SAXSource` */
 class SaxSource extends RefType {
   SaxSource() { this.hasQualifiedName("javax.xml.transform.sax", "SAXSource") }
 }
@@ -835,7 +838,7 @@ class SaxSource extends RefType {
 /** DEPRECATED: Alias for SaxSource */
 deprecated class SAXSource = SaxSource;
 
-/** A call to the constructor of `SaxSource` with `XmlReader` and `InputSource`. */
+/** A call to the constructor of `SAXSource` with `XmlReader` and `InputSource`. */
 class ConstructedSaxSource extends ClassInstanceExpr {
   ConstructedSaxSource() {
     this.getConstructedType() instanceof SaxSource and
@@ -858,7 +861,7 @@ class ConstructedSaxSource extends ClassInstanceExpr {
 /** DEPRECATED: Alias for ConstructedSaxSource */
 deprecated class ConstructedSAXSource = ConstructedSaxSource;
 
-/** A call to the `SaxSource.setXMLReader` method. */
+/** A call to the `SAXSource.setXMLReader` method. */
 class SaxSourceSetReader extends MethodAccess {
   SaxSourceSetReader() {
     exists(Method m |
@@ -907,7 +910,7 @@ class XmlConstants extends RefType {
 }
 
 /** A configuration specific for transformers and schema. */
-Expr configAccessExternalDTD() {
+Expr configAccessExternalDtd() {
   result.(ConstantStringExpr).getStringValue() =
     "http://javax.xml.XMLConstants/property/accessExternalDTD"
   or
@@ -917,6 +920,9 @@ Expr configAccessExternalDTD() {
     f.getDeclaringType() instanceof XmlConstants
   )
 }
+
+/** DEPRECATED: Alias for configAccessExternalDtd */
+deprecated Expr configAccessExternalDTD() { result = configAccessExternalDtd() }
 
 /** A configuration specific for transformers. */
 Expr configAccessExternalStyleSheet() {
@@ -1040,7 +1046,7 @@ class SafeTransformerFactory extends VarAccess {
   SafeTransformerFactory() {
     exists(Variable v | v = this.getVariable() |
       exists(TransformerFactoryConfig config | config.getQualifier() = v.getAnAccess() |
-        config.disables(configAccessExternalDTD())
+        config.disables(configAccessExternalDtd())
       ) and
       exists(TransformerFactoryConfig config | config.getQualifier() = v.getAnAccess() |
         config.disables(configAccessExternalStyleSheet())
@@ -1049,7 +1055,7 @@ class SafeTransformerFactory extends VarAccess {
   }
 }
 
-/** A `Transformer` created from a safely configured `TranformerFactory`. */
+/** A `Transformer` created from a safely configured `TransformerFactory`. */
 class SafeTransformer extends MethodAccess {
   SafeTransformer() {
     exists(SafeTransformerFactoryFlowConfig stf, Method m |
@@ -1141,7 +1147,7 @@ class SafeSchemaFactory extends VarAccess {
   SafeSchemaFactory() {
     exists(Variable v | v = this.getVariable() |
       exists(SchemaFactoryConfig config | config.getQualifier() = v.getAnAccess() |
-        config.disables(configAccessExternalDTD())
+        config.disables(configAccessExternalDtd())
       ) and
       exists(SchemaFactoryConfig config | config.getQualifier() = v.getAnAccess() |
         config.disables(configAccessExternalSchema())

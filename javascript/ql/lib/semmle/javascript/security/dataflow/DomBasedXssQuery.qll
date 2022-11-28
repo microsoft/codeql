@@ -6,6 +6,7 @@
 import javascript
 private import semmle.javascript.security.TaintedUrlSuffix
 import DomBasedXssCustomizations::DomBasedXss
+private import Xss::Shared as Shared
 
 /**
  * DEPRECATED. Use `Vue::VHtmlSourceWrite` instead.
@@ -22,12 +23,15 @@ deprecated class JQueryHtmlOrSelectorInjectionConfiguration = Configuration;
  * A sink that is not a URL write or a JQuery selector,
  * assumed to be a value that is interpreted as HTML.
  */
-class HTMLSink extends DataFlow::Node instanceof Sink {
-  HTMLSink() {
-    not this instanceof WriteURLSink and
+class HtmlSink extends DataFlow::Node instanceof Sink {
+  HtmlSink() {
+    not this instanceof WriteUrlSink and
     not this instanceof JQueryHtmlOrSelectorSink
   }
 }
+
+/** DEPRECATED: Alias for HtmlSink */
+deprecated class HTMLSink = HtmlSink;
 
 /**
  * A taint-tracking configuration for reasoning about XSS.
@@ -54,13 +58,13 @@ class Configuration extends TaintTracking::Configuration {
   }
 
   override predicate isSink(DataFlow::Node sink, DataFlow::FlowLabel label) {
-    sink instanceof HTMLSink and
+    sink instanceof HtmlSink and
     label = [TaintedUrlSuffix::label(), prefixLabel(), DataFlow::FlowLabel::taint()]
     or
     sink instanceof JQueryHtmlOrSelectorSink and
     label = [DataFlow::FlowLabel::taint(), prefixLabel()]
     or
-    sink instanceof WriteURLSink and
+    sink instanceof WriteUrlSink and
     label = prefixLabel()
   }
 
@@ -71,7 +75,9 @@ class Configuration extends TaintTracking::Configuration {
   }
 
   override predicate isSanitizerGuard(TaintTracking::SanitizerGuardNode guard) {
-    guard instanceof SanitizerGuard
+    guard instanceof PrefixStringSanitizerActivated or
+    guard instanceof QuoteGuard or
+    guard instanceof ContainsHtmlGuard
   }
 
   override predicate isLabeledBarrier(DataFlow::Node node, DataFlow::FlowLabel lbl) {
@@ -124,13 +130,19 @@ class Configuration extends TaintTracking::Configuration {
   }
 }
 
-/**
- * A sanitizer that blocks the `PrefixString` label when the start of the string is being tested as being of a particular prefix.
- */
-class PrefixStringSanitizer extends SanitizerGuard, TaintTracking::LabeledSanitizerGuardNode instanceof StringOps::StartsWith {
-  override predicate sanitizes(boolean outcome, Expr e, DataFlow::FlowLabel label) {
-    e = super.getBaseString().asExpr() and
-    label = prefixLabel() and
-    outcome = super.getPolarity()
-  }
+private class PrefixStringSanitizerActivated extends TaintTracking::SanitizerGuardNode,
+  PrefixStringSanitizer {
+  PrefixStringSanitizerActivated() { this = this }
+}
+
+private class PrefixStringActivated extends DataFlow::FlowLabel, PrefixString {
+  PrefixStringActivated() { this = this }
+}
+
+private class QuoteGuard extends TaintTracking::SanitizerGuardNode, Shared::QuoteGuard {
+  QuoteGuard() { this = this }
+}
+
+private class ContainsHtmlGuard extends TaintTracking::SanitizerGuardNode, Shared::ContainsHtmlGuard {
+  ContainsHtmlGuard() { this = this }
 }

@@ -1,0 +1,16 @@
+load("@swift_codegen_deps//:requirements.bzl", "requirement")
+
+py_binary(
+    name = "codegen",
+    srcs = ["codegen.py"],
+    data = [
+        "//swift:schema",
+        "//swift:schema_includes",
+        "//swift/codegen/templates:cpp",
+        "//swift/codegen/templates:trap",
+    ],
+    visibility = ["//swift:__subpackages__"],
+    deps = [
+        "//swift/codegen/generators",
+    ],
+)

@@ -227,8 +227,9 @@ The following aggregates are available in QL:
 
 - ``min`` and ``max``: These aggregates determine the smallest (``min``) or largest (``max``)
   value of ``<expression>`` among the possible assignments to the aggregation variables. 
-  In this case, ``<expression>`` must be of numeric type or of type ``string``.
-    
+  ``<expression>`` must be of numeric type or of type ``string``, or an explicit order must be defined with ``order by``.
+  When using ``order by``, more than one result may exist in case of ties.
+  
   For example, the following aggregation returns the name of the ``.js`` file (or files) with the 
   largest number of lines, using the number of lines of code to break ties:
 
@@ -297,9 +298,10 @@ The following aggregates are available in QL:
 .. index:: rank
 
 - ``rank``: This aggregate takes the possible values of ``<expression>`` and ranks them. 
-  In this case, ``<expression>`` must be of numeric type or of type ``string``. The aggregation
-  returns the value that is ranked in the position specified by the **rank expression**.
+  ``<expression>`` must be of numeric type or of type ``string``, or an explicit order must be defined with ``order by``.
+  The aggregation returns the value that is ranked in the position specified by the **rank expression**.
   You must include this rank expression in brackets after the keyword ``rank``.
+  When using ``order by``, more than one result may exist in case of ties.
 
   For example, the following aggregation returns the value that is ranked 4th out of all the
   possible values. In this case, ``8`` is the 4th integer in the range from ``5`` through
@@ -569,7 +571,7 @@ If there had been two different prices for apples too, the monotonic
 
 Charles wants to buy a banana, which is not for sale at all. In the
 default case, the sum produced for Charles includes the cost of the
-apple he *can* buy, but there's no line for Charles in the monontonic
+apple he *can* buy, but there's no line for Charles in the monotonic
 ``sum`` output, because there *is no way* for Charles to buy one apple
 plus one banana.
 
@@ -584,7 +586,7 @@ case: As long as there's no price for bananas, no output is produced
 for him. This means that if we later do learn of a banana price, we
 don't need to *remove* any output tuple already produced. The
 importance of this is that the monotonic aggregate behavior works well
-with a fixpoint-based semantics for recursion, so it will be meaningul
+with a fixpoint-based semantics for recursion, so it will be meaningful
 to let the ``getPrice`` predicate be mutually recursive with the count
 aggregate itself. (On the other hand, ``getFruit`` still cannot be
 allowed to be recursive, because adding another fruit to someone's

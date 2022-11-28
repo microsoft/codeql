@@ -5,6 +5,7 @@
  *              privileges or unexpected exposure from chained vulnerabilities.
  * @kind problem
  * @problem.severity warning
+ * @security-severity 7.5
  * @precision medium
  * @id java/android/cleartext-storage-database
  * @tags security
@@ -19,5 +20,5 @@ where
   input = s.getAnInput() and
   store = s.getAStore() and
   data.flowsTo(input)
-select store, "SQLite database $@ containing $@ is stored $@. Data was added $@.", s, s.toString(),
-  data, "sensitive data", store, "here", input, "here"
+select store, "This stores data in a SQLite database $@ containing $@ which was $@.", s,
+  s.toString(), data, "sensitive data", input, "previously added"

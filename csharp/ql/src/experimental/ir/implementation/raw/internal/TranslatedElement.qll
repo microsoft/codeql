@@ -10,7 +10,6 @@ private import TranslatedCondition
 private import TranslatedFunction
 private import TranslatedStmt
 private import IRConstruction
-private import experimental.ir.Util
 private import experimental.ir.internal.IRCSharpLanguage as Language
 private import desugar.Foreach
 private import desugar.Delegate
@@ -513,7 +512,7 @@ abstract class TranslatedElement extends TTranslatedElement {
 
   /**
    * If the instruction specified by `tag` has a result of type `UnknownType`,
-   * gets the size of the result in bytes. If the result does not have a knonwn
+   * gets the size of the result in bytes. If the result does not have a known
    * constant size, this predicate does not hold.
    */
   int getInstructionResultSize(InstructionTag tag) { none() }

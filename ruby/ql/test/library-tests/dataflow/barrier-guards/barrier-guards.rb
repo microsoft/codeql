@@ -39,3 +39,84 @@ if FOO.include?(foo)
 else
     foo
 end
+
+if foo == "foo"
+    capture {
+        foo # guarded
+    }
+end
+
+if foo == "foo"
+    capture {
+        foo = "bar"
+        foo # not guarded
+    }
+end
+
+if foo == "foo"
+    my_lambda = -> () {
+        foo # not guarded
+    }
+
+    foo = "bar"
+
+    my_lambda()
+end
+
+foos = nil
+foos = ["foo"]
+bars = NotAnArray.new
+
+if foos.include?(foo)
+    foo
+else
+    foo
+end
+
+if bars.include?(foo)
+    foo
+else
+    foo
+end
+
+if foos.index(foo) != nil
+    foo
+else
+    foo
+end
+
+if foos.index(foo) == nil
+    foo
+else
+    foo
+end
+
+bars = ["bar"]
+
+if condition
+    bars = nil
+end
+
+if bars.include?(foo)
+    foo
+else
+    foo
+end
+
+if x or y then
+    foo
+else
+    bars
+end
+
+if x and y then
+    foo
+else
+    bars
+end
+
+if not x then
+    foo
+else
+    bars
+end

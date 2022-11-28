@@ -6,6 +6,7 @@
 import semmle.code.cpp.Location
 private import semmle.code.cpp.Enclosing
 private import semmle.code.cpp.internal.ResolveClass
+private import semmle.code.cpp.internal.ResolveGlobalVariable
 
 /**
  * Get the `Element` that represents this `@element`.
@@ -28,9 +29,12 @@ Element mkElement(@element e) { unresolveElement(result) = e }
 pragma[inline]
 @element unresolveElement(Element e) {
   not result instanceof @usertype and
+  not result instanceof @variable and
   result = e
   or
   e = resolveClass(result)
+  or
+  e = resolveGlobalVariable(result)
 }
 
 /**
@@ -109,10 +113,7 @@ class Element extends ElementBase {
     then
       exists(MacroInvocation mi |
         this = mi.getAGeneratedElement() and
-        not exists(MacroInvocation closer |
-          this = closer.getAGeneratedElement() and
-          mi = closer.getParentInvocation+()
-        ) and
+        not hasCloserMacroInvocation(this, mi) and
         result = mi.getMacro()
       )
     else result = this
@@ -234,6 +235,14 @@ class Element extends ElementBase {
       this.(DeclarationEntry).getDeclaration() = e
     )
   }
+}
+
+pragma[noinline]
+private predicate hasCloserMacroInvocation(Element elem, MacroInvocation mi) {
+  exists(MacroInvocation closer |
+    elem = closer.getAGeneratedElement() and
+    mi = closer.getParentInvocation()
+  )
 }
 
 private predicate isFromTemplateInstantiationRec(Element e, Element instantiation) {

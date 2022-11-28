@@ -29,6 +29,7 @@ private Callable dispatchCand(Call c) {
 /**
  * Holds if `t` and all its enclosing types are public.
  */
+pragma[assume_small_delta]
 private predicate veryPublic(RefType t) {
   t.isPublic() and
   (
@@ -131,8 +132,8 @@ private class RelevantNode extends Node {
  */
 pragma[nomagic]
 private predicate viableParamCand(Call call, int i, ParameterNode p) {
-  exists(Callable callable |
-    callable = dispatchCand(call) and
+  exists(DataFlowCallable callable |
+    callable.asCallable() = dispatchCand(call) and
     p.isParameterOf(callable, i) and
     p instanceof RelevantNode
   )
@@ -200,7 +201,7 @@ private predicate flowStep(RelevantNode n1, RelevantNode n2) {
     n2.asExpr().(MethodAccess).getMethod() = getValue
   )
   or
-  n2.asExpr().(CastExpr).getExpr() = n1.asExpr()
+  n2.asExpr().(CastingExpr).getExpr() = n1.asExpr()
   or
   n2.asExpr().(ChooseExpr).getAResultExpr() = n1.asExpr()
   or

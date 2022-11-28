@@ -1,6 +1,7 @@
 import python
 private import semmle.python.pointsto.PointsTo
 private import semmle.python.objects.ObjectInternal
+private import semmle.python.internal.CachedStages
 
 /** An expression */
 class Expr extends Expr_, AstNode {
@@ -8,7 +9,11 @@ class Expr extends Expr_, AstNode {
   override Scope getScope() { py_scopes(this, result) }
 
   /** Gets a textual representation of this element. */
-  override string toString() { result = "Expression" }
+  cached
+  override string toString() {
+    Stages::AST::ref() and
+    result = "Expression"
+  }
 
   /** Gets the module in which this expression occurs */
   Module getEnclosingModule() { result = this.getScope().getEnclosingModule() }
@@ -184,7 +189,16 @@ class Call extends Call_ {
    */
   Keyword getKeyword(int index) {
     result = this.getNamedArg(index) and
-    not exists(DictUnpacking d, int lower | d = this.getNamedArg(lower) and lower < index)
+    (
+      not exists(this.getMinimumUnpackingIndex())
+      or
+      index <= this.getMinimumUnpackingIndex()
+    )
+  }
+
+  /** Gets the minimum index (if any) at which a dictionary unpacking (`**foo`) occurs in this call. */
+  private int getMinimumUnpackingIndex() {
+    result = min(int i | this.getNamedArg(i) instanceof DictUnpacking)
   }
 
   /**
@@ -231,10 +245,12 @@ class Call extends Call_ {
     result = count(Expr arg | arg = this.getAPositionalArg() and not arg instanceof Starred)
   }
 
-  /** Gets the tuple (*) argument of this call, provided there is exactly one. */
+  /** Gets the first tuple (*) argument of this call, if any. */
   Expr getStarArg() {
-    count(this.getStarargs()) < 2 and
-    result = this.getStarargs()
+    exists(int firstStarArgIndex |
+      firstStarArgIndex = min(int i | this.getPositionalArg(i) instanceof Starred | i) and
+      result = this.getPositionalArg(firstStarArgIndex).(Starred).getValue()
+    )
   }
 }
 
@@ -601,6 +617,9 @@ private string non_byte_prefix() {
   result = any(Str_ s).getPrefix() and
   not result.charAt(_) in ["b", "B"]
 }
+
+/** A string constant. This is a placeholder class -- use `StrConst` instead. */
+class Str = StrConst;
 
 /** A string constant. */
 class StrConst extends Str_, ImmutableLiteral {

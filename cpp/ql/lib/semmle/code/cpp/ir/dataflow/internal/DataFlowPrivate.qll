@@ -98,16 +98,16 @@ class ParameterPosition = Position;
 /** An argument position represented by an integer. */
 class ArgumentPosition = Position;
 
-class Position extends TPosition {
+abstract class Position extends TPosition {
   abstract string toString();
 }
 
-class DirectPosition extends TDirectPosition {
+class DirectPosition extends Position, TDirectPosition {
   int index;
 
   DirectPosition() { this = TDirectPosition(index) }
 
-  string toString() {
+  override string toString() {
     index = -1 and
     result = "this"
     or
@@ -118,12 +118,12 @@ class DirectPosition extends TDirectPosition {
   int getIndex() { result = index }
 }
 
-class IndirectionPosition extends TIndirectionPosition {
+class IndirectionPosition extends Position, TIndirectionPosition {
   int index;
 
   IndirectionPosition() { this = TIndirectionPosition(index) }
 
-  string toString() {
+  override string toString() {
     index = -1 and
     result = "this"
     or
@@ -244,7 +244,25 @@ OutNode getAnOutNode(DataFlowCall call, ReturnKind kind) {
  * calling context. For example, this would happen with flow through a
  * global or static variable.
  */
-predicate jumpStep(Node n1, Node n2) { none() }
+predicate jumpStep(Node n1, Node n2) {
+  exists(GlobalOrNamespaceVariable v |
+    v =
+      n1.asInstruction()
+          .(StoreInstruction)
+          .getResultAddress()
+          .(VariableAddressInstruction)
+          .getAstVariable() and
+    v = n2.asVariable()
+    or
+    v =
+      n2.asInstruction()
+          .(LoadInstruction)
+          .getSourceAddress()
+          .(VariableAddressInstruction)
+          .getAstVariable() and
+    v = n1.asVariable()
+  )
+}
 
 /**
  * Holds if data can flow from `node1` to `node2` via an assignment to `f`.
@@ -278,6 +296,12 @@ predicate readStep(ReadNode node1, FieldContent f, ReadNode node2) {
 predicate clearsContent(Node n, Content c) {
   none() // stub implementation
 }
+
+/**
+ * Holds if the value that is being tracked is expected to be stored inside content `c`
+ * at node `n`.
+ */
+predicate expectsContent(Node n, ContentSet c) { none() }
 
 /** Gets the type of `n` used for type pruning. */
 IRType getNodeType(Node n) {

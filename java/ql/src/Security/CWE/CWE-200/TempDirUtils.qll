@@ -36,33 +36,6 @@ predicate isFileConstructorArgument(Expr expSource, Expr exprDest, int paramCoun
 }
 
 /**
- * A `File` method where the temporary directory is still part of the root path.
- */
-private class TaintFollowingFileMethod extends Method {
-  TaintFollowingFileMethod() {
-    this.getDeclaringType() instanceof TypeFile and
-    this.hasName(["getAbsoluteFile", "getCanonicalFile"])
-  }
-}
-
-private predicate isTaintPropagatingFileTransformation(Expr expSource, Expr exprDest) {
-  exists(MethodAccess fileMethodAccess |
-    fileMethodAccess.getMethod() instanceof TaintFollowingFileMethod and
-    fileMethodAccess.getQualifier() = expSource and
-    fileMethodAccess = exprDest
-  )
-}
-
-/**
- * Holds if taint should propagate from `node1` to `node2` across some file creation or transformation operation.
- * For example, `taintedFile.getCanonicalFile()` is itself tainted.
- */
-predicate isAdditionalFileTaintStep(DataFlow::Node node1, DataFlow::Node node2) {
-  isFileConstructorArgument(node1.asExpr(), node2.asExpr(), _) or
-  isTaintPropagatingFileTransformation(node1.asExpr(), node2.asExpr())
-}
-
-/**
  * A method call to `java.io.File::setReadable`.
  */
 private class FileSetRedableMethodAccess extends MethodAccess {
@@ -80,7 +53,7 @@ private class FileSetRedableMethodAccess extends MethodAccess {
   private predicate isCallToSecondArgumentWithValue(boolean value) {
     this.getMethod().getNumberOfParameters() = 1 and value = true
     or
-    isCallWithArgument(1, value)
+    this.isCallWithArgument(1, value)
   }
 
   private predicate isCallWithArgument(int index, boolean arg) {

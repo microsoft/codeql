@@ -1,6 +1,7 @@
 /** Provides classes related to the namespace `System.Security`. */
 
 import csharp
+private import semmle.code.csharp.dataflow.ExternalFlow
 private import semmle.code.csharp.frameworks.System
 
 /** The `System.Security` namespace. */

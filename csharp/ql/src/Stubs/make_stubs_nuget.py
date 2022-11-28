@@ -71,13 +71,13 @@ if (version != "latest"):
     cmd.append(version)
 run_cmd(cmd)
 
-sdk_version = '6.0.101'
+sdk_version = '6.0.202'
 print("\n* Creating new global.json file and setting SDK to " + sdk_version)
 run_cmd(['dotnet', 'new', 'globaljson', '--force', '--sdk-version', sdk_version, '--output', workDir])
 
 print("\n* Creating DB")
 run_cmd(['codeql', 'database', 'create', dbDir, '--language=csharp',
-                 '--command', 'dotnet build /t:rebuild /p:UseSharedCompilation=false ' + projectDirIn])
+                 '--command', 'dotnet build /t:rebuild ' + projectDirIn])
 
 if not os.path.isdir(dbDir):
     print("Expected database directory " + dbDir + " not found.")

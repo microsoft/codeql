@@ -36,18 +36,35 @@ module ArrayTaintTracking {
       succ = call
     )
     or
-    // `array.filter(x => x)` keeps the taint
+    // `array.filter(x => x)` and `array.filter(x => !!x)` keeps the taint
     call.(DataFlow::MethodCallNode).getMethodName() = "filter" and
     pred = call.getReceiver() and
     succ = call and
-    exists(DataFlow::FunctionNode callback | callback = call.getArgument(0).getAFunctionValue() |
-      callback.getParameter(0).getALocalUse() = callback.getAReturn()
+    exists(DataFlow::FunctionNode callback, DataFlow::Node param, DataFlow::Node ret |
+      callback = call.getArgument(0).getAFunctionValue() and
+      param = callback.getParameter(0).getALocalUse() and
+      ret = callback.getAReturn()
+    |
+      param = ret
+      or
+      param = DataFlow::exprNode(ret.asExpr().(LogNotExpr).getOperand().(LogNotExpr).getOperand())
     )
     or
     // `array.reduce` with tainted value in callback
+    // The callback parameters are: (previousValue, currentValue, currentIndex, array)
     call.(DataFlow::MethodCallNode).getMethodName() = "reduce" and
-    pred = call.getArgument(0).(DataFlow::FunctionNode).getAReturn() and // Require the argument to be a closure to avoid spurious call/return flow
-    succ = call
+    exists(DataFlow::FunctionNode callback |
+      callback = call.getArgument(0) // Require the argument to be a closure to avoid spurious call/return flow
+    |
+      pred = callback.getAReturn() and
+      succ = call
+      or
+      pred = call.getReceiver() and
+      succ = callback.getParameter([1, 3]) // into currentValue or array
+      or
+      pred = [call.getArgument(1), callback.getAReturn()] and
+      succ = callback.getParameter(0) // into previousValue
+    )
     or
     // `array.push(e)`, `array.unshift(e)`: if `e` is tainted, then so is `array`.
     pred = call.getAnArgument() and
@@ -64,7 +81,7 @@ module ArrayTaintTracking {
     succ.(DataFlow::SourceNode).getAMethodCall("splice") = call
     or
     // `e = array.pop()`, `e = array.shift()`, or similar: if `array` is tainted, then so is `e`.
-    call.(DataFlow::MethodCallNode).calls(pred, ["pop", "shift", "slice", "splice"]) and
+    call.(DataFlow::MethodCallNode).calls(pred, ["pop", "shift", "slice", "splice", "at"]) and
     succ = call
     or
     // `e = Array.from(x)`: if `x` is tainted, then so is `e`.
@@ -188,13 +205,13 @@ private module ArrayDataFlow {
   }
 
   /**
-   * A step for retrieving an element from an array using `.pop()` or `.shift()`.
+   * A step for retrieving an element from an array using `.pop()`, `.shift()`, or `.at()`.
    * E.g. `array.pop()`.
    */
   private class ArrayPopStep extends DataFlow::SharedFlowStep {
     override predicate loadStep(DataFlow::Node obj, DataFlow::Node element, string prop) {
       exists(DataFlow::MethodCallNode call |
-        call.getMethodName() = ["pop", "shift"] and
+        call.getMethodName() = ["pop", "shift", "at"] and
         prop = arrayElement() and
         obj = call.getReceiver() and
         element = call
@@ -244,14 +261,12 @@ private module ArrayDataFlow {
   /**
    * A step for creating an array and storing the elements in the array.
    */
-  private class ArrayCreationStep extends DataFlow::SharedFlowStep {
+  private class ArrayCreationStep extends PreCallGraphStep {
     override predicate storeStep(DataFlow::Node element, DataFlow::SourceNode obj, string prop) {
       exists(DataFlow::ArrayCreationNode array, int i |
         element = array.getElement(i) and
         obj = array and
-        if array = any(PromiseAllCreation c).getArrayNode()
-        then prop = arrayElement(i)
-        else prop = arrayElement()
+        prop = arrayElement(i)
       )
     }
   }
@@ -329,6 +344,14 @@ private module ArrayLibraries {
     result = DataFlow::globalVarRef("Array").getAMemberCall("from")
     or
     result = DataFlow::moduleImport("array-from").getACall()
+    or
+    // Array.prototype.slice.call acts the same as Array.from, and is sometimes used with e.g. the arguments object.
+    result =
+      DataFlow::globalVarRef("Array")
+          .getAPropertyRead("prototype")
+          .getAPropertyRead("slice")
+          .getAMethodCall("call") and
+    result.getNumArgument() = 1
   }
 
   /**

@@ -3,7 +3,6 @@
  */
 
 import Expr
-import semmle.code.csharp.Callable
 private import semmle.code.csharp.frameworks.system.linq.Expressions
 private import semmle.code.csharp.TypeRef
 
@@ -390,7 +389,7 @@ class ArrayCreation extends Expr, @array_creation_expr {
   /** Holds if this array creation has an initializer. */
   predicate hasInitializer() { exists(this.getInitializer()) }
 
-  /** Gets the array initializer of this array cration, if any. */
+  /** Gets the array initializer of this array creation, if any. */
   ArrayInitializer getInitializer() { result = this.getChild(-1) }
 
   /** Holds if the type of the created array is inferred from its initializer. */

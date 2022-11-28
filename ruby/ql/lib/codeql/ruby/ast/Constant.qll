@@ -8,28 +8,37 @@ private import internal.TreeSitter
 /** A constant value. */
 class ConstantValue extends TConstantValue {
   /** Gets a textual representation of this constant value. */
-  final string toString() {
-    result = this.getInt().toString()
+  final string toString() { this.hasValueWithType(result, _) }
+
+  /** Gets a string describing the type of this constant value. */
+  string getValueType() { this.hasValueWithType(_, result) }
+
+  private predicate hasValueWithType(string value, string type) {
+    value = this.getInt().toString() and type = "int"
     or
-    result = this.getFloat().toString()
+    value = this.getFloat().toString() and type = "float"
     or
     exists(int numerator, int denominator |
       this.isRational(numerator, denominator) and
-      result = numerator + "/" + denominator
+      value = numerator + "/" + denominator and
+      type = "rational"
     )
     or
     exists(float real, float imaginary |
       this.isComplex(real, imaginary) and
-      result = real + "+" + imaginary + "i"
+      value = real + "+" + imaginary + "i" and
+      type = "complex"
     )
     or
-    result = this.getString()
+    value = this.getString() and type = "string"
     or
-    result = ":" + this.getSymbol()
+    value = ":" + this.getSymbol() and type = "symbol"
     or
-    result = this.getBoolean().toString()
+    value = this.getRegExp() and type = "regexp"
     or
-    this.isNil() and result = "nil"
+    value = this.getBoolean().toString() and type = "boolean"
+    or
+    this.isNil() and value = "nil" and type = "nil"
   }
 
   /** Gets the integer value, if this is an integer. */
@@ -56,17 +65,37 @@ class ConstantValue extends TConstantValue {
   /** Holds if this is the string value `s`. */
   predicate isString(string s) { s = this.getString() }
 
-  /** Gets the symbol value (exluding the `:` prefix), if this is a symbol. */
+  /** Gets the symbol value (excluding the `:` prefix), if this is a symbol. */
   string getSymbol() { this = TSymbol(result) }
 
   /** Holds if this is the symbol value `:s`. */
   predicate isSymbol(string s) { s = this.getSymbol() }
 
-  /** Gets the string or symbol value, if any. */
-  string getStringOrSymbol() { result = [this.getString(), this.getSymbol()] }
+  /** Gets the regexp value, if this is a regexp. */
+  string getRegExp() { this.isRegExpWithFlags(result, _) }
 
-  /** Holds if this is the string value `s` or the symbol value `:s`. */
-  predicate isStringOrSymbol(string s) { s = this.getStringOrSymbol() }
+  /** Holds if this is the regexp value `/s/`, ignoring any flags. */
+  predicate isRegExp(string s) { this.isRegExpWithFlags(s, _) }
+
+  /** Holds if this is the regexp value `/s/flags` . */
+  predicate isRegExpWithFlags(string s, string flags) { this = TRegExp(s, flags) }
+
+  /** DEPRECATED: Use `getStringlikeValue` instead. */
+  deprecated string getStringOrSymbol() { result = this.getStringlikeValue() }
+
+  /** DEPRECATED: Use `isStringlikeValue` instead. */
+  deprecated predicate isStringOrSymbol(string s) { s = this.getStringlikeValue() }
+
+  /** Gets the string/symbol/regexp value, if any. */
+  string getStringlikeValue() { result = [this.getString(), this.getSymbol(), this.getRegExp()] }
+
+  /**
+   * Holds if this is:
+   * - the string value `s`,
+   * - the symbol value `:s`, or
+   * - the regexp value `/s/`.
+   */
+  predicate isStringlikeValue(string s) { s = this.getStringlikeValue() }
 
   /** Gets the Boolean value, if this is a Boolean. */
   boolean getBoolean() { this = TBoolean(result) }
@@ -76,6 +105,38 @@ class ConstantValue extends TConstantValue {
 
   /** Holds if this is the `nil` value. */
   predicate isNil() { this = TNil() }
+
+  /** Gets a (unique) serialized version of this value. */
+  final string serialize() {
+    result = this.getInt().toString()
+    or
+    exists(string res | res = this.getFloat().toString() |
+      if exists(res.indexOf(".")) then result = res else result = res + ".0"
+    )
+    or
+    exists(int numerator, int denominator |
+      this.isRational(numerator, denominator) and
+      result = numerator + "/" + denominator
+    )
+    or
+    exists(float real, float imaginary |
+      this.isComplex(real, imaginary) and
+      result = real + "+" + imaginary + "i"
+    )
+    or
+    result = "\"" + this.getString().replaceAll("\"", "\\\"") + "\""
+    or
+    result = ":" + this.getSymbol()
+    or
+    exists(string s, string flags |
+      this.isRegExpWithFlags(s, flags) and
+      result = "/" + s + "/" + flags
+    )
+    or
+    result = this.getBoolean().toString()
+    or
+    this.isNil() and result = "nil"
+  }
 }
 
 /** Provides different sub classes of `ConstantValue`. */
@@ -92,17 +153,41 @@ module ConstantValue {
   /** A constant complex value. */
   class ConstantComplexValue extends ConstantValue, TComplex { }
 
+  /** A constant string-like value. */
+  class ConstantStringlikeValue extends ConstantValue, TStringlike { }
+
   /** A constant string value. */
-  class ConstantStringValue extends ConstantValue, TString { }
+  class ConstantStringValue extends ConstantStringlikeValue, TString { }
 
   /** A constant symbol value. */
-  class ConstantSymbolValue extends ConstantValue, TSymbol { }
+  class ConstantSymbolValue extends ConstantStringlikeValue, TSymbol { }
+
+  /** A constant regexp value. */
+  class ConstantRegExpValue extends ConstantStringlikeValue, TRegExp { }
 
   /** A constant Boolean value. */
   class ConstantBooleanValue extends ConstantValue, TBoolean { }
 
   /** A constant `nil` value. */
   class ConstantNilValue extends ConstantValue, TNil { }
+
+  /** Gets the integer constant `x`. */
+  ConstantValue fromInt(int x) { result.getInt() = x }
+
+  /** Gets the float constant `x`. */
+  ConstantValue fromFloat(float x) { result.getFloat() = x }
+
+  /** Gets the string constant `x`. */
+  ConstantValue fromString(string x) { result.getString() = x }
+
+  /** Gets the symbol constant `x`. */
+  ConstantValue fromSymbol(string x) { result.getSymbol() = x }
+
+  /** Gets the regexp constant `x`. */
+  ConstantValue fromRegExp(string x) { result.getRegExp() = x }
+
+  /** Gets the string, symbol, or regexp constant `x`. */
+  ConstantValue fromStringlikeValue(string x) { result.getStringlikeValue() = x }
 }
 
 /** An access to a constant. */
@@ -185,6 +270,20 @@ private class ConstantReadAccessSynth extends ConstantAccess, TConstantReadAcces
   final override predicate hasGlobalScope() { value.matches("::%") }
 }
 
+private class ConstantWriteAccessSynth extends ConstantAccess, TConstantWriteAccessSynth {
+  private string value;
+
+  ConstantWriteAccessSynth() { this = TConstantWriteAccessSynth(_, _, value) }
+
+  final override string getName() {
+    if this.hasGlobalScope() then result = value.suffix(2) else result = value
+  }
+
+  final override Expr getScopeExpr() { synthChild(this, 0, result) }
+
+  final override predicate hasGlobalScope() { value.matches("::%") }
+}
+
 /**
  * A use (read) of a constant.
  *
@@ -224,23 +323,16 @@ class ConstantReadAccess extends ConstantAccess {
    *
    * the value being read at `M::CONST` is `"const"`.
    */
-  Expr getValue() {
-    not exists(this.getScopeExpr()) and
-    result = lookupConst(this.getEnclosingModule+().getModule(), this.getName()) and
-    // For now, we restrict the scope of top-level declarations to their file.
-    // This may remove some plausible targets, but also removes a lot of
-    // implausible targets
-    if result.getEnclosingModule() instanceof Toplevel
-    then result.getFile() = this.getFile()
-    else any()
-    or
-    this.hasGlobalScope() and
-    result = lookupConst(TResolved("Object"), this.getName())
-    or
-    result = lookupConst(resolveConstantReadAccess(this.getScopeExpr()), this.getName())
-  }
+  Expr getValue() { result = getConstantReadAccessValue(this) }
 
-  final override ConstantValue getConstantValue() { result = this.getValue().getConstantValue() }
+  /**
+   * Gets a fully qualified name for this constant read, based on the context in
+   * which it occurs.
+   */
+  string getAQualifiedName() { result = resolveConstant(this) }
+
+  /** Gets the module that this read access resolves to, if any. */
+  Module getModule() { result = resolveConstantReadAccess(this) }
 
   final override string getAPrimaryQlClass() { result = "ConstantReadAccess" }
 }
@@ -263,7 +355,9 @@ class ConstantReadAccess extends ConstantAccess {
  */
 class ConstantWriteAccess extends ConstantAccess {
   ConstantWriteAccess() {
-    explicitAssignmentNode(toGenerated(this), _) or this instanceof TNamespace
+    explicitAssignmentNode(toGenerated(this), _) or
+    this instanceof TNamespace or
+    this instanceof TConstantWriteAccessSynth
   }
 
   override string getAPrimaryQlClass() { result = "ConstantWriteAccess" }
@@ -303,7 +397,7 @@ class ConstantWriteAccess extends ConstantAccess {
    * constants up the namespace chain, the fully qualified name of a nested
    * constant can be ambiguous from just statically looking at the AST.
    */
-  string getAQualifiedName() { result = resolveConstantWriteAccess(this) }
+  string getAQualifiedName() { result = resolveConstantWrite(this) }
 
   /**
    * Gets a qualified name for this constant. Deprecated in favor of

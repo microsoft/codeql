@@ -5,23 +5,60 @@
 private import python
 private import semmle.python.dataflow.new.internal.DataFlowPublic as DataFlowPublic
 private import semmle.python.dataflow.new.internal.DataFlowPrivate as DataFlowPrivate
+import semmle.python.internal.CachedStages
 
 class Node = DataFlowPublic::Node;
 
 class TypeTrackingNode = DataFlowPublic::TypeTrackingNode;
 
-predicate simpleLocalFlowStep = DataFlowPrivate::simpleLocalFlowStep/2;
+/** A content name for use by type trackers, or the empty string. */
+class OptionalTypeTrackerContent extends string {
+  OptionalTypeTrackerContent() {
+    this = ""
+    or
+    this = getPossibleContentName()
+  }
+}
 
-predicate jumpStep = DataFlowPrivate::jumpStep/2;
+/** A content name for use by type trackers. */
+class TypeTrackerContent extends OptionalTypeTrackerContent {
+  TypeTrackerContent() { this != "" }
+}
 
-/** Holds if there is a level step from `pred` to `succ`. */
-predicate levelStep(Node pred, Node succ) { none() }
+/** Gets the content string representing no value. */
+OptionalTypeTrackerContent noContent() { result = "" }
+
+/**
+ * A label to use for `WithContent` and `WithoutContent` steps, restricting
+ * which `ContentSet` may pass through. Not currently used in Python.
+ */
+class ContentFilter extends Unit {
+  TypeTrackerContent getAMatchingContent() { none() }
+}
+
+pragma[inline]
+predicate compatibleContents(TypeTrackerContent storeContent, TypeTrackerContent loadContent) {
+  storeContent = loadContent
+}
+
+predicate simpleLocalFlowStep = DataFlowPrivate::simpleLocalFlowStepForTypetracking/2;
+
+predicate jumpStep = DataFlowPrivate::jumpStepSharedWithTypeTracker/2;
+
+/** Holds if there is a level step from `nodeFrom` to `nodeTo`, which may depend on the call graph. */
+predicate levelStepCall(Node nodeFrom, Node nodeTo) { none() }
+
+/** Holds if there is a level step from `nodeFrom` to `nodeTo`, which does not depend on the call graph. */
+predicate levelStepNoCall(Node nodeFrom, Node nodeTo) { none() }
 
 /**
  * Gets the name of a possible piece of content. For Python, this is currently only attribute names,
  * using the name of the attribute for the corresponding content.
  */
-string getPossibleContentName() { result = any(DataFlowPublic::AttrRef a).getAttributeName() }
+string getPossibleContentName() {
+  Stages::TypeTracking::ref() and // the TypeTracking::append() etc. predicates that we want to cache depend on this predicate, so we can place the `ref()` call here to get around identical files.
+  result = any(DataFlowPublic::AttrRef a).getAttributeName()
+}
 
 /**
  * Gets a callable for the call where `nodeFrom` is used as the `i`'th argument.
@@ -31,16 +68,22 @@ string getPossibleContentName() { result = any(DataFlowPublic::AttrRef a).getAtt
  */
 pragma[nomagic]
 private DataFlowPrivate::DataFlowCallable getCallableForArgument(
-  DataFlowPublic::ArgumentNode nodeFrom, int i
+  DataFlowPublic::ExtractedArgumentNode nodeFrom, int i
 ) {
-  exists(DataFlowPrivate::DataFlowCall call |
-    nodeFrom.argumentOf(call, i) and
+  exists(DataFlowPrivate::ExtractedDataFlowCall call |
+    nodeFrom.extractedArgumentOf(call, i) and
     result = call.getCallable()
   )
 }
 
-/** Holds if `nodeFrom` steps to `nodeTo` by being passed as a parameter in a call. */
-predicate callStep(DataFlowPublic::ArgumentNode nodeFrom, DataFlowPublic::ParameterNode nodeTo) {
+/**
+ * Holds if `nodeFrom` steps to `nodeTo` by being passed as a parameter in a call.
+ *
+ * Flow into summarized library methods is not included, as that will lead to negative
+ * recursion (or, at best, terrible performance), since identifying calls to library
+ * methods is done using API graphs (which uses type tracking).
+ */
+predicate callStep(DataFlowPublic::ArgumentNode nodeFrom, DataFlowPrivate::ParameterNodeImpl nodeTo) {
   // TODO: Support special methods?
   exists(DataFlowPrivate::DataFlowCallable callable, int i |
     callable = getCallableForArgument(nodeFrom, i) and
@@ -50,8 +93,9 @@ predicate callStep(DataFlowPublic::ArgumentNode nodeFrom, DataFlowPublic::Parame
 
 /** Holds if `nodeFrom` steps to `nodeTo` by being returned from a call. */
 predicate returnStep(DataFlowPrivate::ReturnNode nodeFrom, Node nodeTo) {
-  exists(DataFlowPrivate::DataFlowCall call |
-    nodeFrom.getEnclosingCallable() = call.getCallable() and nodeTo.asCfgNode() = call.getNode()
+  exists(DataFlowPrivate::ExtractedDataFlowCall call |
+    nodeFrom.getEnclosingCallable() = call.getCallable() and
+    nodeTo.(DataFlowPublic::CfgNode).getNode() = call.getNode()
   )
 }
 
@@ -76,6 +120,23 @@ predicate basicLoadStep(Node nodeFrom, Node nodeTo, string content) {
     nodeTo = a
   )
 }
+
+/**
+ * Holds if the `loadContent` of `nodeFrom` is stored in the `storeContent` of `nodeTo`.
+ */
+predicate basicLoadStoreStep(Node nodeFrom, Node nodeTo, string loadContent, string storeContent) {
+  none()
+}
+
+/**
+ * Holds if type-tracking should step from `nodeFrom` to `nodeTo` but block flow of contents matched by `filter` through here.
+ */
+predicate basicWithoutContentStep(Node nodeFrom, Node nodeTo, ContentFilter filter) { none() }
+
+/**
+ * Holds if type-tracking should step from `nodeFrom` to `nodeTo` if inside a content matched by `filter`.
+ */
+predicate basicWithContentStep(Node nodeFrom, Node nodeTo, ContentFilter filter) { none() }
 
 /**
  * A utility class that is equivalent to `boolean` but does not require type joining.

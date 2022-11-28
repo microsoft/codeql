@@ -15,7 +15,6 @@ import Dynamic
 import Literal
 import LogicalOperation
 import semmle.code.csharp.controlflow.ControlFlowElement
-import semmle.code.csharp.Callable
 import semmle.code.csharp.Location
 import semmle.code.csharp.Stmt
 import semmle.code.csharp.Type
@@ -193,7 +192,7 @@ class Operation extends Expr, @op_expr {
 }
 
 /**
- * A unary operation. Either a unary arithemtic operation
+ * A unary operation. Either a unary arithmetic operation
  * (`UnaryArithmeticOperation`), a unary bitwise operation
  * (`UnaryBitwiseOperation`), a `sizeof` operation (`SizeofExpr`), a pointer
  * indirection operation (`PointerIndirectionExpr`), an address-of operation
@@ -207,7 +206,7 @@ class UnaryOperation extends Operation, @un_op {
 }
 
 /**
- * A binary operation. Either a binary arithemtic operation
+ * A binary operation. Either a binary arithmetic operation
  * (`BinaryArithmeticOperation`), a binary bitwise operation
  * (`BinaryBitwiseOperation`), a comparison operation (`ComparisonOperation`),
  * or a binary logical operation (`BinaryLogicalOperation`).
@@ -777,7 +776,7 @@ class SizeofExpr extends UnaryOperation, @sizeof_expr {
  * struct A {
  *   public void M() { }
  *
- *   unsafe int DirectDerefence() {
+ *   unsafe int DirectDereference() {
  *     int n = 10;
  *     int *pn = &n;
  *     return *pn;
@@ -789,7 +788,7 @@ class SizeofExpr extends UnaryOperation, @sizeof_expr {
  *     pa->M();
  *   }
  *
- *   unsafe void ArrayDerefence() {
+ *   unsafe void ArrayDereference() {
  *     char* cp = stackalloc char[10];
  *     cp[1] = 'a';
  *   }
@@ -814,7 +813,7 @@ class PointerIndirectionExpr extends UnaryOperation, @pointer_indirection_expr {
  *
  * ```csharp
  * class A {
- *   unsafe int DirectDerefence() {
+ *   unsafe int DirectDereference() {
  *     int n = 10;
  *     int *pn = &n;
  *     return *pn;
@@ -938,7 +937,7 @@ class ThrowExpr extends Expr, ThrowElement, @throw_expr {
    * For example, `new ArgumentException("i")` in
    * `return i != 0 ? 1 / i : throw new ArgumentException("i");`.
    */
-  // overriden for more precise qldoc
+  // overridden for more precise qldoc
   override Expr getExpr() { result = ThrowElement.super.getExpr() }
 
   override string getAPrimaryQlClass() { result = "ThrowExpr" }
@@ -1036,9 +1035,6 @@ class TupleExpr extends Expr, @tuple_expr {
 
   /** Gets an argument of this tuple. */
   Expr getAnArgument() { result = this.getArgument(_) }
-
-  /** Holds if this tuple is a read access. */
-  deprecated predicate isReadAccess() { not this = getAnAssignOrForeachChild() }
 
   /** Holds if this expression is a tuple construction. */
   predicate isConstruction() {
@@ -1174,7 +1170,7 @@ class WithExpr extends Expr, @with_expr {
   /** Gets the expression on which this `with` is called. */
   Expr getExpr() { result = this.getChild(0) }
 
-  /** Gets the clone method of the `record` that is targetted by this `with` expression. */
+  /** Gets the clone method of the `record` that is targeted by this `with` expression. */
   RecordCloneMethod getCloneMethod() {
     result = this.getExpr().getType().(RecordClass).getCloneMethod()
   }

@@ -16,11 +16,11 @@
 import python
 private import semmle.python.dataflow.new.DataFlow
 import DataFlow::PathGraph
-import semmle.python.security.dataflow.CleartextLogging::CleartextLogging
+import semmle.python.security.dataflow.CleartextLoggingQuery
 
 from Configuration config, DataFlow::PathNode source, DataFlow::PathNode sink, string classification
 where
   config.hasFlowPath(source, sink) and
   classification = source.getNode().(Source).getClassification()
-select sink.getNode(), source, sink, "$@ is logged here.", source.getNode(),
-  "Sensitive data (" + classification + ")"
+select sink.getNode(), source, sink, "This expression logs $@ as clear text.", source.getNode(),
+  "sensitive data (" + classification + ")"

@@ -1,6 +1,5 @@
 private import TreeSitter
 private import codeql.ruby.AST
-private import codeql.ruby.ast.Scope
 private import codeql.ruby.ast.internal.AST
 private import codeql.ruby.ast.internal.Parameter
 private import codeql.ruby.ast.internal.Variable
@@ -129,7 +128,7 @@ private AstNode specialParentOfInclSynth(AstNode n) {
   n =
     [
       result.(Namespace).getScopeExpr(), result.(ClassDeclaration).getSuperclassExpr(),
-      result.(SingletonMethod).getObject()
+      result.(SingletonMethod).getObject(), result.(SingletonClass).getValue()
     ]
 }
 

@@ -1,4 +1,4 @@
-import ruby
+import codeql.ruby.AST
 
 query predicate stringEscapeSequenceComponents(
   StringEscapeSequenceComponent c, string raw, string unescaped
@@ -18,7 +18,7 @@ query predicate regexpEscapeSequenceComponents(RegExpEscapeSequenceComponent c, 
 }
 
 query predicate stringlikeLiterals(StringlikeLiteral l, string value, string kind) {
-  value = l.getConstantValue().getString() and kind = "string"
-  or
-  value = l.getConstantValue().getSymbol() and kind = "symbol"
+  exists(ConstantValue v |
+    v = l.getConstantValue() and value = v.getStringlikeValue() and kind = v.getValueType()
+  )
 }

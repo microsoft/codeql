@@ -5,7 +5,6 @@
 
 import csharp
 private import semmle.code.csharp.dataflow.flowsources.Remote
-private import semmle.code.csharp.dataflow.TaintTracking
 private import semmle.code.csharp.frameworks.System
 private import semmle.code.csharp.dataflow.FlowSummary
 
@@ -103,7 +102,9 @@ class UntrustedExternalApiDataNode extends ExternalApiDataNode {
 /** DEPRECATED: Alias for UntrustedExternalApiDataNode */
 deprecated class UntrustedExternalAPIDataNode = UntrustedExternalApiDataNode;
 
+/** An external API which is used with untrusted data. */
 private newtype TExternalApi =
+  /** An untrusted API method `m` where untrusted data is passed at `index`. */
   TExternalApiParameter(Callable m, int index) {
     exists(UntrustedExternalApiDataNode n |
       m = n.getCallable().getUnboundDeclaration() and

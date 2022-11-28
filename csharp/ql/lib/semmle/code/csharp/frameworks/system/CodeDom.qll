@@ -2,6 +2,7 @@
 
 import csharp
 private import semmle.code.csharp.frameworks.System
+private import semmle.code.csharp.dataflow.ExternalFlow
 
 /** The `System.CodeDome` namespace. */
 class SystemCodeDomNamespace extends Namespace {

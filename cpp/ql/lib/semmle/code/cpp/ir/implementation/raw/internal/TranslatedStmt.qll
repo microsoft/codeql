@@ -76,6 +76,13 @@ class TranslatedDeclStmt extends TranslatedStmt {
 
   private int getChildCount() { result = count(getDeclarationEntry(_)) }
 
+  IRDeclarationEntry getIRDeclarationEntry(int index) {
+    result.hasIndex(index) and
+    result.getStmt() = stmt
+  }
+
+  IRDeclarationEntry getAnIRDeclarationEntry() { result = this.getIRDeclarationEntry(_) }
+
   /**
    * Gets the `TranslatedDeclarationEntry` child at zero-based index `index`. Since not all
    * `DeclarationEntry` objects have a `TranslatedDeclarationEntry` (e.g. extern functions), we map
@@ -85,7 +92,7 @@ class TranslatedDeclStmt extends TranslatedStmt {
   private TranslatedDeclarationEntry getDeclarationEntry(int index) {
     result =
       rank[index + 1](TranslatedDeclarationEntry entry, int originalIndex |
-        entry = getTranslatedDeclarationEntry(stmt.getDeclarationEntry(originalIndex))
+        entry = getTranslatedDeclarationEntry(this.getIRDeclarationEntry(originalIndex))
       |
         entry order by originalIndex
       )
@@ -421,18 +428,34 @@ class TranslatedCatchAnyHandler extends TranslatedHandler {
 class TranslatedIfStmt extends TranslatedStmt, ConditionContext {
   override IfStmt stmt;
 
-  override Instruction getFirstInstruction() { result = getCondition().getFirstInstruction() }
+  override Instruction getFirstInstruction() {
+    if hasInitialization()
+    then result = getInitialization().getFirstInstruction()
+    else result = getFirstConditionInstruction()
+  }
 
   override TranslatedElement getChild(int id) {
-    id = 0 and result = getCondition()
+    id = 0 and result = getInitialization()
     or
-    id = 1 and result = getThen()
+    id = 1 and result = getCondition()
     or
-    id = 2 and result = getElse()
+    id = 2 and result = getThen()
+    or
+    id = 3 and result = getElse()
+  }
+
+  private predicate hasInitialization() { exists(stmt.getInitialization()) }
+
+  private TranslatedStmt getInitialization() {
+    result = getTranslatedStmt(stmt.getInitialization())
   }
 
   private TranslatedCondition getCondition() {
     result = getTranslatedCondition(stmt.getCondition().getFullyConverted())
+  }
+
+  private Instruction getFirstConditionInstruction() {
+    result = getCondition().getFirstInstruction()
   }
 
   private TranslatedStmt getThen() { result = getTranslatedStmt(stmt.getThen()) }
@@ -456,6 +479,9 @@ class TranslatedIfStmt extends TranslatedStmt, ConditionContext {
   }
 
   override Instruction getChildSuccessor(TranslatedElement child) {
+    child = getInitialization() and
+    result = getFirstConditionInstruction()
+    or
     (child = getThen() or child = getElse()) and
     result = getParent().getChildSuccessor(this)
   }
@@ -578,36 +604,32 @@ class TranslatedRangeBasedForStmt extends TranslatedStmt, ConditionContext {
   override RangeBasedForStmt stmt;
 
   override TranslatedElement getChild(int id) {
-    id = 0 and result = getRangeVariableDeclaration()
+    id = 0 and result = getRangeVariableDeclStmt()
     or
-    id = 1 and result = getBeginVariableDeclaration()
+    // Note: `__begin` and `__end` are declared by the same `DeclStmt`
+    id = 1 and result = getBeginEndVariableDeclStmt()
     or
-    id = 2 and result = getEndVariableDeclaration()
+    id = 2 and result = getCondition()
     or
-    id = 3 and result = getCondition()
+    id = 3 and result = getUpdate()
     or
-    id = 4 and result = getUpdate()
+    id = 4 and result = getVariableDeclStmt()
     or
-    id = 5 and result = getVariableDeclaration()
-    or
-    id = 6 and result = getBody()
+    id = 5 and result = getBody()
   }
 
   override Instruction getFirstInstruction() {
-    result = getRangeVariableDeclaration().getFirstInstruction()
+    result = getRangeVariableDeclStmt().getFirstInstruction()
   }
 
   override Instruction getChildSuccessor(TranslatedElement child) {
-    child = getRangeVariableDeclaration() and
-    result = getBeginVariableDeclaration().getFirstInstruction()
+    child = getRangeVariableDeclStmt() and
+    result = getBeginEndVariableDeclStmt().getFirstInstruction()
     or
-    child = getBeginVariableDeclaration() and
-    result = getEndVariableDeclaration().getFirstInstruction()
-    or
-    child = getEndVariableDeclaration() and
+    child = getBeginEndVariableDeclStmt() and
     result = getCondition().getFirstInstruction()
     or
-    child = getVariableDeclaration() and
+    child = getVariableDeclStmt() and
     result = getBody().getFirstInstruction()
     or
     child = getBody() and
@@ -624,23 +646,25 @@ class TranslatedRangeBasedForStmt extends TranslatedStmt, ConditionContext {
   override Instruction getInstructionSuccessor(InstructionTag tag, EdgeKind kind) { none() }
 
   override Instruction getChildTrueSuccessor(TranslatedCondition child) {
-    child = getCondition() and result = getVariableDeclaration().getFirstInstruction()
+    child = getCondition() and result = getVariableDeclStmt().getFirstInstruction()
   }
 
   override Instruction getChildFalseSuccessor(TranslatedCondition child) {
     child = getCondition() and result = getParent().getChildSuccessor(this)
   }
 
-  private TranslatedRangeBasedForVariableDeclaration getRangeVariableDeclaration() {
-    result = getTranslatedRangeBasedForVariableDeclaration(stmt.getRangeVariable())
+  private TranslatedDeclStmt getRangeVariableDeclStmt() {
+    exists(IRVariableDeclarationEntry entry |
+      entry.getDeclaration() = stmt.getRangeVariable() and
+      result.getAnIRDeclarationEntry() = entry
+    )
   }
 
-  private TranslatedRangeBasedForVariableDeclaration getBeginVariableDeclaration() {
-    result = getTranslatedRangeBasedForVariableDeclaration(stmt.getBeginVariable())
-  }
-
-  private TranslatedRangeBasedForVariableDeclaration getEndVariableDeclaration() {
-    result = getTranslatedRangeBasedForVariableDeclaration(stmt.getEndVariable())
+  private TranslatedDeclStmt getBeginEndVariableDeclStmt() {
+    exists(IRVariableDeclarationEntry entry |
+      entry.getStmt() = stmt.getBeginEndDeclaration() and
+      result.getAnIRDeclarationEntry() = entry
+    )
   }
 
   // Public for getInstructionBackEdgeSuccessor
@@ -653,8 +677,11 @@ class TranslatedRangeBasedForStmt extends TranslatedStmt, ConditionContext {
     result = getTranslatedExpr(stmt.getUpdate().getFullyConverted())
   }
 
-  private TranslatedRangeBasedForVariableDeclaration getVariableDeclaration() {
-    result = getTranslatedRangeBasedForVariableDeclaration(stmt.getVariable())
+  private TranslatedDeclStmt getVariableDeclStmt() {
+    exists(IRVariableDeclarationEntry entry |
+      entry.getDeclaration() = stmt.getVariable() and
+      result.getAnIRDeclarationEntry() = entry
+    )
   }
 
   private TranslatedStmt getBody() { result = getTranslatedStmt(stmt.getStmt()) }
@@ -698,14 +725,28 @@ class TranslatedSwitchStmt extends TranslatedStmt {
     result = getTranslatedExpr(stmt.getExpr().getFullyConverted())
   }
 
+  private Instruction getFirstExprInstruction() { result = getExpr().getFirstInstruction() }
+
   private TranslatedStmt getBody() { result = getTranslatedStmt(stmt.getStmt()) }
 
-  override Instruction getFirstInstruction() { result = getExpr().getFirstInstruction() }
+  override Instruction getFirstInstruction() {
+    if hasInitialization()
+    then result = getInitialization().getFirstInstruction()
+    else result = getFirstExprInstruction()
+  }
 
   override TranslatedElement getChild(int id) {
-    id = 0 and result = getExpr()
+    id = 0 and result = getInitialization()
     or
-    id = 1 and result = getBody()
+    id = 1 and result = getExpr()
+    or
+    id = 2 and result = getBody()
+  }
+
+  private predicate hasInitialization() { exists(stmt.getInitialization()) }
+
+  private TranslatedStmt getInitialization() {
+    result = getTranslatedStmt(stmt.getInitialization())
   }
 
   override predicate hasInstruction(Opcode opcode, InstructionTag tag, CppType resultType) {
@@ -735,6 +776,8 @@ class TranslatedSwitchStmt extends TranslatedStmt {
   }
 
   override Instruction getChildSuccessor(TranslatedElement child) {
+    child = getInitialization() and result = getFirstExprInstruction()
+    or
     child = getExpr() and result = getInstruction(SwitchBranchTag())
     or
     child = getBody() and result = getParent().getChildSuccessor(this)

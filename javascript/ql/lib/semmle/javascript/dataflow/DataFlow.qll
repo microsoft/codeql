@@ -139,9 +139,12 @@ module DataFlow {
     }
 
     /**
+     * DEPRECATED: Use `DataFlow::ParameterNode::flowsTo()` instead.
      * Holds if this expression may refer to the initial value of parameter `p`.
      */
-    predicate mayReferToParameter(Parameter p) { parameterNode(p).(SourceNode).flowsTo(this) }
+    deprecated predicate mayReferToParameter(Parameter p) {
+      parameterNode(p).(SourceNode).flowsTo(this)
+    }
 
     /**
      * Holds if this element is at the specified location.
@@ -589,6 +592,13 @@ module DataFlow {
      * Gets the node where the property write happens in the control flow graph.
      */
     abstract ControlFlowNode getWriteNode();
+
+    /**
+     * If this installs an accessor on an object, as opposed to a regular property,
+     * gets the body of the accessor. `isSetter` is true if installing a setter, and
+     * false is installing a getter.
+     */
+    DataFlow::FunctionNode getInstalledAccessor(boolean isSetter) { none() }
   }
 
   /**
@@ -627,6 +637,17 @@ module DataFlow {
     override string getPropertyName() { result = prop.getName() }
 
     override Node getRhs() { result = valueNode(prop.(ValueProperty).getInit()) }
+
+    override DataFlow::FunctionNode getInstalledAccessor(boolean isSetter) {
+      (
+        prop instanceof PropertySetter and
+        isSetter = true
+        or
+        prop instanceof PropertyGetter and
+        isSetter = false
+      ) and
+      result = valueNode(prop.getInit())
+    }
 
     override ControlFlowNode getWriteNode() { result = prop }
   }
@@ -688,6 +709,17 @@ module DataFlow {
       result = valueNode(prop.getInit())
     }
 
+    override DataFlow::FunctionNode getInstalledAccessor(boolean isSetter) {
+      (
+        prop instanceof SetterMethodDefinition and
+        isSetter = true
+        or
+        prop instanceof GetterMethodDefinition and
+        isSetter = false
+      ) and
+      result = valueNode(prop.getInit())
+    }
+
     override ControlFlowNode getWriteNode() { result = prop }
   }
 
@@ -708,6 +740,17 @@ module DataFlow {
 
     override Node getRhs() {
       not prop instanceof AccessorMethodDefinition and
+      result = valueNode(prop.getInit())
+    }
+
+    override DataFlow::FunctionNode getInstalledAccessor(boolean isSetter) {
+      (
+        prop instanceof SetterMethodDefinition and
+        isSetter = true
+        or
+        prop instanceof GetterMethodDefinition and
+        isSetter = false
+      ) and
       result = valueNode(prop.getInit())
     }
 
@@ -983,6 +1026,32 @@ module DataFlow {
 
     /**
      * Gets the function corresponding to this return node.
+     */
+    Function getFunction() { result = function }
+
+    override File getFile() { result = function.getFile() }
+  }
+
+  /**
+   * A data flow node representing the arguments object given to a function.
+   */
+  class ReflectiveParametersNode extends DataFlow::Node, TReflectiveParametersNode {
+    Function function;
+
+    ReflectiveParametersNode() { this = TReflectiveParametersNode(function) }
+
+    override string toString() { result = "'arguments' object of " + function.describe() }
+
+    override predicate hasLocationInfo(
+      string filepath, int startline, int startcolumn, int endline, int endcolumn
+    ) {
+      function.getLocation().hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
+    }
+
+    override BasicBlock getBasicBlock() { result = function.getEntry().getBasicBlock() }
+
+    /**
+     * Gets the function whose `arguments` object is represented by this node.
      */
     Function getFunction() { result = function }
 
@@ -1511,6 +1580,8 @@ module DataFlow {
       or
       predExpr = succExpr.(TypeAssertion).getExpression()
       or
+      predExpr = succExpr.(SatisfiesExpr).getExpression()
+      or
       predExpr = succExpr.(NonNullAssertion).getExpression()
       or
       predExpr = succExpr.(ExpressionWithTypeArguments).getExpression()
@@ -1587,6 +1658,35 @@ module DataFlow {
     exists(Function f | not f.isAsyncOrGenerator() |
       DataFlow::functionReturnNode(succ, f) and pred = valueNode(f.getAReturnedExpr())
     )
+    or
+    // from a reflective params node to a reference to the arguments object.
+    exists(DataFlow::ReflectiveParametersNode params, Function f | f = params.getFunction() |
+      succ = f.getArgumentsVariable().getAnAccess().flow() and
+      pred = params
+    )
+  }
+
+  /** A load step from a reflective parameter node to each parameter. */
+  private class ReflectiveParamsStep extends PreCallGraphStep {
+    override predicate loadStep(DataFlow::Node obj, DataFlow::Node element, string prop) {
+      exists(DataFlow::ReflectiveParametersNode params, DataFlow::FunctionNode f, int i |
+        f.getFunction() = params.getFunction() and
+        obj = params and
+        prop = i + "" and
+        element = f.getParameter(i)
+      )
+    }
+  }
+
+  /** A taint step from the reflective parameters node to any parameter. */
+  private class ReflectiveParamsTaintStep extends TaintTracking::SharedTaintStep {
+    override predicate step(DataFlow::Node obj, DataFlow::Node element) {
+      exists(DataFlow::ReflectiveParametersNode params, DataFlow::FunctionNode f |
+        f.getFunction() = params.getFunction() and
+        obj = params and
+        element = f.getAParameter()
+      )
+    }
   }
 
   /**
@@ -1594,10 +1694,10 @@ module DataFlow {
    */
   predicate localFieldStep(DataFlow::Node pred, DataFlow::Node succ) {
     exists(ClassNode cls, string prop |
-      pred = cls.getADirectSuperClass*().getAReceiverNode().getAPropertyWrite(prop).getRhs() or
+      pred = AccessPath::getAnAssignmentTo(cls.getADirectSuperClass*().getAReceiverNode(), prop) or
       pred = cls.getInstanceMethod(prop)
     |
-      succ = cls.getAReceiverNode().getAPropertyRead(prop)
+      succ = AccessPath::getAReferenceTo(cls.getAReceiverNode(), prop)
     )
   }
 
@@ -1613,7 +1713,7 @@ module DataFlow {
   }
 
   /**
-   * Holds if the flow information for this node is incomplete.
+   * Holds if the flow information for the node `nd`.
    *
    * This predicate holds if there may be a source flow node from which data flows into
    * this node, but that node is not a result of `getALocalSource()` due to analysis incompleteness.

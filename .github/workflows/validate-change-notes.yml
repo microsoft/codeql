@@ -5,6 +5,7 @@ on:
     paths:
       - "*/ql/*/change-notes/**/*"
       - ".github/workflows/validate-change-notes.yml"
+      - ".github/actions/fetch-codeql/action.yml"
     branches:
       - main
       - "rc/*"
@@ -12,13 +13,14 @@ on:
     paths:
       - "*/ql/*/change-notes/**/*"
       - ".github/workflows/validate-change-notes.yml"
+      - ".github/actions/fetch-codeql/action.yml"
 
 jobs:
   check-change-note:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Setup CodeQL
         uses: ./.github/actions/fetch-codeql

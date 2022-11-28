@@ -12,7 +12,45 @@ private import codeql.ruby.dataflow.RemoteFlowSources
 private import codeql.ruby.ApiGraphs
 
 /**
+ * A data-flow node that constructs a SQL statement.
+ *
+ * Often, it is worthy of an alert if a SQL statement is constructed such that
+ * executing it would be a security risk.
+ *
+ * If it is important that the SQL statement is executed, use `SqlExecution`.
+ *
+ * Extend this class to refine existing API models. If you want to model new APIs,
+ * extend `SqlConstruction::Range` instead.
+ */
+class SqlConstruction extends DataFlow::Node instanceof SqlConstruction::Range {
+  /** Gets the argument that specifies the SQL statements to be constructed. */
+  DataFlow::Node getSql() { result = super.getSql() }
+}
+
+/** Provides a class for modeling new SQL execution APIs. */
+module SqlConstruction {
+  /**
+   * A data-flow node that constructs a SQL statement.
+   *
+   * Often, it is worthy of an alert if a SQL statement is constructed such that
+   * executing it would be a security risk.
+   *
+   * If it is important that the SQL statement is executed, use `SqlExecution`.
+   *
+   * Extend this class to model new APIs. If you want to refine existing API models,
+   * extend `SqlConstruction` instead.
+   */
+  abstract class Range extends DataFlow::Node {
+    /** Gets the argument that specifies the SQL statements to be constructed. */
+    abstract DataFlow::Node getSql();
+  }
+}
+
+/**
  * A data-flow node that executes SQL statements.
+ *
+ * If the context of interest is such that merely constructing a SQL statement
+ * would be valuable to report, consider using `SqlConstruction`.
  *
  * Extend this class to refine existing API models. If you want to model new APIs,
  * extend `SqlExecution::Range` instead.
@@ -26,6 +64,9 @@ class SqlExecution extends DataFlow::Node instanceof SqlExecution::Range {
 module SqlExecution {
   /**
    * A data-flow node that executes SQL statements.
+   *
+   * If the context of interest is such that merely constructing a SQL
+   * statement would be valuable to report, consider using `SqlConstruction`.
    *
    * Extend this class to model new APIs. If you want to refine existing API models,
    * extend `SqlExecution` instead.
@@ -222,7 +263,7 @@ class HtmlEscaping extends Escaping {
 }
 
 /** Provides classes for modeling HTTP-related APIs. */
-module HTTP {
+module Http {
   /** Provides classes for modeling HTTP servers. */
   module Server {
     /**
@@ -250,6 +291,11 @@ module HTTP {
 
       /** Gets a string that identifies the framework used for this route setup. */
       string getFramework() { result = super.getFramework() }
+
+      /**
+       * Gets the HTTP method name, in lowercase, that this handler will respond to.
+       */
+      string getHttpMethod() { result = super.getHttpMethod() }
     }
 
     /** Provides a class for modeling new HTTP routing APIs. */
@@ -266,10 +312,7 @@ module HTTP {
 
         /** Gets the URL pattern for this route, if it can be statically determined. */
         string getUrlPattern() {
-          exists(CfgNodes::ExprNodes::StringlikeLiteralCfgNode strNode |
-            this.getUrlPatternArg().getALocalSource() = DataFlow::exprNode(strNode) and
-            result = strNode.getExpr().getConstantValue().getStringOrSymbol()
-          )
+          result = this.getUrlPatternArg().getALocalSource().getConstantValue().getStringlikeValue()
         }
 
         /**
@@ -287,7 +330,102 @@ module HTTP {
 
         /** Gets a string that identifies the framework used for this route setup. */
         abstract string getFramework();
+
+        /**
+         * Gets the HTTP method name, in all caps, that this handler will respond to.
+         */
+        abstract string getHttpMethod();
       }
+    }
+
+    /** A kind of request input. */
+    class RequestInputKind extends string {
+      RequestInputKind() { this = ["parameter", "header", "body", "url", "cookie"] }
+    }
+
+    /** Input from the parameters of a request. */
+    RequestInputKind parameterInputKind() { result = "parameter" }
+
+    /** Input from the headers of a request. */
+    RequestInputKind headerInputKind() { result = "header" }
+
+    /** Input from the body of a request. */
+    RequestInputKind bodyInputKind() { result = "body" }
+
+    /** Input from the URL of a request. */
+    RequestInputKind urlInputKind() { result = "url" }
+
+    /** Input from the cookies of a request. */
+    RequestInputKind cookieInputKind() { result = "cookie" }
+
+    /**
+     * An access to a user-controlled HTTP request input. For example, the URL or body of a request.
+     * Instances of this class automatically become `RemoteFlowSource`s.
+     *
+     * Extend this class to refine existing API models. If you want to model new APIs,
+     * extend `RequestInputAccess::Range` instead.
+     */
+    class RequestInputAccess extends DataFlow::Node instanceof RequestInputAccess::Range {
+      /**
+       * Gets a string that describes the type of this input.
+       *
+       * This is typically the name of the method that gives rise to this input.
+       */
+      string getSourceType() { result = super.getSourceType() }
+
+      /**
+       * Gets the kind of the accessed input,
+       * Can be one of "parameter", "header", "body", "url", "cookie".
+       */
+      RequestInputKind getKind() { result = super.getKind() }
+
+      /**
+       * Holds if this part of the request may be controlled by a third party,
+       * that is, an agent other than the one who sent the request.
+       *
+       * This is true for the URL, query parameters, and request body.
+       * These can be controlled by a malicious third party in the following scenarios:
+       *
+       * - The user clicks a malicious link or is otherwise redirected to a malicious URL.
+       * - The user visits a web site that initiates a form submission or AJAX request on their behalf.
+       *
+       * In these cases, the request is technically sent from the user's browser, but
+       * the user is not in direct control of the URL or POST body.
+       *
+       * Headers are never considered third-party controllable by this predicate, although the
+       * third party does have some control over the the Referer and Origin headers.
+       */
+      predicate isThirdPartyControllable() {
+        this.getKind() = [parameterInputKind(), urlInputKind(), bodyInputKind()]
+      }
+    }
+
+    /** Provides a class for modeling new HTTP request inputs. */
+    module RequestInputAccess {
+      /**
+       * An access to a user-controlled HTTP request input.
+       *
+       * Extend this class to model new APIs. If you want to refine existing API models,
+       * extend `RequestInputAccess` instead.
+       */
+      abstract class Range extends DataFlow::Node {
+        /**
+         * Gets a string that describes the type of this input.
+         *
+         * This is typically the name of the method that gives rise to this input.
+         */
+        abstract string getSourceType();
+
+        /**
+         * Gets the kind of the accessed input,
+         * Can be one of "parameter", "header", "body", "url", "cookie".
+         */
+        abstract RequestInputKind getKind();
+      }
+    }
+
+    private class RequestInputAccessAsRemoteFlowSource extends RemoteFlowSource::Range instanceof RequestInputAccess {
+      override string getSourceType() { result = this.(RequestInputAccess).getSourceType() }
     }
 
     /**
@@ -305,6 +443,12 @@ module HTTP {
 
       /** Gets a string that identifies the framework used for this route setup. */
       string getFramework() { result = super.getFramework() }
+
+      /**
+       * Gets an HTTP method name, in all caps, that this handler will respond to.
+       * Handlers can potentially respond to multiple HTTP methods.
+       */
+      string getAnHttpMethod() { result = super.getAnHttpMethod() }
     }
 
     /** Provides a class for modeling new HTTP request handlers. */
@@ -326,6 +470,12 @@ module HTTP {
 
         /** Gets a string that identifies the framework used for this request handler. */
         abstract string getFramework();
+
+        /**
+         * Gets an HTTP method name, in all caps, that this handler will respond to.
+         * Handlers can potentially respond to multiple HTTP methods.
+         */
+        abstract string getAnHttpMethod();
       }
     }
 
@@ -340,15 +490,50 @@ module HTTP {
       }
 
       override string getFramework() { result = rs.getFramework() }
+
+      override string getAnHttpMethod() { result = rs.getHttpMethod() }
     }
 
     /** A parameter that will receive parts of the url when handling an incoming request. */
-    private class RoutedParameter extends RemoteFlowSource::Range, DataFlow::ParameterNode {
+    private class RoutedParameter extends RequestInputAccess::Range, DataFlow::ParameterNode {
       RequestHandler handler;
 
       RoutedParameter() { this.getParameter() = handler.getARoutedParameter() }
 
       override string getSourceType() { result = handler.getFramework() + " RoutedParameter" }
+
+      override RequestInputKind getKind() { result = parameterInputKind() }
+    }
+
+    /**
+     * A data flow node that writes data to a header in an HTTP response.
+     *
+     * Extend this class to refine existing API models. If you want to model new APIs,
+     * extend `HeaderWriteAccess::Range` instead.
+     */
+    class HeaderWriteAccess extends DataFlow::Node instanceof HeaderWriteAccess::Range {
+      /** Gets the (lower case) name of the header that is written to. */
+      string getName() { result = super.getName().toLowerCase() }
+
+      /** Gets the value that is written to the header. */
+      DataFlow::Node getValue() { result = super.getValue() }
+    }
+
+    /** Provides a class for modeling new HTTP header writes. */
+    module HeaderWriteAccess {
+      /**
+       * A data flow node that writes data to the header in an HTTP response.
+       *
+       * Extend this class to model new APIs. If you want to refine existing API models,
+       * extend `HeaderWriteAccess` instead.
+       */
+      abstract class Range extends DataFlow::Node {
+        /** Gets the name of the header that is written to. */
+        abstract string getName();
+
+        /** Gets the value that is written to the header. */
+        abstract DataFlow::Node getValue();
+      }
     }
 
     /**
@@ -391,10 +576,12 @@ module HTTP {
 
         /** Gets the mimetype of this HTTP response, if it can be statically determined. */
         string getMimetype() {
-          exists(CfgNodes::ExprNodes::StringlikeLiteralCfgNode strNode |
-            this.getMimetypeOrContentTypeArg().getALocalSource() = DataFlow::exprNode(strNode) and
-            result = strNode.getExpr().getConstantValue().getStringOrSymbol().splitAt(";", 0)
-          )
+          result =
+            this.getMimetypeOrContentTypeArg()
+                .getALocalSource()
+                .getConstantValue()
+                .getStringlikeValue()
+                .splitAt(";", 0)
           or
           not exists(this.getMimetypeOrContentTypeArg()) and
           result = this.getMimetypeDefault()
@@ -427,7 +614,7 @@ module HTTP {
        * Extend this class to model new APIs. If you want to refine existing API models,
        * extend `HttpResponse` instead.
        */
-      abstract class Range extends HTTP::Server::HttpResponse::Range {
+      abstract class Range extends Http::Server::HttpResponse::Range {
         /** Gets the data-flow node that specifies the location of this HTTP redirect response. */
         abstract DataFlow::Node getRedirectLocation();
       }
@@ -436,32 +623,37 @@ module HTTP {
 
   /** Provides classes for modeling HTTP clients. */
   module Client {
+    import codeql.ruby.internal.ConceptsShared::Http::Client as SC
+
     /**
      * A method call that makes an outgoing HTTP request.
      *
      * Extend this class to refine existing API models. If you want to model new APIs,
      * extend `Request::Range` instead.
      */
-    class Request extends MethodCall instanceof Request::Range {
+    class Request extends SC::Request instanceof Request::Range {
       /** Gets a node which returns the body of the response */
       DataFlow::Node getResponseBody() { result = super.getResponseBody() }
 
       /**
+       * DEPRECATED: Use `getAUrlPart` instead.
+       *
        * Gets a node that contributes to the URL of the request.
        * Depending on the framework, a request may have multiple nodes which contribute to the URL.
        */
-      DataFlow::Node getURL() { result = super.getURL() }
-
-      /** Gets a string that identifies the framework used for this request. */
-      string getFramework() { result = super.getFramework() }
+      deprecated DataFlow::Node getURL() {
+        result = super.getURL() or result = Request::Range.super.getAUrlPart()
+      }
 
       /**
        * Holds if this request is made using a mode that disables SSL/TLS
        * certificate validation, where `disablingNode` represents the point at
        * which the validation was disabled.
        */
-      predicate disablesCertificateValidation(DataFlow::Node disablingNode) {
-        super.disablesCertificateValidation(disablingNode)
+      deprecated predicate disablesCertificateValidation(DataFlow::Node disablingNode) {
+        Request::Range.super.disablesCertificateValidation(disablingNode, _)
+        or
+        Request::Range.super.disablesCertificateValidation(disablingNode)
       }
     }
 
@@ -473,25 +665,26 @@ module HTTP {
        * Extend this class to model new APIs. If you want to refine existing API models,
        * extend `Request` instead.
        */
-      abstract class Range extends MethodCall {
+      abstract class Range extends SC::Request::Range {
         /** Gets a node which returns the body of the response */
         abstract DataFlow::Node getResponseBody();
 
         /**
+         * DEPRECATED: overwrite `getAUrlPart` instead.
+         *
          * Gets a node that contributes to the URL of the request.
          * Depending on the framework, a request may have multiple nodes which contribute to the URL.
          */
-        abstract DataFlow::Node getURL();
-
-        /** Gets a string that identifies the framework used for this request. */
-        abstract string getFramework();
+        deprecated DataFlow::Node getURL() { none() }
 
         /**
+         * DEPRECATED: override `disablesCertificateValidation/2` instead.
+         *
          * Holds if this request is made using a mode that disables SSL/TLS
          * certificate validation, where `disablingNode` represents the point at
          * which the validation was disabled.
          */
-        abstract predicate disablesCertificateValidation(DataFlow::Node disablingNode);
+        deprecated predicate disablesCertificateValidation(DataFlow::Node disablingNode) { none() }
       }
     }
 
@@ -505,6 +698,9 @@ module HTTP {
     }
   }
 }
+
+/** DEPRECATED: Alias for Http */
+deprecated module HTTP = Http;
 
 /**
  * A data flow node that executes an operating system command,
@@ -545,6 +741,9 @@ module SystemCommandExecution {
 class CodeExecution extends DataFlow::Node instanceof CodeExecution::Range {
   /** Gets the argument that specifies the code to be executed. */
   DataFlow::Node getCode() { result = super.getCode() }
+
+  /** Holds if this execution runs arbitrary code, as opposed to some restricted subset. E.g. `Object.send` will only run any method on an object. */
+  predicate runsArbitraryCode() { super.runsArbitraryCode() }
 }
 
 /** Provides a class for modeling new dynamic code execution APIs. */
@@ -558,6 +757,9 @@ module CodeExecution {
   abstract class Range extends DataFlow::Node {
     /** Gets the argument that specifies the code to be executed. */
     abstract DataFlow::Node getCode();
+
+    /** Holds if this execution runs arbitrary code, as opposed to some restricted subset. E.g. `Object.send` will only run any method on an object. */
+    predicate runsArbitraryCode() { any() }
   }
 }
 
@@ -567,16 +769,12 @@ module CodeExecution {
  * Extend this class to refine existing API models. If you want to model new APIs,
  * extend `XmlParserCall::Range` instead.
  */
-class XmlParserCall extends DataFlow::Node {
-  XmlParserCall::Range range;
-
-  XmlParserCall() { this = range }
-
+class XmlParserCall extends DataFlow::Node instanceof XmlParserCall::Range {
   /** Gets the argument that specifies the XML content to be parsed. */
-  DataFlow::Node getInput() { result = range.getInput() }
+  DataFlow::Node getInput() { result = super.getInput() }
 
   /** Holds if this XML parser call is configured to process external entities */
-  predicate externalEntitiesEnabled() { range.externalEntitiesEnabled() }
+  predicate externalEntitiesEnabled() { super.externalEntitiesEnabled() }
 }
 
 /** Provides a class for modeling new XML parsing APIs. */
@@ -660,7 +858,7 @@ module PersistentWriteAccess {
  * Extend this class to refine existing API models. If you want to model new APIs,
  * extend `CSRFProtectionSetting::Range` instead.
  */
-class CSRFProtectionSetting extends DataFlow::Node instanceof CSRFProtectionSetting::Range {
+class CsrfProtectionSetting extends DataFlow::Node instanceof CsrfProtectionSetting::Range {
   /**
    * Gets the boolean value corresponding to if CSRF protection is enabled
    * (`true`) or disabled (`false`) by this node.
@@ -668,8 +866,11 @@ class CSRFProtectionSetting extends DataFlow::Node instanceof CSRFProtectionSett
   boolean getVerificationSetting() { result = super.getVerificationSetting() }
 }
 
+/** DEPRECATED: Alias for CsrfProtectionSetting */
+deprecated class CSRFProtectionSetting = CsrfProtectionSetting;
+
 /** Provides a class for modeling new CSRF protection setting APIs. */
-module CSRFProtectionSetting {
+module CsrfProtectionSetting {
   /**
    * A data-flow node that may set or unset Cross-site request forgery protection.
    *
@@ -684,6 +885,9 @@ module CSRFProtectionSetting {
     abstract boolean getVerificationSetting();
   }
 }
+
+/** DEPRECATED: Alias for CsrfProtectionSetting */
+deprecated module CSRFProtectionSetting = CsrfProtectionSetting;
 
 /** Provides classes for modeling path-related APIs. */
 module Path {
@@ -740,13 +944,9 @@ module CookieSecurityConfigurationSetting {
  * Extend this class to refine existing API models. If you want to model new APIs,
  * extend `Logging::Range` instead.
  */
-class Logging extends DataFlow::Node {
-  Logging::Range range;
-
-  Logging() { this = range }
-
+class Logging extends DataFlow::Node instanceof Logging::Range {
   /** Gets an input that is logged. */
-  DataFlow::Node getAnInput() { result = range.getAnInput() }
+  DataFlow::Node getAnInput() { result = super.getAnInput() }
 }
 
 /** Provides a class for modeling new logging mechanisms. */
@@ -761,4 +961,57 @@ module Logging {
     /** Gets an input that is logged. */
     abstract DataFlow::Node getAnInput();
   }
+}
+
+/**
+ * Provides models for cryptographic concepts.
+ *
+ * Note: The `CryptographicAlgorithm` class currently doesn't take weak keys into
+ * consideration for the `isWeak` member predicate. So RSA is always considered
+ * secure, although using a low number of bits will actually make it insecure. We plan
+ * to improve our libraries in the future to more precisely capture this aspect.
+ */
+module Cryptography {
+  // Since we still rely on `isWeak` predicate on `CryptographicOperation` in Ruby, we
+  // modify that part of the shared concept... which means we have to explicitly
+  // re-export everything else.
+  // Using SC shorthand for "Shared Cryptography"
+  import codeql.ruby.internal.ConceptsShared::Cryptography as SC
+
+  class CryptographicAlgorithm = SC::CryptographicAlgorithm;
+
+  class EncryptionAlgorithm = SC::EncryptionAlgorithm;
+
+  class HashingAlgorithm = SC::HashingAlgorithm;
+
+  class PasswordHashingAlgorithm = SC::PasswordHashingAlgorithm;
+
+  /**
+   * A data-flow node that is an application of a cryptographic algorithm. For example,
+   * encryption, decryption, signature-validation.
+   *
+   * Extend this class to refine existing API models. If you want to model new APIs,
+   * extend `CryptographicOperation::Range` instead.
+   */
+  class CryptographicOperation extends SC::CryptographicOperation instanceof CryptographicOperation::Range {
+    /** DEPRECATED: Use `getAlgorithm().isWeak() or getBlockMode().isWeak()` instead */
+    deprecated predicate isWeak() { super.isWeak() }
+  }
+
+  /** Provides classes for modeling new applications of a cryptographic algorithms. */
+  module CryptographicOperation {
+    /**
+     * A data-flow node that is an application of a cryptographic algorithm. For example,
+     * encryption, decryption, signature-validation.
+     *
+     * Extend this class to model new APIs. If you want to refine existing API models,
+     * extend `CryptographicOperation` instead.
+     */
+    abstract class Range extends SC::CryptographicOperation::Range {
+      /** DEPRECATED: Use `getAlgorithm().isWeak() or getBlockMode().isWeak()` instead */
+      deprecated predicate isWeak() { this.getAlgorithm().isWeak() or this.getBlockMode().isWeak() }
+    }
+  }
+
+  class BlockMode = SC::BlockMode;
 }
