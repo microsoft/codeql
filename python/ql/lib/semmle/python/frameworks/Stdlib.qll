@@ -2651,6 +2651,32 @@ private module StdlibPrivate {
   // ---------------------------------------------------------------------------
   // hashlib
   // ---------------------------------------------------------------------------
+
+
+  private API::CallNode hashlibpbkdf2HMACCall(string algorithmName)
+  {
+    algorithmName =
+      result.getParameter(0, "hash_name").getAValueReachingSink().asExpr().(StrConst).getText() and
+    result = API::moduleImport("hashlib").getMember("pbkdf2_hmac").getACall()
+  }
+
+  class Hashlibpbkdf2HMAC extends Cryptography::CryptographicOperation::Range, API::CallNode  {
+    string hashName;
+
+    Hashlibpbkdf2HMAC() {
+      this = hashlibpbkdf2HMACCall(hashName) and
+      exists(this.getParameter(1, "data"))
+    }
+
+    override string getAlgorithmRaw() { 
+      result = hashName
+    }
+
+    override DataFlow::Node getAnInput() { result = this.getParameter(1, "password").asSink() }
+
+    override string getBlockModeRaw() { none() }
+  }
+
   /** Gets a call to `hashlib.new` with `algorithmName` as the first argument. */
   private API::CallNode hashlibNewCall(string algorithmName) {
     algorithmName =
@@ -2669,11 +2695,13 @@ private module StdlibPrivate {
       exists(this.getParameter(1, "data"))
     }
 
-    override Cryptography::CryptographicAlgorithm getAlgorithm() { result.matchesName(hashName) }
+    override string getAlgorithmRaw() { 
+      result = hashName
+    }
 
     override DataFlow::Node getAnInput() { result = this.getParameter(1, "data").asSink() }
 
-    override Cryptography::BlockMode getBlockMode() { none() }
+    override string getBlockModeRaw() { none() }
   }
 
   /**
@@ -2686,24 +2714,27 @@ private module StdlibPrivate {
       this = hashlibNewCall(hashName).getReturn().getMember("update").getACall()
     }
 
-    override Cryptography::CryptographicAlgorithm getAlgorithm() { result.matchesName(hashName) }
+    override string getAlgorithmRaw() { 
+      result = hashName
+    }
 
     override DataFlow::Node getAnInput() { result = this.getArg(0) }
 
-    override Cryptography::BlockMode getBlockMode() { none() }
+    override string getBlockModeRaw() { none() }
   }
 
   /** Helper predicate for the `HashLibGenericHashOperation` charpred, to prevent a bad join order. */
   pragma[nomagic]
   private API::Node hashlibMember(string hashName) {
     result = API::moduleImport("hashlib").getMember(hashName) and
-    hashName != "new"
+    hashName != "new" and hashName != "pbkdf2_hmac"
   }
 
   /**
    * A hashing operation from the `hashlib` package using one of the predefined classes
    * (such as `hashlib.md5`). `hashlib.new` is not included, since it is handled by
    * `HashlibNewCall` and `HashlibNewUpdateCall`.
+   * `hashlib.pbkdf2_hmac` is also not included and is handled by `Hashlibpbkdf2HMAC`
    */
   abstract class HashlibGenericHashOperation extends Cryptography::CryptographicOperation::Range,
     DataFlow::CallCfgNode {
@@ -2713,9 +2744,11 @@ private module StdlibPrivate {
     bindingset[this]
     HashlibGenericHashOperation() { hashClass = hashlibMember(hashName) }
 
-    override Cryptography::CryptographicAlgorithm getAlgorithm() { result.matchesName(hashName) }
+    override string getAlgorithmRaw() {  
+      result = hashName
+    }
 
-    override Cryptography::BlockMode getBlockMode() { none() }
+    override string getBlockModeRaw() { none() }
   }
 
   /**
