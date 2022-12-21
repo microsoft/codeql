@@ -9,6 +9,7 @@ private import python
 private import semmle.python.dataflow.new.DataFlow
 private import semmle.python.Concepts
 private import semmle.python.ApiGraphs
+import semmle.python.concepts.internal.CryptoAlgorithmNames
 
 /**
  * Provides models for
@@ -124,7 +125,9 @@ private module CryptodomeModel {
       this = newCall.getReturn().getMember(methodName).getACall()
     }
 
-    override Cryptography::CryptographicAlgorithm getAlgorithm() { result.matchesName(cipherName) }
+    override string getAlgorithmRaw() { 
+      result = cipherName
+    }
 
     override DataFlow::Node getAnInput() {
       methodName = "encrypt" and
@@ -156,18 +159,23 @@ private module CryptodomeModel {
         ]
     }
 
-    override Cryptography::BlockMode getBlockMode() {
-      // `modeName` is of the form "MODE_<BlockMode>"
-      exists(string modeName |
-        newCall.getArg(1) =
-          API::moduleImport(["Crypto", "Cryptodome"])
-              .getMember("Cipher")
-              .getMember(cipherName)
-              .getMember(modeName)
-              .getAValueReachableFromSource()
-      |
-        result = modeName.splitAt("_", 1)
-      )
+    private predicate resolveModeName(string modeName)
+    {
+      newCall.getArg(1) =
+      API::moduleImport(["Crypto", "Cryptodome"])
+          .getMember("Cipher")
+          .getMember(cipherName)
+          .getMember(modeName)
+          .getAValueReachableFromSource()
+    }
+
+    override Cryptography::BlockMode getBlockModeRaw() {
+        // `modeName` is of the form "MODE_<BlockMode>"
+        exists(string modeName | 
+          if resolveModeName(modeName)
+          then result = modeName.splitAt("_", 1)
+          else modeName = unknownAlgorithm() and 
+              result = unknownAlgorithm())
     }
   }
 
@@ -191,8 +199,8 @@ private module CryptodomeModel {
             .getACall()
     }
 
-    override Cryptography::CryptographicAlgorithm getAlgorithm() {
-      result.matchesName(signatureName)
+    override string getAlgorithmRaw() {
+      result = signatureName
     }
 
     override DataFlow::Node getAnInput() {
@@ -207,7 +215,7 @@ private module CryptodomeModel {
       )
     }
 
-    override Cryptography::BlockMode getBlockMode() { none() }
+    override string getBlockModeRaw() { none() }
   }
 
   /**
@@ -228,10 +236,12 @@ private module CryptodomeModel {
       )
     }
 
-    override Cryptography::CryptographicAlgorithm getAlgorithm() { result.matchesName(hashName) }
+    override string getAlgorithmRaw() { 
+      result = hashName
+    }
 
     override DataFlow::Node getAnInput() { result in [this.getArg(0), this.getArgByName("data")] }
 
-    override Cryptography::BlockMode getBlockMode() { none() }
+    override string getBlockModeRaw() { none() }
   }
 }

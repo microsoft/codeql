@@ -9,7 +9,7 @@ private import internal.CryptoAlgorithmNames
 /**
  * A cryptographic algorithm.
  */
-private newtype TCryptographicAlgorithm =
+private newtype TCryptographicAlgorithm = 
   MkHashingAlgorithm(string name, boolean isWeak) {
     isStrongHashingAlgorithm(name) and isWeak = false
     or
@@ -25,6 +25,9 @@ private newtype TCryptographicAlgorithm =
     or
     isWeakPasswordHashingAlgorithm(name) and isWeak = true
   }
+  or
+  MkUnknown() 
+  
 
 /**
  * A cryptographic algorithm.
@@ -53,6 +56,26 @@ abstract class CryptographicAlgorithm extends TCryptographicAlgorithm {
    * Holds if this algorithm is weak.
    */
   abstract predicate isWeak();
+
+  /**
+   * Holds if this algorithm is not known.
+   */
+  predicate isUnknown() { this instanceof UnknownAlgorithm }
+}
+
+/**
+ * An 'Unknown' cryptographic algorithm, typically encountered when extracting as yet unmodelled API algorithms.
+ */
+class UnknownAlgorithm extends MkUnknown, CryptographicAlgorithm {
+  override predicate isUnknown() { any() }
+
+  override string getName() { result = unknownAlgorithm() }
+
+  override predicate isWeak() { any() }
+
+  bindingset[name]
+  override predicate matchesName(string name) { none()}
+
 }
 
 /**
@@ -81,6 +104,8 @@ class EncryptionAlgorithm extends MkEncryptionAlgorithm, CryptographicAlgorithm 
   override string getName() { result = name }
 
   override predicate isWeak() { isWeak = true }
+
+  predicate isAsymmetricEncryption() { isAsymmetricEncryption(name) }
 
   /** Holds if this algorithm is a stream cipher. */
   predicate isStreamCipher() { isStreamCipher(name) }
