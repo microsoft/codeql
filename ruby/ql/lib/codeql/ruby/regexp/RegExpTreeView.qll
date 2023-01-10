@@ -539,6 +539,15 @@ private module Impl implements RegexTreeViewSig {
     override predicate isNullable() { this.getAChild().isNullable() }
   }
 
+  /**
+   * A character escape in a regular expression.
+   *
+   * Example:
+   *
+   * ```
+   * \.
+   * ```
+   */
   class RegExpCharEscape = RegExpEscape;
 
   /**
@@ -756,7 +765,7 @@ private module Impl implements RegexTreeViewSig {
    * \t
    * ```
    */
-  class RegExpNormalChar extends RegExpTerm, TRegExpNormalChar {
+  additional class RegExpNormalChar extends RegExpTerm, TRegExpNormalChar {
     RegExpNormalChar() { this = TRegExpNormalChar(re, start, end) }
 
     /**
@@ -878,7 +887,7 @@ private module Impl implements RegexTreeViewSig {
    * .
    * ```
    */
-  class RegExpSpecialChar extends RegExpTerm, TRegExpSpecialChar {
+  additional class RegExpSpecialChar extends RegExpTerm, TRegExpSpecialChar {
     string char;
 
     RegExpSpecialChar() {
@@ -975,7 +984,7 @@ private module Impl implements RegexTreeViewSig {
    * (?=\w)
    * ```
    */
-  class RegExpZeroWidthMatch extends RegExpGroup {
+  additional class RegExpZeroWidthMatch extends RegExpGroup {
     RegExpZeroWidthMatch() { re.zeroWidthMatch(start, end) }
 
     override RegExpTerm getChild(int i) { none() }
@@ -1050,7 +1059,7 @@ private module Impl implements RegexTreeViewSig {
    * (?!\n)
    * ```
    */
-  class RegExpNegativeLookahead extends RegExpLookahead {
+  additional class RegExpNegativeLookahead extends RegExpLookahead {
     RegExpNegativeLookahead() { re.negativeLookaheadAssertionGroup(start, end) }
 
     override string getAPrimaryQlClass() { result = "RegExpNegativeLookahead" }
@@ -1092,7 +1101,7 @@ private module Impl implements RegexTreeViewSig {
    * (?<!\\)
    * ```
    */
-  class RegExpNegativeLookbehind extends RegExpLookbehind {
+  additional class RegExpNegativeLookbehind extends RegExpLookbehind {
     RegExpNegativeLookbehind() { re.negativeLookbehindAssertionGroup(start, end) }
 
     override string getAPrimaryQlClass() { result = "RegExpNegativeLookbehind" }
@@ -1142,7 +1151,7 @@ private module Impl implements RegexTreeViewSig {
    * A named character property. For example, the POSIX bracket expression
    * `[[:digit:]]`.
    */
-  class RegExpNamedCharacterProperty extends RegExpTerm, TRegExpNamedCharacterProperty {
+  additional class RegExpNamedCharacterProperty extends RegExpTerm, TRegExpNamedCharacterProperty {
     RegExpNamedCharacterProperty() { this = TRegExpNamedCharacterProperty(re, start, end) }
 
     override RegExpTerm getChild(int i) { none() }
