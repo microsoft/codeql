@@ -5,25 +5,20 @@
 import csharp
 import semmle.code.csharp.dataflow.TaintTracking2
 import semmle.code.csharp.dataflow.TaintTracking3
-import semmle.code.csharp.dataflow.TaintTracking4
 import semmle.code.csharp.controlflow.Guards
 import semmle.code.csharp.dataflow.DataFlow::DataFlow::PathGraph
 
 abstract class AbstractSanitizerMethod extends Method { }
 
-class RootSanitizerMethod extends AbstractSanitizerMethod {
-  // Alias for String.StartsWith
-  RootSanitizerMethod() { this.getQualifiedName() = "System.String.StartsWith" }
+class MethodSystemStringStartsWith extends AbstractSanitizerMethod {
+  MethodSystemStringStartsWith() { this.getQualifiedName() = "System.String.StartsWith" }
 }
 
 abstract class UnsanitizedPathCombiner extends Expr { }
 
 class PathCombinerViaMethodCall extends UnsanitizedPathCombiner {
   PathCombinerViaMethodCall() {
-    exists(MethodCall mcPathCombine |
-      mcPathCombine.getTarget().hasQualifiedName("System.IO.Path", "Combine") and
-      this = mcPathCombine
-    )
+    this.(MethodCall).getTarget().hasQualifiedName("System.IO.Path", "Combine")
   }
 }
 
@@ -39,7 +34,7 @@ class MethodCallGetFullPath extends MethodCall {
   MethodCallGetFullPath() { this.getTarget().hasQualifiedName("System.IO.Path", "GetFullPath") }
 }
 
-class GetFullPathToQualifierTaintTrackingConfiguration extends TaintTracking4::Configuration {
+class GetFullPathToQualifierTaintTrackingConfiguration extends TaintTracking3::Configuration {
   GetFullPathToQualifierTaintTrackingConfiguration() {
     this = "GetFullPathToQualifierTaintTrackingConfiguration"
   }
@@ -50,21 +45,40 @@ class GetFullPathToQualifierTaintTrackingConfiguration extends TaintTracking4::C
 
   override predicate isSink(DataFlow::Node node) {
     exists(MethodCall mc |
-      mc.getTarget() instanceof RootSanitizerMethod and
+      mc.getTarget() instanceof MethodSystemStringStartsWith and
       node.asExpr() = mc.getQualifier()
     )
   }
 }
 
-class PathCombinerToGetFullPathTaintTrackingConfiguration extends TaintTracking4::Configuration {
+/**
+ * PathCombinerToGetFullPathTaintTrackingConfiguration - A Taint Tracking configuration that tracks
+ * a File path combining expression (Such as string concatenation, Path.Combine, or string interpolation),
+ * to a Path.GetFullPath method call's argument.
+ * 
+ * We need this because we need to find a safe sequence of operations wherein
+ *  - An absolute path is created (uncanonicalized)
+ *  - The Path is canonicalized
+ * 
+ * If the operations are in the opposite order, the resultant may still contain path traversal characters,
+ * as you cannot fully resolve a relative path. So we must ascertain that they are conducted in this sequence.
+ */
+class PathCombinerToGetFullPathTaintTrackingConfiguration extends TaintTracking3::Configuration {
   PathCombinerToGetFullPathTaintTrackingConfiguration() {
     this = "PathCombinerToGetFullPathTaintTrackingConfiguration "
   }
 
+  /**
+   * We are looking for the result of some Path combining operation (String concat, Path.Combine, etc.)
+   */
   override predicate isSource(DataFlow::Node node) {
     exists(UnsanitizedPathCombiner pathCombiner | node = DataFlow::exprNode(pathCombiner))
   }
 
+  /**
+   * Find the first (and only) argument of Path.GetFullPath, so we make sure that our expression
+   * first goes through some path combining function, and then is canonicalized.
+   */
   override predicate isSink(DataFlow::Node node) {
     exists(MethodCallGetFullPath mcGetFullPath |
       node = DataFlow::exprNode(mcGetFullPath.getArgument(0))
@@ -72,32 +86,33 @@ class PathCombinerToGetFullPathTaintTrackingConfiguration extends TaintTracking4
   }
 }
 
+/** Predicate to check for a safe sequence of events
+ * Path.Combine THEN Path.GetFullPath is applied (with possibly arbitrary mutations)
+ */
 private predicate safeCombineGetFullPathSequence(MethodCallGetFullPath mcGetFullPath, Expr q) {
-  // Path.Combine THEN Path.GetFullPath is applied (with possibly arbitrary mutations)
-  exists(DataFlow::Node source, PathCombinerToGetFullPathTaintTrackingConfiguration taintTracking |
-    taintTracking.hasFlow(source, DataFlow::exprNode(mcGetFullPath.getArgument(0)))
+  exists(UnsanitizedPathCombiner source, PathCombinerToGetFullPathTaintTrackingConfiguration taintTracking |
+    taintTracking.hasFlow(DataFlow::exprNode(source), DataFlow::exprNode(mcGetFullPath.getArgument(0)))
   ) and
   exists(GetFullPathToQualifierTaintTrackingConfiguration qualifierTaintTracker |
     qualifierTaintTracker.hasFlow(DataFlow::exprNode(mcGetFullPath), DataFlow::exprNode(q))
   )
 }
 
+/**
+* The set of /valid/ Guards of RootSanitizerMethodCall.
+*
+*    IN CONJUNCTION with BOTH
+*      Path.Combine
+*      AND Path.GetFullPath
+*    OR
+*      There is a direct flow from Path.GetFullPath to qualifier of RootSanitizerMethodCall.
+*
+*    It is not simply enough for the qualifier of String.StartsWith
+*    to pass through Path.Combine without also passing through GetFullPath AFTER.
+*/
 class RootSanitizerMethodCall extends SanitizerMethodCall {
-  /*
-   * The set of /valid/ Guards of RootSanitizerMethodCall.
-   *
-   *    IN CONJUNCTION with BOTH
-   *      Path.Combine
-   *      AND Path.GetFullPath
-   *    OR
-   *      There is a direct flow from Path.GetFullPath to qualifier of RootSanitizerMethodCall.
-   *
-   *    It is not simply enough for the qualifier of String.StartsWith
-   *    to pass through Path.Combine without also passing through GetFullPath AFTER.
-   */
-
   RootSanitizerMethodCall() {
-    exists(RootSanitizerMethod sm | this.getTarget() = sm) and
+    exists(MethodSystemStringStartsWith sm | this.getTarget() = sm) and
     exists(Expr q, AbstractValue v |
       this.getQualifier() = q and
       v.(AbstractValues::BooleanValue).getValue() = true and
@@ -108,13 +123,12 @@ class RootSanitizerMethodCall extends SanitizerMethodCall {
   override Expr getFilePathArgument() { result = this.getQualifier() }
 }
 
+/**
+* The set of Guards of RootSanitizerMethodCall that are used IN CONJUNCTION with
+*      Path.GetFullPath - it is not simply enough for the qualifier of String.StartsWith
+*      to pass through Path.Combine without also passing through GetFullPath.
+*/
 class ZipSlipGuard extends Guard {
-  /*
-   * The set of Guards of RootSanitizerMethodCall that are used IN CONJUNCTION with
-   *      Path.GetFullPath - it is not simply enough for the qualifier of String.StartsWith
-   *      to pass through Path.Combine without also passing through GetFullPath.
-   */
-
   ZipSlipGuard() { this instanceof SanitizerMethodCall }
 
   Expr getFilePathArgument() { result = this.(SanitizerMethodCall).getFilePathArgument() }
@@ -126,8 +140,21 @@ abstract class SanitizerMethodCall extends MethodCall {
   abstract Expr getFilePathArgument();
 }
 
-class SantizedGuardTaintTrackingConfiguration extends TaintTracking2::Configuration {
-  SantizedGuardTaintTrackingConfiguration() { this = "SantizedGuardTaintTrackingConfiguration" }
+/**
+ * SanitizedGuardTaintTrackingConfiguration - A Taint Tracking configuration class to trace
+ * parameters of a function to calls to RootSanitizerMethodCall (String.StartsWith).
+ * 
+ * For example, the following function:
+ *  void exampleFn(String somePath){
+ *    somePath = Path.GetFullPath(somePath);
+ *    ...
+ *    if(somePath.startsWith("aaaaa"))
+ *      ...
+ *    ...
+ *  }
+ */
+class SanitizedGuardTaintTrackingConfiguration extends TaintTracking2::Configuration {
+  SanitizedGuardTaintTrackingConfiguration() { this = "SanitizedGuardTaintTrackingConfiguration" }
 
   override predicate isSource(DataFlow::Node source) { source instanceof DataFlow::ParameterNode }
 
@@ -139,15 +166,16 @@ class SantizedGuardTaintTrackingConfiguration extends TaintTracking2::Configurat
   }
 }
 
+/**
+ * An AbstractWrapperSanitizerMethod is a Method that
+ *  is a suitable sanitizer for a ZipSlip path that may not have been canonicalized prior.
+ *
+ * If the return value of this Method correctly validates if a file path is in a valid location,
+ * or is a restricted subset of that validation, then any use of this Method is as valid as the Root
+ * sanitizer (Path.StartsWith).
+ */
 abstract class AbstractWrapperSanitizerMethod extends AbstractSanitizerMethod {
-  /**
-   * An AbstractWrapperSanitizerMethod is a Method that
-   *  is a suitable sanitizer for a ZipSlip path that may not have been canonicalized prior.
-   *
-   * If the return value of this Method correctly validates if a file path is in a valid location,
-   * or is a restricted subset of that validation, then any use of this Method is as valid as the Root
-   * sanitizer (Path.StartsWith).
-   */
+  
   Parameter paramFilename;
 
   AbstractWrapperSanitizerMethod() {
@@ -158,29 +186,39 @@ abstract class AbstractWrapperSanitizerMethod extends AbstractSanitizerMethod {
   Parameter paramFilePath() { result = paramFilename }
 }
 
+/**
+* A DirectWrapperSantizierMethod is a Method where
+*      The function can /only/ returns true when passes through the RootSanitizerGuard
+*
+*     bool wrapperFn(a,b){
+*       if(guard(a,b))
+*         return true
+*       ....
+*       return false
+*     }
+*
+*     bool wrapperFn(a,b){
+*       ...
+*       return guard(a,b)
+*     }
+*/
 class DirectWrapperSantizierMethod extends AbstractWrapperSanitizerMethod {
-  /*
-   * A DirectWrapperSantizierMethod is a Method where
-   *      The function can /only/ returns true when passes through the RootSanitizerGuard
-   *
-   *     bool wrapperFn(a,b){
-   *       if(guard(a,b))
-   *         return true
-   *       ....
-   *       return false
-   *     }
-   *
-   *     bool wrapperFn(a,b){
-   *       ...
-   *       return guard(a,b)
-   *     }
-   */
 
+  /**
+   * To be declared a Wrapper, a function must:
+   * - Be a predicate (return a boolean)
+   * - Accept and use a parameter which represents a File path
+   * - Contain a call to another sanitizer
+   * - And can only return true if the sanitizer also returns true.
+   */
   DirectWrapperSantizierMethod() {
+    // For every return statement in this Method,
     forex(ReturnStmt ret | ret.getEnclosingCallable() = this |
+      // The function returns false (Fails the Guard)
       ret.getExpr().(BoolLiteral).getBoolValue() = false
       or
-      exists(ZipSlipGuard g, SantizedGuardTaintTrackingConfiguration taintTracker |
+      // It passes the guard, contraining the function argument to the Guard argument.
+      exists(ZipSlipGuard g, SanitizedGuardTaintTrackingConfiguration taintTracker |
         g.getEnclosingCallable() = this and
         taintTracker
             .hasFlow(DataFlow::parameterNode(paramFilename),
@@ -200,19 +238,31 @@ class DirectWrapperSantizierMethod extends AbstractWrapperSanitizerMethod {
   }
 }
 
+/**
+ * An IndirectOverloadedWrapperSanitizerMethod is a Method in which simply wraps /another/ wrapper.class
+ *
+ * Usually this will look like the following stanza:
+ * boolean someWrapper(string s){
+ *  return someWrapper(s, true);
+ * }
+ */
 class IndirectOverloadedWrapperSantizierMethod extends AbstractWrapperSanitizerMethod {
+
   /**
-   * An IndirectOverloadedWrapperSanitizerMethod is a Method in which simply wraps /another/ wrapper.class
-   *
-   * Usually this will look like the following stanza:
-   * boolean someWrapper(string s){
-   *  return someWrapper(s, true);
-   * }
+   * To be declared a Wrapper, a function must:
+   * - Be a predicate (return a boolean)
+   * - Accept and use a parameter which represents a File path (via delegation)
+   * - Contain a call to another sanitizer (via delegation)
+   * - And can only return true if the delegate sanitizer also returns true.
    */
   IndirectOverloadedWrapperSantizierMethod() {
+    // For every return statement in our Method,
     forex(ReturnStmt ret | ret.getEnclosingCallable() = this |
+      // The Return statement returns false OR
       ret.getExpr().(BoolLiteral).getBoolValue() = false
       or
+      // The Method returns the result of calling another known-good sanitizer, connecting
+      // the parameters of this function to the sanitizer MethodCall.
       exists(ZipSlipGuard g |
         // If the parameter flows directly to SanitizerMethodCall, and the resultant is returned
         DataFlow::localFlow(DataFlow::parameterNode(paramFilename),
@@ -223,8 +273,15 @@ class IndirectOverloadedWrapperSantizierMethod extends AbstractWrapperSanitizerM
   }
 }
 
+/**
+ * A Wrapped Sanitizer Method call (some function that is equally or more restrictive than our root sanitizer)
+ * 
+ * bool wrapperMethod(string path){
+ *  return realSanitizer(path);
+ * }
+ */
 class WrapperSanitizerMethodCall extends SanitizerMethodCall {
-  // A Wrapped Sanitizer Method call (some function that is equally or more restrictive than our root sanitizer)
+  
   AbstractWrapperSanitizerMethod wrapperMethod;
 
   WrapperSanitizerMethodCall() {
@@ -277,8 +334,10 @@ class ArchiveEntryFullName extends Source {
  */
 abstract class Sink extends DataFlow::Node { }
 
+/** 
+ * Argument to extract to file extension method
+ */
 class SinkCompressionExtractToFileArgument extends Sink {
-  // Argument to extract to file extension method
   SinkCompressionExtractToFileArgument() {
     exists(MethodCall mc |
       mc.getTarget().hasQualifiedName("System.IO.Compression.ZipFileExtensions", "ExtractToFile") and
@@ -287,8 +346,10 @@ class SinkCompressionExtractToFileArgument extends Sink {
   }
 }
 
+/**
+ * File Stream created from tainted file name through File.Open/File.Create
+ */
 class SinkFileOpenArgument extends Sink {
-  // File Stream created from tainted file name through File.Open/File.Create
   SinkFileOpenArgument() {
     exists(MethodCall mc |
       (
@@ -301,8 +362,10 @@ class SinkFileOpenArgument extends Sink {
   }
 }
 
+/**
+ * File Stream created from tainted file name passed directly to the constructor
+ */
 class SinkStreamConstructorArgument extends Sink {
-  // File Stream created from tainted file name passed directly to the constructor
   SinkStreamConstructorArgument() {
     exists(ObjectCreation oc |
       oc.getTarget().getDeclaringType().hasQualifiedName("System.IO", "FileStream") and
@@ -311,8 +374,11 @@ class SinkStreamConstructorArgument extends Sink {
   }
 }
 
+
+/**
+ * Constructor to FileInfo can take tainted file name and subsequently be used to open file stream
+ */
 class SinkFileInfoConstructorArgument extends Sink {
-  // Constructor to FileInfo can take tainted file name and subsequently be used to open file stream
   SinkFileInfoConstructorArgument() {
     exists(ObjectCreation oc |
       oc.getTarget().getDeclaringType().hasQualifiedName("System.IO", "FileInfo") and
@@ -321,8 +387,10 @@ class SinkFileInfoConstructorArgument extends Sink {
   }
 }
 
+/**
+ * Extracting just file name from a ZipEntry, not the full path
+ */
 class FileNameExtrationSanitizer extends Sanitizer {
-  // Extracting just file name from a ZipEntry, not the full path
   FileNameExtrationSanitizer() {
     exists(MethodCall mc |
       mc.getTarget().hasQualifiedName("System.IO.Path", "GetFileName") and
@@ -331,9 +399,11 @@ class FileNameExtrationSanitizer extends Sanitizer {
   }
 }
 
+/**
+ * Checks the string for relative path,
+ * or checks the destination folder for whitelisted/target path, etc
+ */
 class StringCheckSanitizer extends Sanitizer {
-  // Checks the string for relative path,
-  // or checks the destination folder for whitelisted/target path, etc
   StringCheckSanitizer() {
     exists(MethodCall mc |
       (
