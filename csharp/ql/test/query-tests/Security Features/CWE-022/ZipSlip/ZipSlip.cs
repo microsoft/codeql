@@ -182,12 +182,12 @@ namespace ZipSlip
                 fullPath = AddBackslashIfNotPresent(fullPath);
                 path = AddBackslashIfNotPresent(path);
 
-                var result = fullPath.StartsWith(path, StringComparison.OrdinalIgnoreCase);
-                if (fullPath!.StartsWith(path, StringComparison.OrdinalIgnoreCase) && excludeSame)
+                var result = fullPath!.StartsWith(path, StringComparison.OrdinalIgnoreCase);
+                if (result && excludeSame)
                 {
                     return !fullPath.Equals(path, StringComparison.OrdinalIgnoreCase);
                 }
-                return fullPath!.StartsWith(path, StringComparison.OrdinalIgnoreCase);
+                return result;
             }
             catch
             {
