@@ -8,13 +8,13 @@ import semmle.code.csharp.dataflow.TaintTracking3
 import semmle.code.csharp.controlflow.Guards
 import semmle.code.csharp.dataflow.DataFlow::DataFlow::PathGraph
 
-abstract class AbstractSanitizerMethod extends Method { }
+private abstract class AbstractSanitizerMethod extends Method { }
 
 class MethodSystemStringStartsWith extends AbstractSanitizerMethod {
   MethodSystemStringStartsWith() { this.getQualifiedName() = "System.String.StartsWith" }
 }
 
-abstract class UnsanitizedPathCombiner extends Expr { }
+private abstract class UnsanitizedPathCombiner extends Expr { }
 
 class PathCombinerViaMethodCall extends UnsanitizedPathCombiner {
   PathCombinerViaMethodCall() {
@@ -134,7 +134,7 @@ class ZipSlipGuard extends Guard {
   Expr getFilePathArgument() { result = this.(SanitizerMethodCall).getFilePathArgument() }
 }
 
-abstract class SanitizerMethodCall extends MethodCall {
+private abstract class SanitizerMethodCall extends MethodCall {
   SanitizerMethodCall() { this instanceof MethodCall }
 
   abstract Expr getFilePathArgument();
@@ -174,7 +174,7 @@ class SanitizedGuardTaintTrackingConfiguration extends TaintTracking2::Configura
  * or is a restricted subset of that validation, then any use of this Method is as valid as the Root
  * sanitizer (Path.StartsWith).
  */
-abstract class AbstractWrapperSanitizerMethod extends AbstractSanitizerMethod {
+private abstract class AbstractWrapperSanitizerMethod extends AbstractSanitizerMethod {
   
   Parameter paramFilename;
 
@@ -306,7 +306,7 @@ private predicate wrapperCheckGuard(Guard g, Expr e, AbstractValue v) {
 /**
  * A sanitizer for unsafe zip extraction.
  */
-abstract class Sanitizer extends DataFlow::ExprNode { }
+private abstract class Sanitizer extends DataFlow::ExprNode { }
 
 class WrapperCheckSanitizer extends Sanitizer {
   // A Wrapped RootSanitizer that is an explicit subset of RootSanitizer
@@ -316,14 +316,15 @@ class WrapperCheckSanitizer extends Sanitizer {
 /**
  * A data flow source for unsafe zip extraction.
  */
-abstract class Source extends DataFlow::Node { }
+private abstract class Source extends DataFlow::Node { }
 
+/**
+ * Access to the `FullName` property of the archive item
+ */
 class ArchiveEntryFullName extends Source {
-  // Access to full name of the archive item
   ArchiveEntryFullName() {
     exists(PropertyAccess pa |
-      pa.getTarget().getDeclaringType().hasQualifiedName("System.IO.Compression", "ZipArchiveEntry") and
-      pa.getTarget().getName() = "FullName" and
+      pa.getTarget().hasQualifiedName("System.IO.Compression.ZipArchiveEntry", "FullName") and
       this = DataFlow::exprNode(pa)
     )
   }
@@ -332,7 +333,7 @@ class ArchiveEntryFullName extends Source {
 /**
  * A data flow sink for unsafe zip extraction.
  */
-abstract class Sink extends DataFlow::Node { }
+private abstract class Sink extends DataFlow::Node { }
 
 /** 
  * Argument to extract to file extension method
@@ -415,7 +416,7 @@ class StringCheckSanitizer extends Sanitizer {
   }
 }
 
-class ZipSlipTaintTrackingConfiguration extends TaintTracking::Configuration {
+final class ZipSlipTaintTrackingConfiguration extends TaintTracking::Configuration {
   ZipSlipTaintTrackingConfiguration() { this = "ZipSlipTaintTrackingConfiguration" }
 
   override predicate isSource(DataFlow::Node node) { node instanceof Source }
