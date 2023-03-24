@@ -48,7 +48,7 @@ apply_lambda(MY_LAMBDA2, taint(9))
 
 class A
   def method1 x
-    sink x # $ hasValueFlow=10 $ hasValueFlow=11 $ hasValueFlow=12 $ hasValueFlow=13 $ hasValueFlow=26 $ hasValueFlow=28 $ hasValueFlow=30 $ SPURIOUS: hasValueFlow=27
+    sink x # $ hasValueFlow=10 $ hasValueFlow=11 $ hasValueFlow=12 $ hasValueFlow=13 $ hasValueFlow=26 $ hasValueFlow=28 $ hasValueFlow=30 $ hasValueFlow=33 $ hasValueFlow=35 $ SPURIOUS: hasValueFlow=27
   end
 
   def method2 x
@@ -77,6 +77,14 @@ class A
     end
   end
 
+  def method5 x
+    self.method1 x
+  end
+
+  def call_method5
+    self.method5 (taint 33)
+  end
+
   def self.singleton_method2 x
     singleton_method1 x
   end
@@ -94,8 +102,12 @@ class A
   end
 
   def initialize(x)
-    sink x # $ hasValueFlow=28 $ hasValueFlow=30 $ hasValueFlow=32
+    sink x # $ hasValueFlow=28 $ hasValueFlow=30 $ hasValueFlow=32 $ hasValueFlow=35
     method1 x
+  end
+
+  def self.call_new x
+    new x
   end
 end
 
@@ -110,6 +122,7 @@ A.singleton_method2(taint 14)
 A.call_singleton_method2(taint 15)
 A.singleton_method3(A, taint(16))
 A.call_singleton_method3(taint 17)
+A.call_new(taint 35)
 
 class B < A
   def method1 x
@@ -126,6 +139,10 @@ class B < A
 
   def call_method3 x
     self.method3(self, x)
+  end
+
+  def call_method5 x
+    self.method5 (taint 34)
   end
 
   def self.call_singleton_method2 x
@@ -152,6 +169,7 @@ B.singleton_method2(taint 22)
 B.call_singleton_method2(taint 23)
 B.singleton_method3(B, taint(24))
 B.call_singleton_method3(taint 25)
+B.call_new(taint 36)
 
 def create (type, x)
   type.new x

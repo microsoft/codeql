@@ -159,18 +159,16 @@ private module ThisFlow {
  */
 pragma[nomagic]
 predicate hasNodePath(ControlFlowReachabilityConfiguration conf, ExprNode n1, Node n2) {
-  exists(Expr e1, ControlFlow::Node cfn1, Expr e2, ControlFlow::Node cfn2 |
-    conf.hasExprPath(e1, cfn1, e2, cfn2)
-  |
+  exists(ControlFlow::Node cfn1, ControlFlow::Node cfn2 | conf.hasExprPath(_, cfn1, _, cfn2) |
     cfn1 = n1.getControlFlowNode() and
     cfn2 = n2.(ExprNode).getControlFlowNode()
   )
   or
   exists(
-    Expr e, ControlFlow::Node cfn, AssignableDefinition def, ControlFlow::Node cfnDef,
+    ControlFlow::Node cfn, AssignableDefinition def, ControlFlow::Node cfnDef,
     Ssa::ExplicitDefinition ssaDef
   |
-    conf.hasDefPath(e, cfn, def, cfnDef)
+    conf.hasDefPath(_, cfn, def, cfnDef)
   |
     cfn = n1.getControlFlowNode() and
     ssaDef.getADefinition() = def and
@@ -538,9 +536,7 @@ predicate simpleLocalFlowStep(Node nodeFrom, Node nodeTo) {
   )
   or
   // Flow into phi (read)/uncertain SSA definition node from read
-  exists(SsaImpl::DefinitionExt def, Node read |
-    LocalFlow::localFlowSsaInputFromRead(read, def, nodeTo)
-  |
+  exists(Node read | LocalFlow::localFlowSsaInputFromRead(read, _, nodeTo) |
     nodeFrom = read and
     not FlowSummaryImpl::Private::Steps::prohibitsUseUseFlow(nodeFrom, _)
     or
@@ -883,9 +879,7 @@ private module Cached {
     )
     or
     // Flow into phi (read)/uncertain SSA definition node from read
-    exists(SsaImpl::DefinitionExt def, Node read |
-      LocalFlow::localFlowSsaInputFromRead(read, def, nodeTo)
-    |
+    exists(Node read | LocalFlow::localFlowSsaInputFromRead(read, _, nodeTo) |
       nodeFrom = read
       or
       nodeFrom.(PostUpdateNode).getPreUpdateNode() = read
@@ -1221,7 +1215,8 @@ private module ArgumentNodes {
    * ```
    */
   class ImplicitCapturedArgumentNode extends ArgumentNodeImpl, NodeImpl,
-    TImplicitCapturedArgumentNode {
+    TImplicitCapturedArgumentNode
+  {
     private LocalScopeVariable v;
     private ControlFlow::Nodes::ElementNode cfn;
 
@@ -2040,7 +2035,8 @@ private module PostUpdateNodes {
    * a pre-update node for the `ObjectCreationNode`.
    */
   class ObjectInitializerNode extends PostUpdateNode, NodeImpl, ArgumentNodeImpl,
-    TObjectInitializerNode {
+    TObjectInitializerNode
+  {
     private ObjectCreation oc;
     private ControlFlow::Nodes::ElementNode cfn;
 
@@ -2380,3 +2376,12 @@ module Csv {
     )
   }
 }
+
+/**
+ * Gets an additional term that is added to the `join` and `branch` computations to reflect
+ * an additional forward or backwards branching factor that is not taken into account
+ * when calculating the (virtual) dispatch cost.
+ *
+ * Argument `arg` is part of a path from a source to a sink, and `p` is the target parameter.
+ */
+int getAdditionalFlowIntoCallNodeTerm(ArgumentNode arg, ParameterNode p) { none() }

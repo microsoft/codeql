@@ -41,7 +41,7 @@ open class KotlinUsesExtractor(
     val globalExtensionState: KotlinExtractorGlobalState
 ) {
     fun referenceExternalClass(name: String) =
-        pluginContext.referenceClass(FqName(name))?.owner.also {
+        getClassByFqName(pluginContext, FqName(name))?.owner.also {
             if (it == null)
                 logger.warn("Unable to resolve external class $name")
             else
@@ -71,16 +71,16 @@ open class KotlinUsesExtractor(
         TypeResult(fakeKotlinType(), "", "")
     )
 
-    fun extractFileClass(f: IrFile): Label<out DbClass> {
+    fun extractFileClass(f: IrFile): Label<out DbClassorinterface> {
         val pkg = f.fqName.asString()
         val jvmName = getFileClassName(f)
         val qualClassName = if (pkg.isEmpty()) jvmName else "$pkg.$jvmName"
         val label = "@\"class;$qualClassName\""
-        val id: Label<DbClass> = tw.getLabelFor(label) {
+        val id: Label<DbClassorinterface> = tw.getLabelFor(label) {
             val fileId = tw.mkFileId(f.path, false)
             val locId = tw.getWholeFileLocation(fileId)
             val pkgId = extractPackage(pkg)
-            tw.writeClasses(it, jvmName, pkgId, it)
+            tw.writeClasses_or_interfaces(it, jvmName, pkgId, it)
             tw.writeFile_class(it)
             tw.writeHasLocation(it, locId)
 
@@ -118,7 +118,7 @@ open class KotlinUsesExtractor(
     }
 
     fun getJavaEquivalentClass(c: IrClass) =
-        getJavaEquivalentClassId(c)?.let { pluginContext.referenceClass(it.asSingleFqName()) }?.owner
+        getJavaEquivalentClassId(c)?.let { getClassByFqName(pluginContext, it.asSingleFqName()) }?.owner
 
     /**
      * Gets a KotlinFileExtractor based on this one, except it attributes locations to the file that declares the given class.
@@ -328,7 +328,7 @@ open class KotlinUsesExtractor(
                 return@getOrPut null
             }
 
-            val result = pluginContext.referenceClass(qualifiedName)?.owner
+            val result = getClassByFqName(pluginContext, qualifiedName)?.owner
             if (result != null) {
                 logger.info("Replaced synthetic class ${c.name} with its real equivalent")
                 return@getOrPut result
@@ -337,7 +337,7 @@ open class KotlinUsesExtractor(
             // The above doesn't work for (some) generated nested classes, such as R$id, which should be R.id
             val fqn = qualifiedName.asString()
             if (fqn.indexOf('$') >= 0) {
-                val nested = pluginContext.referenceClass(FqName(fqn.replace('$', '.')))?.owner
+                val nested = getClassByFqName(pluginContext, fqn.replace('$', '.'))?.owner
                 if (nested != null) {
                     logger.info("Replaced synthetic nested class ${c.name} with its real equivalent")
                     return@getOrPut nested
@@ -454,7 +454,7 @@ open class KotlinUsesExtractor(
         }
 
         fun tryGetPair(arity: Int): Pair<IrClass, List<IrTypeArgument>?>? {
-            val replaced = pluginContext.referenceClass(fqName)?.owner ?: return null
+            val replaced = getClassByFqName(pluginContext, fqName)?.owner ?: return null
             return Pair(replaced, List(arity) { makeTypeProjection(pluginContext.irBuiltIns.anyNType, Variance.INVARIANT) })
         }
 
@@ -478,7 +478,7 @@ open class KotlinUsesExtractor(
     private fun useAnonymousClass(c: IrClass) =
         tw.lm.anonymousTypeMapping.getOrPut(c) {
             TypeResults(
-                TypeResult(tw.getFreshIdLabel<DbClass>(), "", ""),
+                TypeResult(tw.getFreshIdLabel<DbClassorinterface>(), "", ""),
                 TypeResult(fakeKotlinType(), "TODO", "TODO")
             )
         }
@@ -487,8 +487,8 @@ open class KotlinUsesExtractor(
         val fakeKotlinPackageId: Label<DbPackage> = tw.getLabelFor("@\"FakeKotlinPackage\"", {
             tw.writePackages(it, "fake.kotlin")
         })
-        val fakeKotlinClassId: Label<DbClass> = tw.getLabelFor("@\"FakeKotlinClass\"", {
-            tw.writeClasses(it, "FakeKotlinClass", fakeKotlinPackageId, it)
+        val fakeKotlinClassId: Label<DbClassorinterface> = tw.getLabelFor("@\"FakeKotlinClass\"", {
+            tw.writeClasses_or_interfaces(it, "FakeKotlinClass", fakeKotlinPackageId, it)
         })
         val fakeKotlinTypeId: Label<DbKt_nullable_type> = tw.getLabelFor("@\"FakeKotlinType\"", {
             tw.writeKt_nullable_types(it, fakeKotlinClassId)
@@ -650,11 +650,11 @@ open class KotlinUsesExtractor(
         // We use this when we don't actually have an IrClass for a class
         // we want to refer to
         // TODO: Eliminate the need for this if possible
-        fun makeClass(pkgName: String, className: String): Label<DbClass> {
+        fun makeClass(pkgName: String, className: String): Label<DbClassorinterface> {
             val pkgId = extractPackage(pkgName)
             val label = "@\"class;$pkgName.$className\""
-            val classId: Label<DbClass> = tw.getLabelFor(label, {
-                tw.writeClasses(it, className, pkgId, it)
+            val classId: Label<DbClassorinterface> = tw.getLabelFor(label, {
+                tw.writeClasses_or_interfaces(it, className, pkgId, it)
             })
             return classId
         }
@@ -1237,7 +1237,7 @@ open class KotlinUsesExtractor(
 
         var res = tw.lm.locallyVisibleFunctionLabelMapping[f]
         if (res == null) {
-            val javaResult = TypeResult(tw.getFreshIdLabel<DbClass>(), "", "")
+            val javaResult = TypeResult(tw.getFreshIdLabel<DbClassorinterface>(), "", "")
             val kotlinResult = TypeResult(tw.getFreshIdLabel<DbKt_notnull_type>(), "", "")
             tw.writeKt_notnull_types(kotlinResult.id, javaResult.id)
             res = LocallyVisibleFunctionLabels(
