@@ -73,6 +73,7 @@ import experimental.semmle.code.cpp.semantic.SemanticCFG
 import experimental.semmle.code.cpp.semantic.SemanticType
 import experimental.semmle.code.cpp.semantic.SemanticOpcode
 private import ConstantAnalysis
+import experimental.semmle.code.cpp.semantic.SemanticLocation
 
 /**
  * Holds if `typ` is a small integral type with the given lower and upper bounds.
@@ -228,6 +229,10 @@ signature module UtilSig<DeltaSig DeltaParam> {
 
 signature module BoundSig<DeltaSig D> {
   class SemBound {
+    string toString();
+
+    SemLocation getLocation();
+
     SemExpr getExpr(D::Delta delta);
   }
 
@@ -585,24 +590,6 @@ module RangeStage<DeltaSig D, BoundSig<D> Bounds, LangSig<D> LangParam, UtilSig<
     e2.(SafeCastExpr).getOperand() = e1 and
     delta = D::fromInt(0) and
     (upper = true or upper = false)
-    or
-    exists(SemExpr x | e2.(SemAddExpr).hasOperands(e1, x) |
-      // `x instanceof ConstantIntegerExpr` is covered by valueFlowStep
-      not x instanceof SemConstantIntegerExpr and
-      not e1 instanceof SemConstantIntegerExpr and
-      if strictlyPositiveIntegralExpr(x)
-      then upper = false and delta = D::fromInt(1)
-      else
-        if semPositive(x)
-        then upper = false and delta = D::fromInt(0)
-        else
-          if strictlyNegativeIntegralExpr(x)
-          then upper = true and delta = D::fromInt(-1)
-          else
-            if semNegative(x)
-            then upper = true and delta = D::fromInt(0)
-            else none()
-    )
     or
     exists(SemExpr x, SemSubExpr sub |
       e2 = sub and
@@ -1038,13 +1025,74 @@ module RangeStage<DeltaSig D, BoundSig<D> Bounds, LangSig<D> LangParam, UtilSig<
         delta = D::fromFloat(f) and
         if semPositive(e) then f >= 0 else any()
       )
+      or
+      exists(
+        SemBound bLeft, SemBound bRight, D::Delta dLeft, D::Delta dRight, boolean fbeLeft,
+        boolean fbeRight, D::Delta odLeft, D::Delta odRight, SemReason rLeft, SemReason rRight
+      |
+        boundedAddOperand(e, upper, bLeft, false, dLeft, fbeLeft, odLeft, rLeft) and
+        boundedAddOperand(e, upper, bRight, true, dRight, fbeRight, odRight, rRight) and
+        delta = D::fromFloat(D::toFloat(dLeft) + D::toFloat(dRight)) and
+        fromBackEdge = fbeLeft.booleanOr(fbeRight)
+      |
+        b = bLeft and origdelta = odLeft and reason = rLeft and bRight instanceof SemZeroBound
+        or
+        b = bRight and origdelta = odRight and reason = rRight and bLeft instanceof SemZeroBound
+      )
+      or
+      exists(
+        SemRemExpr rem, SemZeroBound b1, SemZeroBound b2, D::Delta d_max, D::Delta d1, D::Delta d2,
+        boolean fbe1, boolean fbe2, D::Delta od1, D::Delta od2, SemReason r1, SemReason r2
+      |
+        rem = e and
+        not (upper = true and semPositive(rem.getRightOperand())) and
+        not (upper = true and semPositive(rem.getLeftOperand())) and
+        boundedRemExpr(rem, b1, true, d1, fbe1, od1, r1) and
+        boundedRemExpr(rem, b2, false, d2, fbe2, od2, r2) and
+        (
+          if D::toFloat(d1).abs() > D::toFloat(d2).abs()
+          then (
+            b = b1 and d_max = d1 and fromBackEdge = fbe1 and origdelta = od1 and reason = r1
+          ) else (
+            b = b2 and d_max = d2 and fromBackEdge = fbe2 and origdelta = od2 and reason = r2
+          )
+        )
+      |
+        upper = true and delta = D::fromFloat(D::toFloat(d_max).abs() - 1)
+        or
+        upper = false and delta = D::fromFloat(-D::toFloat(d_max).abs() + 1)
+      )
     )
   }
 
+  pragma[nomagic]
   private predicate boundedConditionalExpr(
     SemConditionalExpr cond, SemBound b, boolean upper, boolean branch, D::Delta delta,
     boolean fromBackEdge, D::Delta origdelta, SemReason reason
   ) {
     bounded(cond.getBranchExpr(branch), b, delta, upper, fromBackEdge, origdelta, reason)
+  }
+
+  pragma[nomagic]
+  private predicate boundedAddOperand(
+    SemAddExpr add, boolean upper, SemBound b, boolean isLeft, D::Delta delta, boolean fromBackEdge,
+    D::Delta origdelta, SemReason reason
+  ) {
+    // `semValueFlowStep` already handles the case where one of the operands is a constant.
+    not semValueFlowStep(add, _, _) and
+    (
+      isLeft = true and
+      bounded(add.getLeftOperand(), b, delta, upper, fromBackEdge, origdelta, reason)
+      or
+      isLeft = false and
+      bounded(add.getRightOperand(), b, delta, upper, fromBackEdge, origdelta, reason)
+    )
+  }
+
+  private predicate boundedRemExpr(
+    SemRemExpr rem, SemZeroBound b, boolean upper, D::Delta delta, boolean fromBackEdge,
+    D::Delta origdelta, SemReason reason
+  ) {
+    bounded(rem.getRightOperand(), b, delta, upper, fromBackEdge, origdelta, reason)
   }
 }
