@@ -1,5 +1,8 @@
 name: Sync Main
 on:
+  pull_request:
+    branches:
+      - "main" 
   schedule:
     - cron:  '* * * * *'
   workflow_dispatch:
