@@ -34,6 +34,6 @@ jobs:
       - name: Sync Main
         shell: bash
         run: |
-          git checkout main
+          git checkout --track origin/main
           git merge --no-edit upstream/main
           git push origin main
