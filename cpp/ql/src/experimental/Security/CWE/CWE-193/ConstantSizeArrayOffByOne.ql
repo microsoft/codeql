@@ -10,23 +10,23 @@
  *       experimental
  */
 
-import experimental.semmle.code.cpp.semantic.analysis.RangeAnalysis
-import experimental.semmle.code.cpp.semantic.SemanticBound
-import experimental.semmle.code.cpp.semantic.SemanticExprSpecific
+import semmle.code.cpp.rangeanalysis.new.internal.semantic.analysis.RangeAnalysis
+import semmle.code.cpp.rangeanalysis.new.internal.semantic.SemanticExprSpecific
 import semmle.code.cpp.ir.IR
 import semmle.code.cpp.ir.dataflow.DataFlow
 import PointerArithmeticToDerefFlow::PathGraph
 
 pragma[nomagic]
 Instruction getABoundIn(SemBound b, IRFunction func) {
-  result = b.getExpr(0) and
+  getSemanticExpr(result) = b.getExpr(0) and
   result.getEnclosingIRFunction() = func
 }
 
 /**
  * Holds if `i <= b + delta`.
  */
-pragma[nomagic]
+bindingset[i]
+pragma[inline_late]
 predicate bounded(Instruction i, Instruction b, int delta) {
   exists(SemBound bound, IRFunction func |
     semBounded(getSemanticExpr(i), bound, delta, true, _) and
@@ -55,6 +55,7 @@ predicate isFieldAddressSource(Field f, DataFlow::Node source) {
  * writes to an address that non-strictly upper-bounds `sink`, or `i` is a `LoadInstruction` that
  * reads from an address that non-strictly upper-bounds `sink`.
  */
+pragma[inline]
 predicate isInvalidPointerDerefSink(DataFlow::Node sink, Instruction i, string operation) {
   exists(AddressOperand addr, int delta |
     bounded(addr.getDef(), sink.asInstruction(), delta) and
@@ -88,6 +89,7 @@ module PointerArithmeticToDerefConfig implements DataFlow::ConfigSig {
     isConstantSizeOverflowSource(_, source.asInstruction(), _)
   }
 
+  pragma[inline]
   predicate isSink(DataFlow::Node sink) { isInvalidPointerDerefSink(sink, _, _) }
 }
 

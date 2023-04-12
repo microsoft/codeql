@@ -3,7 +3,7 @@ private import DataFlowUtil
 private import DataFlowImplCommon
 private import ContainerFlow
 private import FlowSummaryImpl as FlowSummaryImpl
-import codeql.util.Unit
+private import codeql.util.Unit
 import DataFlowNodes::Private
 
 private newtype TReturnKind =
@@ -352,7 +352,7 @@ Node getArgument(CallNode c, int i) {
 }
 
 /** Holds if `n` should be hidden from path explanations. */
-predicate nodeIsHidden(Node n) { none() }
+predicate nodeIsHidden(Node n) { n instanceof SummaryNode or n instanceof SummarizedParameterNode }
 
 class LambdaCallKind = Unit;
 

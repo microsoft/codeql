@@ -3,7 +3,7 @@ private import DataFlowUtil
 private import DataFlowDispatch
 private import FlowVar
 private import DataFlowImplConsistency
-import codeql.util.Unit
+private import codeql.util.Unit
 
 /** Gets the callable in which this node occurs. */
 DataFlowCallable nodeGetEnclosingCallable(Node n) { result = n.getEnclosingCallable() }
@@ -159,7 +159,7 @@ predicate storeStep(Node node1, Content f, PostUpdateNode node2) {
     // `PostUpdateNode`, which means it must be an `ObjectInitializerNode`.
     node2.asExpr() = aggr and
     f.(FieldContent).getField() = field and
-    aggr.getFieldExpr(field) = node1.asExpr()
+    aggr.getAFieldExpr(field) = node1.asExpr()
   )
   or
   exists(FieldAccess fa |

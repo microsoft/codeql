@@ -19,7 +19,7 @@ private import semmle.code.csharp.frameworks.system.Collections
 private import semmle.code.csharp.frameworks.system.threading.Tasks
 private import semmle.code.cil.Ssa::Ssa as CilSsa
 private import semmle.code.cil.internal.SsaImpl as CilSsaImpl
-import codeql.util.Unit
+private import codeql.util.Unit
 
 /** Gets the callable in which this node occurs. */
 DataFlowCallable nodeGetEnclosingCallable(NodeImpl n) { result = n.getEnclosingCallableImpl() }
@@ -236,6 +236,14 @@ module LocalFlow {
         isSuccessor = false
         or
         e1 = e2.(SwitchExpr).getACase().getBody() and
+        scope = e2 and
+        isSuccessor = true
+        or
+        e1 = e2.(CheckedExpr).getExpr() and
+        scope = e2 and
+        isSuccessor = true
+        or
+        e1 = e2.(UncheckedExpr).getExpr() and
         scope = e2 and
         isSuccessor = true
         or
