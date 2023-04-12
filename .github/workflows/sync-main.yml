@@ -27,6 +27,7 @@ jobs:
         shell: bash
         run: |
           set -x
+          git fetch --all
           git checkout origin/main
           git pull --unshallow
           git remote add upstream https://github.com/github/codeql.git
@@ -35,6 +36,7 @@ jobs:
       - name: Sync Main
         shell: bash
         run: |
+          git fetch --all
           git checkout origin/main
           git merge --no-edit upstream/master
           git push origin main
