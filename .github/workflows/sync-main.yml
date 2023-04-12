@@ -28,7 +28,6 @@ jobs:
         run: |
           set -x
           git fetch
-          git pull --unshallow
           git remote add upstream https://github.com/github/codeql.git
           git fetch upstream
 
