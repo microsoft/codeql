@@ -26,6 +26,32 @@ predicate impossibleEdge(ComparisonOperation cmp, boolean value, BasicBlock src,
   if value = true then dst = src.getAFalseSuccessor() else dst = src.getATrueSuccessor()
 }
 
+
+BasicBlock impossibleEdge2(ComparisonOperation cmp, boolean value, BasicBlock src) {
+  src.getEnclosingFunction().getFile().getBaseName() = ["TestPolicyProvider.cpp", "test.cpp"] and
+  exists(BasicBlock dst |
+    cmp = src.getEnd() and
+    reachablePointlessComparison(cmp, _, _, value, _) and
+    if value = true then dst = src.getAFalseSuccessor() else dst = src.getATrueSuccessor() and
+    result = dst
+  )
+}
+
+deprecated float upperBound(ComparisonOperation cmp){
+  exists(BasicBlock src |
+    cmp.getEnclosingFunction().getFile().getBaseName() = ["TestPolicyProvider.cpp", "test.cpp"] and
+    impossibleEdge(cmp, true, src, _) and
+    result = upperBoundFC(cmp.getLeftOperand())
+  )
+}
+deprecated float lowBound(ComparisonOperation cmp){
+  exists(BasicBlock src |
+    cmp.getEnclosingFunction().getFile().getBaseName() = ["TestPolicyProvider.cpp", "test.cpp"] and
+    impossibleEdge(cmp, true, src, _) and
+    result = lowerBoundFC(cmp.getRightOperand())
+  )
+}
+
 BasicBlock enhancedSucc(BasicBlock bb) {
   result = bb.getASuccessor() and not impossibleEdge(_, _, bb, result)
 }
@@ -53,6 +79,35 @@ predicate impossibleEdgeCausesNonTermination(ComparisonOperation cmp, boolean va
     // false positives.
     exists(EntryBasicBlock entry | src = enhancedSucc+(entry))
   )
+}
+ExitBasicBlock impossibleEdgeCausesNonTermination2(ComparisonOperation cmp, boolean value) {
+  exists(BasicBlock src |
+    src.getEnclosingFunction().getFile().getBaseName() = "TestPolicyProvider.cpp" and
+    impossibleEdge(cmp, value, src, _) and
+    exists(ExitBasicBlock exitBlock |
+      src.getASuccessor+() = exitBlock and
+      result = exitBlock
+    ) and
+    not enhancedSucc+(src) instanceof ExitBasicBlock and
+    // Make sure that the source is reachable to reduce
+    // false positives.
+    exists(EntryBasicBlock entry | src = enhancedSucc+(entry))
+  )
+}
+
+
+class Something extends Expr{
+  Something(){
+    any()
+  }
+
+  override final string toString() { result = "aaa"}
+}
+
+class SomethingOverridable = Something;
+
+class SomethingExtended extends SomethingOverridable{
+  final string toString() { result = "bbb"}
 }
 
 from ComparisonOperation cmp, boolean value

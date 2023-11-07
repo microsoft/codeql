@@ -1,3 +1,4 @@
+
 void test00(int n) {
   int i = 0;
   if (n <= 0) {
@@ -139,4 +140,70 @@ void test10(char *str) {
     if (c < 'a' || c > 'z') // GOOD: this condition is satisfiable.
       return;
   }
+}
+
+void test11(int iterations)
+{
+    // Profile profile;
+    // profile.RoutingMethod = RoutingMethod::Geographic;
+    // profile.TimeToLiveInSeconds = this->GenerateRandomTtl();
+
+    // const auto& mappings = this->addressToRegionHierarchyMap.GetRegionHierarchyMappings();
+    for (int i = 0; i < iterations; i++)
+    {
+        // uint64_t index = this->GenerateRandomValue(0, mappings.size() - 1);
+        // const auto& pair = mappings[index];
+        // const AddressRange& range = pair.first;
+        // const AddressToRegionHierarchyMap::RegionCodes& regionCodes = pair.second;
+        const int regionCodes[4] = {1,2,3,4};
+
+        for (const auto& region : regionCodes)
+        {
+            const int maxEndpoints = 5;
+            // profile.Endpoints.clear();
+
+            for (int endpointIndex = 0; endpointIndex < maxEndpoints; endpointIndex++)
+            {
+                //std::ostringstream os;
+                //os << endpointIndex;
+
+                // Endpoint endpoint;
+                // endpoint.ResourceName = os.str();
+                // endpoint.RecordType = RecordType::CanonicalName;
+                // endpoint.Health = Health::Healthy;
+                // endpoint.CanonicalName = os.str();
+
+                // AddressToRegionHierarchyMap::RegionCodes regionHierarchy{ region };
+                // endpoint.Regions = bond::maybe<std::vector<std::string>>(regionHierarchy);
+
+                // profile.Endpoints.push_back(endpoint);
+            }
+
+            // std::set<std::string> endpointsHit;
+            // while (endpointsHit.size() < profile.Endpoints.size())
+            // {
+            //     Address randomAddress = this->GenerateRandomAddress(range);
+            //     Transaction transaction(this->GetPolicyProvider(), "test.net", profile);
+            //     transaction.SetAddress(randomAddress);
+
+            //     PolicyProviderResultCode resultCode = transaction.Execute();
+
+            //     Assert::AreEqual((int)PolicyProviderResultCode::Success, (int)resultCode);
+            //     Assert::IsNotNull(transaction.GetResult());
+            //     Assert::AreEqual(0u, transaction.GetResult()->ClientSubnetLength);
+            //     Assert::AreEqual((int)PolicyProviderOutputFlags::CollapseCname, (int)transaction.GetResult()->Flags);
+
+            //     const PolicyProviderRecord& record = transaction.GetResult()->Records[0];
+            //     std::string target(record.RecordData.CNAME.Target);
+
+            //     TraceVerbose(
+            //         "TestPolicyProvider-TestSelectOneOfMatchingEndpointsByGeography-Endpoint",
+            //         Tlv(randomAddress.ToString().c_str(), "address"),
+            //         Tlv(region.c_str(), "region"),
+            //         Tlv(record.RecordData.CNAME.Target, "endpoint"));
+
+            //     endpointsHit.insert(target);
+            // }
+        }
+    }
 }

@@ -6,10 +6,10 @@ import cpp
 import semmle.code.cpp.rangeanalysis.SimpleRangeAnalysis
 
 /** Gets the lower bound of the fully converted expression. */
-private float lowerBoundFC(Expr expr) { result = lowerBound(expr.getFullyConverted()) }
+float lowerBoundFC(Expr expr) { result = lowerBound(expr.getFullyConverted()) }
 
 /** Gets the upper bound of the fully converted expression. */
-private float upperBoundFC(Expr expr) { result = upperBound(expr.getFullyConverted()) }
+float upperBoundFC(Expr expr) { result = upperBound(expr.getFullyConverted()) }
 
 /**
  * Describes which side of a pointless comparison is known to be smaller.
