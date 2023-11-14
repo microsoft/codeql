@@ -89,23 +89,63 @@
        and c.getArgument(ind) = [n1.asExpr(), n1.asIndirectExpr()]
        and n2.asIndirectExpr() = c
        )
- 
    }
- 
  }
  
  module NonConstFlow = TaintTracking::Global<NonConstFlowConfig>;
+
+module LiteralToFormatConfig implements DataFlow::ConfigSig{
+  predicate  isSource(DataFlow::Node source) {
+      source.asExpr() instanceof StringLiteral
+  }
+
+  predicate isSink(DataFlow::Node sink) {
+    isSinkImpl(sink, _) 
+  }
+
+  predicate isAdditionalFlowStep(DataFlow::Node n1, DataFlow::Node n2){
+    exists(Call c, int ind |
+      whitelistFunction(c.getTarget(), ind)
+      and c.getArgument(ind) = [n1.asExpr(), n1.asIndirectExpr()]
+      and n2.asIndirectExpr() = c
+      )
+  }
+}
+
+module LiteralToFormatTrace = TaintTracking::Global<LiteralToFormatConfig>;
+
+predicate isLiteralFormat(Expr fmt){
+  exists(DataFlow::Node src, DataFlow::Node sink | 
+      LiteralToFormatTrace::flow(src,sink)
+      and 
+      isSinkImpl(sink, fmt) 
+  )
+}
+
+predicate isNonLiteralfmt(Expr fmt){
+  exists(DataFlow::Node sink | isSinkImpl(sink, fmt))
+  and
+  not isLiteralFormat(fmt)
+}
+
  
  
- from FormattingFunctionCall call, Expr formatString
- where
-   call.getArgument(call.getFormatParameterIndex()) = formatString and
-   exists(DataFlow::Node sink |
-     NonConstFlow::flowTo(sink) and
-     isSinkImpl(sink, formatString)
-   )
- select formatString,
-   "The format string argument to " + call.getTarget().getName() +
-     " should be constant to prevent security issues and other potential errors."
- 
- 
+// from FormattingFunctionCall call, Expr formatString
+// where
+//   call.getArgument(call.getFormatParameterIndex()) = formatString and
+//   exists(DataFlow::Node sink |
+//     NonConstFlow::flowTo(sink) and
+//     isSinkImpl(sink, formatString)
+//   )
+// select formatString,
+//   "The format string argument to " + call.getTarget().getName() +
+//     " should be constant to prevent security issues and other potential errors."
+
+from FormattingFunctionCall call, Expr formatString
+where
+  call.getArgument(call.getFormatParameterIndex()) = formatString and
+  isNonLiteralfmt(formatString)
+select formatString,
+  "The format string argument to " + call.getTarget().getName() +
+    " should be constant to prevent security issues and other potential errors."
+
