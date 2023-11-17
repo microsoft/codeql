@@ -17,6 +17,7 @@
 
  import semmle.code.cpp.ir.dataflow.TaintTracking
  import semmle.code.cpp.security.FlowSources
+ import semmle.code.cpp.models.implementations.Strcpy
  import StrConcatenation
  
  /**
@@ -59,26 +60,31 @@
   *   is not in the white list (see `whitelistFunction`)
   * 2) A parameter to a function that is not called (see `UncalledFunction`)
   * 3) An out parameter of a function so long as the function has no definition and is not the
-  *   output of a formatting function call (see `FormattingFunctionCall`). 
-  *   Rationale: The output of a FormattingFunctionCall is a step in a data flow, not a source of
+  *   output of a formatting function call (see `FormattingFunctionCall`) or a call to a strcpy variant
+  *   (see `StrcpyFunction`). 
+  *   Rationale: The output of a FormattingFunctionCall and StrcpyFunction is a step in a data flow, not a source of
   *   const or non-const data. 
   * 4) A flow source (see `FlowSources`)
   */
  predicate isNonConst(DataFlow::Node node){
-     exists(Call fc | fc = [node.asExpr(), node.asIndirectExpr()] |
-       not (
-         whitelistFunction(fc.getTarget(), _) or
-         fc.getTarget().hasDefinition()
-       )
-     )
-     or
+    //  exists(Call fc | fc = [node.asExpr(), node.asIndirectExpr()] |
+    //    not (
+    //      whitelistFunction(fc.getTarget(), _) or
+    //      fc.getTarget().hasDefinition()
+    //    )
+    //  )
+    //  or
      exists(UncalledFunction f | f.getAParameter() = node.asParameter())
-     or
-     (
-       node instanceof DataFlow::DefinitionByReferenceNode and
-       not exists(FormattingFunctionCall fc | node.asDefiningArgument() = fc.getOutputArgument(_)) and
-       not exists(Call c | c.getAnArgument() = node.asDefiningArgument() and c.getTarget().hasDefinition())
-     )
+    //  or
+    //  (
+    //    node instanceof DataFlow::DefinitionByReferenceNode and
+    //    not exists(FormattingFunctionCall fc | node.asDefiningArgument() = fc.getOutputArgument(_)) and
+    //    not exists(Call c | c.getAnArgument() = node.asDefiningArgument() and c.getTarget().hasDefinition()) and
+    //    not exists(StrcpyFunction fc, Call c |  c.(Call).getTarget() = fc | 
+    //     node.asDefiningArgument() = c.getArgument(fc.getParamDest())
+    //     or
+    //     [node.asExpr(), node.asIndirectExpr()] = c)
+    //  )
      or node instanceof FlowSource
  }
  
@@ -247,7 +253,16 @@ where
       isSinkImpl(sink, formatString)
       )
   )
+
 select formatString,
   "The format string argument to " + call.getTarget().getName() +
     " should be constant to prevent security issues and other potential errors."
 
+
+// import NonConstFlow::PathGraph
+// from NonConstFlow::PathNode source, NonConstFlow::PathNode sink
+// where
+//   NonConstFlow::flowPath(source, sink) and
+//   exists(Expr formatString| isSinkImpl(sink.getNode(), formatString)
+//   )
+// select sink, source, sink, "TEST"
