@@ -17,7 +17,11 @@
 
  import semmle.code.cpp.ir.dataflow.TaintTracking
  import semmle.code.cpp.security.FlowSources
+ import StrConcatenation
  
+ /**
+  * Functions not statically observed to be called by any other function
+  */
  class UncalledFunction extends Function {
    UncalledFunction() { 
      not exists(Call c | c.getTarget() = this)
@@ -50,6 +54,16 @@
  }
  
  
+ /**
+  * 1) The return of any function so long as the function does not have a definition and 
+  *   is not in the white list (see `whitelistFunction`)
+  * 2) A parameter to a function that is not called (see `UncalledFunction`)
+  * 3) An out parameter of a function so long as the function has no definition and is not the
+  *   output of a formatting function call (see `FormattingFunctionCall`). 
+  *   Rationale: The output of a FormattingFunctionCall is a step in a data flow, not a source of
+  *   const or non-const data. 
+  * 4) A flow source (see `FlowSources`)
+  */
  predicate isNonConst(DataFlow::Node node){
      exists(Call fc | fc = [node.asExpr(), node.asIndirectExpr()] |
        not (
@@ -70,12 +84,21 @@
  
  
  
+ /**
+  * `sink` is DataFlow::Node representing format string of a `FormatingFunctionCall`
+  * `formatSTring` is the Expr representing the format string of `sink`. 
+  */
  predicate isSinkImpl(DataFlow::Node sink, Expr formatString) {
    [sink.asExpr(), sink.asIndirectExpr()] = formatString and
    exists(FormattingFunctionCall fc | formatString = fc.getArgument(fc.getFormatParameterIndex()))
  }
  
  
+ /**
+  * Flow from a non-constant source to a format string of a formatting function call.
+  * 
+  * Continue flow through `whitelistFunction` calls.
+  */
  module NonConstFlowConfig implements DataFlow::ConfigSig {
    predicate isSource(DataFlow::Node source) {
      isNonConst(source)
@@ -94,6 +117,21 @@
  
  module NonConstFlow = TaintTracking::Global<NonConstFlowConfig>;
 
+ /**
+  * Flow from a non-constant source to a format string of a formatting function call.
+  * Used to find non-constant format strings by finding format variables with no
+  * constant source (the non-existence of any literal path to a format would indicate a 
+  * potential vulnerability).
+  * NOTE: this is an approximation. If one literal flows to a format sink, then it appears
+  * to not be vulnerable. For example, if two paths exist to the format, one with a literal
+  * and one without, this approach will result in a false negative.
+  * Another potential for false negatives is string concatenation with a literal. 
+  * We address these false negatives partially by combining results using the `NonConstFlow`
+  * trace, and also by providing specific barriers for known concatenation with literals
+  * (Special casing how flow should be traced through string concatenation using `LiteralToStrConcatFlow`).
+  * 
+  * Continues flow through `whitelistFunction` calls.
+  */
 module LiteralToFormatConfig implements DataFlow::ConfigSig{
   predicate  isSource(DataFlow::Node source) {
       source.asExpr() instanceof StringLiteral
@@ -109,6 +147,10 @@ module LiteralToFormatConfig implements DataFlow::ConfigSig{
       and c.getArgument(ind) = [n1.asExpr(), n1.asIndirectExpr()]
       and n2.asIndirectExpr() = c
       )
+  }
+
+  predicate isBarrierOut(DataFlow::Node node) {
+    exists(StrConcatenation sc | sc.getAnOperand() = [node.asExpr(), node.asIndirectExpr()])
   }
 }
 
@@ -128,18 +170,66 @@ predicate isNonLiteralfmt(Expr fmt){
   not isLiteralFormat(fmt)
 }
 
- 
- 
-// from FormattingFunctionCall call, Expr formatString
-// where
-//   call.getArgument(call.getFormatParameterIndex()) = formatString and
-//   exists(DataFlow::Node sink |
-//     NonConstFlow::flowTo(sink) and
-//     isSinkImpl(sink, formatString)
-//   )
-// select formatString,
-//   "The format string argument to " + call.getTarget().getName() +
-//     " should be constant to prevent security issues and other potential errors."
+
+module LiteralToStrConcatConfig implements DataFlow::ConfigSig{
+  predicate  isSource(DataFlow::Node source) {
+      source.asExpr() instanceof Literal
+  }
+
+  predicate isSink(DataFlow::Node sink) {
+    exists(StrConcatenation sc | sc.getAnOperand() = [sink.asExpr(), sink.asIndirectExpr()])
+  }
+
+  predicate isAdditionalFlowStep(DataFlow::Node n1, DataFlow::Node n2){
+    exists(Call c, int ind |
+      whitelistFunction(c.getTarget(), ind)
+      and c.getArgument(ind) = [n1.asExpr(), n1.asIndirectExpr()]
+      and n2.asIndirectExpr() = c
+      )
+  }
+}
+
+module LiteralToStrConcatFlow = TaintTracking::Global<LiteralToStrConcatConfig>;
+
+predicate isLiteralStrConcatArg(StrConcatenation cat, Expr arg){
+  exists(DataFlow::Node src, DataFlow::Node sink | 
+      LiteralToStrConcatFlow::flow(src,sink)
+      and 
+      arg = [sink.asExpr(), sink.asIndirectExpr()]
+      and
+      cat.getAnOperand() = arg
+  )
+}
+
+predicate isNonLiteralStrConcatArg(StrConcatenation cat, Expr arg){
+  cat.getAnOperand() = arg
+  and 
+  not isLiteralStrConcatArg(cat, arg)
+}
+
+
+module NonConstStrCatToFormatConfig implements DataFlow::ConfigSig{
+  predicate  isSource(DataFlow::Node source) {
+      exists(StrConcatenation sc | 
+        isNonLiteralStrConcatArg(sc, _)
+        and
+        sc.getResultExpr() = [source.asExpr(), source.asIndirectExpr()])
+  }
+
+  predicate isSink(DataFlow::Node sink) {
+    isSinkImpl(sink, _) 
+  }
+
+  predicate isAdditionalFlowStep(DataFlow::Node n1, DataFlow::Node n2){
+    exists(Call c, int ind |
+      whitelistFunction(c.getTarget(), ind)
+      and c.getArgument(ind) = [n1.asExpr(), n1.asIndirectExpr()]
+      and n2.asIndirectExpr() = c
+      )
+  }
+}
+module NonConstStrCatToFormatFlow = TaintTracking::Global<NonConstStrCatToFormatConfig>;
+
 
 from FormattingFunctionCall call, Expr formatString
 where
@@ -147,10 +237,15 @@ where
   (
     isNonLiteralfmt(formatString)
     or
-      exists(DataFlow::Node sink |
+    exists(DataFlow::Node sink |
       NonConstFlow::flowTo(sink) and
       isSinkImpl(sink, formatString)
-    )
+      )
+    or
+    exists(DataFlow::Node sink |
+      NonConstStrCatToFormatFlow::flowTo(sink) and
+      isSinkImpl(sink, formatString)
+      )
   )
 select formatString,
   "The format string argument to " + call.getTarget().getName() +
