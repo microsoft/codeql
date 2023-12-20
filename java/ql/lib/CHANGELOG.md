@@ -1,3 +1,35 @@
+## 0.8.4
+
+### Minor Analysis Improvements
+
+* The diagnostic query `java/diagnostics/successfully-extracted-files`, and therefore the Code Scanning UI measure of scanned Java files, now considers any Java file seen during extraction, even one with some errors, to be extracted / scanned.
+* Switch cases using binding patterns and `case null[, default]` are now supported. Classes `PatternCase` and `NullDefaultCase` are introduced to represent new kinds of case statement.
+* Both switch cases and instanceof expressions using record patterns are now supported. The new class `RecordPatternExpr` is introduced to represent record patterns, and `InstanceOfExpr` gains `getPattern` to replace `getLocalVariableDeclExpr`.
+* The control-flow graph and therefore dominance information regarding switch blocks in statement context but with an expression rule (e.g. `switch(...) { case 1 -> System.out.println("Hello world!") }`) has been fixed. This reduces false positives and negatives from various queries relating to functions featuring such statements.
+
+## 0.8.3
+
+### Deprecated APIs
+
+* In `SensitiveApi.qll`, `javaApiCallablePasswordParam`, `javaApiCallableUsernameParam`, `javaApiCallableCryptoKeyParam`, and `otherApiCallableCredentialParam` predicates have been deprecated. They have been replaced with a new class `CredentialsSinkNode` and its child classes `PasswordSink`, `UsernameSink`, and `CryptoKeySink`. The predicates have been changed to using the new classes, so there may be minor changes in results relying on these predicates.
+
+### Minor Analysis Improvements
+
+* The types `java.util.SequencedCollection`, `SequencedSet` and `SequencedMap`, as well as the related `Collections.unmodifiableSequenced*` methods are now modelled. This means alerts may be raised relating to data flow through these types and methods.
+
+## 0.8.2
+
+### Minor Analysis Improvements
+
+* Java classes `MethodAccess`, `LValue` and `RValue` were renamed to `MethodCall`, `VarWrite` and `VarRead` respectively, along with related predicates and class names. The old names remain usable for the time being but are deprecated and should be replaced.
+* New class `NewClassExpr` was added to represent specifically an explicit `new ClassName(...)` invocation, in contrast to `ClassInstanceExpr` which also includes expressions that implicitly instantiate classes, such as defining a lambda or taking a method reference.
+* Added up to date models related to Spring Framework 6's `org.springframework.http.ResponseEntity`.
+* Added models for the following packages:
+
+  * com.alibaba.fastjson2
+  * javax.management
+  * org.apache.http.client.utils
+
 ## 0.8.1
 
 ### New Features

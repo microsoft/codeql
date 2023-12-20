@@ -1,3 +1,25 @@
+## 0.11.4
+
+### Minor Analysis Improvements
+
+- Added support for tarfile extraction filters as defined in [PEP-706](https://peps.python.org/pep-0706). In particular, calls to `TarFile.extract`, and `TarFile.extractall` are no longer considered to be sinks for the `py/tarslip` query if a sufficiently safe filter is provided.
+* Added modeling of `*args` and `**kwargs` as routed-parameters in request handlers for django/flask/FastAPI/tornado.
+- Added support for type parameters in function and class definitions, as well as the new Python 3.12 type alias statement.
+* Added taint-flow modeling for regular expressions with `re` module from the standard library.
+
+## 0.11.3
+
+### Minor Analysis Improvements
+
+* Added basic flow for attributes defined on classes, when the attribute lookup is on a direct reference to that class (so not instance, cls parameter, or self parameter). Example: class definition `class Foo: my_tuples = (dangerous, safe)` and usage `SINK(Foo.my_tuples[0])`.
+
+## 0.11.2
+
+### Minor Analysis Improvements
+
+* Added support for functions decorated with `contextlib.contextmanager`.
+* Namespace packages in the form of regular packages with missing `__init__.py`-files are now allowed. This enables the analysis to resolve modules and functions inside such packages.
+
 ## 0.11.1
 
 ### Minor Analysis Improvements

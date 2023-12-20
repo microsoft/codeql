@@ -1,3 +1,18 @@
+## 0.8.4
+
+### Minor Analysis Improvements
+
+* Added models for the `sqlite` and `better-sqlite3` npm packages.
+* TypeScript 5.3 is now supported.
+
+## 0.8.3
+
+No user-facing changes.
+
+## 0.8.2
+
+No user-facing changes.
+
 ## 0.8.1
 
 ### Minor Analysis Improvements
