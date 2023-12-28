@@ -15,6 +15,14 @@ def write_csproj_prefix(ioWrapper):
         '    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>\n')
     ioWrapper.write('  </PropertyGroup>\n\n')
 
+def write_nuget_config(ioWrapper):
+    ioWrapper.write(b"""<?xml version="1.0" encoding="utf-8"?>
+    <configuration>
+        <packageSources>
+          <clear />
+          <add key="IDDP" value="https://identitydivision.pkgs.visualstudio.com/_packaging/IDDP/nuget/v3/index.json" />
+        </packageSources>
+    </configuration>""")
 
 print('Script to generate stub file from a nuget package')
 print(' Usage: python3 ' + sys.argv[0] +
@@ -70,6 +78,10 @@ run_cmd(['dotnet', 'new', template, "-f", "net7.0", "--language", "C#", '--name'
                  projectNameIn, '--output', projectDirIn])
 helpers.remove_files(projectDirIn, '.cs')
 
+nugetConfigFile = open(os.path.join(projectDirIn, 'nuget.config'), 'wb')
+write_nuget_config(nugetConfigFile)
+nugetConfigFile.close()
+
 print("\n* Adding reference to package: " + nuget)
 cmd = ['dotnet', 'add', projectDirIn, 'package', nuget]
 if (version != "latest"):
@@ -77,7 +89,7 @@ if (version != "latest"):
     cmd.append(version)
 run_cmd(cmd)
 
-sdk_version = '7.0.102'
+sdk_version = '7.0.403'
 print("\n* Creating new global.json file and setting SDK to " + sdk_version)
 run_cmd(['dotnet', 'new', 'globaljson', '--force', '--sdk-version', sdk_version, '--output', workDir])
 
