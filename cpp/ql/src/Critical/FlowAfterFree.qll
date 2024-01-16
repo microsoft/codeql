@@ -38,6 +38,12 @@ signature module FlowFromFreeParamSig {
    */
   bindingset[dealloc, e]
   predicate isExcluded(DeallocationExpr dealloc, Expr e);
+
+  /**
+   * Holds if `sink` should be considered a `sink` when the source of flow is `source`.
+   */
+  bindingset[source, sink]
+  default predicate sourceSinkIsRelated(DataFlow::Node source, DataFlow::Node sink) { any() }
 }
 
 /**
@@ -61,20 +67,12 @@ module FlowFromFree<FlowFromFreeParamSig P> {
 
     pragma[inline]
     predicate isSink(DataFlow::Node sink, FlowState state) {
-      exists(
-        Expr e, DataFlow::Node source, DeallocationExpr dealloc, IRBlock b1, int i1, IRBlock b2,
-        int i2
-      |
+      exists(Expr e, DataFlow::Node source, DeallocationExpr dealloc |
         P::isSink(sink, e) and
         isFree(source, _, state, dealloc) and
         e != state and
         not P::isExcluded(dealloc, e) and
-        source.hasIndexInBlock(b1, i1) and
-        sink.hasIndexInBlock(b2, i2)
-      |
-        strictlyDominates(b1, i1, b2, i2)
-        or
-        strictlyPostDominates(b2, i2, b1, i1)
+        P::sourceSinkIsRelated(source, sink)
       )
     }
 
@@ -127,5 +125,21 @@ predicate isExFreePoolCall(FunctionCall fc, Expr e) {
     )
     or
     fc.getTarget().hasGlobalName("ExFreePool")
+  )
+}
+
+/**
+ * Holds if either `source` strictly dominates `sink`, or `sink` strictly
+ * post-dominates `source`.
+ */
+bindingset[source, sink]
+predicate defaultSourceSinkIsRelated(DataFlow::Node source, DataFlow::Node sink) {
+  exists(IRBlock b1, int i1, IRBlock b2, int i2 |
+    source.hasIndexInBlock(b1, i1) and
+    sink.hasIndexInBlock(b2, i2)
+  |
+    strictlyDominates(b1, i1, b2, i2)
+    or
+    strictlyPostDominates(b2, i2, b1, i1)
   )
 }
