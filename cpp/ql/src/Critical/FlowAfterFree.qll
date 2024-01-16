@@ -24,6 +24,7 @@ predicate strictlyDominates(IRBlock b1, int i1, IRBlock b2, int i2) {
   b1.strictlyDominates(b2)
 }
 
+<<<<<<< HEAD
 signature module FlowFromFreeParamSig {
   /**
    * Signature for a predicate that holds if `n.asExpr() = e` and `n` is a sink in
@@ -44,16 +45,27 @@ signature module FlowFromFreeParamSig {
    */
   bindingset[source, sink]
   default predicate sourceSinkIsRelated(DataFlow::Node source, DataFlow::Node sink) { any() }
+=======
+predicate sinkStrictlyPostDominatesSource(DataFlow::Node source, DataFlow::Node sink) {
+  exists(IRBlock b1, int i1, IRBlock b2, int i2 |
+    source.hasIndexInBlock(b1, i1) and
+    sink.hasIndexInBlock(b2, i2) and
+    strictlyPostDominates(b2, i2, b1, i1)
+  )
+}
+
+predicate sourceStrictlyDominatesSink(DataFlow::Node source, DataFlow::Node sink) {
+  exists(IRBlock b1, int i1, IRBlock b2, int i2 |
+    source.hasIndexInBlock(b1, i1) and
+    sink.hasIndexInBlock(b2, i2) and
+    strictlyDominates(b1, i1, b2, i2)
+  )
+>>>>>>> a0ef7955b1 (Updating FlowAfterFree to not enforce dominance of source/sink. DoubleFree and UseAfterFree queries now enforce dominance.)
 }
 
 /**
  * Constructs a `FlowFromFreeConfig` module that can be used to find flow between
  * a pointer being freed by some deallocation function, and a user-specified sink.
- *
- * In order to reduce false positives, the set of sinks is restricted to only those
- * that satisfy at least one of the following two criteria:
- * 1. The source dominates the sink, or
- * 2. The sink post-dominates the source.
  */
 module FlowFromFree<FlowFromFreeParamSig P> {
   module FlowFromFreeConfig implements DataFlow::StateConfigSig {
@@ -67,12 +79,20 @@ module FlowFromFree<FlowFromFreeParamSig P> {
 
     pragma[inline]
     predicate isSink(DataFlow::Node sink, FlowState state) {
+<<<<<<< HEAD
       exists(Expr e, DataFlow::Node source, DeallocationExpr dealloc |
         P::isSink(sink, e) and
         isFree(source, _, state, dealloc) and
         e != state and
         not P::isExcluded(dealloc, e) and
         P::sourceSinkIsRelated(source, sink)
+=======
+      exists(Expr e, DeallocationExpr dealloc |
+        isASink(sink, e) and
+        isFree(_, _, state, dealloc) and
+        e != state and
+        not isExcluded(dealloc, e)
+>>>>>>> a0ef7955b1 (Updating FlowAfterFree to not enforce dominance of source/sink. DoubleFree and UseAfterFree queries now enforce dominance.)
       )
     }
 
