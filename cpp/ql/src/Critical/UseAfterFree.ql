@@ -175,6 +175,16 @@ predicate isExcludeFreeUsePair(DeallocationExpr dealloc1, Expr e) {
 
 module UseAfterFreeParam implements FlowFromFreeParamSig {
   predicate isSink = isUse/2;
+<<<<<<< HEAD
+
+  predicate isExcluded = isExcludeFreeUsePair/2;
+
+  predicate sourceSinkIsRelated = defaultSourceSinkIsRelated/2;
+}
+
+module UseAfterFree = FlowFromFree<UseAfterFreeParam>;
+=======
+>>>>>>> 39dafd6f6a (C++: Suggestions to #15343 (#39))
 
   predicate isExcluded = isExcludeFreeUsePair/2;
 
@@ -183,24 +193,9 @@ module UseAfterFreeParam implements FlowFromFreeParamSig {
 
 module UseAfterFree = FlowFromFree<UseAfterFreeParam>;
 
-/*
- * In order to reduce false positives, the set of sinks is restricted to only those
- * that satisfy at least one of the following two criteria:
- * 1. The source dominates the sink, or
- * 2. The sink post-dominates the source.
- */
-
-from
-  UseAfterFree::PathNode source, UseAfterFree::PathNode sink, DeallocationExpr dealloc,
-  DataFlow::Node srcNode, DataFlow::Node sinkNode
+from UseAfterFree::PathNode source, UseAfterFree::PathNode sink, DeallocationExpr dealloc
 where
   UseAfterFree::flowPath(source, sink) and
-  source.getNode() = srcNode and
-  sink.getNode() = sinkNode and
-  isFree(srcNode, _, _, dealloc) and
-  (
-    sinkStrictlyPostDominatesSource(srcNode, sinkNode) or
-    sourceStrictlyDominatesSink(srcNode, sinkNode)
-  )
-select sinkNode, source, sink, "Memory may have been previously freed by $@.", dealloc,
+  isFree(source.getNode(), _, _, dealloc)
+select sink.getNode(), source, sink, "Memory may have been previously freed by $@.", dealloc,
   dealloc.toString()

@@ -31,6 +31,7 @@ signature module FlowFromFreeParamSig {
    * the `FlowFromFreeConfig` module.
    */
   predicate isSink(DataFlow::Node n, Expr e);
+<<<<<<< HEAD
 
   /**
    * Holds if `dealloc` is a deallocation expression and `e` is an expression such
@@ -61,11 +62,32 @@ predicate sourceStrictlyDominatesSink(DataFlow::Node source, DataFlow::Node sink
     strictlyDominates(b1, i1, b2, i2)
   )
 >>>>>>> a0ef7955b1 (Updating FlowAfterFree to not enforce dominance of source/sink. DoubleFree and UseAfterFree queries now enforce dominance.)
+=======
+
+  /**
+   * Holds if `dealloc` is a deallocation expression and `e` is an expression such
+   * that `isFree(_, e)` holds for some `isFree` predicate satisfying `isSinkSig`,
+   * and this source-sink pair should be excluded from the analysis.
+   */
+  bindingset[dealloc, e]
+  predicate isExcluded(DeallocationExpr dealloc, Expr e);
+
+  /**
+   * Holds if `sink` should be considered a `sink` when the source of flow is `source`.
+   */
+  bindingset[source, sink]
+  default predicate sourceSinkIsRelated(DataFlow::Node source, DataFlow::Node sink) { any() }
+>>>>>>> 39dafd6f6a (C++: Suggestions to #15343 (#39))
 }
 
 /**
  * Constructs a `FlowFromFreeConfig` module that can be used to find flow between
  * a pointer being freed by some deallocation function, and a user-specified sink.
+ *
+ * In order to reduce false positives, the set of sinks is restricted to only those
+ * that satisfy at least one of the following two criteria:
+ * 1. The source dominates the sink, or
+ * 2. The sink post-dominates the source.
  */
 module FlowFromFree<FlowFromFreeParamSig P> {
   module FlowFromFreeConfig implements DataFlow::StateConfigSig {
@@ -80,6 +102,7 @@ module FlowFromFree<FlowFromFreeParamSig P> {
     pragma[inline]
     predicate isSink(DataFlow::Node sink, FlowState state) {
 <<<<<<< HEAD
+<<<<<<< HEAD
       exists(Expr e, DataFlow::Node source, DeallocationExpr dealloc |
         P::isSink(sink, e) and
         isFree(source, _, state, dealloc) and
@@ -93,6 +116,14 @@ module FlowFromFree<FlowFromFreeParamSig P> {
         e != state and
         not isExcluded(dealloc, e)
 >>>>>>> a0ef7955b1 (Updating FlowAfterFree to not enforce dominance of source/sink. DoubleFree and UseAfterFree queries now enforce dominance.)
+=======
+      exists(Expr e, DataFlow::Node source, DeallocationExpr dealloc |
+        P::isSink(sink, e) and
+        isFree(source, _, state, dealloc) and
+        e != state and
+        not P::isExcluded(dealloc, e) and
+        P::sourceSinkIsRelated(source, sink)
+>>>>>>> 39dafd6f6a (C++: Suggestions to #15343 (#39))
       )
     }
 
