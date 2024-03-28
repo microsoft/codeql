@@ -19,7 +19,21 @@ import semmle.code.cpp.security.FunctionWithWrappers
 import semmle.code.cpp.security.FlowSources
 import semmle.code.cpp.ir.IR
 import semmle.code.cpp.ir.dataflow.TaintTracking
-import TaintedPath::PathGraph
+import TaintedPathFlow::PathGraph
+import semmle.code.cpp.controlflow.IRGuards
+
+
+
+/**
+ * A node whose type is a simple type unlikely to carry taint, such as primitives and their boxed counterparts,
+ * `java.util.UUID` and `java.util.Date`.
+ */
+class SimpleTypeSanitizer extends DataFlow::Node {
+  SimpleTypeSanitizer() {
+    this.getType() instanceof ArithmeticType
+  }
+}
+
 
 /**
  * A function for opening a file.
@@ -47,59 +61,91 @@ class FileFunction extends FunctionWithWrappers {
   override predicate interestingArg(int arg) { arg = 0 }
 }
 
-/**
- * Holds for a variable that has any kind of upper-bound check anywhere in the program.
- * This is biased towards being inclusive and being a coarse overapproximation because
- * there are a lot of valid ways of doing an upper bounds checks if we don't consider
- * where it occurs, for example:
- * ```cpp
- *   if (x < 10) { sink(x); }
- *
- *   if (10 > y) { sink(y); }
- *
- *   if (z > 10) { z = 10; }
- *   sink(z);
- * ```
- */
-predicate hasUpperBoundsCheck(Variable var) {
-  exists(RelationalOperation oper, VariableAccess access |
-    oper.getAnOperand() = access and
-    access.getTarget() = var and
-    // Comparing to 0 is not an upper bound check
-    not oper.getAnOperand().getValue() = "0"
-  )
+predicate testcheck(IRGuardCondition g, Expr e, boolean branch) {
+  branch = [true, false] and 
+  not g.getLocation().getStartLine() = 11 and 
+  g.getLocation().getFile().getBaseName() = "testcpp.cpp" and 
+  e = g.getUnconvertedResultExpression().getAChild*()
+  // // exists(Operand left |
+  // //   g.comparesEq(left, _, _, _, branch) or 
+  // //   g.ensuresEq(left, _, _, _, branch)
+  // // |
+  // //   left.getDef().getUnconvertedResultExpression() = e and
+  // //   //exists(Literal l | l.getValue().matches("..") and e.getAChild*() = l)
+  // //   e.getLocation().getFile().getBaseName() = "testcpp.cpp"
+  // // )
+  // //g.getLocation().getFile().getBaseName() = "testcpp.cpp" and
+  // e = g.getUnconvertedResultExpression().getAChild*() and
+  // e.(Call).getTarget().getName().matches("find")
+  // // exists(Call c | c = g.getUnconvertedResultExpression().getAChild*() and
+  // //  c.getTarget().hasName("find")) and
+  // // g.comparesEq(_, _, _, _, branch) 
+  // and
+  // branch = [true, false]
+
+  //.comparesEq(_, _, _, _, branch) and
+  // e = g.getUnconvertedResultExpression().getAChild*() and
+  // e.(Call).getTarget().getName().matches("is_open") and
+  // branch = true
+
+    // e = g.getUnconvertedResultExpression() and 
+    // e.getLocation().getFile().getBaseName() = "testcpp.cpp" and
+    // branch = [true, false]
+
+  // exists(Call call |
+  //   g.getUnconvertedResultExpression().getAChild*() = call and
+  //   call.getTarget().hasName("exists") and
+  //   e = call.getAnArgument() and
+  //   (branch = true or branch = false)
+  //    )
 }
 
 module TaintedPathConfig implements DataFlow::ConfigSig {
   predicate isSource(DataFlow::Node node) { node instanceof FlowSource }
 
   predicate isSink(DataFlow::Node node) {
-    exists(FileFunction fileFunction |
-      fileFunction.outermostWrapperFunctionCall(node.asIndirectArgument(), _)
-    )
+    any()
+    // exists(FileFunction fileFunction |
+    //   fileFunction.outermostWrapperFunctionCall(node.asIndirectArgument(), _)
+    // )
   }
 
   predicate isBarrier(DataFlow::Node node) {
-    node.asExpr().(Call).getTarget().getUnspecifiedType() instanceof ArithmeticType
+    // node instanceof SimpleTypeSanitizer or
+    node = DataFlow::BarrierGuard<testcheck/3>::getAnIndirectBarrierNode()
     or
-    exists(LoadInstruction load, Variable checkedVar |
-      load = node.asInstruction() and
-      checkedVar = load.getSourceAddress().(VariableAddressInstruction).getAstVariable() and
-      hasUpperBoundsCheck(checkedVar)
-    )
+    node = DataFlow::BarrierGuard<testcheck/3>::getABarrierNode()
   }
+
+
+
+  //   // node.asExpr().(Call).getTarget().getUnspecifiedType() instanceof ArithmeticType
+  //   // or
+  //   // exists(LoadInstruction load, Variable checkedVar |
+  //   //   load = node.asInstruction() and
+  //   //   checkedVar = load.getSourceAddress().(VariableAddressInstruction).getAstVariable() and
+  //   //   hasUpperBoundsCheck(checkedVar)
+  //   // )
+  // }
 }
 
-module TaintedPath = TaintTracking::Global<TaintedPathConfig>;
+module TaintedPathFlow = TaintTracking::Global<TaintedPathConfig>;
+
+// from
+//   FileFunction fileFunction, Expr taintedArg, FlowSource taintSource,
+//   TaintedPathFlow::PathNode sourceNode, TaintedPathFlow::PathNode sinkNode, string callChain
+// where
+//   taintedArg = sinkNode.getNode().asIndirectArgument() and
+//   fileFunction.outermostWrapperFunctionCall(taintedArg, callChain) and
+//   TaintedPathFlow::flowPath(sourceNode, sinkNode) and
+//   taintSource = sourceNode.getNode()
+// select taintedArg, sourceNode, sinkNode,
+//   "This argument to a file access function is derived from $@ and then passed to " + callChain + ".",
+//   taintSource, "user input (" + taintSource.getSourceType() + ")"
+
 
 from
-  FileFunction fileFunction, Expr taintedArg, FlowSource taintSource,
-  TaintedPath::PathNode sourceNode, TaintedPath::PathNode sinkNode, string callChain
+  TaintedPathFlow::PathNode sourceNode, TaintedPathFlow::PathNode sinkNode
 where
-  taintedArg = sinkNode.getNode().asIndirectArgument() and
-  fileFunction.outermostWrapperFunctionCall(taintedArg, callChain) and
-  TaintedPath::flowPath(sourceNode, sinkNode) and
-  taintSource = sourceNode.getNode()
-select taintedArg, sourceNode, sinkNode,
-  "This argument to a file access function is derived from $@ and then passed to " + callChain + ".",
-  taintSource, "user input (" + taintSource.getSourceType() + ")"
+  TaintedPathFlow::flowPath(sourceNode, sinkNode) 
+select sinkNode.getNode(), sourceNode, sinkNode, "test"

@@ -56,6 +56,7 @@ int main(int argc, char** argv) {
     void read(const char *fileName);
     read(argv[1]); // BAD
   }
+  
 }
 
 void read(char *fileName) {
