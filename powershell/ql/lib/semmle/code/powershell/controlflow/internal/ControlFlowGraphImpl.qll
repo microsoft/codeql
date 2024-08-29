@@ -281,6 +281,7 @@ private module Cached {
     TBooleanSuccessor(boolean b) { b in [false, true] } or
     TReturnSuccessor() or
     TBreakSuccessor() or
+    TContinueSuccessor() or
     TRaiseSuccessor() or
     TExitSuccessor()
 }

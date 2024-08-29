@@ -15,6 +15,7 @@ private newtype TCompletion =
   TBooleanCompletion(boolean b) { b in [false, true] } or
   TReturnCompletion() or
   TBreakCompletion() or
+  TContinueCompletion() or
   TRaiseCompletion() or
   TExitCompletion()
 
@@ -49,19 +50,10 @@ abstract class Completion extends TCompletion {
    * Holds if this completion will continue a loop when it is the completion
    * of a loop body.
    */
-  predicate continuesLoop() { this instanceof NormalCompletion }
-
-  /**
-   * Gets the inner completion. This is either the inner completion,
-   * when the completion is nested, or the completion itself.
-   */
-  Completion getInnerCompletion() { result = this }
-
-  /**
-   * Gets the outer completion. This is either the outer completion,
-   * when the completion is nested, or the completion itself.
-   */
-  Completion getOuterCompletion() { result = this }
+  predicate continuesLoop() {
+    this instanceof NormalCompletion or
+    this instanceof ContinueCompletion
+  }
 
   /** Gets a successor type that matches this completion. */
   abstract SuccessorType getAMatchingSuccessorType();
@@ -157,6 +149,16 @@ class BreakCompletion extends Completion, TBreakCompletion {
   override BreakSuccessor getAMatchingSuccessorType() { any() }
 
   override string toString() { result = "break" }
+}
+
+/**
+ * A completion that represents evaluation of a statement or an
+ * expression resulting in a continuation of a loop.
+ */
+class ContinueCompletion extends Completion, TContinueCompletion {
+  override ContinueSuccessor getAMatchingSuccessorType() { any() }
+
+  override string toString() { result = "continue" }
 }
 
 /**
