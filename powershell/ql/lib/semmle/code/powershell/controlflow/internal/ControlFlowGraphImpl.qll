@@ -616,6 +616,14 @@ module Trees {
     }
   }
 
+  class ReturnStmtTree extends StandardPreOrderTree instanceof ReturnStmt {
+    override AstNode getChildNode(int i) { i = 0 and result = super.getPipeline() }
+  }
+
+  class ExitStmtTree extends StandardPreOrderTree instanceof ExitStmt {
+    override AstNode getChildNode(int i) { i = 0 and result = super.getPipeline() }
+  }
+
   class ThrowStmtTree extends StandardPreOrderTree instanceof ThrowStmt {
     override AstNode getChildNode(int i) { i = 0 and result = super.getPipeline() }
   }
