@@ -94,18 +94,6 @@ module Trees {
     }
   }
 
-  class AttributeTree extends StandardPostOrderTree instanceof Attribute {
-    override AstNode getChildNode(int i) {
-      result = super.getPositionalArgument(i)
-      or
-      exists(int n |
-        n = super.getNumberOfPositionalArguments() and
-        i >= n and
-        result = super.getNamedArgument(i - n)
-      )
-    }
-  }
-
   abstract class ScriptBlockTree extends ControlFlowTree instanceof ScriptBlock {
     abstract predicate succEntry(AstNode n, Completion c);
 
@@ -602,8 +590,6 @@ module Trees {
   class ArrayLiteralTree extends StandardPostOrderTree instanceof ArrayLiteral {
     override AstNode getChildNode(int i) { result = super.getElement(i) }
   }
-
-  class TypeConstraintTree extends LeafTree instanceof TypeConstraint { }
 
   class ArrayExprTree extends StandardPostOrderTree instanceof ArrayExpr {
     override AstNode getChildNode(int i) { i = 0 and result = super.getStmtBlock() }
