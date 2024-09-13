@@ -34,6 +34,12 @@ private predicate completionIsValidForStmt(Ast n, Completion c) {
   n instanceof ContinueStmt and
   c instanceof ContinueCompletion
   or
+  n instanceof ReturnStmt and
+  c instanceof ReturnCompletion
+  or
+  n instanceof ExitStmt and
+  c instanceof ExitCompletion
+  or
   n instanceof ThrowStmt and
   c instanceof ThrowCompletion
   or
