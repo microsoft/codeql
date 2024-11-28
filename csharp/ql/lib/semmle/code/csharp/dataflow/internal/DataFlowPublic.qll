@@ -238,6 +238,20 @@ class PropertyContent extends Content, TPropertyContent {
   override Location getLocation() { result = p.getLocation() }
 }
 
+/** A reference to a dynamic property. */
+class DynamicPropertyContent extends Content, TDynamicPropertyContent {
+  private string s;
+
+  DynamicPropertyContent() { this = TDynamicPropertyContent(s) }
+
+  /** Gets the property that is referenced. */
+  DynamicMemberAccess getADynamicMemberAccess() { result.getLateBoundTargetName() = s }
+
+  override string toString() { result = "dynamic property " + s }
+
+  override Location getLocation() { result instanceof EmptyLocation }
+}
+
 /**
  * A reference to a synthetic field corresponding to a
  * primary constructor parameter.

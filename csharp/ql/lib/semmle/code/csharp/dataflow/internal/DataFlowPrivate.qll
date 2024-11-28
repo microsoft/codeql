@@ -824,6 +824,16 @@ private class Argument extends Expr {
  * `postUpdate` indicates whether the store targets a post-update node.
  */
 private predicate fieldOrPropertyStore(Expr e, ContentSet c, Expr src, Expr q, boolean postUpdate) {
+  exists(DynamicMemberAccess dma, AssignableDefinition def, DynamicPropertyContent dpc |
+    def.getTargetAccess() = dma and
+    dpc.getADynamicMemberAccess() = dma and
+    c.isSingleton(dpc) and
+    src = def.getSource() and
+    q = dma.getQualifier() and
+    e = def.getExpr() and
+    postUpdate = true
+  )
+  or
   exists(FieldOrProperty f |
     c = f.getContentSet() and
     (
@@ -1141,6 +1151,7 @@ private module Cached {
   newtype TContent =
     TFieldContent(Field f) { f.isUnboundDeclaration() } or
     TPropertyContent(Property p) { p.isUnboundDeclaration() } or
+    TDynamicPropertyContent(string s) { s = any(DynamicMemberAccess dma).getLateBoundTargetName() } or
     TElementContent() or
     TSyntheticFieldContent(SyntheticField f) or
     TPrimaryConstructorParameterContent(Parameter p) {
@@ -1157,6 +1168,9 @@ private module Cached {
   newtype TContentApprox =
     TFieldApproxContent(string firstChar) { firstChar = approximateFieldContent(_) } or
     TPropertyApproxContent(string firstChar) { firstChar = approximatePropertyContent(_) } or
+    TDynamicPropertyApproxContent(string firstChar) {
+      firstChar = approximateDynamicPropertyContent(_)
+    } or
     TElementApproxContent() or
     TSyntheticFieldApproxContent() or
     TPrimaryConstructorParameterApproxContent(string firstChar) {
@@ -3034,6 +3048,11 @@ class ContentApprox extends TContentApprox {
       this = TPropertyApproxContent(firstChar) and result = "approximated property " + firstChar
     )
     or
+    exists(string firstChar |
+      this = TDynamicPropertyApproxContent(firstChar) and
+      result = "approximated dynamic property " + firstChar
+    )
+    or
     this = TElementApproxContent() and result = "element"
     or
     this = TSyntheticFieldApproxContent() and result = "approximated synthetic field"
@@ -3059,6 +3078,14 @@ private string approximatePropertyContent(PropertyContent pc) {
   result = pc.getProperty().getName().prefix(1)
 }
 
+/** Gets a string for approximating the name of a property. */
+private string approximateDynamicPropertyContent(DynamicPropertyContent dpc) {
+  exists(DynamicMemberAccess dma |
+    dpc.getADynamicMemberAccess() = dma and
+    result = dma.getLateBoundTargetName().prefix(1)
+  )
+}
+
 /**
  * Gets a string for approximating the name of a synthetic field corresponding
  * to a primary constructor parameter.
@@ -3073,6 +3100,8 @@ ContentApprox getContentApprox(Content c) {
   result = TFieldApproxContent(approximateFieldContent(c))
   or
   result = TPropertyApproxContent(approximatePropertyContent(c))
+  or
+  result = TDynamicPropertyApproxContent(approximateDynamicPropertyContent(c))
   or
   c instanceof ElementContent and result = TElementApproxContent()
   or
