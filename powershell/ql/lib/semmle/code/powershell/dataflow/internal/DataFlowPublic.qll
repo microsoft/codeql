@@ -482,7 +482,7 @@ class CallNode extends AstNode {
   int getNumberOfArguments() { result = call.getNumberOfArguments() }
 }
 
-/** A call to operator `&`, viwed as a node in a data flow graph. */
+/** A call to operator `&`, viewed as a node in a data flow graph. */
 class CallOperatorNode extends CallNode {
   override CfgNodes::StmtNodes::CallOperatorCfgNode call;
 
