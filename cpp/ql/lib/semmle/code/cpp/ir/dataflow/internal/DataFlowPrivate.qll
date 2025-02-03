@@ -46,6 +46,12 @@ private module Cached {
       TRawIndirectInstruction0(Node0Impl node, int indirectionIndex) {
         not exists(node.asOperand()) and
         Ssa::hasRawIndirectInstruction(node.asInstruction(), indirectionIndex)
+      } or
+      TFinalParameterNode(Parameter p, int indirectionIndex) {
+        exists(Ssa::FinalParameterUse use |
+          use.getParameter() = p and
+          use.getIndirectionIndex() = indirectionIndex
+        )
       }
   }
 
@@ -109,6 +115,8 @@ int getNumberOfIndirections0(Node1Impl n) {
   n = TRawIndirectOperand0(_, result)
   or
   n = TRawIndirectInstruction0(_, result)
+  or
+  n = TFinalParameterNode(_, result)
 }
 
 private string stars0(Node1Impl n) { result = repeatStars(getNumberOfIndirections0(n)) }
@@ -581,6 +589,45 @@ private module IndirectInstructions {
 }
 
 import IndirectInstructions
+
+/**
+ * INTERNAL: do not use.
+ *
+ * A node representing the value of an update parameter
+ * just before reaching the end of a function.
+ */
+class FinalParameterNode0 extends Node1Impl, TFinalParameterNode {
+  Parameter p;
+  int indirectionIndex;
+
+  FinalParameterNode0() { this = TFinalParameterNode(p, indirectionIndex) }
+
+  /** Gets the parameter associated with this final use. */
+  Parameter getParameter() { result = p }
+
+  /** Gets the underlying indirection index. */
+  int getIndirectionIndex() { result = indirectionIndex }
+
+  /** Gets the argument index associated with this final use. */
+  final int getArgumentIndex() { result = p.getIndex() }
+
+  override Declaration getFunction() { result = p.getFunction() }
+
+  override Declaration getEnclosingCallable() { result = this.getFunction() }
+
+  override DataFlowType getType() { result = getTypeImpl(p.getUnderlyingType(), indirectionIndex) }
+
+  final override Location getLocationImpl() {
+    // Parameters can have multiple locations. When there's a unique location we use
+    // that one, but if multiple locations exist we default to an unknown location.
+    result = unique( | | p.getLocation())
+    or
+    not exists(unique( | | p.getLocation())) and
+    result instanceof UnknownDefaultLocation
+  }
+
+  override string toStringImpl() { result = stars0(this) + p.toString() }
+}
 
 /** Gets the callable in which this node occurs. */
 DataFlowCallable nodeGetEnclosingCallable(Node n) { result = n.getEnclosingCallable() }

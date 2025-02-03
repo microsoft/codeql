@@ -1062,39 +1062,17 @@ Type getTypeImpl(Type t, int indirectionIndex) {
  * A node representing the value of an update parameter
  * just before reaching the end of a function.
  */
-class FinalParameterNode extends Node, TFinalParameterNode {
-  Parameter p;
-  int indirectionIndex;
-
-  FinalParameterNode() { this = TFinalParameterNode(p, indirectionIndex) }
+class FinalParameterNode extends Node, Node1 {
+  override FinalParameterNode0 node;
 
   /** Gets the parameter associated with this final use. */
-  Parameter getParameter() { result = p }
+  Parameter getParameter() { result = node.getParameter() }
 
   /** Gets the underlying indirection index. */
-  int getIndirectionIndex() { result = indirectionIndex }
+  int getIndirectionIndex() { result = node.getIndirectionIndex() }
 
   /** Gets the argument index associated with this final use. */
-  final int getArgumentIndex() { result = p.getIndex() }
-
-  override Declaration getFunction() { result = p.getFunction() }
-
-  override DataFlowCallable getEnclosingCallable() {
-    result.asSourceCallable() = this.getFunction()
-  }
-
-  override DataFlowType getType() { result = getTypeImpl(p.getUnderlyingType(), indirectionIndex) }
-
-  final override Location getLocationImpl() {
-    // Parameters can have multiple locations. When there's a unique location we use
-    // that one, but if multiple locations exist we default to an unknown location.
-    result = unique( | | p.getLocation())
-    or
-    not exists(unique( | | p.getLocation())) and
-    result instanceof UnknownDefaultLocation
-  }
-
-  override string toStringImpl() { result = stars(this) + p.toString() }
+  final int getArgumentIndex() { result = node.getArgumentIndex() }
 }
 
 /**
