@@ -738,36 +738,12 @@ class SideEffectOperandNode extends Node instanceof IndirectOperand {
   Expr getArgument() { result = call.getArgument(argumentIndex).getUnconvertedResultExpression() }
 }
 
-/**
- * INTERNAL: do not use.
- *
- * A node representing the value of a global variable just before returning
- * from a function body.
- */
-class FinalGlobalValue extends Node, TFinalGlobalValue {
-  Ssa::GlobalUse globalUse;
+class FinalGlobalValue extends Node, Node1 {
+  override FinalGlobalValue0 node;
 
-  FinalGlobalValue() { this = TFinalGlobalValue(globalUse) }
-
-  /** Gets the underlying SSA use. */
-  Ssa::GlobalUse getGlobalUse() { result = globalUse }
-
-  override DataFlowCallable getEnclosingCallable() {
-    result.asSourceCallable() = this.getFunction()
+  Ssa::GlobalUse getGlobalUse() {
+    result = node.getGlobalUse()
   }
-
-  override Declaration getFunction() { result = globalUse.getIRFunction().getFunction() }
-
-  override DataFlowType getType() {
-    exists(int indirectionIndex |
-      indirectionIndex = globalUse.getIndirectionIndex() and
-      result = getTypeImpl(globalUse.getUnderlyingType(), indirectionIndex - 1)
-    )
-  }
-
-  final override Location getLocationImpl() { result = globalUse.getLocation() }
-
-  override string toStringImpl() { result = globalUse.toString() }
 }
 
 /**

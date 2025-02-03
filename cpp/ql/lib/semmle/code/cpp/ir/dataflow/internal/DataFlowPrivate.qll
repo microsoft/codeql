@@ -52,7 +52,8 @@ private module Cached {
           use.getParameter() = p and
           use.getIndirectionIndex() = indirectionIndex
         )
-      }
+      } or
+      TFinalGlobalValue(Ssa::GlobalUse use)
   }
 
   /**
@@ -627,6 +628,32 @@ class FinalParameterNode0 extends Node1Impl, TFinalParameterNode {
   }
 
   override string toStringImpl() { result = stars0(this) + p.toString() }
+}
+
+/**
+ * INTERNAL: do not use.
+ *
+ * A node representing the value of a global variable just before returning
+ * from a function body.
+ */
+class FinalGlobalValue0 extends Node1Impl, TFinalGlobalValue {
+  Ssa::GlobalUse use;
+
+  FinalGlobalValue0() { this = TFinalGlobalValue(use) }
+
+  override Declaration getEnclosingCallable() { result = this.getFunction() }
+
+  override Declaration getFunction() { result = use.getIRFunction().getFunction() }
+
+  override DataFlowType getType() {
+    result = getTypeImpl(use.getUnderlyingType(), use.getIndirectionIndex() - 1)
+  }
+
+  final override Location getLocationImpl() { result = use.getLocation() }
+
+  override string toStringImpl() { result = use.toString() }
+
+  Ssa::GlobalUse getGlobalUse() { result = use }
 }
 
 /** Gets the callable in which this node occurs. */
