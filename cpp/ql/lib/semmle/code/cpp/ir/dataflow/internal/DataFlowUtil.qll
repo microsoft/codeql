@@ -746,33 +746,10 @@ class FinalGlobalValue extends Node, Node1 {
   }
 }
 
-/**
- * INTERNAL: do not use.
- *
- * A node representing the value of a global variable just after entering
- * a function body.
- */
-class InitialGlobalValue extends Node, TInitialGlobalValue {
-  Ssa::GlobalDef globalDef;
+class InitialGlobalValue extends Node, Node1 {
+  override InitialGlobalValue0 node;
 
-  InitialGlobalValue() { this = TInitialGlobalValue(globalDef) }
-
-  /** Gets the underlying SSA definition. */
-  Ssa::GlobalDef getGlobalDef() { result = globalDef }
-
-  override DataFlowCallable getEnclosingCallable() {
-    result.asSourceCallable() = this.getFunction()
-  }
-
-  override Declaration getFunction() { result = globalDef.getFunction() }
-
-  final override predicate isGLValue() { globalDef.getIndirectionIndex() = 0 }
-
-  override DataFlowType getType() { result = globalDef.getUnderlyingType() }
-
-  final override Location getLocationImpl() { result = globalDef.getLocation() }
-
-  override string toStringImpl() { result = globalDef.toString() }
+  Ssa::GlobalDef getDef() { result = node.getDef() }
 }
 
 /**

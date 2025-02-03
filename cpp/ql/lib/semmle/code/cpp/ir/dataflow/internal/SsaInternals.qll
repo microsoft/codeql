@@ -706,7 +706,7 @@ predicate defToNode(
     or
     nodeHasInstruction(node, def.getValue().asInstruction(), def.getIndirectionIndex())
     or
-    node.(InitialGlobalValue).getGlobalDef() = def
+    node = def.(GlobalDef).getNode()
   ) and
   if def.isCertain() then uncertain = false else uncertain = true
 }
@@ -1097,6 +1097,8 @@ class GlobalDef extends DefinitionExt {
    * definition.
    */
   GlobalLikeVariable getVariable() { result = impl.getVariable() }
+
+  InitialGlobalValue getNode() { result.getDef() = this }
 }
 
 private module SsaImpl = SsaImplCommon::Make<Location, SsaInput>;
