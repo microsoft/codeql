@@ -53,7 +53,8 @@ private module Cached {
           use.getIndirectionIndex() = indirectionIndex
         )
       } or
-      TFinalGlobalValue(Ssa::GlobalUse use)
+      TFinalGlobalValue(Ssa::GlobalUse use) or
+      TInitialGlobalValue(Ssa::GlobalDef def)
   }
 
   /**
@@ -656,6 +657,39 @@ class FinalGlobalValue0 extends Node1Impl, TFinalGlobalValue {
   Ssa::GlobalUse getGlobalUse() { result = use }
 }
 
+/**
+ * INTERNAL: do not use.
+ *
+ * A node representing the value of a global variable just after entering
+ * a function body.
+ */
+class InitialGlobalValue0 extends Node1Impl, TInitialGlobalValue {
+  Ssa::GlobalDef def;
+
+  InitialGlobalValue0() { this = TInitialGlobalValue(def) }
+
+  override Declaration getEnclosingCallable() { result = this.getFunction() }
+
+  override Declaration getFunction() { result = def.getFunction() }
+
+  Ssa::GlobalDef getDef() { result = def }
+
+  final override predicate isGLValue() { def.getIndirectionIndex() = 0 }
+
+  override DataFlowType getType() {
+    exists(DataFlowType type |
+      type = def.getUnderlyingType() and
+      if this.isGLValue()
+      then result = type
+      else result = getTypeImpl(type, def.getIndirectionIndex() - 1)
+    )
+  }
+
+  final override Location getLocationImpl() { result = def.getLocation() }
+
+  override string toStringImpl() { result = def.toString() }
+}
+
 /** Gets the callable in which this node occurs. */
 DataFlowCallable nodeGetEnclosingCallable(Node n) { result = n.getEnclosingCallable() }
 
@@ -1126,7 +1160,7 @@ predicate jumpStep(Node n1, Node n2) {
     or
     exists(Ssa::GlobalDef globalDef |
       v = globalDef.getVariable() and
-      n2.(InitialGlobalValue).getGlobalDef() = globalDef
+      n2 = globalDef.getNode()
     |
       globalDef.getIndirection() = getMinIndirectionForGlobalDef(globalDef) and
       v = n1.asVariable()

@@ -32,7 +32,6 @@ newtype TIRDataFlowNode =
   TSsaPhiInputNode(Ssa::PhiNode phi, IRBlock input) { phi.hasInputFromBlock(_, _, _, _, input) } or
   TSsaPhiNode(Ssa::PhiNode phi) or
   TSsaIteratorNode(IteratorFlow::IteratorFlowNode n) or
-  TInitialGlobalValue(Ssa::GlobalDef globalUse) or
   TBodyLessParameterNodeImpl(Parameter p, int indirectionIndex) {
     // Rule out parameters of catch blocks.
     not exists(p.getCatchBlock()) and
