@@ -771,33 +771,20 @@ class IndirectReturnNode extends Node {
  * has been returned from a function.
  */
 class IndirectArgumentOutNode extends PostUpdateNodeImpl {
-  override ArgumentOperand operand;
+  override IndirectArgumentOutNode0 node;
 
-  int getArgumentIndex() {
-    exists(CallInstruction call | call.getArgumentOperand(result) = operand)
-  }
+  int getArgumentIndex() { result = node.getArgumentIndex() }
 
-  Operand getAddressOperand() { result = operand }
+  Operand getAddressOperand() { result = node.getAddressOperand() }
 
-  CallInstruction getCallInstruction() { result.getAnArgumentOperand() = operand }
+  CallInstruction getCallInstruction() { result = node.getCallInstruction() }
 
   /**
    * Gets the `Function` that the call targets, if this is statically known.
    */
-  Function getStaticCallTarget() { result = this.getCallInstruction().getStaticCallTarget() }
+  Function getStaticCallTarget() { result = node.getStaticCallTarget() }
 
-  override string toStringImpl() {
-    exists(string prefix |
-      if this.getIndirectionIndex() > 0 then prefix = "" else prefix = "pointer to "
-    |
-      // This string should be unique enough to be helpful but common enough to
-      // avoid storing too many different strings.
-      result = prefix + this.getStaticCallTarget().getName() + " output argument"
-      or
-      not exists(this.getStaticCallTarget()) and
-      result = prefix + "output argument"
-    )
-  }
+  override string toStringImpl() { result = node.toString() }
 }
 
 /**
@@ -1362,19 +1349,14 @@ private module Cached {
    */
   cached
   predicate simpleLocalFlowStep(Node nodeFrom, Node nodeTo, string model) {
-    (
-      exists(Node1Impl nFrom, Node1Impl nTo |
-        nodeFrom = TNode1(nFrom) and
-        nodeTo = TNode1(nTo) and
-        simpleLocalFlowStep1(nFrom, nTo)
-      )
-      or
-      IteratorFlow::localFlowStep(nodeFrom, nodeTo)
-    ) and
+    IteratorFlow::localFlowStep(nodeFrom, nodeTo) and
     model = ""
     or
-    // Flow through modeled functions
-    modelFlow(nodeFrom, nodeTo, model)
+    exists(Node1Impl nFrom, Node1Impl nTo |
+      nodeFrom = TNode1(nFrom) and
+      nodeTo = TNode1(nTo) and
+      simpleLocalFlowStep1(nFrom, nTo, model)
+    )
     or
     // Reverse flow: data that flows from the definition node back into the indirection returned
     // by a function. This allows data to flow 'in' through references returned by a modeled
@@ -1385,24 +1367,6 @@ private module Cached {
     // models-as-data summarized flow
     FlowSummaryImpl::Private::Steps::summaryLocalStep(nodeFrom.(FlowSummaryNode).getSummaryNode(),
       nodeTo.(FlowSummaryNode).getSummaryNode(), true, model)
-  }
-
-  private predicate modelFlow(Node nodeFrom, Node nodeTo, string model) {
-    exists(
-      CallInstruction call, DataFlowFunction func, FunctionInput modelIn, FunctionOutput modelOut
-    |
-      call.getStaticCallTarget() = func and
-      func.hasDataFlow(modelIn, modelOut) and
-      model = "DataFlowFunction"
-    |
-      nodeFrom = callInput(call, modelIn) and
-      nodeTo = callOutput(call, modelOut)
-      or
-      exists(int d |
-        nodeFrom = callInput(call, modelIn, d) and
-        nodeTo = callOutput(call, modelOut, d)
-      )
-    )
   }
 
   private predicate reverseFlow(Node nodeFrom, Node nodeTo) {
