@@ -686,11 +686,8 @@ predicate adjacentDefRead(IRBlock bb1, int i1, SourceVariable sv, IRBlock bb2, i
   adjacentDefReadExt(_, sv, bb1, i1, bb2, i2)
 }
 
-predicate useToNode(IRBlock bb, int i, SourceVariable sv, Node nodeTo) {
-  exists(Node1Impl n |
-    useToNode0(bb, i, sv, n) and
-    nodeTo = TNode1(n)
-  )
+predicate useToNode(IRBlock bb, int i, SourceVariable sv, Node1Impl nodeTo) {
+  useToNode0(bb, i, sv, nodeTo)
 }
 
 predicate useToNode0(IRBlock bb, int i, SourceVariable sv, Node1Impl nodeTo) {
@@ -714,10 +711,10 @@ predicate outNodeHasAddressAndIndex(
  * Holds if `node` is the node that corresponds to the definition of `def`.
  */
 predicate defToNode(
-  Node node, DefinitionExt def, SourceVariable sv, IRBlock bb, int i, boolean uncertain
+  Node1Impl node, DefinitionExt def, SourceVariable sv, IRBlock bb, int i, boolean uncertain
 ) {
   def.hasIndexInBlock(bb, i, sv) and
-  node = TNode1(def.getNode()) and
+  node = def.getNode() and
   if def.isCertain() then uncertain = false else uncertain = true
 }
 
@@ -729,7 +726,7 @@ predicate defToNode(
  *
  * `uncertain` is `true` if this is an uncertain definition.
  */
-predicate nodeToDefOrUse(Node node, SourceVariable sv, IRBlock bb, int i, boolean uncertain) {
+predicate nodeToDefOrUse(Node1Impl node, SourceVariable sv, IRBlock bb, int i, boolean uncertain) {
   defToNode(node, _, sv, bb, i, uncertain)
   or
   // Node -> Use
@@ -741,14 +738,14 @@ predicate nodeToDefOrUse(Node node, SourceVariable sv, IRBlock bb, int i, boolea
  * Perform a single conversion-like step from `nFrom` to `nTo`. This relation
  * only holds when there is no use-use relation out of `nTo`.
  */
-private predicate indirectConversionFlowStep(Node nFrom, Node nTo) {
+private predicate indirectConversionFlowStep(Node1Impl nFrom, Node1Impl nTo) {
   not exists(SourceVariable sv, IRBlock bb2, int i2 |
     useToNode(bb2, i2, sv, nTo) and
     adjacentDefRead(bb2, i2, sv, _, _)
   ) and
   exists(Operand op1, Operand op2, int indirectionIndex, Instruction instr |
-    hasOperandAndIndex(nFrom, op1, pragma[only_bind_into](indirectionIndex)) and
-    hasOperandAndIndex(nTo, op2, pragma[only_bind_into](indirectionIndex)) and
+    hasOperandAndIndex1(nFrom, op1, pragma[only_bind_into](indirectionIndex)) and
+    hasOperandAndIndex1(nTo, op2, pragma[only_bind_into](indirectionIndex)) and
     instr = op2.getDef() and
     conversionFlow(op1, instr, _, _)
   )
@@ -758,11 +755,8 @@ private predicate indirectConversionFlowStep(Node nFrom, Node nTo) {
  * Holds if `node` is a phi input node that should receive flow from the
  * definition to (or use of) `sv` at `(bb1, i1)`.
  */
-private predicate phiToNode(SsaPhiInputNode node, SourceVariable sv, IRBlock bb1, int i1) {
-  exists(SsaPhiInputNode0 n |
-    node = TNode1(n) and
-    phiToNode0(n, sv, bb1, i1)
-  )
+private predicate phiToNode(SsaPhiInputNode0 node, SourceVariable sv, IRBlock bb1, int i1) {
+  phiToNode0(node, sv, bb1, i1)
 }
 
 /**
@@ -786,7 +780,7 @@ private predicate phiToNode0(SsaPhiInputNode0 node, SourceVariable sv, IRBlock b
  * is _not_ guaranteed to overwrite the entire allocation.
  */
 private predicate ssaFlowImpl(
-  IRBlock bb1, int i1, SourceVariable sv, Node nodeFrom, Node nodeTo, boolean uncertain
+  IRBlock bb1, int i1, SourceVariable sv, Node1Impl nodeFrom, Node1Impl nodeTo, boolean uncertain
 ) {
   nodeToDefOrUse(nodeFrom, sv, bb1, i1, uncertain) and
   (
@@ -801,7 +795,7 @@ private predicate ssaFlowImpl(
 }
 
 /** Gets a node that represents the prior definition of `node`. */
-private Node getAPriorDefinition(DefinitionExt next) {
+private Node1Impl getAPriorDefinition(DefinitionExt next) {
   exists(IRBlock bb, int i, SourceVariable sv |
     lastRefRedefExt(_, pragma[only_bind_into](sv), pragma[only_bind_into](bb),
       pragma[only_bind_into](i), _, next) and
@@ -831,14 +825,14 @@ private predicate inOut(FIO::FunctionInput input, FIO::FunctionOutput output) {
  *   first argument of `strcpy`).
  * - a conversion that flows to such an input.
  */
-private predicate modeledFlowBarrier(Node n) {
+private predicate modeledFlowBarrier(Node1Impl n) {
   exists(
     FIO::FunctionInput input, FIO::FunctionOutput output, CallInstruction call,
     PartialFlow::PartialFlowFunction partialFlowFunc
   |
-    n = callInput(call, input) and
+    n = callInput0(call, input) and
     inOut(input, output) and
-    exists(callOutput(call, output)) and
+    exists(callOutput0(call, output)) and
     partialFlowFunc = call.getStaticCallTarget() and
     not partialFlowFunc.isPartialWrite(output)
   |
@@ -847,17 +841,17 @@ private predicate modeledFlowBarrier(Node n) {
     call.getStaticCallTarget().(Taint::TaintFunction).hasTaintFlow(_, output)
   )
   or
-  exists(Operand operand, Instruction instr, Node n0, int indirectionIndex |
+  exists(Operand operand, Instruction instr, Node1Impl n0, int indirectionIndex |
     modeledFlowBarrier(n0) and
-    nodeHasInstruction(n0, instr, indirectionIndex) and
+    nodeHasInstruction1(n0, instr, indirectionIndex) and
     conversionFlow(operand, instr, false, _) and
-    nodeHasOperand(n, operand, indirectionIndex)
+    nodeHasOperand1(n, operand, indirectionIndex)
   )
 }
 
 /** Holds if there is def-use or use-use flow from `nodeFrom` to `nodeTo`. */
-predicate ssaFlow(Node nodeFrom, Node nodeTo) {
-  exists(Node nFrom, boolean uncertain, IRBlock bb, int i, SourceVariable sv |
+predicate ssaFlow(Node1Impl nodeFrom, Node1Impl nodeTo) {
+  exists(Node1Impl nFrom, boolean uncertain, IRBlock bb, int i, SourceVariable sv |
     ssaFlowImpl(bb, i, sv, nFrom, nodeTo, uncertain) and
     not modeledFlowBarrier(nFrom) and
     nodeFrom != nodeTo
@@ -893,16 +887,16 @@ private predicate isArgumentOfCallableOperand(DataFlowCall call, Operand operand
   )
 }
 
-private predicate isArgumentOfCallable(DataFlowCall call, Node n) {
+private predicate isArgumentOfCallable(DataFlowCall call, Node1Impl n) {
   isArgumentOfCallableOperand(call, n.asOperand())
   or
   exists(Operand op |
-    n.(IndirectOperand).hasOperandAndIndirectionIndex(op, _) and
+    n.(IndirectOperand1).hasOperandAndIndirectionIndex(op, _) and
     isArgumentOfCallableOperand(call, op)
   )
   or
   exists(Instruction instr |
-    n.(IndirectInstruction).hasInstructionAndIndirectionIndex(instr, _) and
+    n.(IndirectInstruction1).hasInstructionAndIndirectionIndex(instr, _) and
     isArgumentOfCallableInstruction(call, instr)
   )
 }
@@ -910,7 +904,7 @@ private predicate isArgumentOfCallable(DataFlowCall call, Node n) {
 /**
  * Holds if there is use-use flow from `pun`'s pre-update node to `n`.
  */
-private predicate postUpdateNodeToFirstUse(PostUpdateNode pun, Node n) {
+private predicate postUpdateNodeToFirstUse(PostUpdateNode0 pun, Node1Impl n) {
   // We cannot mark a `PointerArithmeticInstruction` that computes an offset
   // based on some SSA
   // variable `x` as a use of `x` since this creates taint-flow in the
@@ -926,7 +920,7 @@ private predicate postUpdateNodeToFirstUse(PostUpdateNode pun, Node n) {
   // So this predicate recurses back along conversions and `PointerArithmetic`
   // instructions to find the first use that has provides use-use flow, and
   // uses that target as the target of the `nodeFrom`.
-  exists(Node adjusted, IRBlock bb1, int i1, SourceVariable sv |
+  exists(Node1Impl adjusted, IRBlock bb1, int i1, SourceVariable sv |
     indirectConversionFlowStep*(adjusted, pun.getPreUpdateNode()) and
     useToNode(bb1, i1, sv, adjusted)
   |
@@ -939,9 +933,9 @@ private predicate postUpdateNodeToFirstUse(PostUpdateNode pun, Node n) {
   )
 }
 
-private predicate stepUntilNotInCall(DataFlowCall call, Node n1, Node n2) {
+private predicate stepUntilNotInCall(DataFlowCall call, Node1Impl n1, Node1Impl n2) {
   isArgumentOfCallable(call, n1) and
-  exists(Node mid | ssaFlowImpl(_, _, _, n1, mid, _) |
+  exists(Node1Impl mid | ssaFlowImpl(_, _, _, n1, mid, _) |
     isArgumentOfCallable(call, mid) and
     stepUntilNotInCall(call, mid, n2)
     or
@@ -952,7 +946,7 @@ private predicate stepUntilNotInCall(DataFlowCall call, Node n1, Node n2) {
 
 bindingset[n1, n2]
 pragma[inline_late]
-private predicate isArgumentOfSameCall(DataFlowCall call, Node n1, Node n2) {
+private predicate isArgumentOfSameCall(DataFlowCall call, Node1Impl n1, Node1Impl n2) {
   isArgumentOfCallable(call, n1) and isArgumentOfCallable(call, n2)
 }
 
@@ -973,8 +967,8 @@ private predicate isArgumentOfSameCall(DataFlowCall call, Node n1, Node n2) {
  * similarly we want flow from the second argument of `write_first_argument` to `x`
  * on the next line.
  */
-predicate postUpdateFlow(PostUpdateNode pun, Node nodeTo) {
-  exists(Node preUpdate, Node mid |
+predicate postUpdateFlow(PostUpdateNode0 pun, Node1Impl nodeTo) {
+  exists(Node1Impl preUpdate, Node1Impl mid |
     preUpdate = pun.getPreUpdateNode() and
     postUpdateNodeToFirstUse(pun, mid)
   |
@@ -989,7 +983,7 @@ predicate postUpdateFlow(PostUpdateNode pun, Node nodeTo) {
 }
 
 /** Holds if `nodeTo` receives flow from the phi node `nodeFrom`. */
-predicate fromPhiNode(SsaPhiNode nodeFrom, Node nodeTo) {
+predicate fromPhiNode(SsaPhiNode0 nodeFrom, Node1Impl nodeTo) {
   exists(PhiNode phi, SourceVariable sv, IRBlock bb1, int i1 |
     phi = nodeFrom.getPhiNode() and
     phi.definesAt(sv, bb1, i1, _)

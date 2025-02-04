@@ -806,7 +806,7 @@ class SsaPhiInputNode0 extends Node1Impl, TSsaPhiInputNode {
 /**
  * INTERNAL: Do not use.
  */
-class PostUpdateNodeImpl0 extends Node1Impl, TPostUpdateNodeImpl {
+class PostUpdateNodeImpl0 extends PostUpdateNode0, TPostUpdateNodeImpl {
   int indirectionIndex;
   Operand operand;
 
@@ -828,13 +828,89 @@ class PostUpdateNodeImpl0 extends Node1Impl, TPostUpdateNodeImpl {
 
   override Location getLocationImpl() { result = operand.getLocation() }
 
-  Node1Impl getPreUpdateNode() {
+  final override Node1Impl getPreUpdateNode() {
     indirectionIndex > 0 and
     hasOperandAndIndex1(result, operand, indirectionIndex)
     or
     indirectionIndex = 0 and
     result.asOperand() = operand
   }
+}
+
+/**
+ * Holds if `node` is an indirect operand with columns `(operand, indirectionIndex)`, and
+ * `operand` represents a use of the fully converted value of `call`.
+ */
+private predicate hasOperand(
+  Node1Impl node, CallInstruction call, int indirectionIndex, Operand operand
+) {
+  operandForFullyConvertedCall(operand, call) and
+  hasOperandAndIndex1(node, operand, indirectionIndex)
+}
+
+/**
+ * Holds if `node` is an indirect instruction with columns `(instr, indirectionIndex)`, and
+ * `instr` represents a use of the fully converted value of `call`.
+ *
+ * Note that `hasOperand(node, _, _, _)` implies `not hasInstruction(node, _, _, _)`.
+ */
+private predicate hasInstruction(
+  Node1Impl node, CallInstruction call, int indirectionIndex, Instruction instr
+) {
+  instructionForFullyConvertedCall(instr, call) and
+  hasInstructionAndIndex1(node, instr, indirectionIndex)
+}
+
+class IndirectReturnOutNode0 extends Node1Impl {
+  CallInstruction call;
+  int indirectionIndex;
+
+  IndirectReturnOutNode0() {
+    // Annoyingly, we need to pick the fully converted value as the output of the function to
+    // make flow through in the shared dataflow library work correctly.
+    hasOperand(this, call, indirectionIndex, _)
+    or
+    hasInstruction(this, call, indirectionIndex, _)
+  }
+
+  CallInstruction getCallInstruction() { result = call }
+
+  int getIndirectionIndex() { result = indirectionIndex }
+
+  /** Gets the operand associated with this node, if any. */
+  Operand getOperand() { hasOperand(this, call, indirectionIndex, result) }
+
+  /** Gets the instruction associated with this node, if any. */
+  Instruction getInstruction() { hasInstruction(this, call, indirectionIndex, result) }
+}
+
+/**
+ * The value of an uninitialized local variable, viewed as a node in a data
+ * flow graph.
+ */
+class UninitializedNode0 extends Node1Impl {
+  Cpp::LocalVariable v;
+
+  UninitializedNode0() {
+    exists(Ssa::DefinitionExt def, Ssa::SourceVariable sv |
+      def.getIndirectionIndex() = 0 and
+      def.getValue().asInstruction() instanceof UninitializedInstruction and
+      Ssa::defToNode(this, def, sv, _, _, _) and
+      v = sv.getBaseVariable().(Ssa::BaseIRVariable).getIRVariable().getAst()
+    )
+  }
+
+  /** Gets the uninitialized local variable corresponding to this node. */
+  Cpp::LocalVariable getLocalVariable() { result = v }
+}
+
+abstract class PostUpdateNode0 extends Node1Impl {
+  /**
+   * Gets the node before the state update.
+   */
+  abstract Node1Impl getPreUpdateNode();
+
+  override DataFlowType getType() { result = this.getPreUpdateNode().getType() }
 }
 
 /** Gets the callable in which this node occurs. */

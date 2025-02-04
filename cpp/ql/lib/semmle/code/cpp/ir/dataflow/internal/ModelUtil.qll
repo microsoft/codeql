@@ -7,12 +7,18 @@ private import semmle.code.cpp.ir.IR
 private import semmle.code.cpp.ir.dataflow.DataFlow
 private import DataFlowUtil
 private import DataFlowPrivate
+private import DataFlowNodes
 private import SsaInternals as Ssa
+
+private IndirectReturnOutNode0 getIndirectReturnOutNode0(CallInstruction call, int d) {
+  result.getCallInstruction() = call and
+  result.getIndirectionIndex() = d
+}
 
 /**
  * Gets the instruction that goes into `input` for `call`.
  */
-DataFlow::Node callInput(CallInstruction call, FunctionInput input) {
+Node1Impl callInput0(CallInstruction call, FunctionInput input) {
   // An argument or qualifier
   exists(int index |
     result.asOperand() = call.getArgumentOperand(index) and
@@ -21,14 +27,18 @@ DataFlow::Node callInput(CallInstruction call, FunctionInput input) {
   or
   // A value pointed to by an argument or qualifier
   exists(int index, int indirectionIndex |
-    hasOperandAndIndex(result, call.getArgumentOperand(index), indirectionIndex) and
+    hasOperandAndIndex1(result, call.getArgumentOperand(index), indirectionIndex) and
     input.isParameterDerefOrQualifierObject(index, indirectionIndex)
   )
   or
   exists(int ind |
-    result = getIndirectReturnOutNode(call, ind) and
+    result = getIndirectReturnOutNode0(call, ind) and
     input.isReturnValueDeref(ind)
   )
+}
+
+DataFlow::Node callInput(CallInstruction call, FunctionInput input) {
+  result = TNode1(callInput0(call, input))
 }
 
 /**
@@ -76,8 +86,7 @@ DataFlow::Node callInput(CallInstruction call, FunctionInput input, int d) {
 }
 
 private IndirectReturnOutNode getIndirectReturnOutNode(CallInstruction call, int d) {
-  result.getCallInstruction() = call and
-  result.getIndirectionIndex() = d
+  result = TNode1(getIndirectReturnOutNode0(call, d))
 }
 
 /**
