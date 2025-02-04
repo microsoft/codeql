@@ -51,7 +51,13 @@ private module Cached {
       TFinalGlobalValue(Ssa::GlobalUse use) or
       TInitialGlobalValue(Ssa::GlobalDef def) or
       TSsaPhiInputNode(Ssa::PhiNode phi, IRBlock input) { phi.hasInputFromBlock(_, _, _, _, input) } or
-      TSsaPhiNode(Ssa::PhiNode phi)
+      TSsaPhiNode(Ssa::PhiNode phi) or
+      TPostUpdateNodeImpl(Operand operand, int indirectionIndex) {
+        operand = any(FieldAddress fa).getObjectAddressOperand() and
+        indirectionIndex = [0 .. Ssa::countIndirectionsForCppType(Ssa::getLanguageType(operand))]
+        or
+        Ssa::isModifiableByCall(operand, indirectionIndex)
+      }
   }
 
   /**
@@ -794,6 +800,40 @@ class SsaPhiInputNode0 extends Node1Impl, TSsaPhiInputNode {
 
   /** Gets the source variable underlying this phi node. */
   Ssa::SourceVariable getSourceVariable() { result = phi.getSourceVariable() }
+}
+
+/**
+ * INTERNAL: Do not use.
+ */
+class PostUpdateNodeImpl0 extends Node1Impl, TPostUpdateNodeImpl {
+  int indirectionIndex;
+  Operand operand;
+
+  PostUpdateNodeImpl0() { this = TPostUpdateNodeImpl(operand, indirectionIndex) }
+
+  override Declaration getFunction() { result = operand.getUse().getEnclosingFunction() }
+
+  override Declaration getEnclosingCallable() {
+    result = this.getPreUpdateNode().getEnclosingCallable()
+  }
+
+  override DataFlowType getType() { result = this.getPreUpdateNode().getType() }
+
+  /** Gets the operand associated with this node. */
+  Operand getOperand() { result = operand }
+
+  /** Gets the indirection index associated with this node. */
+  int getIndirectionIndex() { result = indirectionIndex }
+
+  override Location getLocationImpl() { result = operand.getLocation() }
+
+  Node1Impl getPreUpdateNode() {
+    indirectionIndex > 0 and
+    hasOperandAndIndex1(result, operand, indirectionIndex)
+    or
+    indirectionIndex = 0 and
+    result.asOperand() = operand
+  }
 }
 
 /** Gets the callable in which this node occurs. */

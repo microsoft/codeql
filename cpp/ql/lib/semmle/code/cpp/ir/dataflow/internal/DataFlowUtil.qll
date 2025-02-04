@@ -510,36 +510,20 @@ Type stripPointer(Type t) {
   result = t.(FunctionPointerIshType).getBaseType()
 }
 
-/**
- * INTERNAL: Do not use.
- */
-class PostUpdateNodeImpl extends PartialDefinitionNode, TPostUpdateNodeImpl {
-  int indirectionIndex;
+class PostUpdateNodeImpl extends Node1, PartialDefinitionNode {
+  override PostUpdateNodeImpl0 node;
   Operand operand;
 
-  PostUpdateNodeImpl() { this = TPostUpdateNodeImpl(operand, indirectionIndex) }
+  PostUpdateNodeImpl() { operand = node.getOperand() }
 
-  override Declaration getFunction() { result = operand.getUse().getEnclosingFunction() }
+  final override Node getPreUpdateNode() { result = TNode1(node.getPreUpdateNode()) }
 
-  override DataFlowCallable getEnclosingCallable() {
-    result = this.getPreUpdateNode().getEnclosingCallable()
-  }
+  override DataFlowType getType() { result = node.getType() }
 
   /** Gets the operand associated with this node. */
   Operand getOperand() { result = operand }
 
-  /** Gets the indirection index associated with this node. */
-  override int getIndirectionIndex() { result = indirectionIndex }
-
-  override Location getLocationImpl() { result = operand.getLocation() }
-
-  final override Node getPreUpdateNode() {
-    indirectionIndex > 0 and
-    hasOperandAndIndex(result, operand, indirectionIndex)
-    or
-    indirectionIndex = 0 and
-    result.asOperand() = operand
-  }
+  override int getIndirectionIndex() { result = node.getIndirectionIndex() }
 
   final override Expr getDefinedExpr() {
     result = operand.getDef().getUnconvertedResultExpression()
@@ -803,7 +787,9 @@ class IndirectArgumentOutNode extends PostUpdateNodeImpl {
   Function getStaticCallTarget() { result = this.getCallInstruction().getStaticCallTarget() }
 
   override string toStringImpl() {
-    exists(string prefix | if indirectionIndex > 0 then prefix = "" else prefix = "pointer to " |
+    exists(string prefix |
+      if this.getIndirectionIndex() > 0 then prefix = "" else prefix = "pointer to "
+    |
       // This string should be unique enough to be helpful but common enough to
       // avoid storing too many different strings.
       result = prefix + this.getStaticCallTarget().getName() + " output argument"
@@ -1214,7 +1200,7 @@ abstract class PostUpdateNode extends Node {
    */
   abstract Node getPreUpdateNode();
 
-  final override DataFlowType getType() { result = this.getPreUpdateNode().getType() }
+  override DataFlowType getType() { result = this.getPreUpdateNode().getType() }
 }
 
 /**

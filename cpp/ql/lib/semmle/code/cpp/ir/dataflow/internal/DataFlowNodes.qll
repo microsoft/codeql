@@ -23,12 +23,6 @@ newtype TIRDataFlowNode =
     indirectionIndex =
       [getMinIndirectionsForType(var.getUnspecifiedType()) .. Ssa::getMaxIndirectionsForType(var.getUnspecifiedType())]
   } or
-  TPostUpdateNodeImpl(Operand operand, int indirectionIndex) {
-    operand = any(FieldAddress fa).getObjectAddressOperand() and
-    indirectionIndex = [0 .. Ssa::countIndirectionsForCppType(Ssa::getLanguageType(operand))]
-    or
-    Ssa::isModifiableByCall(operand, indirectionIndex)
-  } or
   TSsaIteratorNode(IteratorFlow::IteratorFlowNode n) or
   TBodyLessParameterNodeImpl(Parameter p, int indirectionIndex) {
     // Rule out parameters of catch blocks.
