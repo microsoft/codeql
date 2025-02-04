@@ -563,120 +563,44 @@ class PostFieldUpdateNode extends PostUpdateNodeImpl {
   override string toStringImpl() { result = this.getPreUpdateNode() + " [post update]" }
 }
 
-/**
- * INTERNAL: do not use.
- *
- * A phi node produced by the shared SSA library, viewed as a node in a data flow graph.
- */
-class SsaPhiNode extends Node, TSsaPhiNode {
-  Ssa::PhiNode phi;
+class SsaPhiNode extends Node1 {
+  override SsaPhiNode0 node;
 
-  SsaPhiNode() { this = TSsaPhiNode(phi) }
+  predicate isPhiRead() { node.isPhiRead() }
 
   /** Gets the phi node associated with this node. */
-  Ssa::PhiNode getPhiNode() { result = phi }
+  Ssa::PhiNode getPhiNode() { result = node.getPhiNode() }
 
-  override DataFlowCallable getEnclosingCallable() {
-    result.asSourceCallable() = this.getFunction()
-  }
-
-  override Declaration getFunction() { result = phi.getBasicBlock().getEnclosingFunction() }
-
-  override DataFlowType getType() {
-    exists(Ssa::SourceVariable sv |
-      this.getPhiNode().definesAt(sv, _, _, _) and
-      result = sv.getType()
-    )
-  }
-
-  override predicate isGLValue() { phi.getSourceVariable().isGLValue() }
-
-  final override Location getLocationImpl() { result = phi.getBasicBlock().getLocation() }
-
-  override string toStringImpl() { result = phi.toString() }
+  /** Gets the source variable underlying this phi node. */
+  Ssa::SourceVariable getSourceVariable() { result = node.getSourceVariable() }
 
   /**
    * Gets a node that is used as input to this phi node.
    * `fromBackEdge` is true if data flows along a back-edge,
    * and `false` otherwise.
    */
-  cached
-  final Node getAnInput(boolean fromBackEdge) {
-    result.(SsaPhiInputNode).getPhiNode() = phi and
-    exists(IRBlock bPhi, IRBlock bResult |
-      bPhi = phi.getBasicBlock() and bResult = result.getBasicBlock()
-    |
-      if bPhi.dominates(bResult) then fromBackEdge = true else fromBackEdge = false
-    )
-  }
+  final Node getAnInput(boolean fromBackEdge) { result = node.getAnInput(fromBackEdge) }
 
   /** Gets a node that is used as input to this phi node. */
-  final Node getAnInput() { result = this.getAnInput(_) }
-
-  /** Gets the source variable underlying this phi node. */
-  Ssa::SourceVariable getSourceVariable() { result = phi.getSourceVariable() }
-
-  /**
-   * Holds if this phi node is a phi-read node.
-   *
-   * Phi-read nodes are like normal phi nodes, but they are inserted based
-   * on reads instead of writes.
-   */
-  predicate isPhiRead() { phi.isPhiRead() }
+  final Node getAnInput() { result = node.getAnInput() }
 }
 
-/**
- * INTERNAL: Do not use.
- *
- * A node that is used as an input to a phi node.
- *
- * This class exists to allow more powerful barrier guards. Consider this
- * example:
- *
- * ```cpp
- * int x = source();
- * if(!safe(x)) {
- *   x = clear();
- * }
- * // phi node for x here
- * sink(x);
- * ```
- *
- * At the phi node for `x` it is neither the case that `x` is dominated by
- * `safe(x)`, or is the case that the phi is dominated by a clearing of `x`.
- *
- * By inserting a "phi input" node as the last entry in the basic block that
- * defines the inputs to the phi we can conclude that each of those inputs are
- * safe to pass to `sink`.
- */
-class SsaPhiInputNode extends Node, TSsaPhiInputNode {
-  Ssa::PhiNode phi;
-  IRBlock block;
-
-  SsaPhiInputNode() { this = TSsaPhiInputNode(phi, block) }
+class SsaPhiInputNode extends Node1 {
+  override SsaPhiInputNode0 node;
 
   /** Gets the phi node associated with this node. */
-  Ssa::PhiNode getPhiNode() { result = phi }
+  Ssa::PhiNode getPhiNode() { result = node.getPhiNode() }
 
   /** Gets the basic block in which this input originates. */
-  IRBlock getBlock() { result = block }
-
-  override DataFlowCallable getEnclosingCallable() {
-    result.asSourceCallable() = this.getFunction()
-  }
-
-  override Declaration getFunction() { result = phi.getBasicBlock().getEnclosingFunction() }
-
-  override DataFlowType getType() { result = this.getSourceVariable().getType() }
-
-  override predicate isGLValue() { phi.getSourceVariable().isGLValue() }
-
-  final override Location getLocationImpl() { result = block.getLastInstruction().getLocation() }
-
-  override string toStringImpl() { result = "Phi input" }
+  IRBlock getBlock() { result = node.getBlock() }
 
   /** Gets the source variable underlying this phi node. */
-  Ssa::SourceVariable getSourceVariable() { result = phi.getSourceVariable() }
+  Ssa::SourceVariable getSourceVariable() { result = node.getSourceVariable() }
+}
+
+private SsaPhiInputNode ssaPhiInputNode(Ssa::PhiNode phi, IRBlock block) {
+  result.getPhiNode() = phi and
+  result.getBlock() = block
 }
 
 /**
@@ -2114,7 +2038,7 @@ module BarrierGuard<guardChecksSig/3 guardChecks> {
       guardChecks(g, def.getARead().asOperand().getDef().getConvertedResultExpression(), branch) and
       guardControlsPhiInput(g, branch, def, pragma[only_bind_into](input),
         pragma[only_bind_into](phi)) and
-      result = TSsaPhiInputNode(phi, input)
+      result = ssaPhiInputNode(phi, input)
     )
   }
 
@@ -2214,7 +2138,7 @@ module BarrierGuard<guardChecksSig/3 guardChecks> {
         branch) and
       guardControlsPhiInput(g, branch, def, pragma[only_bind_into](input),
         pragma[only_bind_into](phi)) and
-      result = TSsaPhiInputNode(phi, input)
+      result = ssaPhiInputNode(phi, input)
     )
   }
 }
@@ -2262,7 +2186,7 @@ module InstructionBarrierGuard<instructionGuardChecksSig/3 instructionGuardCheck
       instructionGuardChecks(g, def.getARead().asOperand().getDef(), branch) and
       guardControlsPhiInput(g, branch, def, pragma[only_bind_into](input),
         pragma[only_bind_into](phi)) and
-      result = TSsaPhiInputNode(phi, input)
+      result = ssaPhiInputNode(phi, input)
     )
   }
 
@@ -2292,7 +2216,7 @@ module InstructionBarrierGuard<instructionGuardChecksSig/3 instructionGuardCheck
       instructionGuardChecks(g, def.getARead().asIndirectOperand(indirectionIndex).getDef(), branch) and
       guardControlsPhiInput(g, branch, def, pragma[only_bind_into](input),
         pragma[only_bind_into](phi)) and
-      result = TSsaPhiInputNode(phi, input)
+      result = ssaPhiInputNode(phi, input)
     )
   }
 }

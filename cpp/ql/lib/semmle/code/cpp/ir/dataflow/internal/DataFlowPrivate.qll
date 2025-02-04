@@ -54,7 +54,9 @@ private module Cached {
         )
       } or
       TFinalGlobalValue(Ssa::GlobalUse use) or
-      TInitialGlobalValue(Ssa::GlobalDef def)
+      TInitialGlobalValue(Ssa::GlobalDef def) or
+      TSsaPhiInputNode(Ssa::PhiNode phi, IRBlock input) { phi.hasInputFromBlock(_, _, _, _, input) } or
+      TSsaPhiNode(Ssa::PhiNode phi)
   }
 
   /**
@@ -688,6 +690,121 @@ class InitialGlobalValue0 extends Node1Impl, TInitialGlobalValue {
   final override Location getLocationImpl() { result = def.getLocation() }
 
   override string toStringImpl() { result = def.toString() }
+}
+
+/**
+ * INTERNAL: do not use.
+ *
+ * A phi node produced by the shared SSA library, viewed as a node in a data flow graph.
+ */
+class SsaPhiNode0 extends Node1Impl, TSsaPhiNode {
+  Ssa::PhiNode phi;
+
+  SsaPhiNode0() { this = TSsaPhiNode(phi) }
+
+  /** Gets the phi node associated with this node. */
+  Ssa::PhiNode getPhiNode() { result = phi }
+
+  override Declaration getEnclosingCallable() { result = this.getFunction() }
+
+  override Declaration getFunction() { result = phi.getBasicBlock().getEnclosingFunction() }
+
+  override DataFlowType getType() {
+    exists(Ssa::SourceVariable sv |
+      this.getPhiNode().definesAt(sv, _, _, _) and
+      result = sv.getType()
+    )
+  }
+
+  /** Gets the basic block to which this phi node belongs. */
+  IRBlock getBasicBlock() { result = phi.getBasicBlock() }
+
+  override predicate isGLValue() { phi.getSourceVariable().isGLValue() }
+
+  final override Location getLocationImpl() { result = phi.getBasicBlock().getLocation() }
+
+  override string toStringImpl() { result = phi.toString() }
+
+  /**
+   * Gets a node that is used as input to this phi node.
+   * `fromBackEdge` is true if data flows along a back-edge,
+   * and `false` otherwise.
+   */
+  cached
+  final Node getAnInput(boolean fromBackEdge) {
+    result.(SsaPhiInputNode).getPhiNode() = phi and
+    exists(IRBlock bPhi, IRBlock bResult |
+      bPhi = phi.getBasicBlock() and bResult = result.getBasicBlock()
+    |
+      if bPhi.dominates(bResult) then fromBackEdge = true else fromBackEdge = false
+    )
+  }
+
+  /** Gets a node that is used as input to this phi node. */
+  final Node getAnInput() { result = this.getAnInput(_) }
+
+  /** Gets the source variable underlying this phi node. */
+  Ssa::SourceVariable getSourceVariable() { result = phi.getSourceVariable() }
+
+  /**
+   * Holds if this phi node is a phi-read node.
+   *
+   * Phi-read nodes are like normal phi nodes, but they are inserted based
+   * on reads instead of writes.
+   */
+  predicate isPhiRead() { phi.isPhiRead() }
+}
+
+/**
+ * INTERNAL: Do not use.
+ *
+ * A node that is used as an input to a phi node.
+ *
+ * This class exists to allow more powerful barrier guards. Consider this
+ * example:
+ *
+ * ```cpp
+ * int x = source();
+ * if(!safe(x)) {
+ *   x = clear();
+ * }
+ * // phi node for x here
+ * sink(x);
+ * ```
+ *
+ * At the phi node for `x` it is neither the case that `x` is dominated by
+ * `safe(x)`, or is the case that the phi is dominated by a clearing of `x`.
+ *
+ * By inserting a "phi input" node as the last entry in the basic block that
+ * defines the inputs to the phi we can conclude that each of those inputs are
+ * safe to pass to `sink`.
+ */
+class SsaPhiInputNode0 extends Node1Impl, TSsaPhiInputNode {
+  Ssa::PhiNode phi;
+  IRBlock block;
+
+  SsaPhiInputNode0() { this = TSsaPhiInputNode(phi, block) }
+
+  /** Gets the phi node associated with this node. */
+  Ssa::PhiNode getPhiNode() { result = phi }
+
+  /** Gets the basic block in which this input originates. */
+  IRBlock getBlock() { result = block }
+
+  override Declaration getEnclosingCallable() { result = this.getFunction() }
+
+  override Declaration getFunction() { result = phi.getBasicBlock().getEnclosingFunction() }
+
+  override DataFlowType getType() { result = this.getSourceVariable().getType() }
+
+  override predicate isGLValue() { phi.getSourceVariable().isGLValue() }
+
+  final override Location getLocationImpl() { result = block.getLastInstruction().getLocation() }
+
+  override string toStringImpl() { result = "Phi input" }
+
+  /** Gets the source variable underlying this phi node. */
+  Ssa::SourceVariable getSourceVariable() { result = phi.getSourceVariable() }
 }
 
 /** Gets the callable in which this node occurs. */
