@@ -180,6 +180,8 @@ abstract class DefImpl extends TDefImpl {
   /** Gets a textual representation of this element. */
   abstract string toString();
 
+  abstract Node getNode();
+
   /** Gets the block of this definition or use. */
   final IRBlock getBlock() { this.hasIndexInBlock(result, _) }
 
@@ -372,6 +374,8 @@ private class DefVariableAddressImpl extends DefAddressImpl {
       index = 0
     )
   }
+
+  final override Node getNode() { none() }
 }
 
 private class DefCallAddressImpl extends DefAddressImpl {
@@ -380,6 +384,8 @@ private class DefCallAddressImpl extends DefAddressImpl {
   final override predicate hasIndexInBlock(IRBlock block, int index) {
     block.getInstruction(index) = v.getCallInstruction()
   }
+
+  final override Node getNode() { none() }
 }
 
 private class DirectDef extends DefImpl, TDirectDefImpl {
@@ -410,6 +416,12 @@ private class DirectDef extends DefImpl, TDirectDefImpl {
   override Node0Impl getValue() { isDef(_, result, address, _, _, _) }
 
   override predicate isCertain() { isDef(true, _, address, _, _, indirectionIndex) }
+
+  final override Node getNode() {
+    nodeHasOperand(result, this.getValue().asOperand(), this.getIndirectionIndex())
+    or
+    nodeHasInstruction(result, this.getValue().asInstruction(), this.getIndirectionIndex())
+  }
 }
 
 private class DirectUseImpl extends UseImpl, TDirectUseImpl {
@@ -454,14 +466,6 @@ private class DirectUseImpl extends UseImpl, TDirectUseImpl {
   override predicate isCertain() { isUse(true, operand, _, _, indirectionIndex) }
 
   override Node getNode() { nodeHasOperand(result, operand, indirectionIndex) }
-}
-
-pragma[nomagic]
-private predicate finalParameterNodeHasParameterAndIndex(
-  FinalParameterNode n, Parameter p, int indirectionIndex
-) {
-  n.getParameter() = p and
-  n.getIndirectionIndex() = indirectionIndex
 }
 
 class FinalParameterUse extends UseImpl, TFinalParameterUse {
@@ -669,6 +673,8 @@ class GlobalDefImpl extends DefImpl, TGlobalDefImpl {
   override string toString() { result = "Def of " + this.getSourceVariable() }
 
   override Location getLocation() { result = f.getLocation() }
+
+  final override InitialGlobalValue getNode() { getDefImpl(result.getDef()) = this }
 }
 
 /**
@@ -702,14 +708,8 @@ predicate outNodeHasAddressAndIndex(
 predicate defToNode(
   Node node, DefinitionExt def, SourceVariable sv, IRBlock bb, int i, boolean uncertain
 ) {
-  def.definesAt(sv, bb, i, _) and
-  (
-    nodeHasOperand(node, def.getValue().asOperand(), def.getIndirectionIndex())
-    or
-    nodeHasInstruction(node, def.getValue().asInstruction(), def.getIndirectionIndex())
-    or
-    node = def.(GlobalDef).getNode()
-  ) and
+  def.hasIndexInBlock(bb, i, sv) and
+  node = def.getNode() and
   if def.isCertain() then uncertain = false else uncertain = true
 }
 
@@ -1099,8 +1099,6 @@ class GlobalDef extends DefinitionExt {
    * definition.
    */
   GlobalLikeVariable getVariable() { result = impl.getVariable() }
-
-  InitialGlobalValue getNode() { result.getDef() = this }
 }
 
 private module SsaImpl = SsaImplCommon::Make<Location, SsaInput>;
@@ -1193,6 +1191,14 @@ class DefinitionExt extends SsaImpl::DefinitionExt {
       or
       phiToNode(result, sv, bb, i)
     )
+  }
+
+  /** INTERNAL: Do not use. */
+  Node getNode() { result = getDefImpl(this).getNode() }
+
+  /** Holds if this definition is is the `index`'th member in `block`. */
+  predicate hasIndexInBlock(IRBlock block, int index, SourceVariable sv) {
+    getDefImpl(this).hasIndexInBlock(block, index, sv)
   }
 }
 
