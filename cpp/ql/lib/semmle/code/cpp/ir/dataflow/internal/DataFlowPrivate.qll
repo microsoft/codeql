@@ -12,6 +12,7 @@ private import ModelUtil
 private import semmle.code.cpp.models.interfaces.FunctionInputsAndOutputs as IO
 private import semmle.code.cpp.models.interfaces.DataFlow as DF
 private import semmle.code.cpp.dataflow.ExternalFlow as External
+private import DataFlowNodes
 
 cached
 private module Cached {
@@ -2518,7 +2519,7 @@ module IteratorFlow {
     or
     exists(Ssa::UseImpl use |
       use.hasIndexInBlock(bb, i, sv) and
-      nodeTo = use.getNode()
+      nodeTo = TNode1(use.getNode())
     )
   }
 
