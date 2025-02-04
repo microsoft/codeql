@@ -665,9 +665,7 @@ class SideEffectOperandNode extends Node instanceof IndirectOperand {
 class FinalGlobalValue extends Node, Node1 {
   override FinalGlobalValue0 node;
 
-  Ssa::GlobalUse getGlobalUse() {
-    result = node.getGlobalUse()
-  }
+  Ssa::GlobalUse getGlobalUse() { result = node.getGlobalUse() }
 }
 
 class InitialGlobalValue extends Node, Node1 {
@@ -950,6 +948,8 @@ class FinalParameterNode extends Node, Node1 {
 
   /** Gets the argument index associated with this final use. */
   final int getArgumentIndex() { result = node.getArgumentIndex() }
+
+  Ssa::FinalParameterUse getUse() { result = node.getUse() }
 }
 
 /**
