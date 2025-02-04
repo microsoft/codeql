@@ -801,54 +801,23 @@ class IndirectArgumentOutNode extends PostUpdateNodeImpl {
 }
 
 /**
- * Holds if `node` is an indirect operand with columns `(operand, indirectionIndex)`, and
- * `operand` represents a use of the fully converted value of `call`.
- */
-private predicate hasOperand(Node node, CallInstruction call, int indirectionIndex, Operand operand) {
-  operandForFullyConvertedCall(operand, call) and
-  hasOperandAndIndex(node, operand, indirectionIndex)
-}
-
-/**
- * Holds if `node` is an indirect instruction with columns `(instr, indirectionIndex)`, and
- * `instr` represents a use of the fully converted value of `call`.
- *
- * Note that `hasOperand(node, _, _, _)` implies `not hasInstruction(node, _, _, _)`.
- */
-private predicate hasInstruction(
-  Node node, CallInstruction call, int indirectionIndex, Instruction instr
-) {
-  instructionForFullyConvertedCall(instr, call) and
-  hasInstructionAndIndex(node, instr, indirectionIndex)
-}
-
-/**
  * INTERNAL: do not use.
  *
  * A node representing the indirect value of a function call (i.e., a value hidden
  * behind a number of indirections).
  */
-class IndirectReturnOutNode extends Node {
-  CallInstruction call;
-  int indirectionIndex;
+class IndirectReturnOutNode extends Node1 {
+  override IndirectReturnOutNode0 node;
 
-  IndirectReturnOutNode() {
-    // Annoyingly, we need to pick the fully converted value as the output of the function to
-    // make flow through in the shared dataflow library work correctly.
-    hasOperand(this, call, indirectionIndex, _)
-    or
-    hasInstruction(this, call, indirectionIndex, _)
-  }
+  CallInstruction getCallInstruction() { result = node.getCallInstruction() }
 
-  CallInstruction getCallInstruction() { result = call }
-
-  int getIndirectionIndex() { result = indirectionIndex }
+  int getIndirectionIndex() { result = node.getIndirectionIndex() }
 
   /** Gets the operand associated with this node, if any. */
-  Operand getOperand() { hasOperand(this, call, indirectionIndex, result) }
+  Operand getOperand() { result = node.getOperand() }
 
   /** Gets the instruction associated with this node, if any. */
-  Instruction getInstruction() { hasInstruction(this, call, indirectionIndex, result) }
+  Instruction getInstruction() { result = node.getInstruction() }
 }
 
 /**
@@ -872,6 +841,8 @@ private class PostIndirectReturnOutNode extends IndirectReturnOutNode, PostUpdat
   }
 
   override Node getPreUpdateNode() { result = this }
+
+  override DataFlowType getType() { result = node.getType() }
 }
 
 /**
@@ -942,20 +913,11 @@ class FinalParameterNode extends Node, Node1 {
  * The value of an uninitialized local variable, viewed as a node in a data
  * flow graph.
  */
-class UninitializedNode extends Node {
-  LocalVariable v;
-
-  UninitializedNode() {
-    exists(Ssa::DefinitionExt def, Ssa::SourceVariable sv |
-      def.getIndirectionIndex() = 0 and
-      def.getValue().asInstruction() instanceof UninitializedInstruction and
-      Ssa::defToNode(this, def, sv, _, _, _) and
-      v = sv.getBaseVariable().(Ssa::BaseIRVariable).getIRVariable().getAst()
-    )
-  }
+class UninitializedNode extends Node1 {
+  override UninitializedNode0 node;
 
   /** Gets the uninitialized local variable corresponding to this node. */
-  LocalVariable getLocalVariable() { result = v }
+  LocalVariable getLocalVariable() { result = node.getLocalVariable() }
 }
 
 abstract private class AbstractParameterNode extends Node {
