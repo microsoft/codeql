@@ -697,14 +697,6 @@ predicate useToNode0(IRBlock bb, int i, SourceVariable sv, Node1Impl nodeTo) {
   )
 }
 
-pragma[noinline]
-predicate outNodeHasAddressAndIndex(
-  IndirectArgumentOutNode out, Operand address, int indirectionIndex
-) {
-  out.getAddressOperand() = address and
-  out.getIndirectionIndex() = indirectionIndex
-}
-
 /**
  * INTERNAL: Do not use.
  *

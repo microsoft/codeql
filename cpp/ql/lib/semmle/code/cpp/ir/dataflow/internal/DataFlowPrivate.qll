@@ -1041,6 +1041,47 @@ private predicate modelFlow(Node1Impl nodeFrom, Node1Impl nodeTo, string model) 
   )
 }
 
+private predicate reverseFlow(Node1Impl nodeFrom, Node1Impl nodeTo) {
+  reverseFlowOperand(nodeFrom, nodeTo)
+  or
+  reverseFlowInstruction(nodeFrom, nodeTo)
+}
+
+pragma[noinline]
+predicate outNodeHasAddressAndIndex(
+  IndirectArgumentOutNode0 out, Operand address, int indirectionIndex
+) {
+  out.getAddressOperand() = address and
+  out.getIndirectionIndex() = indirectionIndex
+}
+
+private predicate reverseFlowOperand(Node1Impl nodeFrom, IndirectReturnOutNode0 nodeTo) {
+  exists(Operand address, int indirectionIndex |
+    nodeHasOperand1(nodeTo, address, indirectionIndex)
+  |
+    exists(StoreInstruction store |
+      nodeHasInstruction1(nodeFrom, store, indirectionIndex - 1) and
+      store.getDestinationAddressOperand() = address
+    )
+    or
+    // We also want a write coming out of an `OutNode` to flow `nodeTo`.
+    // This is different from `reverseFlowInstruction` since `nodeFrom` can never
+    // be an `OutNode` when it's defined by an instruction.
+    outNodeHasAddressAndIndex(nodeFrom, address, indirectionIndex)
+  )
+}
+
+private predicate reverseFlowInstruction(Node1Impl nodeFrom, IndirectReturnOutNode0 nodeTo) {
+  exists(Instruction address, int indirectionIndex |
+    nodeHasInstruction1(nodeTo, address, indirectionIndex)
+  |
+    exists(StoreInstruction store |
+      nodeHasInstruction1(nodeFrom, store, indirectionIndex - 1) and
+      store.getDestinationAddress() = address
+    )
+  )
+}
+
 predicate simpleLocalFlowStep1(Node1Impl nodeFrom, Node1Impl nodeTo, string model) {
   (
     // Post update node -> Node flow
@@ -1077,6 +1118,12 @@ predicate simpleLocalFlowStep1(Node1Impl nodeFrom, Node1Impl nodeTo, string mode
   or
   // Flow through modeled functions
   modelFlow(nodeFrom, nodeTo, model)
+  or
+  // Reverse flow: data that flows from the definition node back into the indirection returned
+  // by a function. This allows data to flow 'in' through references returned by a modeled
+  // function such as `operator[]`.
+  reverseFlow(nodeFrom, nodeTo) and
+  model = ""
 }
 
 /** Gets the callable in which this node occurs. */
