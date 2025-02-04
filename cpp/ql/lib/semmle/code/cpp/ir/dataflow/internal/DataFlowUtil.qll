@@ -1353,67 +1353,6 @@ private module Cached {
     FlowSummaryImpl::Private::Steps::summaryThroughStepValue(nodeFrom, nodeTo, _)
   }
 
-  private predicate indirectionOperandFlow(RawIndirectOperand nodeFrom, Node nodeTo) {
-    nodeFrom != nodeTo and
-    (
-      // Reduce the indirection count by 1 if we're passing through a `LoadInstruction`.
-      exists(int ind, LoadInstruction load |
-        hasOperandAndIndex(nodeFrom, load.getSourceAddressOperand(), ind) and
-        nodeHasInstruction(nodeTo, load, ind - 1)
-      )
-      or
-      // If an operand flows to an instruction, then the indirection of
-      // the operand also flows to the indirection of the instruction.
-      exists(Operand operand, Instruction instr, int indirectionIndex |
-        simpleInstructionLocalFlowStep(operand, instr) and
-        hasOperandAndIndex(nodeFrom, operand, pragma[only_bind_into](indirectionIndex)) and
-        hasInstructionAndIndex(nodeTo, instr, pragma[only_bind_into](indirectionIndex))
-      )
-      or
-      // If there's indirect flow to an operand, then there's also indirect
-      // flow to the operand after applying some pointer arithmetic.
-      exists(PointerArithmeticInstruction pointerArith, int indirectionIndex |
-        hasOperandAndIndex(nodeFrom, pointerArith.getAnOperand(),
-          pragma[only_bind_into](indirectionIndex)) and
-        hasInstructionAndIndex(nodeTo, pointerArith, pragma[only_bind_into](indirectionIndex))
-      )
-    )
-  }
-
-  /**
-   * Holds if `operand.getDef() = instr`, but there exists a `StoreInstruction` that
-   * writes to an address that is equivalent to the value computed by `instr` in
-   * between `instr` and `operand`, and therefore there should not be flow from `*instr`
-   * to `*operand`.
-   */
-  pragma[nomagic]
-  private predicate isStoredToBetween(Instruction instr, Operand operand) {
-    simpleOperandLocalFlowStep(pragma[only_bind_into](instr), pragma[only_bind_into](operand)) and
-    exists(StoreInstruction store, IRBlock block, int storeIndex, int instrIndex, int operandIndex |
-      store.getDestinationAddress() = instr and
-      block.getInstruction(storeIndex) = store and
-      block.getInstruction(instrIndex) = instr and
-      block.getInstruction(operandIndex) = operand.getUse() and
-      instrIndex < storeIndex and
-      storeIndex < operandIndex
-    )
-  }
-
-  private predicate indirectionInstructionFlow(
-    RawIndirectInstruction nodeFrom, IndirectOperand nodeTo
-  ) {
-    nodeFrom != nodeTo and
-    // If there's flow from an instruction to an operand, then there's also flow from the
-    // indirect instruction to the indirect operand.
-    exists(Operand operand, Instruction instr, int indirectionIndex |
-      simpleOperandLocalFlowStep(pragma[only_bind_into](instr), pragma[only_bind_into](operand))
-    |
-      hasOperandAndIndex(nodeTo, operand, pragma[only_bind_into](indirectionIndex)) and
-      hasInstructionAndIndex(nodeFrom, instr, pragma[only_bind_into](indirectionIndex)) and
-      not isStoredToBetween(instr, operand)
-    )
-  }
-
   /**
    * INTERNAL: do not use.
    *
@@ -1424,37 +1363,13 @@ private module Cached {
   cached
   predicate simpleLocalFlowStep(Node nodeFrom, Node nodeTo, string model) {
     (
-      // Post update node -> Node flow
-      Ssa::postUpdateFlow(nodeFrom, nodeTo)
-      or
-      // Def-use/Use-use flow
-      Ssa::ssaFlow(nodeFrom, nodeTo)
-      or
-      // Phi input -> Phi
-      nodeFrom.(SsaPhiInputNode).getPhiNode() = nodeTo.(SsaPhiNode).getPhiNode()
-      or
-      IteratorFlow::localFlowStep(nodeFrom, nodeTo)
-      or
-      // Operand -> Instruction flow
-      simpleInstructionLocalFlowStep(nodeFrom.asOperand(), nodeTo.asInstruction())
-      or
-      // Instruction -> Operand flow
-      exists(Instruction iFrom, Operand opTo |
-        iFrom = nodeFrom.asInstruction() and opTo = nodeTo.asOperand()
-      |
-        simpleOperandLocalFlowStep(iFrom, opTo) and
-        // Omit when the instruction node also represents the operand.
-        not iFrom = Ssa::getIRRepresentationOfOperand(opTo)
+      exists(Node1Impl nFrom, Node1Impl nTo |
+        nodeFrom = TNode1(nFrom) and
+        nodeTo = TNode1(nTo) and
+        simpleLocalFlowStep1(nFrom, nTo)
       )
       or
-      // Phi node -> Node flow
-      Ssa::fromPhiNode(nodeFrom, nodeTo)
-      or
-      // Indirect operand -> (indirect) instruction flow
-      indirectionOperandFlow(nodeFrom, nodeTo)
-      or
-      // Indirect instruction -> indirect operand flow
-      indirectionInstructionFlow(nodeFrom, nodeTo)
+      IteratorFlow::localFlowStep(nodeFrom, nodeTo)
     ) and
     model = ""
     or
@@ -1470,18 +1385,6 @@ private module Cached {
     // models-as-data summarized flow
     FlowSummaryImpl::Private::Steps::summaryLocalStep(nodeFrom.(FlowSummaryNode).getSummaryNode(),
       nodeTo.(FlowSummaryNode).getSummaryNode(), true, model)
-  }
-
-  private predicate simpleInstructionLocalFlowStep(Operand opFrom, Instruction iTo) {
-    // Treat all conversions as flow, even conversions between different numeric types.
-    conversionFlow(opFrom, iTo, false, _)
-    or
-    iTo.(CopyInstruction).getSourceValueOperand() = opFrom
-  }
-
-  private predicate simpleOperandLocalFlowStep(Instruction iFrom, Operand opTo) {
-    not opTo instanceof MemoryOperand and
-    opTo.getDef() = iFrom
   }
 
   private predicate modelFlow(Node nodeFrom, Node nodeTo, string model) {

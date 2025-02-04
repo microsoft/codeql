@@ -913,6 +913,111 @@ abstract class PostUpdateNode0 extends Node1Impl {
   override DataFlowType getType() { result = this.getPreUpdateNode().getType() }
 }
 
+predicate simpleInstructionLocalFlowStep(Operand opFrom, Instruction iTo) {
+  // Treat all conversions as flow, even conversions between different numeric types.
+  conversionFlow(opFrom, iTo, false, _)
+  or
+  iTo.(CopyInstruction).getSourceValueOperand() = opFrom
+}
+
+predicate simpleOperandLocalFlowStep(Instruction iFrom, Operand opTo) {
+  not opTo instanceof MemoryOperand and
+  opTo.getDef() = iFrom
+}
+
+private predicate indirectionOperandFlow(RawIndirectOperand0 nodeFrom, Node1Impl nodeTo) {
+  nodeFrom != nodeTo and
+  (
+    // Reduce the indirection count by 1 if we're passing through a `LoadInstruction`.
+    exists(int ind, LoadInstruction load |
+      hasOperandAndIndex1(nodeFrom, load.getSourceAddressOperand(), ind) and
+      nodeHasInstruction1(nodeTo, load, ind - 1)
+    )
+    or
+    // If an operand flows to an instruction, then the indirection of
+    // the operand also flows to the indirection of the instruction.
+    exists(Operand operand, Instruction instr, int indirectionIndex |
+      simpleInstructionLocalFlowStep(operand, instr) and
+      hasOperandAndIndex1(nodeFrom, operand, pragma[only_bind_into](indirectionIndex)) and
+      hasInstructionAndIndex1(nodeTo, instr, pragma[only_bind_into](indirectionIndex))
+    )
+    or
+    // If there's indirect flow to an operand, then there's also indirect
+    // flow to the operand after applying some pointer arithmetic.
+    exists(PointerArithmeticInstruction pointerArith, int indirectionIndex |
+      hasOperandAndIndex1(nodeFrom, pointerArith.getAnOperand(),
+        pragma[only_bind_into](indirectionIndex)) and
+      hasInstructionAndIndex1(nodeTo, pointerArith, pragma[only_bind_into](indirectionIndex))
+    )
+  )
+}
+
+/**
+ * Holds if `operand.getDef() = instr`, but there exists a `StoreInstruction` that
+ * writes to an address that is equivalent to the value computed by `instr` in
+ * between `instr` and `operand`, and therefore there should not be flow from `*instr`
+ * to `*operand`.
+ */
+pragma[nomagic]
+private predicate isStoredToBetween(Instruction instr, Operand operand) {
+  simpleOperandLocalFlowStep(pragma[only_bind_into](instr), pragma[only_bind_into](operand)) and
+  exists(StoreInstruction store, IRBlock block, int storeIndex, int instrIndex, int operandIndex |
+    store.getDestinationAddress() = instr and
+    block.getInstruction(storeIndex) = store and
+    block.getInstruction(instrIndex) = instr and
+    block.getInstruction(operandIndex) = operand.getUse() and
+    instrIndex < storeIndex and
+    storeIndex < operandIndex
+  )
+}
+
+private predicate indirectionInstructionFlow(
+  RawIndirectInstruction0 nodeFrom, IndirectOperand1 nodeTo
+) {
+  nodeFrom != nodeTo and
+  // If there's flow from an instruction to an operand, then there's also flow from the
+  // indirect instruction to the indirect operand.
+  exists(Operand operand, Instruction instr, int indirectionIndex |
+    simpleOperandLocalFlowStep(pragma[only_bind_into](instr), pragma[only_bind_into](operand))
+  |
+    hasOperandAndIndex1(nodeTo, operand, pragma[only_bind_into](indirectionIndex)) and
+    hasInstructionAndIndex1(nodeFrom, instr, pragma[only_bind_into](indirectionIndex)) and
+    not isStoredToBetween(instr, operand)
+  )
+}
+
+predicate simpleLocalFlowStep1(Node1Impl nodeFrom, Node1Impl nodeTo) {
+  // Post update node -> Node flow
+  Ssa::postUpdateFlow(nodeFrom, nodeTo)
+  or
+  // Def-use/Use-use flow
+  Ssa::ssaFlow(nodeFrom, nodeTo)
+  or
+  // Phi input -> Phi
+  nodeFrom.(SsaPhiInputNode0).getPhiNode() = nodeTo.(SsaPhiNode0).getPhiNode()
+  or
+  // Operand -> Instruction flow
+  simpleInstructionLocalFlowStep(nodeFrom.asOperand(), nodeTo.asInstruction())
+  or
+  // Instruction -> Operand flow
+  exists(Instruction iFrom, Operand opTo |
+    iFrom = nodeFrom.asInstruction() and opTo = nodeTo.asOperand()
+  |
+    simpleOperandLocalFlowStep(iFrom, opTo) and
+    // Omit when the instruction node also represents the operand.
+    not iFrom = Ssa::getIRRepresentationOfOperand(opTo)
+  )
+  or
+  // Phi node -> Node flow
+  Ssa::fromPhiNode(nodeFrom, nodeTo)
+  or
+  // Indirect operand -> (indirect) instruction flow
+  indirectionOperandFlow(nodeFrom, nodeTo)
+  or
+  // Indirect instruction -> indirect operand flow
+  indirectionInstructionFlow(nodeFrom, nodeTo)
+}
+
 /** Gets the callable in which this node occurs. */
 DataFlowCallable nodeGetEnclosingCallable(Node n) { result = n.getEnclosingCallable() }
 
