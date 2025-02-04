@@ -838,6 +838,42 @@ class PostUpdateNodeImpl0 extends PostUpdateNode0, TPostUpdateNodeImpl {
 }
 
 /**
+ * INTERNAL: do not use.
+ *
+ * A node representing the indirection of a value after it
+ * has been returned from a function.
+ */
+class IndirectArgumentOutNode0 extends PostUpdateNodeImpl0 {
+  override ArgumentOperand operand;
+
+  int getArgumentIndex() {
+    exists(CallInstruction call | call.getArgumentOperand(result) = operand)
+  }
+
+  Operand getAddressOperand() { result = operand }
+
+  CallInstruction getCallInstruction() { result.getAnArgumentOperand() = operand }
+
+  /**
+   * Gets the `Function` that the call targets, if this is statically known.
+   */
+  Function getStaticCallTarget() { result = this.getCallInstruction().getStaticCallTarget() }
+
+  override string toStringImpl() {
+    exists(string prefix |
+      if this.getIndirectionIndex() > 0 then prefix = "" else prefix = "pointer to "
+    |
+      // This string should be unique enough to be helpful but common enough to
+      // avoid storing too many different strings.
+      result = prefix + this.getStaticCallTarget().getName() + " output argument"
+      or
+      not exists(this.getStaticCallTarget()) and
+      result = prefix + "output argument"
+    )
+  }
+}
+
+/**
  * Holds if `node` is an indirect operand with columns `(operand, indirectionIndex)`, and
  * `operand` represents a use of the fully converted value of `call`.
  */
@@ -986,36 +1022,61 @@ private predicate indirectionInstructionFlow(
   )
 }
 
-predicate simpleLocalFlowStep1(Node1Impl nodeFrom, Node1Impl nodeTo) {
-  // Post update node -> Node flow
-  Ssa::postUpdateFlow(nodeFrom, nodeTo)
-  or
-  // Def-use/Use-use flow
-  Ssa::ssaFlow(nodeFrom, nodeTo)
-  or
-  // Phi input -> Phi
-  nodeFrom.(SsaPhiInputNode0).getPhiNode() = nodeTo.(SsaPhiNode0).getPhiNode()
-  or
-  // Operand -> Instruction flow
-  simpleInstructionLocalFlowStep(nodeFrom.asOperand(), nodeTo.asInstruction())
-  or
-  // Instruction -> Operand flow
-  exists(Instruction iFrom, Operand opTo |
-    iFrom = nodeFrom.asInstruction() and opTo = nodeTo.asOperand()
+private predicate modelFlow(Node1Impl nodeFrom, Node1Impl nodeTo, string model) {
+  exists(
+    CallInstruction call, DF::DataFlowFunction func, IO::FunctionInput modelIn,
+    IO::FunctionOutput modelOut
   |
-    simpleOperandLocalFlowStep(iFrom, opTo) and
-    // Omit when the instruction node also represents the operand.
-    not iFrom = Ssa::getIRRepresentationOfOperand(opTo)
+    call.getStaticCallTarget() = func and
+    func.hasDataFlow(modelIn, modelOut) and
+    model = "DataFlowFunction"
+  |
+    nodeFrom = callInput0(call, modelIn) and
+    nodeTo = callOutput0(call, modelOut)
+    or
+    exists(int d |
+      nodeFrom = callInput0(call, modelIn, d) and
+      nodeTo = callOutput0(call, modelOut, d)
+    )
   )
+}
+
+predicate simpleLocalFlowStep1(Node1Impl nodeFrom, Node1Impl nodeTo, string model) {
+  (
+    // Post update node -> Node flow
+    Ssa::postUpdateFlow(nodeFrom, nodeTo)
+    or
+    // Def-use/Use-use flow
+    Ssa::ssaFlow(nodeFrom, nodeTo)
+    or
+    // Phi input -> Phi
+    nodeFrom.(SsaPhiInputNode0).getPhiNode() = nodeTo.(SsaPhiNode0).getPhiNode()
+    or
+    // Operand -> Instruction flow
+    simpleInstructionLocalFlowStep(nodeFrom.asOperand(), nodeTo.asInstruction())
+    or
+    // Instruction -> Operand flow
+    exists(Instruction iFrom, Operand opTo |
+      iFrom = nodeFrom.asInstruction() and opTo = nodeTo.asOperand()
+    |
+      simpleOperandLocalFlowStep(iFrom, opTo) and
+      // Omit when the instruction node also represents the operand.
+      not iFrom = Ssa::getIRRepresentationOfOperand(opTo)
+    )
+    or
+    // Phi node -> Node flow
+    Ssa::fromPhiNode(nodeFrom, nodeTo)
+    or
+    // Indirect operand -> (indirect) instruction flow
+    indirectionOperandFlow(nodeFrom, nodeTo)
+    or
+    // Indirect instruction -> indirect operand flow
+    indirectionInstructionFlow(nodeFrom, nodeTo)
+  ) and
+  model = ""
   or
-  // Phi node -> Node flow
-  Ssa::fromPhiNode(nodeFrom, nodeTo)
-  or
-  // Indirect operand -> (indirect) instruction flow
-  indirectionOperandFlow(nodeFrom, nodeTo)
-  or
-  // Indirect instruction -> indirect operand flow
-  indirectionInstructionFlow(nodeFrom, nodeTo)
+  // Flow through modeled functions
+  modelFlow(nodeFrom, nodeTo, model)
 }
 
 /** Gets the callable in which this node occurs. */
@@ -1359,10 +1420,18 @@ predicate instructionForFullyConvertedCall(Instruction instr, CallInstruction ca
 }
 
 /** Holds if `node` represents the output node for `call`. */
-predicate simpleOutNode(Node node, CallInstruction call) {
+predicate simpleOutNode1(Node1Impl node, CallInstruction call) {
   operandForFullyConvertedCall(node.asOperand(), call)
   or
   instructionForFullyConvertedCall(node.asInstruction(), call)
+}
+
+/** Holds if `node` represents the output node for `call`. */
+predicate simpleOutNode(Node node, CallInstruction call) {
+  exists(Node1Impl n |
+    node = TNode1(n) and
+    simpleOutNode1(n, call)
+  )
 }
 
 /**

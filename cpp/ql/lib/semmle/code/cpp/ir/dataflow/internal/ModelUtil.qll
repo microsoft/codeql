@@ -45,48 +45,73 @@ DataFlow::Node callInput(CallInstruction call, FunctionInput input) {
  * Gets the node that represents the output of `call` with kind `output` at
  * indirection index `indirectionIndex`.
  */
-private Node callOutputWithIndirectionIndex(
+private Node1Impl callOutputWithIndirectionIndex0(
   CallInstruction call, FunctionOutput output, int indirectionIndex
 ) {
   // The return value
-  simpleOutNode(result, call) and
+  simpleOutNode1(result, call) and
   output.isReturnValue() and
   indirectionIndex = 0
   or
   // The side effect of a call on the value pointed to by an argument or qualifier
   exists(int index |
-    result.(IndirectArgumentOutNode).getArgumentIndex() = index and
-    result.(IndirectArgumentOutNode).getIndirectionIndex() = indirectionIndex - 1 and
-    result.(IndirectArgumentOutNode).getCallInstruction() = call and
+    result.(IndirectArgumentOutNode0).getArgumentIndex() = index and
+    result.(IndirectArgumentOutNode0).getIndirectionIndex() = indirectionIndex - 1 and
+    result.(IndirectArgumentOutNode0).getCallInstruction() = call and
     output.isParameterDerefOrQualifierObject(index, indirectionIndex - 1)
   )
   or
-  result = getIndirectReturnOutNode(call, indirectionIndex) and
+  result = getIndirectReturnOutNode0(call, indirectionIndex) and
   output.isReturnValueDeref(indirectionIndex)
 }
 
 /**
  * Gets the instruction that holds the `output` for `call`.
  */
-Node callOutput(CallInstruction call, FunctionOutput output) {
-  result = callOutputWithIndirectionIndex(call, output, _)
+Node1Impl callOutput0(CallInstruction call, FunctionOutput output) {
+  result = callOutputWithIndirectionIndex0(call, output, _)
 }
 
-DataFlow::Node callInput(CallInstruction call, FunctionInput input, int d) {
-  exists(DataFlow::Node n | n = callInput(call, input) and d > 0 |
+/**
+ * Gets the instruction that holds the `output` for `call`.
+ */
+Node callOutput(CallInstruction call, FunctionOutput output) {
+  result = TNode1(callOutput0(call, output))
+}
+
+Node1Impl callInput0(CallInstruction call, FunctionInput input, int d) {
+  exists(Node1Impl n | n = callInput0(call, input) and d > 0 |
     // An argument or qualifier
-    hasOperandAndIndex(result, n.asOperand(), d)
+    hasOperandAndIndex1(result, n.asOperand(), d)
     or
     exists(Operand operand, int indirectionIndex |
       // A value pointed to by an argument or qualifier
-      hasOperandAndIndex(n, operand, indirectionIndex) and
-      hasOperandAndIndex(result, operand, indirectionIndex + d)
+      hasOperandAndIndex1(n, operand, indirectionIndex) and
+      hasOperandAndIndex1(result, operand, indirectionIndex + d)
     )
   )
 }
 
-private IndirectReturnOutNode getIndirectReturnOutNode(CallInstruction call, int d) {
-  result = TNode1(getIndirectReturnOutNode0(call, d))
+DataFlow::Node callInput(CallInstruction call, FunctionInput input, int d) {
+  result = TNode1(callInput0(call, input, d))
+}
+
+/**
+ * Gets the instruction that holds the `output` for `call`.
+ */
+bindingset[d]
+Node1Impl callOutput0(CallInstruction call, FunctionOutput output, int d) {
+  exists(Node1Impl n, int indirectionIndex |
+    n = callOutputWithIndirectionIndex0(call, output, indirectionIndex) and d > 0
+  |
+    // The return value
+    result = callOutputWithIndirectionIndex0(call, output, indirectionIndex + d)
+    or
+    // If there isn't an indirect out node for the call with indirection `d` then
+    // we conflate this with the underlying `CallInstruction`.
+    not exists(getIndirectReturnOutNode0(call, indirectionIndex + d)) and
+    n = result
+  )
 }
 
 /**
@@ -94,15 +119,5 @@ private IndirectReturnOutNode getIndirectReturnOutNode(CallInstruction call, int
  */
 bindingset[d]
 Node callOutput(CallInstruction call, FunctionOutput output, int d) {
-  exists(DataFlow::Node n, int indirectionIndex |
-    n = callOutputWithIndirectionIndex(call, output, indirectionIndex) and d > 0
-  |
-    // The return value
-    result = callOutputWithIndirectionIndex(call, output, indirectionIndex + d)
-    or
-    // If there isn't an indirect out node for the call with indirection `d` then
-    // we conflate this with the underlying `CallInstruction`.
-    not exists(getIndirectReturnOutNode(call, indirectionIndex + d)) and
-    n = result
-  )
+  result = TNode1(callOutput0(call, output, d))
 }
