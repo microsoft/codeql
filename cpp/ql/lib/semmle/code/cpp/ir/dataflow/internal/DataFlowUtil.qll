@@ -1358,48 +1358,9 @@ private module Cached {
       simpleLocalFlowStep1(nFrom, nTo, model)
     )
     or
-    // Reverse flow: data that flows from the definition node back into the indirection returned
-    // by a function. This allows data to flow 'in' through references returned by a modeled
-    // function such as `operator[]`.
-    reverseFlow(nodeFrom, nodeTo) and
-    model = ""
-    or
     // models-as-data summarized flow
     FlowSummaryImpl::Private::Steps::summaryLocalStep(nodeFrom.(FlowSummaryNode).getSummaryNode(),
       nodeTo.(FlowSummaryNode).getSummaryNode(), true, model)
-  }
-
-  private predicate reverseFlow(Node nodeFrom, Node nodeTo) {
-    reverseFlowOperand(nodeFrom, nodeTo)
-    or
-    reverseFlowInstruction(nodeFrom, nodeTo)
-  }
-
-  private predicate reverseFlowOperand(Node nodeFrom, IndirectReturnOutNode nodeTo) {
-    exists(Operand address, int indirectionIndex |
-      nodeHasOperand(nodeTo, address, indirectionIndex)
-    |
-      exists(StoreInstruction store |
-        nodeHasInstruction(nodeFrom, store, indirectionIndex - 1) and
-        store.getDestinationAddressOperand() = address
-      )
-      or
-      // We also want a write coming out of an `OutNode` to flow `nodeTo`.
-      // This is different from `reverseFlowInstruction` since `nodeFrom` can never
-      // be an `OutNode` when it's defined by an instruction.
-      Ssa::outNodeHasAddressAndIndex(nodeFrom, address, indirectionIndex)
-    )
-  }
-
-  private predicate reverseFlowInstruction(Node nodeFrom, IndirectReturnOutNode nodeTo) {
-    exists(Instruction address, int indirectionIndex |
-      nodeHasInstruction(nodeTo, address, indirectionIndex)
-    |
-      exists(StoreInstruction store |
-        nodeHasInstruction(nodeFrom, store, indirectionIndex - 1) and
-        store.getDestinationAddress() = address
-      )
-    )
   }
 }
 
