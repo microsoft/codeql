@@ -475,7 +475,7 @@ class FinalParameterUse extends UseImpl, TFinalParameterUse {
 
   int getArgumentIndex() { result = p.getIndex() }
 
-  override Node getNode() { finalParameterNodeHasParameterAndIndex(result, p, indirectionIndex) }
+  override FinalParameterNode getNode() { result.getUse() = this }
 
   override int getIndirection() { result = indirectionIndex + 1 }
 
@@ -509,6 +509,8 @@ class FinalParameterUse extends UseImpl, TFinalParameterUse {
     not exists(unique( | | p.getLocation())) and
     result instanceof UnknownDefaultLocation
   }
+
+  Type getType() { result = getTypeImpl(p.getUnderlyingType(), indirectionIndex) }
 
   override BaseIRVariable getBaseSourceVariable() { result.getIRVariable().getAst() = p }
 }

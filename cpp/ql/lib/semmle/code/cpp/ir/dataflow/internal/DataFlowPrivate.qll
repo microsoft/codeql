@@ -47,12 +47,7 @@ private module Cached {
         not exists(node.asOperand()) and
         Ssa::hasRawIndirectInstruction(node.asInstruction(), indirectionIndex)
       } or
-      TFinalParameterNode(Parameter p, int indirectionIndex) {
-        exists(Ssa::FinalParameterUse use |
-          use.getParameter() = p and
-          use.getIndirectionIndex() = indirectionIndex
-        )
-      } or
+      TFinalParameterNode(Ssa::FinalParameterUse use) or
       TFinalGlobalValue(Ssa::GlobalUse use) or
       TInitialGlobalValue(Ssa::GlobalDef def) or
       TSsaPhiInputNode(Ssa::PhiNode phi, IRBlock input) { phi.hasInputFromBlock(_, _, _, _, input) } or
@@ -120,7 +115,7 @@ int getNumberOfIndirections0(Node1Impl n) {
   or
   n = TRawIndirectInstruction0(_, result)
   or
-  n = TFinalParameterNode(_, result)
+  result = n.(FinalParameterNode0).getIndirectionIndex()
 }
 
 private string stars0(Node1Impl n) { result = repeatStars(getNumberOfIndirections0(n)) }
@@ -601,36 +596,30 @@ import IndirectInstructions
  * just before reaching the end of a function.
  */
 class FinalParameterNode0 extends Node1Impl, TFinalParameterNode {
-  Parameter p;
-  int indirectionIndex;
+  Ssa::FinalParameterUse use;
 
-  FinalParameterNode0() { this = TFinalParameterNode(p, indirectionIndex) }
+  FinalParameterNode0() { this = TFinalParameterNode(use) }
 
   /** Gets the parameter associated with this final use. */
-  Parameter getParameter() { result = p }
+  Parameter getParameter() { result = use.getParameter() }
+
+  Ssa::FinalParameterUse getUse() { result = use }
 
   /** Gets the underlying indirection index. */
-  int getIndirectionIndex() { result = indirectionIndex }
+  int getIndirectionIndex() { result = use.getIndirectionIndex() }
 
   /** Gets the argument index associated with this final use. */
-  final int getArgumentIndex() { result = p.getIndex() }
+  final int getArgumentIndex() { result = this.getParameter().getIndex() }
 
-  override Declaration getFunction() { result = p.getFunction() }
+  override Declaration getFunction() { result = use.getParameter().getFunction() }
 
   override Declaration getEnclosingCallable() { result = this.getFunction() }
 
-  override DataFlowType getType() { result = getTypeImpl(p.getUnderlyingType(), indirectionIndex) }
+  override DataFlowType getType() { result = use.getType() }
 
-  final override Location getLocationImpl() {
-    // Parameters can have multiple locations. When there's a unique location we use
-    // that one, but if multiple locations exist we default to an unknown location.
-    result = unique( | | p.getLocation())
-    or
-    not exists(unique( | | p.getLocation())) and
-    result instanceof UnknownDefaultLocation
-  }
+  final override Location getLocationImpl() { result = use.getLocation() }
 
-  override string toStringImpl() { result = stars0(this) + p.toString() }
+  override string toStringImpl() { result = stars0(this) + this.getParameter().toString() }
 }
 
 /**
@@ -1277,7 +1266,7 @@ predicate jumpStep(Node n1, Node n2) {
     or
     exists(Ssa::GlobalDef globalDef |
       v = globalDef.getVariable() and
-      n2 = globalDef.getNode()
+      n2.(InitialGlobalValue).getDef() = globalDef
     |
       globalDef.getIndirection() = getMinIndirectionForGlobalDef(globalDef) and
       v = n1.asVariable()
