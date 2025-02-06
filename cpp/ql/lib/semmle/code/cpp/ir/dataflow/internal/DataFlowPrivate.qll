@@ -375,9 +375,9 @@ class InstructionNode1 extends Node1Impl, Node0 {
   Instruction getInstruction() { result = node.getInstruction() }
 }
 
-private Node0 operandNode0(Operand op) { result.asOperand() = op }
+Node0 operandNode0(Operand op) { result.asOperand() = op }
 
-private Node0 instructionNode0(Instruction i) { result.asInstruction() = i }
+Node0 instructionNode0(Instruction i) { result.asInstruction() = i }
 
 private class RawIndirectOperand0 extends Node1Impl, TRawIndirectOperand0 {
   Node0Impl node;
@@ -2463,6 +2463,8 @@ private Instruction getAnInstruction(Node n) {
   result = n.asOperand().getUse()
   or
   result = n.(SsaPhiNode).getPhiNode().getBasicBlock().getFirstInstruction()
+  or
+  result = n.(AliasedPhiNode).getPhi().getPhi().getBasicBlock().getFirstInstruction()
   or
   result = n.(SsaPhiInputNode).getBasicBlock().getFirstInstruction()
   or
