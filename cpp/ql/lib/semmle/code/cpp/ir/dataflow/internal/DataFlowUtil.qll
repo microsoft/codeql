@@ -20,6 +20,7 @@ private import Node0ToString
 private import DataFlowDispatch as DataFlowDispatch
 import ExprNodes
 private import DataFlowNodes
+private import AliasedFlow as Aliased
 
 /**
  * Holds if `opFrom` is an operand whose value flows to the result of `instrTo`.
@@ -111,6 +112,8 @@ class Node extends TIRDataFlowNode {
     or
     this.(SsaPhiInputNode).getBlock() = block and
     i = block.getInstructionCount()
+    or
+    this.(AliasedPhiNode).getPhi().getPhi().getBasicBlock() = block and i = -1
     or
     exists(Node1Impl n |
       this = TNode1(n) and
@@ -692,6 +695,26 @@ class BodyLessParameterNodeImpl extends Node, TBodyLessParameterNodeImpl {
   final override string toStringImpl() {
     exists(string prefix | prefix = stars(this) | result = prefix + p.toString())
   }
+}
+
+class AliasedPhiNode extends Node, TAliasedPhiNode {
+  Aliased::AliasedPhiNodeImpl phi;
+
+  AliasedPhiNode() { this = TAliasedPhiNode(phi) }
+
+  Aliased::AliasedPhiNodeImpl getPhi() { result = phi }
+
+  override DataFlowCallable getEnclosingCallable() {
+    result.asSourceCallable() = this.getFunction()
+  }
+
+  override Declaration getFunction() { result = phi.getFunction() }
+
+  override DataFlowType getType() { result = phi.getPhi().getSourceVariable().getType() }
+
+  final override Location getLocationImpl() { result = phi.getLocation() }
+
+  final override string toStringImpl() { result = phi.toString() }
 }
 
 /**
@@ -1349,8 +1372,18 @@ private module Cached {
    */
   cached
   predicate simpleLocalFlowStep(Node nodeFrom, Node nodeTo, string model) {
-    IteratorFlow::localFlowStep(nodeFrom, nodeTo) and
-    model = ""
+    model = "" and
+    (
+      IteratorFlow::localFlowStep(nodeFrom, nodeTo)
+      or
+      Aliased::into(nodeFrom, nodeTo.(AliasedPhiNode).getPhi())
+      or
+      Aliased::step1(nodeFrom, nodeTo)
+      or
+      Aliased::step2(nodeFrom.(AliasedPhiNode).getPhi(), nodeTo.(AliasedPhiNode).getPhi())
+      or
+      Aliased::out(nodeFrom.(AliasedPhiNode).getPhi(), nodeTo)
+    )
     or
     exists(Node1Impl nFrom, Node1Impl nTo |
       nodeFrom = TNode1(nFrom) and

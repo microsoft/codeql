@@ -4,6 +4,7 @@ private import semmle.code.cpp.ir.IR
 private import DataFlowImplCommon as DataFlowImplCommon
 private import SsaInternals as Ssa
 private import semmle.code.cpp.dataflow.internal.FlowSummaryImpl as FlowSummaryImpl
+private import AliasedFlow
 
 /**
  * The IR dataflow graph consists of the following nodes:
@@ -33,4 +34,5 @@ newtype TIRDataFlowNode =
     indirectionIndex = [0 .. Ssa::getMaxIndirectionsForType(p.getUnspecifiedType()) - 1] and
     not any(InitializeParameterInstruction init).getParameter() = p
   } or
+  TAliasedPhiNode(AliasedPhiNodeImpl n) or
   TFlowSummaryNode(FlowSummaryImpl::Private::SummaryNode sn)

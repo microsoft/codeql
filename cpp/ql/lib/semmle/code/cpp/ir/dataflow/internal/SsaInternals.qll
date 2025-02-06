@@ -61,6 +61,18 @@ private module SourceVariables {
 
     /** Gets the location of this variable. */
     Location getLocation() { result = this.getBaseVariable().getLocation() }
+
+    /**
+     * Gets the SSA variable that represents `k` indirections of this variable.
+     * Note that this is the identity for `k = 0`.
+     */
+    SourceVariable getIndirectVariable(int k) {
+      k >= 0 and
+      exists(BaseSourceVariable bv, int indirection |
+        sourceVariableHasBaseAndIndex(this, bv, indirection) and
+        sourceVariableHasBaseAndIndex(result, bv, indirection + k)
+      )
+    }
   }
 }
 
