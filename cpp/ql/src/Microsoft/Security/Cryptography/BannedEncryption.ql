@@ -56,3 +56,4 @@ where
   ) and
   not isSrcSinkFiltered(sink, confSink)
 select sink, msg, confSink, confSink.toString()
+
