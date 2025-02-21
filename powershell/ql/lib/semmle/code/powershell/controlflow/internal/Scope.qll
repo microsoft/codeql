@@ -10,6 +10,14 @@ Scope scopeOf(Ast n) {
   )
 }
 
+private predicate foo(StmtBlock n, int k, Ast m) {
+  n.getLocation().getStartLine() = 0 and
+  n.getLocation().getFile().getBaseName() = "test.ps1" and
+  strictcount(n.getParent()) = k and
+  k > 1 and
+  m = n.getParent()
+}
+
 /**
  * A variable scope. This is either a top-level (file), a module, a class,
  * or a callable.

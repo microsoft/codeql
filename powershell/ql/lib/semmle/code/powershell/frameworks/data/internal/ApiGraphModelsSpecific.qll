@@ -40,6 +40,9 @@ private predicate parseType(string rawType, string consts, string suffix) {
   )
 }
 
+/**
+ * Note: `rawType` is normalized.
+ */
 private predicate parseRelevantType(string rawType, string consts, string suffix) {
   isRelevantType(rawType) and
   parseType(rawType, consts, suffix)
@@ -65,13 +68,35 @@ private int getNumConstComponents(string consts) {
   result = strictcount(int n | exists(getConstComponent(consts, n)))
 }
 
+pragma[nomagic]
 private DataFlow::TypePathNode getConstantFromConstPath(string consts, int n) {
   n = 1 and
   result.getComponent() = getConstComponent(consts, 0)
   or
-  result = getConstantFromConstPath(consts, n - 1).getConstant(getConstComponent(consts, n - 1))
+  exists(int n0, DataFlow::TypePathNode p0, string comp |
+    n0 = n - 1 and
+    p0 = getConstantFromConstPath(consts, pragma[only_bind_into](n0)) and
+    comp = getConstComponent(consts, pragma[only_bind_into](n0)) and
+    result = p0.getConstant(comp)
+  )
 }
 
+private DataFlow::TypePathNode foo(string consts, int n) {
+  exists(int n0, DataFlow::TypePathNode p0, string comp |
+    result.getLocation().getStartLine() = 191 and
+    result.getLocation().getFile().getBaseName() = "DedicatedDNSLibrary.ps1" and
+    consts.regexpMatch("(?i)system\\.net\\.sockets\\.udpclient") and // TODO
+    n = 2 and
+    n0 = n - 1 and
+    p0 = getConstantFromConstPath(consts, pragma[only_bind_into](n0)) and
+    comp = getConstComponent(consts, pragma[only_bind_into](n0)) and
+    result = p0.getConstant(comp)
+  )
+}
+
+/**
+ * NOTE: `consts` should be normalized.
+ */
 private DataFlow::TypePathNode getConstantFromConstPath(string consts) {
   result = getConstantFromConstPath(consts, getNumConstComponents(consts))
 }
@@ -89,11 +114,18 @@ API::Node getExtraNodeFromPath(string type, AccessPath path, int n) {
   )
 }
 
-/** Gets a Powershell-specific interpretation of the given `type`. */
+/**
+ * Gets a Powershell-specific interpretation of the given `type`.
+ *
+ * NOTE: `type` is normalized.
+ */
 API::Node getExtraNodeFromType(string type) {
-  exists(string consts, string suffix, DataFlow::TypePathNode constRef |
-    parseRelevantType(type, consts, suffix) and
-    constRef = getConstantFromConstPath(consts)
+  exists(string consts0, string consts1, string suffix, DataFlow::TypePathNode constRef |
+    type.regexpMatch("(?i)system\\.net\\.sockets\\.udpclient") and
+    parseRelevantType(type, consts0, suffix) and
+    consts1.regexpMatch("(?i)system\\.net\\.sockets\\.udpclient") and
+    constRef = getConstantFromConstPath(consts1) and
+    consts0.toLowerCase() = consts1.toLowerCase()
   |
     suffix = "!" and
     result = constRef.track()

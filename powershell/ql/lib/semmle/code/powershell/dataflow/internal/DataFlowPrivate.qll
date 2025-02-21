@@ -1175,6 +1175,12 @@ private predicate isTypePathNode(string type, int n, CfgNode cfg) {
     type = cmd.getNamespaceQualifier() and
     s = type.splitAt(".", n)
   )
+  or
+  exists(CfgNodes::DotNetObjectCreationCfgNode objCreation, string s |
+    cfg = objCreation and
+    type = objCreation.getConstructedTypeName() and
+    s = type.splitAt(".", n)
+  )
 }
 
 /**
@@ -1196,6 +1202,7 @@ class TypePathNodeImpl extends TTypePathNode, NodeImpl {
 
   int getIndex() { result = n }
 
+  pragma[nomagic]
   string getComponent() { result = this.getType().splitAt(".", n) }
 
   override CfgScope getCfgScope() { result = cfg.getScope() }
@@ -1215,8 +1222,13 @@ class TypePathNodeImpl extends TTypePathNode, NodeImpl {
 
   TypePathNodeImpl getPrev() { result.getNext() = this }
 
+  /**
+   * Gets a successor that matches the constant `s`.
+   * Note: `s` is normalized.
+   */
+  pragma[nomagic]
   TypePathNodeImpl getConstant(string s) {
-    s = result.getComponent() and
+    s = result.getComponent().toLowerCase() and
     result = this.getNext()
   }
 }

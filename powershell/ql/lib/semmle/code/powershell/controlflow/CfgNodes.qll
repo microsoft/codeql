@@ -177,6 +177,10 @@ class ObjectCreationCfgNode extends CallCfgNode {
   string getConstructedTypeName() { result = objectCreation.getConstructedTypeName() }
 }
 
+class DotNetObjectCreationCfgNode extends ObjectCreationCfgNode {
+  override DotNetObjectCreation objectCreation;
+}
+
 private class NamedBlockChildMapping extends NonExprChildMapping, NamedBlock {
   override predicate relevantChild(Ast n) { n = this.getAStmt() } // TODO: Handle getATrap
 }
@@ -347,6 +351,18 @@ module ExprNodes {
     Type getType() { result = this.getExpr().getType() }
 
     string getTypeName() { result = this.getExpr().getName() }
+  }
+
+  class StringConstChildMapping extends ExprChildMapping, StringConstExpr {
+    override predicate relevantChild(Ast n) { none() }
+  }
+
+  class StringConstCfgNode extends ExprCfgNode {
+    override string getAPrimaryQlClass() { result = "StringConstCfgNode" }
+
+    override StringConstChildMapping e;
+
+    string getValue() { result = e.getValue().getValue() }
   }
 
   class ConditionalChildMapping extends ExprChildMapping, ConditionalExpr {

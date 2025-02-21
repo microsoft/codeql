@@ -203,6 +203,10 @@ class PostUpdateNode extends Node {
 class TypePathNode extends Node instanceof TypePathNodeImpl {
   string getComponent() { result = super.getComponent() }
 
+  /**
+   * Gets a successor that matches the constant `s`.
+   * Note: `s` is normalized.
+   */
   TypePathNode getConstant(string s) { result = super.getConstant(s) }
 
   API::Node track() { result = API::mod(super.getType(), super.getIndex()) }

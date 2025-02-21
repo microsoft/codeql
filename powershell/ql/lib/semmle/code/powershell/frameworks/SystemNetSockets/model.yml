@@ -5,7 +5,7 @@ extensions:
     data:
       - ["System.Net.Sockets.TcpClient", "Method[GetStream].ReturnValue", "remote"]
       - ["System.Net.Sockets.UdpClient", "Method[EndReceive].ReturnValue", "remote"]
-      - ["System.Net.Sockets.UdpClient", "Method[Receive].ReturnValue", "remote"]
+      - ["system.net.sockets.udpclient", "Method[receive].ReturnValue", "remote"]
       - ["System.Net.Sockets.UdpClient", "Method[ReceiveAsync].ReturnValue", "remote"]
 
   - addsTo:

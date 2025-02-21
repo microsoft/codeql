@@ -191,6 +191,8 @@ predicate interpretModelForTest(QlBuiltins::ExtensionId madId, string model) {
 
 /**
  * Holds if rows involving `type` might be relevant for the analysis of this database.
+ * 
+ * Note: `type` is normalized.
  */
 predicate isRelevantType(string type) {
   (
@@ -316,6 +318,8 @@ private class TypeModelDefEntry extends API::EntryPoint {
 
 /**
  * Gets an API node identified by the given `type`.
+ * 
+ * Note: `type` is normalized.
  */
 pragma[nomagic]
 private API::Node getNodeFromType(string type) {
@@ -335,12 +339,17 @@ private API::Node getNodeFromType(string type) {
 
 /**
  * Gets the API node identified by the first `n` tokens of `path` in the given `(type, path)` tuple.
+ * 
+ * Note: `type` is normalized
  */
 pragma[nomagic]
 API::Node getNodeFromPath(string type, AccessPath path, int n) {
+  type.regexpMatch("(?i)system\\.net\\.sockets\\.udpclient") and
   isRelevantFullPath(type, path) and
   (
+    isRelevantFullPath(type, path) and
     n = 0 and
+    type.regexpMatch("(?i)system\\.net\\.sockets\\.udpclient") and
     result = getNodeFromType(type)
     or
     result = Specific::getExtraNodeFromPath(type, path, n)
@@ -438,7 +447,11 @@ private API::Node getNodeFromSubPath(API::Node base, AccessPath subPath) {
   result = getNodeFromSubPath(base, subPath, subPath.getNumToken())
 }
 
-/** Gets the node identified by the given `(type, path)` tuple. */
+/**
+ * Gets the node identified by the given `(type, path)` tuple.
+ *
+ * Note: `type` is normalized.
+ */
 private API::Node getNodeFromPath(string type, AccessPath path) {
   result = getNodeFromPath(type, path, path.getNumToken())
 }

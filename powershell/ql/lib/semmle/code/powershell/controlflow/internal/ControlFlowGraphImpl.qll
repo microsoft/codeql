@@ -383,9 +383,8 @@ module Trees {
       c instanceof TrueCompletion and
       first(this.getBody(), succ)
       or
-      // Body -> iterator
       last(this.getBody(), pred, c) and
-      completionIsNormal(c) and
+      c.continuesLoop() and
       (
         first(super.getIterator(), succ)
         or
@@ -400,11 +399,6 @@ module Trees {
       // Iterator -> condition
       last(super.getIterator(), pred, c) and
       completionIsNormal(c) and
-      first(super.getCondition(), succ)
-      or
-      // Body -> condition
-      last(this.getBody(), pred, c) and
-      c.continuesLoop() and
       first(super.getCondition(), succ)
     }
   }

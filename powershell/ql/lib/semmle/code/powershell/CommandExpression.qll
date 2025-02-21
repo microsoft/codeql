@@ -11,5 +11,5 @@ class CmdExpr extends @command_expression, CmdBase {
 
   Redirection getARedirection() { result = this.getRedirection(_) }
 
-  override string toString() { result = this.getExpr().toString() }
+  override string toString() { result = "[pipeline] " + this.getExpr().toString() }
 }
