@@ -16,4 +16,9 @@ class Type extends @type_definition, Stmt {
   TypeConstraint getABaseType() { result = this.getBaseType(_) }
 
   Type getASubtype() { result.getABaseType().getName() = this.getName() }
+
+  final override Ast getChild(int i) {
+    result = this.getMember(i) or
+    result = this.getBaseType(-(i + 1))
+  }
 }

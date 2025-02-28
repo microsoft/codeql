@@ -7,5 +7,7 @@ class ArrayLiteral extends @array_literal, Expr {
 
   Expr getAnElement() { array_literal_element(this, _, result) }
 
+  final override Ast getChild(int i) { result = this.getElement(i) }
+
   override string toString() { result = "...,..." }
 }

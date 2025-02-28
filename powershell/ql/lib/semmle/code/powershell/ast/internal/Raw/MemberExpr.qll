@@ -14,6 +14,8 @@ class MemberExpr extends @member_expression, MemberExprBase {
 
   override predicate isStatic() { member_expression(this, _, _, _, true) }
 
+  final override Ast getChild(int i) { i = 0 and result = this.getQualifier() }
+
   final override string toString() { result = this.getMember().toString() }
 }
 

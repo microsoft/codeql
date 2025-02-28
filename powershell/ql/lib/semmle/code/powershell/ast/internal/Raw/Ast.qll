@@ -1,10 +1,17 @@
 private import Raw
 import Location
+private import Scope
 
 class Ast extends @ast {
   string toString() { none() }
 
-  Ast getParent() { parent(this, result) }
+  final Ast getParent() { result.getAChild() = this }
+
+  Ast getChild(int i) { none() }
+
+  final Ast getAChild() { result = this.getChild(_) }
 
   Location getLocation() { none() }
+
+  Scope getScope() { result = scopeOf(this) }
 }

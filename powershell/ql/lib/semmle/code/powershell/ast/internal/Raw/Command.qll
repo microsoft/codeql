@@ -25,6 +25,13 @@ class Cmd extends @command, CmdBase {
 
   override SourceLocation getLocation() { command_location(this, result) }
 
+  final override Ast getChild(int i) {
+    i = -1 and
+    result = this.getCommand()
+    or
+    result = this.getArgument(i)
+  }
+
   /** Gets the name of the command without any qualifiers. */
   string getCommandName() { parseCommandName(this, _, result) }
 
@@ -62,6 +69,17 @@ class Cmd extends @command, CmdBase {
         e = this.getElement(j) and
         not e instanceof CmdParameter and
         j > 0 // 0'th element is the command name itself
+      |
+        e order by j
+      )
+  }
+
+  /** Gets the `i`th positional argument to this command. */
+  Expr getPositionalArgument(int i) {
+    result =
+      rank[i + 1](Expr e, int j |
+        e = this.getArgument(j) and
+        e instanceof PositionalArgument
       |
         e order by j
       )

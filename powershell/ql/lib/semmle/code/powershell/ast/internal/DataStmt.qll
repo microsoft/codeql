@@ -1,4 +1,21 @@
 private import TAst
-private import semmle.code.powershell.ast.internal.Stmt
+private import Internal
+private import Raw.Raw as Raw
 
-class DataStmt extends Stmt, TDataStmt { }
+class DataStmt extends Stmt, TDataStmt {
+  Expr getCmdAllowed(int i) {
+    synthChild(this, i, result)
+    or
+    not synthChild(this, i, _) and
+    toRaw(result) = toRaw(this).(Raw::DataStmt).getCmdAllowed(i)
+  }
+
+  Expr getACmdAllowed() { result = this.getCmdAllowed(_) }
+
+  StmtBlock getBody() {
+    synthChild(this, -1, result)
+    or
+    not synthChild(this, -1, _) and
+    toRaw(result) = toRaw(this).(Raw::DataStmt).getBody()
+  }
+}

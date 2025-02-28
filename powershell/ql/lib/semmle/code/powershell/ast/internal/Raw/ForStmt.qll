@@ -12,4 +12,18 @@ class ForStmt extends @for_statement, LoopStmt {
   PipelineBase getIterator() { for_statement_iterator(this, result) }
 
   final override StmtBlock getBody() { for_statement(this, result) }
+
+  final override Ast getChild(int i) {
+    i = 0 and
+    result = this.getInitializer()
+    or
+    i = 1 and
+    result = this.getCondition()
+    or
+    i = 2 and
+    result = this.getIterator()
+    or
+    i = 3 and
+    result = this.getBody()
+  }
 }

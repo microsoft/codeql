@@ -5,6 +5,8 @@ class CmdExpr extends @command_expression, CmdBase {
 
   Expr getExpr() { command_expression(this, result, _) }
 
+  final override Ast getChild(int i) { i = 0 and result = this.getExpr() }
+
   int getNumRedirections() { command_expression(this, _, result) }
 
   Redirection getRedirection(int i) { command_expression_redirection(this, i, result) }

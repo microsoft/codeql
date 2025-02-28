@@ -21,4 +21,13 @@ class IfStmt extends @if_statement, Stmt {
   StmtBlock getElse() { if_statement_else(this, result) }
 
   predicate hasElse() { exists(this.getElse()) }
+
+  final override Ast getChild(int i) {
+    i = 0 and
+    result = this.getElse()
+    or
+    result = this.getCondition(-(i + 1))
+    or
+    result = this.getThen(i + 1)
+  }
 }

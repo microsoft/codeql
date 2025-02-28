@@ -7,13 +7,15 @@ import Expr
 import PipelineChain
 import ConstantExpression
 import Attribute
+import AttributeBase
 import NamedAttributeArgument
+import FunctionBase
+import Function
 import TypeConstraint
 import VariableExpression
 import ModuleSpecification
 import NamedBlock
 import ScriptBlock
-import StringLiteral
 import AssignmentStatement
 import BinaryExpression
 import UnaryExpression
@@ -66,3 +68,7 @@ import ConvertExpr
 import IndexExpr
 import HashTable
 import Variable
+import CallExpr
+import ExprStmt
+import Constant
+import AttributeBase

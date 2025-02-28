@@ -62,7 +62,7 @@ class ConstInteger extends ConstantValue, TConstInteger {
 
   final override string serialize() { result = this.getValue() }
 
-  final override ConstExpr getAnExpr() { result.getValue().getValue() = this.getValue() }
+  final override ConstExpr getAnExpr() { result.getValue() = this.getValue() }
 }
 
 /** A constant floating point value. */
@@ -95,7 +95,7 @@ class ConstString extends ConstantValue, TConstString {
     result = "\"" + this.asString().replaceAll("\"", "\\\"") + "\""
   }
 
-  final override ConstExpr getAnExpr() { result.getValue().getValue() = this.getValue() }
+  final override ConstExpr getAnExpr() { result.getValue() = this.getValue() }
 }
 
 /** A constant boolean value. */

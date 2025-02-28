@@ -1,4 +1,21 @@
 private import TAst
-private import semmle.code.powershell.ast.internal.Expr
+private import Internal
+private import Raw.Raw as Raw
 
-class PipelineChain extends Expr, TPipelineChain { }
+class PipelineChain extends Expr, TPipelineChain {
+  predicate isBackground() { toRaw(this).(Raw::PipelineChain).isBackground() }
+
+  Expr getLeft() {
+    synthChild(this, 0, result)
+    or
+    not synthChild(this, 0, _) and
+    toRaw(result) = toRaw(this).(Raw::PipelineChain).getLeft()
+  }
+
+  Pipeline getRight() {
+    synthChild(this, 1, result)
+    or
+    not synthChild(this, 1, _) and
+    toRaw(result) = toRaw(this).(Raw::PipelineChain).getRight()
+  }
+}

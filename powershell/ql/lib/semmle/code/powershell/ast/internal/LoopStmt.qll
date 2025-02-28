@@ -1,4 +1,6 @@
 private import TAst
-private import Ast
+private import Internal
 
-class LoopStmt extends Ast, TLoopStmt { }
+class LoopStmt extends Ast, TLoopStmt {
+  StmtBlock getBody() { none() }
+}

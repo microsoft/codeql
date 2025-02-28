@@ -22,4 +22,17 @@ class SwitchStmt extends LabeledStmt, @switch_statement {
   int getNumberOfCases() { result = count(this.getACase()) }
 
   final override string toString() { result = "switch(...) {...}" }
+
+  final override Ast getChild(int i) {
+    i = -2 and
+    result = this.getCondition()
+    or
+    i = -1 and
+    result = this.getDefault()
+    or
+    result = this.getCase(i)
+    or
+    i >= this.getNumberOfCases() and
+    result = this.getPattern(i - this.getNumberOfCases())
+  }
 }

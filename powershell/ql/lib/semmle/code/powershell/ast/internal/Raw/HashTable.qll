@@ -18,4 +18,6 @@ class HashTableExpr extends @hash_table, Expr {
   predicate hasEntry(int index, Expr key, Stmt value) {
     hash_table_key_value_pairs(this, index, key, value)
   }
+
+  final override Ast getChild(int i) { this.hasEntry(i, _, result) }
 }

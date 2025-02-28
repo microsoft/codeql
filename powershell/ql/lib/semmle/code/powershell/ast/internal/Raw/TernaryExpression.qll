@@ -20,4 +20,15 @@ class ConditionalExpr extends @ternary_expression, Expr {
   }
 
   Expr getABranch() { result = this.getBranch(_) }
+
+  final override Ast getChild(int i) {
+    i = 0 and
+    result = this.getCondition()
+    or
+    i = 1 and
+    result = this.getIfTrue()
+    or
+    i = 2 and
+    result = this.getIfFalse()
+  }
 }

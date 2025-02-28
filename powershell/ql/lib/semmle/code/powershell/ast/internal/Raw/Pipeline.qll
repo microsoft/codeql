@@ -14,4 +14,6 @@ class Pipeline extends @pipeline, Chainable {
   CmdBase getComponent(int i) { pipeline_component(this, i, result) }
 
   CmdBase getAComponent() { result = this.getComponent(_) }
+
+  final override Ast getChild(int i) { result = this.getComponent(i) }
 }

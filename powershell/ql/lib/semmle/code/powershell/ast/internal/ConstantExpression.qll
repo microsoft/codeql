@@ -1,4 +1,7 @@
 private import TAst
-private import semmle.code.powershell.ast.internal.Expr
+private import Internal
+private import Raw.Raw as Raw
 
-class ConstExpr extends Expr, TConstExpr { }
+class ConstExpr extends Expr, TConstExpr {
+  string getValue() { result = toRaw(this).(Raw::ConstExpr).getValue().getValue() }
+}

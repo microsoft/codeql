@@ -8,4 +8,10 @@ class PipelineChain extends @pipeline_chain, Chainable {
   Chainable getLeft() { pipeline_chain(this, _, _, result, _) }
 
   Pipeline getRight() { pipeline_chain(this, _, _, _, result) }
+
+  final override Ast getChild(int i) {
+    i = 0 and result = this.getLeft()
+    or
+    i = 1 and result = this.getRight()
+  }
 }

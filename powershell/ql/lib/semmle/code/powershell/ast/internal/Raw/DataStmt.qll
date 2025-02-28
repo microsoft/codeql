@@ -12,4 +12,11 @@ class DataStmt extends @data_statement, Stmt {
   Expr getACmdAllowed() { result = this.getCmdAllowed(_) }
 
   StmtBlock getBody() { data_statement(this, result) }
+
+  final override Ast getChild(int i) {
+    i = -1 and
+    result = this.getBody()
+    or
+    result = this.getCmdAllowed(i)
+  }
 }

@@ -16,4 +16,14 @@ class StmtBlock extends @statement_block, Ast {
   TrapStmt getATrapStmt() { result = this.getTrapStmt(_) }
 
   override string toString() { result = "{...}" }
+
+  final override Ast getChild(int i) {
+    exists(int k |
+      i = 2 * k and
+      result = this.getStmt(k)
+      or
+      i = 2 * k + 1 and
+      result = this.getTrapStmt(k)
+    )
+  }
 }

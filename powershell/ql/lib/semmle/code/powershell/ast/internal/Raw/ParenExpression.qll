@@ -6,4 +6,6 @@ class ParenExpr extends @paren_expression, Expr {
   override SourceLocation getLocation() { paren_expression_location(this, result) }
 
   override string toString() { result = "(...)" }
+
+  final override Ast getChild(int i) { i = 0 and result = this.getBase() }
 }

@@ -9,5 +9,12 @@ class AssignStmt extends @assignment_statement, PipelineBase {
 
   Stmt getRightHandSide() { assignment_statement(this, _, _, result) }
 
+  final override Ast getChild(int i) {
+    i = 0 and
+    result = this.getLeftHandSide()
+    or
+    i = 1 and result = this.getRightHandSide()
+  }
+
   override string toString() { result = "...=..." }
 }

@@ -1,6 +1,29 @@
 private import TAst
-private import Ast
-private import semmle.code.powershell.ast.internal.Expr
+private import Internal
 private import Raw.Raw as Raw
 
-class ArrayExpr extends Expr, TArrayExpr { }
+class ArrayExpr extends Expr, TArrayExpr {
+  StmtBlock getStmtBlock() {
+    synthChild(this, 0, result)
+    or
+    not synthChild(this, 0, result) and
+    toRaw(result) = toRaw(this).(Raw::ArrayExpr).getStmtBlock()
+  }
+
+  // /**
+  //  * Gets the i'th element of this `ArrayExpr`, if this can be determined statically.
+  //  *
+  //  * See `getStmtBlock` when the array elements are not known statically.
+  //  */
+  // Expr getElement(int i) {
+  //   result =
+  //     unique( | | this.getStmtBlock().getAStmt()).(CmdExpr).getExpr().(ArrayLiteral).getElement(i)
+  // }
+
+  // /**
+  //  * Gets an element of this `ArrayExpr`, if this can be determined statically.
+  //  *
+  //  * See `getStmtBlock` when the array elements are not known statically.
+  //  */
+  // Expr getAnElement() { result = this.getElement(_) }
+}

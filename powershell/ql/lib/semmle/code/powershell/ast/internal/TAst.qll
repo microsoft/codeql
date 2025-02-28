@@ -2,6 +2,7 @@ private import Raw.Raw as Raw
 private import Location
 private import Ast as Ast
 private import Synthesis
+private import Expr
 
 private predicate mkSynthChild(SynthKind kind, Ast::Ast parent, int i) {
   any(Synthesis s).child(parent, i, SynthChild(kind))
@@ -19,9 +20,20 @@ private module Cached {
     TBreakStmt(Raw::BreakStmt br) or
     TCatchClause(Raw::CatchClause cc) or
     TCmd(Raw::Cmd c) or
+    TExprStmtSynth(Ast::Ast parent, int i) { mkSynthChild(ExprStmtKind(), parent, i) } or
     TCmdExpr(Raw::CmdExpr ce) or
     TCmdParameter(Raw::CmdParameter p) or
-    TParameterSynth(Ast::Ast parent, int i) { mkSynthChild(ParameterSynthKind(), parent, i) } or
+    TParameterSynth(Ast::Ast parent, int i) { mkSynthChild(ParameterRealKind(), parent, i) } or
+    TDontCareParameterSynth(Ast::Ast parent, int i) {
+      mkSynthChild(DontCareParameterKind(), parent, i)
+    } or
+    TPipelineIteratorVariableSynth(Ast::Ast parent, int i) {
+      mkSynthChild(PipelineIteratorVariableKind(), parent, i)
+    } or
+    TPipelineByPropertyNameIteratorVariableSynth(Ast::Ast parent, int i) {
+      mkSynthChild(PipelineByPropertyNameIteratorVariableKind(), parent, i)
+    } or
+    TFunctionSynth(Ast::Ast parent, int i) { mkSynthChild(FunctionSynthKind(), parent, i) } or
     TConfiguration(Raw::Configuration c) or
     TConstExpr(Raw::ConstExpr c) or
     TContinueStmt(Raw::ContinueStmt c) or
@@ -34,7 +46,7 @@ private module Cached {
     TErrorStmt(Raw::ErrorStmt e) or
     TExitStmt(Raw::ExitStmt e) or
     TExpandableStringExpr(Raw::ExpandableStringExpr e) or
-    TFunctionDefinitionStmt(Raw::FunctionDefinition f) or
+    TFunctionDefinitionStmt(Raw::FunctionDefinitionStmt f) or
     TForEachStmt(Raw::ForEachStmt f) or
     TForStmt(Raw::ForStmt f) or
     TGotoStmt(Raw::GotoStmt g) or
@@ -42,11 +54,11 @@ private module Cached {
     TIfStmt(Raw::IfStmt i) or
     TIndexExpr(Raw::IndexExpr i) or
     TInvokeMemberExpr(Raw::InvokeMemberExpr i) or
-    TMember(Raw::Member m) or
+    TNonMethodMember(Raw::Member m) { not m instanceof Raw::Method } or
+    TMethod(Raw::Method m) or
     TMemberExpr(Raw::MemberExpr m) or
     TNamedAttributeArgument(Raw::NamedAttributeArgument n) or
     TNamedBlock(Raw::NamedBlock n) or
-    TParamBlock(Raw::ParamBlock p) or
     TParenExpr(Raw::ParenExpr p) or
     TPipeline(Raw::Pipeline p) or
     TPipelineChain(Raw::PipelineChain p) or
@@ -58,7 +70,6 @@ private module Cached {
     TExpandableSubExpr(Raw::ExpandableSubExpr e) or
     TStmtBlock(Raw::StmtBlock s) or
     TStringConstExpr(Raw::StringConstExpr s) or
-    TSubExpr(Raw::SubExpr s) or
     TSwitchStmt(Raw::SwitchStmt s) or
     TConditionalExpr(Raw::ConditionalExpr t) or
     TThrowStmt(Raw::ThrowStmt t) or
@@ -79,20 +90,22 @@ private module Cached {
         TContinueStmt or TConvertExpr or TDataStmt or TDoUntilStmt or TDoWhileStmt or
         TDynamicStmt or TErrorExpr or TErrorStmt or TExitStmt or TExpandableStringExpr or
         TForEachStmt or TForStmt or TGotoStmt or THashTableExpr or TIfStmt or TIndexExpr or
-        TInvokeMemberExpr or TMemberExpr or TNamedAttributeArgument or TNamedBlock or TParamBlock or
-        TParenExpr or TPipeline or TPipelineChain or TPropertyMember or TRedirection or
-        TReturnStmt or TScriptBlock or TScriptBlockExpr or TStmtBlock or TStringConstExpr or
-        TSubExpr or TSwitchStmt or TConditionalExpr or TThrowStmt or TTrapStmt or TTryStmt or
-        TType or TTypeConstraint or TUnaryExpr or TUsingStmt or TVarAccess or TWhileStmt or
-        TFunctionDefinitionStmt;
+        TInvokeMemberExpr or TMemberExpr or TNamedAttributeArgument or TNamedBlock or TParenExpr or
+        TPipeline or TPipelineChain or TPropertyMember or TRedirection or TReturnStmt or
+        TScriptBlock or TScriptBlockExpr or TStmtBlock or TStringConstExpr or TSwitchStmt or
+        TConditionalExpr or TThrowStmt or TTrapStmt or TTryStmt or TType or TTypeConstraint or
+        TUnaryExpr or TUsingStmt or TVarAccess or TWhileStmt or TFunctionDefinitionStmt or
+        TExpandableSubExpr or TNonMethodMember or TMethod or TTypeNameExpr;
 
-  class TAstSynth = TParameterSynth;
+  class TAstSynth =
+    TParameterSynth or TExprStmtSynth or TDontCareParameterSynth or
+        TPipelineIteratorVariableSynth or TPipelineByPropertyNameIteratorVariableSynth;
 
   class TExpr =
     TArrayExpr or TArrayLiteral or TBinaryExpr or TConstExpr or TConvertExpr or TErrorExpr or
         THashTableExpr or TIndexExpr or TInvokeMemberExpr or TCmd or TMemberExpr or TParenExpr or
-        TPipeline or TPipelineChain or TPropertyMember or TStringConstExpr or TSubExpr or
-        TConditionalExpr or TUnaryExpr or TVarAccess or TExpandableStringExpr or TScriptBlockExpr or
+        TPipeline or TPipelineChain or TPropertyMember or TStringConstExpr or TConditionalExpr or
+        TUnaryExpr or TVarAccess or TExpandableStringExpr or TScriptBlockExpr or
         TExpandableSubExpr or TTypeNameExpr or TUsingExpr;
 
   class TStmt =
@@ -100,7 +113,17 @@ private module Cached {
         TDoWhileStmt or TDynamicStmt or TErrorStmt or TExitStmt or TForEachStmt or TForStmt or
         TGotoStmt or TIfStmt or TReturnStmt or TStmtBlock or TSwitchStmt or TThrowStmt or
         TTrapStmt or TTryStmt or TUsingStmt or TWhileStmt or TConfiguration or TType or
-        TFunctionDefinitionStmt;
+        TFunctionDefinitionStmt or TExprStmt;
+
+  class TMember = TNonMethodMember or TMethod;
+
+  class TParameter = TParameterSynth or TDontCareParameterSynth;
+
+  class TExprStmt = TExprStmtSynth;
+
+  class TAttributeBase = TAttribute or TTypeConstraint;
+
+  class TFunction = TFunctionSynth or TMethod;
 
   cached
   Raw::Ast toRaw(TAstReal n) {
@@ -136,7 +159,6 @@ private module Cached {
     n = TMemberExpr(result) or
     n = TNamedAttributeArgument(result) or
     n = TNamedBlock(result) or
-    n = TParamBlock(result) or
     n = TParenExpr(result) or
     n = TPipeline(result) or
     n = TPipelineChain(result) or
@@ -147,7 +169,6 @@ private module Cached {
     n = TScriptBlockExpr(result) or
     n = TStmtBlock(result) or
     n = TStringConstExpr(result) or
-    n = TSubExpr(result) or
     n = TSwitchStmt(result) or
     n = TConditionalExpr(result) or
     n = TThrowStmt(result) or
@@ -159,13 +180,32 @@ private module Cached {
     n = TUsingStmt(result) or
     n = TVarAccess(result) or
     n = TWhileStmt(result) or
-    n = TFunctionDefinitionStmt(result)
+    n = TFunctionDefinitionStmt(result) or
+    n = TExpandableSubExpr(result) or
+    n = TTypeNameExpr(result) or
+    n = TMethod(result) or
+    n = TNonMethodMember(result)
   }
+
+  cached
+  TAstReal fromRaw(Raw::Ast a) { toRaw(result) = a }
 
   cached
   Ast::Ast getSynthChild(Ast::Ast parent, int i) {
     result = TParameterSynth(parent, i) or
-    none()
+    result = TExprStmtSynth(parent, i) or
+    result = TDontCareParameterSynth(parent, i) or
+    result = TPipelineIteratorVariableSynth(parent, i) or
+    result = TPipelineByPropertyNameIteratorVariableSynth(parent, i) or
+    result = TFunctionSynth(parent, i)
+  }
+
+  cached
+  Ast::Ast getChild(Ast::Ast parent, int i) {
+    result = getSynthChild(parent, i)
+    or
+    not exists(getSynthChild(parent, i)) and
+    result = parent.getChild(i) // TODO: Implement for all classes
   }
 
   cached
@@ -176,9 +216,6 @@ private module Cached {
     or
     any(Synthesis s).child(parent, i, SynthChildRef(child))
   }
-
-  cached
-  Location getLocation(Ast::Ast n) { result = toRaw(n).getLocation() }
 }
 
 import Cached

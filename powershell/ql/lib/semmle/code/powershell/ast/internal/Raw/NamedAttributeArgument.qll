@@ -10,6 +10,8 @@ class NamedAttributeArgument extends @named_attribute_argument, Ast {
   predicate hasName(string s) { this.getName() = s }
 
   Expr getValue() { named_attribute_argument(this, _, result) }
+
+  final override Ast getChild(int i) { i = 0 and result = this.getValue() }
 }
 
 class ValueFromPipelineAttribute extends NamedAttributeArgument {

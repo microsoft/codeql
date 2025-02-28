@@ -78,7 +78,7 @@ private module ConditionalCompletionSplittingInput implements
 
 import CfgShared::MakeWithSplitting<Location, CfgInput, CfgSplittingInput, ConditionalCompletionSplittingInput>
 
-class CfgScope extends Scope {
+class CfgScope extends ScriptBlock {
   predicate entry(Ast first) { first(this, first) }
 
   predicate exit(Ast last, Completion c) { last(this, last, c) }
@@ -94,12 +94,6 @@ predicate succExit(CfgScope scope, Ast last, Completion c) { scope.exit(last, c)
 
 /** Defines the CFG by dispatch on the various AST types. */
 module Trees {
-  class ParameterBlockTree extends StandardPostOrderTree instanceof ParamBlock {
-    override AstNode getChildNode(int i) {
-      exists(Parameter p | p = super.getParameter(i) | result = p.getDefaultValue())
-    }
-  }
-
   class AttributeTree extends StandardPostOrderTree instanceof Attribute {
     override AstNode getChildNode(int i) {
       result = super.getPositionalArgument(i)
@@ -128,12 +122,6 @@ module Trees {
       not exists(super.getEndBlock()) and
       not exists(super.getProcessBlock()) and
       not exists(super.getBeginBlock()) and
-      last(super.getParamBlock(), last, c)
-      or
-      not exists(super.getEndBlock()) and
-      not exists(super.getProcessBlock()) and
-      not exists(super.getBeginBlock()) and
-      not exists(super.getParamBlock()) and
       // No blocks at all. We end where we started
       this.succEntry(last, c)
     }
@@ -141,22 +129,22 @@ module Trees {
     override predicate succ(AstNode pred, AstNode succ, Completion c) {
       this.succEntry(pred, c) and
       (
-        first(super.getParamBlock(), succ)
+        first(super.getParameter(0), succ) // TODO: CFG tree for parameter
         or
-        not exists(super.getParamBlock()) and
+        not exists(super.getAParameter()) and
         first(super.getBeginBlock(), succ)
         or
-        not exists(super.getParamBlock()) and
+        not exists(super.getAParameter()) and
         not exists(super.getBeginBlock()) and
         first(super.getProcessBlock(), succ)
         or
-        not exists(super.getParamBlock()) and
+        not exists(super.getAParameter()) and
         not exists(super.getBeginBlock()) and
         not exists(super.getProcessBlock()) and
         first(super.getEndBlock(), succ)
       )
       or
-      last(super.getParamBlock(), pred, c) and
+      last(super.getParameter(super.getNumberOfParameters() - 1), pred, c) and
       completionIsNormal(c) and
       (
         first(super.getBeginBlock(), succ)
@@ -190,7 +178,7 @@ module Trees {
     }
 
     final override predicate propagatesAbnormal(AstNode child) {
-      child = super.getParamBlock() or
+      child = super.getAParameter() or
       child = super.getBeginBlock() or
       child = super.getProcessBlock() or
       child = super.getEndBlock()
@@ -206,7 +194,7 @@ module Trees {
       exists(Parameter p |
         p =
           rank[i + 1](Parameter cand, int j |
-            cand.hasDefaultValue() and func.getFunctionParameter(j) = cand
+            cand.hasDefaultValue() and func.getParameter(j) = cand
           |
             cand order by j
           ) and
@@ -475,14 +463,8 @@ module Trees {
   }
 
   class MemberExprTree extends StandardPostOrderTree instanceof MemberExpr {
-    override AstNode getChildNode(int i) {
-      i = 0 and result = super.getQualifier()
-      or
-      i = 1 and result = super.getMember()
-    }
+    override AstNode getChildNode(int i) { i = 0 and result = super.getQualifier() }
   }
-
-  class CmdParameterTree extends LeafTree instanceof CmdParameter { }
 
   class IfStmtTree extends PreOrderTree instanceof IfStmt {
     final override predicate propagatesAbnormal(AstNode child) {
@@ -619,7 +601,7 @@ module Trees {
   }
 
   class ParenExprTree extends StandardPostOrderTree instanceof ParenExpr {
-    override AstNode getChildNode(int i) { i = 0 and result = super.getBase() }
+    override AstNode getChildNode(int i) { i = 0 and result = super.getExpr() }
   }
 
   class TypeNameExprTree extends LeafTree instanceof TypeNameExpr { }
@@ -745,13 +727,9 @@ module Trees {
     }
   }
 
-  class CmdExprTree extends StandardPostOrderTree instanceof CmdExpr {
-    override AstNode getChildNode(int i) { i = 0 and result = super.getExpr() }
-  }
-
-  class CmdTree extends StandardPostOrderTree instanceof Cmd {
+  class CallExprTree extends StandardPostOrderTree instanceof CallExpr {
     override AstNode getChildNode(int i) {
-      i = -1 and result = super.getCommand()
+      i = -1 and result = super.getQualifier()
       or
       result = super.getArgument(i)
     }
@@ -761,14 +739,6 @@ module Trees {
 
   class PipelineTree extends StandardPreOrderTree instanceof Pipeline {
     override AstNode getChildNode(int i) { result = super.getComponent(i) }
-  }
-
-  class InvokeMemberExprTree extends StandardPostOrderTree instanceof InvokeMemberExpr {
-    override AstNode getChildNode(int i) {
-      i = -1 and result = super.getQualifier()
-      or
-      result = super.getArgument(i)
-    }
   }
 }
 

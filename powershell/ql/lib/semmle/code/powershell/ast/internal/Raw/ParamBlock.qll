@@ -14,4 +14,19 @@ class ParamBlock extends @param_block, Ast {
   Attribute getAnAttribute() { result = this.getAttribute(_) }
 
   Parameter getParameter(int i) { param_block_parameter(this, i, result) }
+
+  Parameter getAParameter() { result = this.getParameter(_) }
+
+  final override Ast getChild(int i) {
+    exists(int k |
+      i = 2 * k and
+      result = this.getAttribute(k)
+      or
+      i = 2 * k + 1 and
+      result = this.getParameter(k)
+    )
+  }
+
+  /** Gets the script block, if any. */
+  ScriptBlock getScriptBlock() { result.getParamBlock() = this }
 }

@@ -12,4 +12,12 @@ class ForEachStmt extends @foreach_statement, LoopStmt {
   PipelineBase getIterableExpr() { foreach_statement(this, _, result, _, _) }
 
   predicate isParallel() { foreach_statement(this, _, _, _, 1) }
+
+  final override Ast getChild(int i) {
+    i = 0 and result = this.getVarAccess()
+    or
+    i = 1 and result = this.getIterableExpr()
+    or
+    i = 2 and result = this.getBody()
+  }
 }

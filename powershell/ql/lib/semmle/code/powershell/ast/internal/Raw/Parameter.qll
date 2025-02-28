@@ -11,4 +11,17 @@ class Parameter extends @parameter, Ast {
   override string toString() { result = this.getName() }
 
   override SourceLocation getLocation() { parameter_location(this, result) }
+
+  Attribute getAttribute(int i) { parameter_attribute(this, i, result) }
+
+  Attribute getAnAttribute() { result = this.getAttribute(_) }
+
+  Expr getDefaultValue() { parameter_default_value(this, result) }
+
+  final override Ast getChild(int i) {
+    result = this.getAttribute(i)
+    or
+    i = -1 and
+    result = this.getDefaultValue()
+  }
 }

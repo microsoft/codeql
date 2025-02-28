@@ -1,13 +1,16 @@
 private import Ast
 private import Synthesis
+private import VariableExpression
 private import Location
+private import semmle.code.powershell.controlflow.internal.Scope
 
 cached
 private module Cached {
   cached
   newtype TVariable =
-    TLocalVariableReal(string name) {
-      none() // TODO
+    TLocalVariableReal(Scope scope, string name) {
+      not name = "this" and
+      exists(VarAccess va | va.getName() = name and scope = va.getEnclosingScope())
     } or
     TLocalVariableSynth(Ast n, int i) { any(Synthesis s).localVariable(n, i) }
 }
@@ -27,7 +30,12 @@ class TVariableReal = TLocalVariableReal;
 class TLocalVariable = TLocalVariableReal or TLocalVariableSynth;
 
 class LocalVariableReal extends VariableImpl, TLocalVariableReal {
-  override string getNameImpl() { result = this.getNameImpl() }
+  Scope scope;
+  string name;
 
-  override Location getLocationImpl() { result = this.getLocationImpl() }
+  LocalVariableReal() { this = TLocalVariableReal(scope, name) }
+
+  override string getNameImpl() { result = name }
+
+  override Location getLocationImpl() { result = this.getLocationImpl() } // TODO: Location
 }

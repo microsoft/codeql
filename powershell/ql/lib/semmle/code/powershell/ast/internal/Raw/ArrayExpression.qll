@@ -5,22 +5,7 @@ class ArrayExpr extends @array_expression, Expr {
 
   StmtBlock getStmtBlock() { array_expression(this, result) }
 
-  /**
-   * Gets the i'th element of this `ArrayExpr`, if this can be determined statically.
-   *
-   * See `getStmtBlock` when the array elements are not known statically.
-   */
-  Expr getElement(int i) {
-    result =
-      unique( | | this.getStmtBlock().getAStmt()).(CmdExpr).getExpr().(ArrayLiteral).getElement(i)
-  }
-
-  /**
-   * Gets an element of this `ArrayExpr`, if this can be determined statically.
-   *
-   * See `getStmtBlock` when the array elements are not known statically.
-   */
-  Expr getAnElement() { result = this.getElement(_) }
+  final override Ast getChild(int i) { i = 0 and result = this.getStmtBlock() }
 
   override string toString() { result = "@(...)" }
 }

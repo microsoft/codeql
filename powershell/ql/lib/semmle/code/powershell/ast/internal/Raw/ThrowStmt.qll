@@ -10,4 +10,6 @@ class ThrowStmt extends @throw_statement, Stmt {
   PipelineBase getPipeline() { throw_statement_pipeline(this, result) }
 
   predicate hasPipeline() { exists(this.getPipeline()) }
+
+  final override Ast getChild(int i) { i = 0 and result = this.getPipeline() }
 }

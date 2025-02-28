@@ -7,4 +7,3 @@ class ConstExpr extends @constant_expression, BaseConstExpr {
 
   override StringLiteral getValue() { constant_expression_value(this, result) }
 }
-

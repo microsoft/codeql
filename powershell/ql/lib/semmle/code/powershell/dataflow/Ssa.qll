@@ -24,7 +24,7 @@ module Ssa {
     }
 
     /** Gets a control-flow node that reads the value of this SSA definition. */
-    final AstCfgNode  getARead() { result = SsaImpl::getARead(this) }
+    final AstCfgNode getARead() { result = SsaImpl::getARead(this) }
 
     /**
      * Gets a first control-flow node that reads the value of this SSA definition.
@@ -45,9 +45,7 @@ module Ssa {
      * That is, `read2` can be reached from `read1` without passing through
      * another read.
      */
-    final predicate hasAdjacentReads(
-      VarReadAccessCfgNode read1, VarReadAccessCfgNode read2
-    ) {
+    final predicate hasAdjacentReads(VarReadAccessCfgNode read1, VarReadAccessCfgNode read2) {
       SsaImpl::adjacentReadPair(this, read1, read2)
     }
 

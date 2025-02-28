@@ -1,4 +1,5 @@
 private import Raw
+
 class NamedBlock extends @named_block, Ast {
   override string toString() { result = "{...}" }
 
@@ -15,4 +16,21 @@ class NamedBlock extends @named_block, Ast {
   TrapStmt getTrap(int i) { named_block_trap(this, i, result) }
 
   TrapStmt getATrap() { result = this.getTrap(_) }
+
+  final override Ast getChild(int i) {
+    exists(int k |
+      i = 2 * k and
+      result = this.getStmt(k)
+      or
+      i = 2 * k + 1 and
+      result = this.getTrap(k)
+    )
+  }
+}
+
+/** A `process` block. */
+class ProcessBlock extends NamedBlock {
+  ScriptBlock scriptBlock;
+
+  ProcessBlock() { scriptBlock.getProcessBlock() = this }
 }

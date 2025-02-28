@@ -12,4 +12,6 @@ class ExpandableStringExpr extends @expandable_string_expression, Expr {
   Expr getExpr(int i) { expandable_string_expression_nested_expression(this, i, result) }
 
   Expr getAnExpr() { result = this.getExpr(_) }
+
+  final override Ast getChild(int i) { result = this.getExpr(i) }
 }

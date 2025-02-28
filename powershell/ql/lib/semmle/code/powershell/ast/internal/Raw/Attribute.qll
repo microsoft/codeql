@@ -13,6 +13,12 @@ class Attribute extends @attribute, AttributeBase {
 
   NamedAttributeArgument getNamedArgument(int i) { attribute_named_argument(this, i, result) }
 
+  final override Ast getChild(int i) {
+    result = this.getNamedArgument(-(i + 1))
+    or
+    result = this.getPositionalArgument(i + 1)
+  }
+
   NamedAttributeArgument getANamedArgument() { result = this.getNamedArgument(_) }
 
   int getNumberOfArguments() { result = count(this.getAPositionalArgument()) }

@@ -48,4 +48,26 @@ class ScriptBlock extends @script_block, Ast {
   }
 
   ModuleSpecification getAModuleSpecification() { result = this.getModuleSpecification(_) }
+
+  final override Ast getChild(int i) {
+    result = this.getUsing(-(i + 1))
+    or
+    i = 0 and
+    result = this.getParamBlock()
+    or
+    i = 1 and
+    result = this.getBeginBlock()
+    or
+    i = 2 and
+    result = this.getCleanBlock()
+    or
+    i = 3 and
+    result = this.getDynamicParamBlock()
+    or
+    i = 4 and
+    result = this.getEndBlock()
+    or
+    i = 5 and
+    result = this.getProcessBlock()
+  }
 }

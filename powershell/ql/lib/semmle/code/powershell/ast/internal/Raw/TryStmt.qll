@@ -15,4 +15,14 @@ class TryStmt extends @try_statement, Stmt {
   StmtBlock getBody() { try_statement(this, result) }
 
   predicate hasFinally() { exists(this.getFinally()) }
+
+  final override Ast getChild(int i) {
+    i = -1 and
+    result = this.getBody()
+    or
+    result = this.getCatchClause(i)
+    or
+    i = -2 and
+    result = this.getFinally()
+  }
 }

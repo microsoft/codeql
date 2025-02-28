@@ -1,5 +1,5 @@
-// import powershell
 
+// import powershell
 // abstract private class AbstractObjectCreation extends Call {
 //   /**
 //    * The type of the object being constructed.
@@ -9,11 +9,9 @@
 //    * always exist in the database).
 //    */
 //   abstract Type getConstructedType();
-
 //   /** The name of the type of the object being constructed. */
 //   abstract string getConstructedTypeName();
 // }
-
 // /**
 //  * An object creation from a call to a constructor. For example:
 //  * ```powershell
@@ -22,12 +20,10 @@
 //  */
 // class NewObjectCreation extends AbstractObjectCreation instanceof ConstructorCall {
 //   final override Type getConstructedType() { result = ConstructorCall.super.getConstructedType() }
-
 //   final override string getConstructedTypeName() {
 //     result = ConstructorCall.super.getConstructedTypeName()
 //   }
 // }
-
 // /**
 //  * An object creation from a call to `New-Object`. For example:
 //  * ```powershell
@@ -36,9 +32,7 @@
 //  */
 // class DotNetObjectCreation extends AbstractObjectCreation instanceof Cmd {
 //   DotNetObjectCreation() { this.getCommandName() = "New-Object" }
-
 //   final override Type getConstructedType() { none() }
-
 //   final override string getConstructedTypeName() {
 //     // Either it's the named argument `TypeName`
 //     result = Cmd.super.getNamedArgument("TypeName").(StringConstExpr).getValue().getValue()
@@ -51,5 +45,4 @@
 //     )
 //   }
 // }
-
 // final class ObjectCreation = AbstractObjectCreation;
