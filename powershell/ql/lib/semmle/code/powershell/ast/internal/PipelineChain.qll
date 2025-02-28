@@ -18,4 +18,10 @@ class PipelineChain extends Expr, TPipelineChain {
     not synthChild(this, 1, _) and
     toRaw(result) = toRaw(this).(Raw::PipelineChain).getRight()
   }
+
+  final override Ast getChild(int i) {
+    i = 0 and result = this.getLeft()
+    or
+    i = 1 and result = this.getRight()
+  }
 }

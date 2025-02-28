@@ -3,12 +3,6 @@ private import Raw
 class ScriptBlock extends @script_block, Ast {
   predicate isTopLevel() { not exists(this.getParent()) }
 
-  override string toString() {
-    if this.isTopLevel()
-    then result = this.getLocation().getFile().getBaseName()
-    else result = "{...}"
-  }
-
   override Location getLocation() { script_block_location(this, result) }
 
   int getNumUsings() { script_block(this, result, _, _, _, _) }

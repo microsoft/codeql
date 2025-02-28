@@ -22,4 +22,6 @@ class CallExpr extends Expr, TCallExpr {
 
   /** Gets the qualifier of this call, if any. */
   Expr getQualifier() { none() }
+
+  final override string toString() { result = "Call to " + this.getName() }
 }

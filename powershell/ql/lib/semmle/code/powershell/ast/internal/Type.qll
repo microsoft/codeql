@@ -5,6 +5,9 @@ private import Raw.Raw as Raw
 class Type extends Stmt, TType {
   string getName() { result = toRaw(this).(Raw::Type).getName() }
 
+  
+  override string toString() { result = this.getName() }
+
   Member getMember(int i) {
     synthChild(this, i, result)
     or
@@ -26,4 +29,9 @@ class Type extends Stmt, TType {
   TypeConstraint getABaseType() { result = this.getBaseType(_) }
 
   Type getASubtype() { result.getABaseType().getName() = this.getName() }
+
+  final override Ast getChild(int i) {
+    result = this.getMember(i) or
+    result = this.getBaseType(-(i + 1))
+  }
 }

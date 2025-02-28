@@ -21,8 +21,6 @@ class SwitchStmt extends LabeledStmt, @switch_statement {
 
   int getNumberOfCases() { result = count(this.getACase()) }
 
-  final override string toString() { result = "switch(...) {...}" }
-
   final override Ast getChild(int i) {
     i = -2 and
     result = this.getCondition()

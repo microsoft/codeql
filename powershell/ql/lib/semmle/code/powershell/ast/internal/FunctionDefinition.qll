@@ -4,9 +4,9 @@ private import Raw.Raw as Raw
 
 class FunctionDefinitionStmt extends Stmt, TFunctionDefinitionStmt {
   ScriptBlock getBody() {
-    synthChild(this, -1, result)
+    synthChild(this, 0, result)
     or
-    not synthChild(this, -1, _) and
+    not synthChild(this, 0, _) and
     toRaw(result) = toRaw(this).(Raw::FunctionDefinitionStmt).getBody()
   }
 
@@ -15,4 +15,6 @@ class FunctionDefinitionStmt extends Stmt, TFunctionDefinitionStmt {
   Parameter getParameter(int i) { result = this.getBody().getParameter(i) }
 
   Parameter getAParameter() { result = this.getParameter(_) }
+
+  final override Ast getChild(int i) { i = 0 and result = this.getBody() }
 }

@@ -5,8 +5,6 @@ class PropertyMember extends @property_member, Member {
 
   override SourceLocation getLocation() { property_member_location(this, result) }
 
-  override string toString() { result = this.getName() }
-
   override predicate isHidden() { property_member(this, true, _, _, _, _, _) }
 
   override predicate isPrivate() { property_member(this, _, true, _, _, _, _) }

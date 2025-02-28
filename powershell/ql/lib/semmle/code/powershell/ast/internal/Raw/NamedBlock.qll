@@ -1,8 +1,6 @@
 private import Raw
 
 class NamedBlock extends @named_block, Ast {
-  override string toString() { result = "{...}" }
-
   override SourceLocation getLocation() { named_block_location(this, result) }
 
   int getNumStatements() { named_block(this, result, _) }
@@ -18,13 +16,9 @@ class NamedBlock extends @named_block, Ast {
   TrapStmt getATrap() { result = this.getTrap(_) }
 
   final override Ast getChild(int i) {
-    exists(int k |
-      i = 2 * k and
-      result = this.getStmt(k)
-      or
-      i = 2 * k + 1 and
-      result = this.getTrap(k)
-    )
+    result = this.getStmt(-(i + 1))
+    or
+    result = this.getTrap(i + 1)
   }
 }
 

@@ -5,8 +5,6 @@ class Member extends @member, Ast {
 
   string getName() { none() }
 
-  override string toString() { result = this.getName() }
-
   predicate isHidden() { none() }
 
   predicate isPrivate() { none() }
@@ -29,4 +27,6 @@ class Method extends Member {
   final override string getName() { function_member(this, _, _, _, _, _, _, result, _) }
 
   predicate isConstructor() { function_member(this, _, true, _, _, _, _, _, _) }
+
+  override Location getLocation() { function_member_location(this, result) }
 }

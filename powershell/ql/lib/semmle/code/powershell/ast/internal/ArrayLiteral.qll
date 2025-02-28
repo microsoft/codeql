@@ -11,4 +11,8 @@ class ArrayLiteral extends Expr, TArrayLiteral {
   }
 
   Expr getAnElement() { result = this.getElement(_) }
+
+  override string toString() { result = "...,..." }
+
+  final override Ast getChild(int i) { result = this.getElement(i) }
 }

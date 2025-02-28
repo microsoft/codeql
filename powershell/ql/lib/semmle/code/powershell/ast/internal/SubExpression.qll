@@ -9,4 +9,8 @@ class ExpandableSubExpr extends Expr, TExpandableSubExpr {
     not synthChild(this, 0, _) and
     toRaw(result) = toRaw(this).(Raw::ExpandableSubExpr).getExpr()
   }
+
+  final override string toString() { result = "$(...)" }
+
+  final override Ast getChild(int i) { i = 0 and result = this.getExpr() }
 }

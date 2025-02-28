@@ -3,7 +3,7 @@ import Location
 private import Scope
 
 class Ast extends @ast {
-  string toString() { none() }
+  final string toString() { none() }
 
   final Ast getParent() { result.getAChild() = this }
 

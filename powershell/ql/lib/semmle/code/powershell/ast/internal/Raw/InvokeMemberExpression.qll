@@ -22,8 +22,6 @@ class InvokeMemberExpr extends @invoke_member_expression, MemberExprBase {
     result = this.getArgument(i)
   }
 
-  override string toString() { result = "call to " + this.getName() }
-
   override predicate isStatic() { this.getQualifier() instanceof TypeNameExpr }
 }
 

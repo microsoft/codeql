@@ -11,4 +11,10 @@ class ThrowStmt extends Stmt, TThrowStmt {
   }
 
   predicate hasPipeline() { exists(this.getPipeline()) }
+
+  override string toString() {
+    if this.hasPipeline() then result = "throw ..." else result = "throw"
+  }
+
+  final override Ast getChild(int i) { i = 0 and result = this.getPipeline() }
 }

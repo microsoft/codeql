@@ -1,11 +1,16 @@
 private import TAst
-private import TAst
-private import CallExpr
-private import Expr
+private import Internal
 private import Raw.Raw as Raw
 
 class InvokeMemberExpr extends CallExpr, TInvokeMemberExpr {
   final override string getName() { result = toRaw(this).(Raw::InvokeMemberExpr).getName() }
+
+  final override Ast getChild(int i) {
+    i = -1 and
+    result = this.getQualifier()
+    or
+    result = this.getArgument(i)
+  }
 
   final override Expr getArgument(int i) {
     toRaw(result) = toRaw(this).(Raw::InvokeMemberExpr).getArgument(i)

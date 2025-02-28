@@ -1,7 +1,6 @@
 private import Raw
 
 class NamedAttributeArgument extends @named_attribute_argument, Ast {
-  final override string toString() { result = this.getName() }
 
   final override SourceLocation getLocation() { named_attribute_argument_location(this, result) }
 

@@ -9,4 +9,6 @@ class GotoStmt extends Stmt, TGotoStmt {
     not synthChild(this, 0, _) and
     toRaw(result) = toRaw(this).(Raw::GotoStmt).getLabel()
   }
+
+  final override Ast getChild(int i) { i = 0 and result = this.getLabel() }
 }

@@ -15,6 +15,4 @@ class AssignStmt extends @assignment_statement, PipelineBase {
     or
     i = 1 and result = this.getRightHandSide()
   }
-
-  override string toString() { result = "...=..." }
 }

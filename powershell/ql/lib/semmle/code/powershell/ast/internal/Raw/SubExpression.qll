@@ -6,7 +6,5 @@ class ExpandableSubExpr extends @sub_expression, Expr {
 
   StmtBlock getExpr() { sub_expression(this, result) }
 
-  final override string toString() { result = "$(...)" }
-
   final override Ast getChild(int i) { i = 0 and result = this.getExpr() }
 }

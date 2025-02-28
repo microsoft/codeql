@@ -3,8 +3,6 @@ private import Raw
 class HashTableExpr extends @hash_table, Expr {
   final override Location getLocation() { hash_table_location(this, result) }
 
-  final override string toString() { result = "${...}" }
-
   Stmt getElement(Expr key) { hash_table_key_value_pairs(this, _, key, result) } // TODO: Change @ast to @expr in db scheme
 
   Stmt getElementFromConstant(string key) {

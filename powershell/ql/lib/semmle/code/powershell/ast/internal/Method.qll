@@ -13,4 +13,8 @@ class Method extends Member, FunctionBase, TMethod {
   }
 
   final override Parameter getParameter(int i) { result = this.getBody().getParameter(i) }
+
+  final override Location getLocation() { result = toRaw(this).(Raw::Method).getLocation() }
+
+  final override Ast getChild(int i) { i = 0 and result = this.getBody() }
 }

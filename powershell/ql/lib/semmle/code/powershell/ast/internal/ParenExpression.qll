@@ -9,4 +9,8 @@ class ParenExpr extends Expr, TParenExpr {
     not synthChild(this, 0, _) and
     toRaw(result) = toRaw(this).(Raw::ParenExpr).getBase()
   }
+
+  override string toString() { result = "(...)" }
+
+  final override Ast getChild(int i) { i = 0 and result = this.getExpr() }
 }

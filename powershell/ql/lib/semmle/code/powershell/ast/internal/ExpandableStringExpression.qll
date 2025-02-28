@@ -7,6 +7,8 @@ class ExpandableStringExpr extends Expr, TExpandableStringExpr {
     result = toRaw(this).(Raw::ExpandableStringExpr).getUnexpandedValue().getValue()
   }
 
+  override string toString() { result = this.getUnexpandedValue() }
+
   Expr getExpr(int i) {
     synthChild(this, i, result)
     or
@@ -15,4 +17,6 @@ class ExpandableStringExpr extends Expr, TExpandableStringExpr {
   }
 
   Expr getAnExpr() { result = this.getExpr(_) }
+
+  final override Ast getChild(int i) { result = this.getExpr(i) }
 }

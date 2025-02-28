@@ -1,70 +1,70 @@
-private import Expression
-private import Command
-private import InvokeMemberExpression
+// private import Expression
+// private import Command
+// private import InvokeMemberExpression
 
-module Private {
-  /**
-   * An argument to a call.
-   *
-   * The argument may be named or positional.
-   */
-  abstract class AbstractArgument extends Expr {
-    /** Gets the position if this is a positional argument. */
-    abstract int getPosition();
+// module Private {
+//   /**
+//    * An argument to a call.
+//    *
+//    * The argument may be named or positional.
+//    */
+//   abstract class AbstractArgument extends Expr {
+//     /** Gets the position if this is a positional argument. */
+//     abstract int getPosition();
 
-    /** Gets the name if this is a keyword argument. */
-    abstract string getName();
+//     /** Gets the name if this is a keyword argument. */
+//     abstract string getName();
 
-    /** Holds if this is a qualifier of a call */
-    abstract predicate isQualifier();
-  }
+//     /** Holds if this is a qualifier of a call */
+//     abstract predicate isQualifier();
+//   }
 
-  class CmdArgument extends AbstractArgument {
-    Cmd call;
+//   class CmdArgument extends AbstractArgument {
+//     Cmd call;
 
-    CmdArgument() { call.getAnArgument() = this }
+//     CmdArgument() { call.getAnArgument() = this }
 
-    override int getPosition() { call.getPositionalArgument(result) = this }
+//     override int getPosition() { call.getPositionalArgument(result) = this }
 
-    override string getName() { call.getNamedArgument(result) = this }
+//     override string getName() { call.getNamedArgument(result) = this }
 
-    final override predicate isQualifier() { none() }
-  }
+//     final override predicate isQualifier() { none() }
+//   }
 
-  class MethodArgument extends AbstractArgument {
-    InvokeMemberExpr call;
+//   class MethodArgument extends AbstractArgument {
+//     InvokeMemberExpr call;
 
-    MethodArgument() { call.getAnArgument() = this or call.getQualifier() = this }
+//     MethodArgument() { call.getAnArgument() = this or call.getQualifier() = this }
 
-    override int getPosition() { call.getArgument(result) = this }
+//     override int getPosition() { call.getArgument(result) = this }
 
-    override string getName() { none() }
+//     override string getName() { none() }
 
-    final override predicate isQualifier() { call.getQualifier() = this }
-  }
-}
+//     final override predicate isQualifier() { call.getQualifier() = this }
+//   }
+// }
 
-private import Private
+// private import Private
 
-module Public {
-  final class Argument = AbstractArgument;
+// module Public {
+//   final class Argument = AbstractArgument;
 
-  /** A positional argument to a command. */
-  class PositionalArgument extends Argument {
-    PositionalArgument() {
-      not this instanceof NamedArgument and not this instanceof QualifierArgument
-    }
-  }
+//   /** A positional argument to a command. */
+//   class PositionalArgument extends Argument {
+//     PositionalArgument() {
+//       not this instanceof NamedArgument and not this instanceof QualifierArgument
+//     }
+//   }
 
-  /** A named argument to a command. */
-  class NamedArgument extends Argument {
-    NamedArgument() { exists(this.getName()) }
-  }
+//   /** A named argument to a command. */
+//   class NamedArgument extends Argument {
+//     NamedArgument() { exists(this.getName()) }
+//   }
 
-  /** An argument that is a qualifier to a method. */
-  class QualifierArgument extends Argument {
-    QualifierArgument() { this.isQualifier() }
-  }
-}
+//   /** An argument that is a qualifier to a method. */
+//   class QualifierArgument extends Argument {
+//     QualifierArgument() { this.isQualifier() }
+//   }
+// }
 
-import Public
+// import Public

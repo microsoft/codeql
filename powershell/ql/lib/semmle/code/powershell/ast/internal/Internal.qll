@@ -69,6 +69,8 @@ import IndexExpr
 import HashTable
 import Variable
 import CallExpr
+import Command
 import ExprStmt
 import Constant
 import AttributeBase
+import Method

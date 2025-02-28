@@ -1,7 +1,6 @@
 private import Raw
 
 class VarAccess extends @variable_expression, Expr {
-  override string toString() { result = this.getUserPath() }
 
   override SourceLocation getLocation() { variable_expression_location(this, result) }
 

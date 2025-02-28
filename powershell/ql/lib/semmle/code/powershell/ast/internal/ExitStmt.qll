@@ -9,4 +9,10 @@ class ExitStmt extends Stmt, TExitStmt {
     not synthChild(this, 0, _) and
     toRaw(result) = toRaw(this).(Raw::ExitStmt).getPipeline()
   }
+
+  predicate hasPipeline() { exists(this.getPipeline()) }
+
+  override string toString() { if this.hasPipeline() then result = "exit ..." else result = "exit" }
+
+  final override Ast getChild(int i) { i = 0 and result = this.getPipeline() }
 }

@@ -6,6 +6,4 @@ class ArrayExpr extends @array_expression, Expr {
   StmtBlock getStmtBlock() { array_expression(this, result) }
 
   final override Ast getChild(int i) { i = 0 and result = this.getStmtBlock() }
-
-  override string toString() { result = "@(...)" }
 }

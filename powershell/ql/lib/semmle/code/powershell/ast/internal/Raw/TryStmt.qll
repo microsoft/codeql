@@ -3,8 +3,6 @@ private import Raw
 class TryStmt extends @try_statement, Stmt {
   override SourceLocation getLocation() { try_statement_location(this, result) }
 
-  override string toString() { result = "try {...}" }
-
   CatchClause getCatchClause(int i) { try_statement_catch_clause(this, i, result) }
 
   CatchClause getACatchClause() { result = this.getCatchClause(_) }

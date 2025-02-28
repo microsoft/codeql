@@ -1,7 +1,6 @@
 private import Raw
 
 class FunctionDefinitionStmt extends @function_definition, Stmt {
-  override string toString() { result = this.getName() }
 
   override Location getLocation() { function_definition_location(this, result) }
 

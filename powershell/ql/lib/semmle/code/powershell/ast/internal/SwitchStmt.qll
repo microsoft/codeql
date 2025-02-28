@@ -3,6 +3,8 @@ private import Internal
 private import Raw.Raw as Raw
 
 class SwitchStmt extends Stmt, TSwitchStmt {
+  final override string toString() { result = "switch(...) {...}" }
+
   Expr getCondition() {
     synthChild(this, -2, result)
     or
@@ -35,6 +37,19 @@ class SwitchStmt extends Stmt, TSwitchStmt {
       not synthChild(this, k, _) and
       toRaw(result) = toRaw(this).(Raw::SwitchStmt).getPattern(i)
     )
+  }
+
+  final override Ast getChild(int i) {
+    i = -2 and
+    result = this.getCondition()
+    or
+    i = -1 and
+    result = this.getDefault()
+    or
+    result = this.getCase(i)
+    or
+    i >= this.getNumberOfCases() and
+    result = this.getPattern(i - this.getNumberOfCases())
   }
 
   Expr getAPattern() { result = this.getPattern(_) }

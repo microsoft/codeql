@@ -30,4 +30,12 @@ class Attribute extends Ast, TAttribute {
   Expr getAPositionalArgument() { result = this.getPositionalArgument(_) }
 
   int getNumberOfPositionalArguments() { result = count(this.getAPositionalArgument()) }
+
+  override string toString() { result = this.getName() }
+
+  final override Ast getChild(int i) {
+    result = this.getNamedArgument(-(i + 1))
+    or
+    result = this.getPositionalArgument(i + 1)
+  }
 }

@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Microsoft.Extractor.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+53e8162273a08cd478b859d846467e0cd879a4ef")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9d72dce2c6cf30f00350df4c8ccf6c09b64ed8ab")]
 [assembly: System.Reflection.AssemblyProductAttribute("Microsoft.Extractor.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Microsoft.Extractor.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

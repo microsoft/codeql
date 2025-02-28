@@ -3,6 +3,8 @@ private import Internal
 private import Raw.Raw as Raw
 
 class UnaryExpr extends Expr, TUnaryExpr {
+  final override Ast getChild(int i) { i = 0 and result = this.getOperand() }
+  
   /** INTERNAL: Do not use. */
   int getKind() { result = toRaw(this).(Raw::UnaryExpr).getKind() }
 

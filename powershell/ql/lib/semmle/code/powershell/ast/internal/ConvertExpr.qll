@@ -3,6 +3,8 @@ private import Internal
 private import Raw.Raw as Raw
 
 class ConvertExpr extends Expr, TConvertExpr {
+  override string toString() { result = "[...]..." }
+
   Expr getBase() {
     synthChild(this, 0, result)
     or
@@ -22,5 +24,13 @@ class ConvertExpr extends Expr, TConvertExpr {
     or
     not synthChild(this, 2, _) and
     toRaw(result) = toRaw(this).(Raw::ConvertExpr).getAttribute()
+  }
+
+  final override Ast getChild(int i) {
+    i = 0 and result = this.getBase()
+    or
+    i = 1 and result = this.getType()
+    or
+    i = 2 and result = this.getAttribute()
   }
 }

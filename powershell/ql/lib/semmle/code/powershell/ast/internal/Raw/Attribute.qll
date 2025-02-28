@@ -1,7 +1,6 @@
 private import Raw
 
 class Attribute extends @attribute, AttributeBase {
-  override string toString() { result = this.getName() }
 
   override SourceLocation getLocation() { attribute_location(this, result) }
 

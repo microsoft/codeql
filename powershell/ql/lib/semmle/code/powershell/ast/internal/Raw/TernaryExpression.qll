@@ -1,7 +1,6 @@
 private import Raw
 
 class ConditionalExpr extends @ternary_expression, Expr {
-  override string toString() { result = "...?...:..." }
 
   override SourceLocation getLocation() { ternary_expression_location(this, result) }
 

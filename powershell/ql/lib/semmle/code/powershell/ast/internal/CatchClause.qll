@@ -11,6 +11,14 @@ class CatchClause extends Ast, TCatchClause {
     toRaw(result) = toRaw(this).(Raw::CatchClause).getBody()
   }
 
+  final override Ast getChild(int i) {
+    i = -1 and result = this.getBody()
+    or
+    result = this.getCatchType(i)
+  }
+
+  override string toString() { result = "catch {...}" }
+
   TryStmt getTryStmt() { result.getACatchClause() = this }
 
   predicate isLast() {

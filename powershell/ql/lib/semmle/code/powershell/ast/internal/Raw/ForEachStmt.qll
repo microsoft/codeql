@@ -3,8 +3,6 @@ private import Raw
 class ForEachStmt extends @foreach_statement, LoopStmt {
   override SourceLocation getLocation() { foreach_statement_location(this, result) }
 
-  override string toString() { result = "forach(... in ...)" }
-
   final override StmtBlock getBody() { foreach_statement(this, _, _, result, _) }
 
   VarAccess getVarAccess() { foreach_statement(this, result, _, _, _) }

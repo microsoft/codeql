@@ -4,4 +4,6 @@ private import Raw.Raw as Raw
 
 class MergingRedirection extends Rediction {
   MergingRedirection() { this = TRedirection(any(Raw::MergingRedirection r)) }
+
+  override string toString() { result = "MergingRedirection" }
 }

@@ -3,8 +3,6 @@ private import Raw
 class CatchClause extends @catch_clause, Ast {
   override SourceLocation getLocation() { catch_clause_location(this, result) }
 
-  override string toString() { result = "catch {...}" }
-
   StmtBlock getBody() { catch_clause(this, result, _) }
 
   final override Ast getChild(int i) {

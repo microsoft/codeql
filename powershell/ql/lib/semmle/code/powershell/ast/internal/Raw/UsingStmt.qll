@@ -3,8 +3,6 @@ private import Raw
 class UsingStmt extends @using_statement, Stmt {
   override SourceLocation getLocation() { using_statement_location(this, result) }
 
-  override string toString() { result = "using ..." }
-
   string getName() {
     exists(StringConstExpr const |
       using_statement_name(this, const) and // TODO: Change dbscheme

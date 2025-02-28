@@ -3,6 +3,19 @@ private import Raw.Raw as Raw
 private import Internal
 
 class IfStmt extends Stmt, TIfStmt {
+  override string toString() {
+    if this.hasElse() then result = "if (...) {...} else {...}" else result = "if (...) {...}"
+  }
+
+  final override Ast getChild(int i) {
+    i = 0 and
+    result = this.getElse()
+    or
+    result = this.getCondition(-(i + 1))
+    or
+    result = this.getThen(i + 1)
+  }
+
   Expr getCondition(int i) {
     exists(int k | k = -(i + 1) |
       synthChild(this, k, result)
@@ -33,4 +46,6 @@ class IfStmt extends Stmt, TIfStmt {
     not synthChild(this, 0, _) and
     toRaw(result) = toRaw(this).(Raw::IfStmt).getElse()
   }
+
+  predicate hasElse() { exists(this.getElse()) }
 }

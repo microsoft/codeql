@@ -1,4 +1,6 @@
 private import TAst
 private import semmle.code.powershell.ast.internal.Stmt
 
-class UsingStmt extends Stmt, TUsingStmt { }
+class UsingStmt extends Stmt, TUsingStmt {
+  override string toString() { result = "using ..." }
+}

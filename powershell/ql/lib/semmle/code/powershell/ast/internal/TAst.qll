@@ -21,8 +21,6 @@ private module Cached {
     TCatchClause(Raw::CatchClause cc) or
     TCmd(Raw::Cmd c) or
     TExprStmtSynth(Ast::Ast parent, int i) { mkSynthChild(ExprStmtKind(), parent, i) } or
-    TCmdExpr(Raw::CmdExpr ce) or
-    TCmdParameter(Raw::CmdParameter p) or
     TParameterSynth(Ast::Ast parent, int i) { mkSynthChild(ParameterRealKind(), parent, i) } or
     TDontCareParameterSynth(Ast::Ast parent, int i) {
       mkSynthChild(DontCareParameterKind(), parent, i)
@@ -54,7 +52,6 @@ private module Cached {
     TIfStmt(Raw::IfStmt i) or
     TIndexExpr(Raw::IndexExpr i) or
     TInvokeMemberExpr(Raw::InvokeMemberExpr i) or
-    TNonMethodMember(Raw::Member m) { not m instanceof Raw::Method } or
     TMethod(Raw::Method m) or
     TMemberExpr(Raw::MemberExpr m) or
     TNamedAttributeArgument(Raw::NamedAttributeArgument n) or
@@ -79,23 +76,23 @@ private module Cached {
     TTypeConstraint(Raw::TypeConstraint t) or
     TUnaryExpr(Raw::UnaryExpr u) or
     TUsingStmt(Raw::UsingStmt u) or
-    TVarAccess(Raw::VarAccess va) or
+    TVarAccess(Raw::VarAccess va) { not parameter(_, va, _, _) } or
     TWhileStmt(Raw::WhileStmt w) or
     TTypeNameExpr(Raw::TypeNameExpr t) or
     TUsingExpr(Raw::UsingExpr u)
 
   class TAstReal =
     TArrayExpr or TArrayLiteral or TAssignStmt or TAttribute or TBinaryExpr or TBreakStmt or
-        TCatchClause or TCmd or TCmdExpr or TCmdParameter or TConfiguration or TConstExpr or
-        TContinueStmt or TConvertExpr or TDataStmt or TDoUntilStmt or TDoWhileStmt or
-        TDynamicStmt or TErrorExpr or TErrorStmt or TExitStmt or TExpandableStringExpr or
-        TForEachStmt or TForStmt or TGotoStmt or THashTableExpr or TIfStmt or TIndexExpr or
-        TInvokeMemberExpr or TMemberExpr or TNamedAttributeArgument or TNamedBlock or TParenExpr or
-        TPipeline or TPipelineChain or TPropertyMember or TRedirection or TReturnStmt or
-        TScriptBlock or TScriptBlockExpr or TStmtBlock or TStringConstExpr or TSwitchStmt or
-        TConditionalExpr or TThrowStmt or TTrapStmt or TTryStmt or TType or TTypeConstraint or
-        TUnaryExpr or TUsingStmt or TVarAccess or TWhileStmt or TFunctionDefinitionStmt or
-        TExpandableSubExpr or TNonMethodMember or TMethod or TTypeNameExpr;
+        TCatchClause or TCmd or TConfiguration or TConstExpr or TContinueStmt or TConvertExpr or
+        TDataStmt or TDoUntilStmt or TDoWhileStmt or TDynamicStmt or TErrorExpr or TErrorStmt or
+        TExitStmt or TExpandableStringExpr or TForEachStmt or TForStmt or TGotoStmt or
+        THashTableExpr or TIfStmt or TIndexExpr or TInvokeMemberExpr or TMemberExpr or
+        TNamedAttributeArgument or TNamedBlock or TParenExpr or TPipeline or TPipelineChain or
+        TPropertyMember or TRedirection or TReturnStmt or TScriptBlock or TScriptBlockExpr or
+        TStmtBlock or TStringConstExpr or TSwitchStmt or TConditionalExpr or TThrowStmt or
+        TTrapStmt or TTryStmt or TType or TTypeConstraint or TUnaryExpr or TUsingStmt or
+        TVarAccess or TWhileStmt or TFunctionDefinitionStmt or TExpandableSubExpr or TMethod or
+        TTypeNameExpr;
 
   class TAstSynth =
     TParameterSynth or TExprStmtSynth or TDontCareParameterSynth or
@@ -115,7 +112,7 @@ private module Cached {
         TTrapStmt or TTryStmt or TUsingStmt or TWhileStmt or TConfiguration or TType or
         TFunctionDefinitionStmt or TExprStmt;
 
-  class TMember = TNonMethodMember or TMethod;
+  class TMember = TPropertyMember or TMethod;
 
   class TParameter = TParameterSynth or TDontCareParameterSynth;
 
@@ -135,8 +132,6 @@ private module Cached {
     n = TBreakStmt(result) or
     n = TCatchClause(result) or
     n = TCmd(result) or
-    n = TCmdExpr(result) or
-    n = TCmdParameter(result) or
     n = TConfiguration(result) or
     n = TConstExpr(result) or
     n = TContinueStmt(result) or
@@ -183,8 +178,7 @@ private module Cached {
     n = TFunctionDefinitionStmt(result) or
     n = TExpandableSubExpr(result) or
     n = TTypeNameExpr(result) or
-    n = TMethod(result) or
-    n = TNonMethodMember(result)
+    n = TMethod(result)
   }
 
   cached

@@ -8,6 +8,4 @@ class TypeConstraint extends @type_constraint, AttributeBase {
 
   /** Gets the full name of this type constraint including namespaces. */
   string getFullName() { type_constraint(this, _, result) }
-
-  override string toString() { result = this.getName() }
 }

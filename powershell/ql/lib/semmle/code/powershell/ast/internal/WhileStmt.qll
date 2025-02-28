@@ -3,6 +3,8 @@ private import Internal
 private import Raw.Raw as Raw
 
 class WhileStmt extends LoopStmt, TWhileStmt {
+  override string toString() { result = "while(...) {...}" }
+
   Expr getCondition() {
     synthChild(this, 0, result)
     or

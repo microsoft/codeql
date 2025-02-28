@@ -1,7 +1,6 @@
 private import Raw
 
 class IndexExpr extends @index_expression, Expr {
-  override string toString() { result = "...[...]" }
 
   override SourceLocation getLocation() { index_expression_location(this, result) }
 

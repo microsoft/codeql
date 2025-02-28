@@ -28,4 +28,16 @@ class TryStmt extends Stmt, TTryStmt {
     not synthChild(this, -1, _) and
     toRaw(result) = toRaw(this).(Raw::TryStmt).getBody()
   }
+
+  override string toString() { result = "try {...}" }
+
+  final override Ast getChild(int i) {
+    i = -1 and
+    result = this.getBody()
+    or
+    result = this.getCatchClause(i)
+    or
+    i = -2 and
+    result = this.getFinally()
+  }
 }

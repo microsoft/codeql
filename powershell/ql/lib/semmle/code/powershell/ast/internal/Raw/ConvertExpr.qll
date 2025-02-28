@@ -1,8 +1,6 @@
 private import Raw
 
 class ConvertExpr extends @convert_expression, Expr {
-  override string toString() { result = "[...]..." }
-
   override SourceLocation getLocation() { convert_expression_location(this, result) }
 
   Expr getBase() { convert_expression(this, _, result, _, _) }

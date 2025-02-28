@@ -10,6 +10,10 @@ class ArrayExpr extends Expr, TArrayExpr {
     toRaw(result) = toRaw(this).(Raw::ArrayExpr).getStmtBlock()
   }
 
+  override string toString() { result = "@(...)" }
+
+  final override Ast getChild(int i) { i = 0 and result = this.getStmtBlock() }
+
   // /**
   //  * Gets the i'th element of this `ArrayExpr`, if this can be determined statically.
   //  *

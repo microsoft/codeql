@@ -10,6 +10,8 @@ class MemberExpr extends Expr, TMemberExpr {
     toRaw(result) = toRaw(this).(Raw::MemberExpr).getQualifier()
   }
 
+  final override Ast getChild(int i) { i = 0 and result = this.getQualifier() }
+
   /** Gets the name of the member being looked up, if any. */
   string getMemberName() {
     result = toRaw(this).(Raw::MemberExpr).getMember().(Raw::StringConstExpr).getValue().getValue()
@@ -18,4 +20,6 @@ class MemberExpr extends Expr, TMemberExpr {
   predicate isNullConditional() { toRaw(this).(Raw::MemberExpr).isNullConditional() }
 
   predicate isStatic() { toRaw(this).(Raw::MemberExpr).isStatic() }
+
+  final override string toString() { result = this.getMemberName() }
 }

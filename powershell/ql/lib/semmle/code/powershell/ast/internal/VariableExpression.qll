@@ -4,8 +4,9 @@ private import Raw.Raw as Raw
 
 class VarAccess extends Expr, TVarAccess {
   string getName() { result = toRaw(this).(Raw::VarAccess).getUserPath() }
-}
 
+  override string toString() { result = this.getName() }
+}
 // private predicate isImplicitVariableWriteAccess(Expr e) { none() }
 // class VarReadAccess extends VarAccess {
 //   VarReadAccess() { not this instanceof VarWriteAccess }

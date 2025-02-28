@@ -1,8 +1,6 @@
 private import Raw
 
 class ParamBlock extends @param_block, Ast {
-  override string toString() { result = "param(...)" }
-
   override SourceLocation getLocation() { param_block_location(this, result) }
 
   int getNumAttributes() { param_block(this, result, _) }

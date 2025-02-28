@@ -3,6 +3,14 @@ private import Internal
 private import Raw.Raw as Raw
 
 class IndexExpr extends Expr, TIndexExpr {
+  override string toString() { result = "...[...]" }
+
+  final override Ast getChild(int i) {
+    i = 0 and result = this.getIndex()
+    or
+    i = 1 and result = this.getBase()
+  }
+
   Expr getIndex() {
     synthChild(this, 0, result)
     or
