@@ -22,9 +22,9 @@ private newtype TCompletion =
   TMatchingCompletion(Boolean b) or
   TEmptinessCompletion(Boolean isEmpty)
 
-private predicate commandThrows(Cmd c, boolean unconditional) {
-  c.getNamedArgument("ErrorAction").(StringConstExpr).getValue().getValue() = "Stop" and
-  if c.getCommandName() = "Write-Error" then unconditional = true else unconditional = false
+private predicate commandThrows(CallExpr c, boolean unconditional) {
+  c.getNamedArgument("ErrorAction").(StringConstExpr).getValue() = "Stop" and
+  if c.getName() = "Write-Error" then unconditional = true else unconditional = false
 }
 
 pragma[noinline]
@@ -164,11 +164,11 @@ private predicate inBooleanContext(Ast n) {
     inBooleanContext(pipeline) and
     n = pipeline.getComponent(pipeline.getNumberOfComponents() - 1)
   )
-  or
-  exists(CmdExpr cmdExpr |
-    inBooleanContext(cmdExpr) and
-    n = cmdExpr.getExpr()
-  )
+  // or
+  // exists(CmdExpr cmdExpr |
+  //   inBooleanContext(cmdExpr) and
+  //   n = cmdExpr.getExpr()
+  // )
 }
 
 /**

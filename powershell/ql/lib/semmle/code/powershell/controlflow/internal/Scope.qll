@@ -1,20 +1,10 @@
 private import powershell
-private import ControlFlowGraphImpl
+private import semmle.code.powershell.ast.internal.Raw.Scope as Raw
 
-/** Gets the enclosing scope of `n`. */
-Scope scopeOf(Ast n) {
-  exists(Ast m | m = n.getParent() |
-    m = result
-    or
-    not m instanceof Scope and result = scopeOf(m)
-  )
+class Scope instanceof Raw::Scope {
+  string toString() { result = super.toString() }
 }
 
-/**
- * A variable scope. This is either a top-level (file), a module, a class,
- * or a callable.
- */
-class Scope extends Ast, ScriptBlock {
-  /** Gets the outer scope, if any. */
-  Scope getOuterScope() { result = scopeOf(this) }
+Scope scopeOf(Ast a) {
+  none() // TODO
 }
