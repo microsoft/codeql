@@ -465,7 +465,7 @@ private predicate isFunctionConstructedFrom(Function f, Function templateFunc) {
 }
 
 /** Gets the fully templated version of `f`. */
-private Function getFullyTemplatedFunction(Function f) {
+Function getFullyTemplatedFunction(Function f) {
   not f.isFromUninstantiatedTemplate(_) and
   (
     exists(Class c, Class templateClass, int i |
@@ -627,7 +627,7 @@ private string getTypeNameWithoutClassTemplates(Function f, int n, int remaining
 }
 
 /** Gets the string representation of the `i`'th parameter of `c`. */
-private string getParameterTypeName(Function c, int i) {
+string getParameterTypeName(Function c, int i) {
   result = getTypeNameWithoutClassTemplates(c, i, 0)
 }
 

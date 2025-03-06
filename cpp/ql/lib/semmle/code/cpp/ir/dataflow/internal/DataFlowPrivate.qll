@@ -371,7 +371,7 @@ private class PrimaryArgumentNode extends ArgumentNode, OperandNode {
   PrimaryArgumentNode() { exists(CallInstruction call | op = call.getAnArgumentOperand()) }
 
   override predicate argumentOf(DataFlowCall call, ArgumentPosition pos) {
-    op = call.getArgumentOperand(pos.(DirectPosition).getIndex())
+    op = call.getArgumentOperand(pos.(DirectPosition).getArgumentIndex())
   }
 }
 
@@ -412,7 +412,13 @@ class ArgumentPosition = Position;
 abstract class Position extends TPosition {
   abstract string toString();
 
+  abstract int getArgumentIndex();
+
   abstract int getIndirectionIndex();
+
+  abstract IndirectionPosition incrementIndirection();
+
+  final Position decrementIndirection() { result.incrementIndirection() = this }
 }
 
 class DirectPosition extends Position, TDirectPosition {
@@ -428,9 +434,13 @@ class DirectPosition extends Position, TDirectPosition {
     result = index.toString()
   }
 
-  int getIndex() { result = index }
+  override int getArgumentIndex() { result = index }
 
   final override int getIndirectionIndex() { result = 0 }
+
+  final override IndirectionPosition incrementIndirection() {
+    result = TIndirectionPosition(index, 1)
+  }
 }
 
 class IndirectionPosition extends Position, TIndirectionPosition {
@@ -445,9 +455,13 @@ class IndirectionPosition extends Position, TIndirectionPosition {
     else result = repeatStars(indirectionIndex) + argumentIndex.toString()
   }
 
-  int getArgumentIndex() { result = argumentIndex }
+  override int getArgumentIndex() { result = argumentIndex }
 
   final override int getIndirectionIndex() { result = indirectionIndex }
+
+  final override IndirectionPosition incrementIndirection() {
+    result = TIndirectionPosition(argumentIndex, indirectionIndex + 1)
+  }
 }
 
 newtype TPosition =
