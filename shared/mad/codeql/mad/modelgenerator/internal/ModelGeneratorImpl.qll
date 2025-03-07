@@ -505,8 +505,8 @@ module MakeModelGenerator<
     DataFlowSummaryTargetApi api, DataFlow::ParameterNode p, ReturnNodeExt returnNodeExt
   ) {
     exists(string input, string output |
-      getEnclosingCallable(p) = api and
-      getEnclosingCallable(returnNodeExt) = api and
+      pragma[only_bind_out](getEnclosingCallable(p)) = api and
+      pragma[only_bind_out](getEnclosingCallable(returnNodeExt)) = api and
       input = parameterNodeAsInput(p) and
       output = getOutput(returnNodeExt) and
       input != output and
