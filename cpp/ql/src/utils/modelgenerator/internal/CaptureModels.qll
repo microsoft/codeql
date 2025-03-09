@@ -229,7 +229,7 @@ module ModelGeneratorInput implements ModelGeneratorInputSig<Location, CppDataFl
   bindingset[c]
   string paramReturnNodeAsOutput(Callable c, DataFlowPrivate::Position pos) {
     exists(Parameter p |
-      p.isSourceParameterOf(c, pos) and
+      p.isSourceParameterOf(c, pos.decrementIndirection()) and
       result = parameterAccess(p)
     )
     or
@@ -239,7 +239,7 @@ module ModelGeneratorInput implements ModelGeneratorInputSig<Location, CppDataFl
   bindingset[c]
   string paramReturnNodeAsContentOutput(Callable c, DataFlowPrivate::ParameterPosition pos) {
     exists(Parameter p |
-      p.isSourceParameterOf(c, pos) and
+      p.isSourceParameterOf(c, pos.decrementIndirection()) and
       result = parameterContentAccess(p)
     )
     or
