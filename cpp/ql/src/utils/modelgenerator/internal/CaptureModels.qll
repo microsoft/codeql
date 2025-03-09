@@ -127,16 +127,21 @@ module ModelGeneratorInput implements ModelGeneratorInputSig<Location, CppDataFl
     Callable callable, string namespace, string type, string name, string params
   ) {
     exists(
-      Function functionTemplate, Class classTemplate, string typeWithoutTemplateArgs,
-      string nameWithoutTemplateArgs
+      Function functionTemplate, string typeWithoutTemplateArgs, string nameWithoutTemplateArgs
     |
       functionTemplate = ExternalFlow::getFullyTemplatedFunction(callable) and
-      classTemplate = functionTemplate.getDeclaringType() and
-      classTemplate.hasQualifiedName(namespace, typeWithoutTemplateArgs) and
+      functionTemplate.hasQualifiedName(namespace, typeWithoutTemplateArgs, nameWithoutTemplateArgs) and
       nameWithoutTemplateArgs = functionTemplate.getName() and
       name = nameWithoutTemplateArgs + templateParams(functionTemplate) and
-      type = typeWithoutTemplateArgs + templateParams(classTemplate) and
       params = params(functionTemplate)
+    |
+      exists(Class classTemplate |
+        classTemplate = functionTemplate.getDeclaringType() and
+        type = typeWithoutTemplateArgs + templateParams(classTemplate)
+      )
+      or
+      not exists(functionTemplate.getDeclaringType()) and
+      type = ""
     )
   }
 
