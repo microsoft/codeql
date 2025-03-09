@@ -564,7 +564,7 @@ private string getTypeName(Type t, boolean needsSpace) {
  */
 bindingset[f]
 pragma[inline_late]
-string getParameterTypeWithoutTemplateArguments(Function f, int n) {
+string getParameterTypeWithoutTemplateArguments(Function f, int n, boolean canonical) {
   exists(string s, string base, string specifiers, Type t |
     t = f.getParameter(n).getType() and
     // The name of the string can either be the possibly typedefed name
@@ -572,14 +572,19 @@ string getParameterTypeWithoutTemplateArguments(Function f, int n) {
     // `getTypeName(t, _)` is almost equal to `t.resolveTypedefs().getName()`,
     // except that `t.resolveTypedefs()` doesn't have a result when the
     // resulting type doesn't appear in the database.
-    s = [t.getName(), getTypeName(t, _)] and
+    (
+      s = t.getName() and canonical = true
+      or
+      s = getTypeName(t, _) and canonical = false
+    ) and
     parseAngles(s, base, _, specifiers) and
     result = base + specifiers
   )
   or
   f.isVarargs() and
   n = f.getNumberOfParameters() and
-  result = "..."
+  result = "..." and
+  canonical = true
 }
 
 /**
@@ -590,7 +595,7 @@ private string getTypeNameWithoutFunctionTemplates(Function f, int n, int remain
   exists(Function templateFunction |
     templateFunction = getFullyTemplatedFunction(f) and
     remaining = templateFunction.getNumberOfTemplateArguments() and
-    result = getParameterTypeWithoutTemplateArguments(templateFunction, n)
+    result = getParameterTypeWithoutTemplateArguments(templateFunction, n, _)
   )
   or
   exists(string mid, TypeTemplateParameter tp, Function templateFunction |
