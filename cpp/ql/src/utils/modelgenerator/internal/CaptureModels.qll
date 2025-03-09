@@ -110,7 +110,7 @@ module ModelGeneratorInput implements ModelGeneratorInputSig<Location, CppDataFl
       params =
         concat(int i |
           |
-          ExternalFlow::getParameterTypeWithoutTemplateArguments(functionTemplate, i), ","
+          ExternalFlow::getParameterTypeWithoutTemplateArguments(functionTemplate, i, true), ","
           order by
             i
         )
