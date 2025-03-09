@@ -253,15 +253,15 @@ module ModelGeneratorInput implements ModelGeneratorInputSig<Location, CppDataFl
 
   /** Holds if this instance access is to an enclosing instance of type `t`. */
   pragma[nomagic]
-  private predicate isEnclosingInstanceAccess(DataFlow::Node n, Class t) {
-    exists(Cpp::ThisExpr thiz | thiz = [n.asExpr(), n.asIndirectExpr()] |
-      t = n.getType().stripType() and
-      t != n.getEnclosingCallable().asSourceCallable().(Cpp::Function).getDeclaringType()
-    )
+  private predicate isEnclosingInstanceAccess(DataFlowPrivate::ReturnNode n, Class t) {
+    n.getKind().isIndirectReturn(-1) and
+    t = n.getType().stripType() and
+    t != n.getEnclosingCallable().asSourceCallable().(Cpp::Function).getDeclaringType()
   }
 
   pragma[nomagic]
   predicate isOwnInstanceAccessNode(DataFlowPrivate::ReturnNode node) {
+    node.getKind().isIndirectReturn(-1) and
     not isEnclosingInstanceAccess(node, _)
   }
 
@@ -278,7 +278,7 @@ module ModelGeneratorInput implements ModelGeneratorInputSig<Location, CppDataFl
       source.(DataFlow::ParameterNode).isParameterOf(_, pos) and
       argumentIndex = pos.getArgumentIndex() and
       indirectionIndex = pos.getIndirectionIndex() and
-      result = "Argument[" + indirections(indirectionIndex) + pos + "]"
+      result = "Argument[" + indirections(indirectionIndex) + argumentIndex + "]"
     )
     or
     // TODO: Can it ever be anything other than 1?
