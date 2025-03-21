@@ -286,6 +286,11 @@ module ModelGeneratorInput implements ModelGeneratorInputSig<Location, CppDataFl
     result = qualifierString()
   }
 
+  string getReturnString(DataFlowPrivate::ReturnKind k) {
+    none()
+  }
+
+
   predicate irrelevantSourceSinkApi(Callable source, SourceTargetApi api) { none() }
 
   bindingset[kind]
@@ -344,12 +349,23 @@ module ModelGeneratorInput implements ModelGeneratorInputSig<Location, CppDataFl
     )
   }
 
+  private predicate isPrivate(Function f) {
+    f.getNamespace().getParentNamespace*().isAnonymous()
+    or
+    f.(MemberFunction).isPrivate()
+  }
+
   predicate isUninterestingForDataFlowModels(Callable api) {
     // Note: This also makes all global/static-local variables uninteresting
     not api.(Cpp::Function).hasDefinition()
+    or
+    isPrivate(api)
   }
 
-  predicate isUninterestingForHeuristicDataFlowModels(Callable api) { none() }
+ 
+  predicate isUninterestingForHeuristicDataFlowModels(Callable api) {
+    isUninterestingForDataFlowModels(api)
+  }
 
   string partialModelRow(Callable api, int i) {
     i = 0 and qualifiedName(api, result, _, _, _) // namespace

@@ -122,6 +122,8 @@ signature module ModelGeneratorInputSig<LocationSig Location, InputSig<Location>
    */
   string qualifierString();
 
+  default string getReturnString(Lang::ReturnKind kind) { result = "ReturnValue" }
+
   /**
    * Gets the MaD string representation of the parameter `p`.
    */
@@ -308,8 +310,7 @@ module MakeModelGenerator<
 
   private module PrintReturnNodeExt<printCallableParamSig/2 printCallableParam> {
     string getOutput(ReturnNodeExt node) {
-      node.getKind() instanceof DataFlow::ValueReturnKind and
-      result = "ReturnValue"
+      result = getReturnString(node.getKind().(DataFlow::ValueReturnKind).getKind())
       or
       exists(DataFlow::ParameterPosition pos |
         pos = node.getKind().(DataFlow::ParamUpdateReturnKind).getPosition() and
