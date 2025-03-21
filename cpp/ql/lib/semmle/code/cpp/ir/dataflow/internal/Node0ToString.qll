@@ -11,7 +11,30 @@
 private import semmle.code.cpp.ir.IR
 private import codeql.util.Unit
 private import DataFlowUtil
+private import DataFlowPrivate
+private import DataFlowNodes
 import NormalNode0ToString // Change this import to control which version should be used.
+
+private int getNumberOfIndirections(Node n) {
+  exists(Node1Impl n1 |
+    n = TNode1(n1) and
+    result = getNumberOfIndirections0(n1)
+  )
+  or
+  result = n.(VariableNode).getIndirectionIndex()
+  or
+  result = n.(PostUpdateNodeImpl).getIndirectionIndex()
+  or
+  result = n.(FinalParameterNode).getIndirectionIndex()
+  or
+  result = n.(BodyLessParameterNodeImpl).getIndirectionIndex()
+}
+
+/**
+ * Gets the number of stars (i.e., `*`s) needed to produce the `toString`
+ * output for `n`.
+ */
+string stars(Node n) { result = repeatStars(getNumberOfIndirections(n)) }
 
 /** An abstract class to control the behavior of `Node.toString`. */
 abstract class Node0ToString extends Unit {

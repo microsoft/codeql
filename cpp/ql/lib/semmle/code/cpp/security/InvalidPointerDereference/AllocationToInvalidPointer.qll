@@ -319,7 +319,7 @@ private module Config implements ProductFlow::StateConfigSig {
     // In the above case, this barrier blocks flow from the indirect node
     // for `p` to `p[1]`.
     exists(Operand operand, PointerAddInstruction add |
-      node.(IndirectOperand).hasOperandAndIndirectionIndex(operand, _) and
+      node.(DataFlow::IndirectOperand).hasOperandAndIndirectionIndex(operand, _) and
       add.getLeftOperand() = operand and
       add.getRight().(ConstantInstruction).getValue() != "0"
     )
