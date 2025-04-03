@@ -8,6 +8,7 @@ extractor: powershell
 library: true
 upgrades: upgrades
 dependencies:
+  codeql/codesuggestions: ${workspace}
   codeql/controlflow: ${workspace}
   codeql/dataflow: ${workspace}
   codeql/ssa: ${workspace}
