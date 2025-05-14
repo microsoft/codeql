@@ -73,6 +73,7 @@ private newtype TIRDataFlowNode =
     indirectionIndex = [0 .. Ssa::getMaxIndirectionsForType(p.getUnspecifiedType()) - 1] and
     not any(InitializeParameterInstruction init).getParameter() = p
   } or
+  TAggregateNode(Ssa::AggregateUse use) or
   TFlowSummaryNode(FlowSummaryImpl::Private::SummaryNode sn)
 
 /**
@@ -866,6 +867,40 @@ class BodyLessParameterNodeImpl extends Node, TBodyLessParameterNodeImpl {
   final override string toStringImpl() {
     exists(string prefix | prefix = stars(this) | result = prefix + p.toString())
   }
+}
+
+/**
+ * INTERNAL: do not use.
+ *
+ * A node representing a use of an `AggregateLiteral` after it has been
+ * initialized. This node exists to ensure that
+ * ```
+ * node.asExpr() instanceof AggregateLiteral
+ * ```
+ * has a result.
+ */
+class AggregateNode extends Node, TAggregateNode {
+  Ssa::AggregateUse use;
+
+  AggregateNode() { this = TAggregateNode(use) }
+
+  override DataFlowCallable getEnclosingCallable() {
+    result.asSourceCallable() = this.getFunction()
+  }
+
+  override Declaration getFunction() { result = use.getBlock().getEnclosingFunction() }
+
+  override DataFlowType getType() { result = use.getSourceVariable().getType() }
+
+  final override Location getLocationImpl() { result = use.getLocation() }
+
+  final override string toStringImpl() { result = use.toString() }
+
+  /** Gets the `AggregateUse` corresponding to this node. */
+  Ssa::AggregateUse getUse() { result = use }
+
+  /** Gets the `AggregateLiteral` that has just been initialized. */
+  AggregateLiteral getAggregateLiteral() { result = use.getAggregateLiteral() }
 }
 
 /**

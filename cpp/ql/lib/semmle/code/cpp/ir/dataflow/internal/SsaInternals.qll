@@ -115,6 +115,42 @@ private newtype TDefImpl =
     isGlobalDefImpl(v, f, _, indirectionIndex)
   }
 
+/**
+ * Holds if `chi` is the `ChiInstruction` generated from the initialization
+ * of the `elementIndex`'th field/element of `aggr`. Furthermore, the
+ * initialization has position `position`.
+ */
+private predicate aggregateLiteralInitialization(
+  ChiInstruction chi, Cpp::AggregateLiteral aggr, int elementIndex, int position
+) {
+  exists(Cpp::Field f |
+    chi.getPartial().getAst() = aggr.(Cpp::ClassAggregateLiteral).getFieldExpr(f, position) and
+    f.getInitializationOrder() = elementIndex
+  )
+  or
+  chi.getPartial().getAst() =
+    aggr.(Cpp::ArrayAggregateLiteral).getElementExpr(elementIndex, position)
+}
+
+/**
+ * Gets the initialization order of `chi` when initializing `aggr`.
+ *
+ * That is, if `chi` is the `ChiInstruction` generated from initializing the
+ * `i`'th field then `i = getAggregateLiteralInitializationRank(chi, aggr)`
+ * holds.
+ *
+ * Note that initialization orders may be surprising when a field or element
+ * is initialized repeatedly.
+ */
+private int getAggregateLiteralInitializationRank(ChiInstruction chi, Cpp::AggregateLiteral aggr) {
+  chi =
+    rank[result + 1](ChiInstruction cand, int elementIndex, int position |
+      aggregateLiteralInitialization(cand, aggr, elementIndex, position)
+    |
+      cand order by elementIndex, position
+    )
+}
+
 cached
 private newtype TUseImpl =
   TDirectUseImpl(Operand operand, int indirectionIndex) {
@@ -125,6 +161,16 @@ private newtype TUseImpl =
     // Represents a final "use" of a global variable to ensure that
     // the assignment to a global variable isn't ruled out as dead.
     isGlobalUse(v, f, _, indirectionIndex)
+  } or
+  TAggregateUse(Cpp::AggregateLiteral aggr) {
+    // There is no single instruction that represents a fully initialized
+    // aggregate. So we work around this by creating a dataflow ndoe to
+    // represent this, and we do that by adding a single use of the associated
+    // variable after the last initialization.
+    exists(int i |
+      i = getAggregateLiteralInitializationRank(_, aggr) and
+      not i + 1 = getAggregateLiteralInitializationRank(_, aggr)
+    )
   } or
   TFinalParameterUse(Parameter p, int indirectionIndex) {
     underlyingTypeIsModifiableAt(p.getUnderlyingType(), indirectionIndex) and
@@ -617,6 +663,68 @@ class GlobalUse extends UseImpl, TGlobalUse {
   Type getUnderlyingType() { result = global.getUnderlyingType() }
 
   override predicate isCertain() { any() }
+}
+
+/**
+ * A use that works around an IR issue where no instruction computes the
+ * expression that is an `AggregateLiteral`.
+ *
+ * That is there is no instruction `i` for which
+ * ```
+ * i.getUnconvertedResultExpression() instanceof AggregateLiteral
+ * ```
+ * holds. Instead, the IR represents the initialization of an aggregate literal
+ * as a sequence of `StoreInstruction`s.
+ *
+ * To work around this we add a use after the final `ChiInstruction` in the
+ * initialization sequence and implement `getNode()` to return a node for which
+ * we map `node.asExpr()` to be the aggregate literal.
+ */
+class AggregateUse extends UseImpl, TAggregateUse {
+  Cpp::AggregateLiteral aggr;
+
+  AggregateUse() { this = TAggregateUse(aggr) and indirectionIndex = 1 }
+
+  final override AggregateNode getNode() { result.getUse() = this }
+
+  /** Gets the aggregate literal that has just been initialized. */
+  final Cpp::AggregateLiteral getAggregateLiteral() { result = aggr }
+
+  final override string toString() { result = aggr.toString() }
+
+  private ChiInstruction getChiInstruction() {
+    exists(int i |
+      i = getAggregateLiteralInitializationRank(result, aggr) and
+      not i + 1 = getAggregateLiteralInitializationRank(_, aggr)
+    )
+  }
+
+  final override predicate hasIndexInBlock(IRBlock block, int index) {
+    block.getInstruction(index) = this.getChiInstruction()
+  }
+
+  final override Cpp::Location getLocation() { result = aggr.getLocation() }
+
+  final override int getIndirection() { result = 1 }
+
+  final override BaseIRVariable getBaseSourceVariable() {
+    exists(Instruction dest, IRVariable v |
+      dest = this.getChiInstruction().getPartial().(StoreInstruction).getDestinationAddress() and
+      v = result.getIRVariable()
+    |
+      // A class aggregate literal
+      v =
+        dest.(FieldAddressInstruction)
+            .getObjectAddress()
+            .(VariableAddressInstruction)
+            .getIRVariable()
+      or
+      // An array aggregate literal
+      v = dest.(PointerAddInstruction).getLeft().(VariableAddressInstruction).getIRVariable()
+    )
+  }
+
+  final override predicate isCertain() { any() }
 }
 
 /**

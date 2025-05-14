@@ -1357,6 +1357,8 @@ predicate nodeIsHidden(Node n) {
   n instanceof InitialGlobalValue
   or
   n instanceof SsaSynthNode
+  or
+  n instanceof AggregateNode
 }
 
 predicate neverSkipInPathGraph(Node n) {

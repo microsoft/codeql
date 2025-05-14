@@ -264,6 +264,11 @@ private module Cached {
     e = getConvertedResultExpression(node.asInstruction(), n)
   }
 
+  private predicate exprNodeShouldBeAggregateNode(AggregateNode node, Expr e, int n) {
+    node.getAggregateLiteral() = e and
+    n = 0
+  }
+
   /** Holds if `node` should be an `IndirectInstruction` that maps `node.asIndirectExpr()` to `e`. */
   private predicate indirectExprNodeShouldBeIndirectInstruction(
     IndirectInstruction node, Expr e, int n, int indirectionIndex
@@ -294,7 +299,8 @@ private module Cached {
     exprNodeShouldBeInstruction(_, e, n) or
     exprNodeShouldBeOperand(_, e, n) or
     exprNodeShouldBeIndirectOutNode(_, e, n) or
-    exprNodeShouldBeIndirectOperand(_, e, n)
+    exprNodeShouldBeIndirectOperand(_, e, n) or
+    exprNodeShouldBeAggregateNode(_, e, n)
   }
 
   private class InstructionExprNode extends ExprNodeBase, InstructionNode {
@@ -440,6 +446,12 @@ private module Cached {
     IndirectOperandExprNode() { exprNodeShouldBeIndirectOperand(this, _, _) }
 
     final override Expr getConvertedExpr(int n) { exprNodeShouldBeIndirectOperand(this, result, n) }
+  }
+
+  private class AggregateExprNode extends ExprNodeBase instanceof AggregateNode {
+    AggregateExprNode() { exprNodeShouldBeAggregateNode(this, _, _) }
+
+    final override Expr getConvertedExpr(int n) { exprNodeShouldBeAggregateNode(this, result, n) }
   }
 
   /**
