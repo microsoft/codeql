@@ -23,6 +23,10 @@ jobs:
         uses: ./.github/actions/fetch-codeql
         with:
           channel: release
+      - name: Setup .NET version 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.x
       - name: Install PowerShell
         shell: pwsh
         run: |
