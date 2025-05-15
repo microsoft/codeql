@@ -1,7 +1,7 @@
 /**
  * @id cpp/microsoft/public/typo/bad-wchar
  * @name Initialization of bad wide char
- * @description wchar_t should initialized with L prefix but might be initialized inside single quote. E.g. 'L\0' instead of L'\0'
+ * @description wchar_t should be initialized with L prefix but might be initialized inside single quote. E.g. 'L\0' instead of L'\0'
  * @kind problem
  * @problem.severity error
  * @precision high
