@@ -264,6 +264,27 @@ private module Cached {
     e = getConvertedResultExpression(node.asInstruction(), n)
   }
 
+  private class ClassAggregateInitializerPostUpdateNode extends PostFieldUpdateNode {
+    ClassAggregateLiteral aggr;
+
+    ClassAggregateInitializerPostUpdateNode() {
+      exists(Node node1, FieldContent fc, int position, StoreInstruction store |
+        store.getSourceValue().getUnconvertedResultExpression() =
+          aggr.getFieldExpr(fc.getField(), position) and
+        node1.asInstruction() = store and
+        not exists(aggr.getFieldExpr(_, position + 1)) and
+        storeStep(node1, fc, this)
+      )
+    }
+
+    ClassAggregateLiteral getClassAggregateLiteral() { result = aggr }
+  }
+
+  private predicate exprNodeShouldBePostUpdateNode(Node node, Expr e, int n) {
+    node.(ClassAggregateInitializerPostUpdateNode).getClassAggregateLiteral() = e and
+    n = 0
+  }
+
   /** Holds if `node` should be an `IndirectInstruction` that maps `node.asIndirectExpr()` to `e`. */
   private predicate indirectExprNodeShouldBeIndirectInstruction(
     IndirectInstruction node, Expr e, int n, int indirectionIndex
@@ -294,7 +315,8 @@ private module Cached {
     exprNodeShouldBeInstruction(_, e, n) or
     exprNodeShouldBeOperand(_, e, n) or
     exprNodeShouldBeIndirectOutNode(_, e, n) or
-    exprNodeShouldBeIndirectOperand(_, e, n)
+    exprNodeShouldBeIndirectOperand(_, e, n) or
+    exprNodeShouldBePostUpdateNode(_, e, n)
   }
 
   private class InstructionExprNode extends ExprNodeBase, InstructionNode {
@@ -440,6 +462,12 @@ private module Cached {
     IndirectOperandExprNode() { exprNodeShouldBeIndirectOperand(this, _, _) }
 
     final override Expr getConvertedExpr(int n) { exprNodeShouldBeIndirectOperand(this, result, n) }
+  }
+
+  private class PostUpdateExprNode extends ExprNodeBase instanceof PostUpdateNode {
+    PostUpdateExprNode() { exprNodeShouldBePostUpdateNode(this, _, _) }
+
+    final override Expr getConvertedExpr(int n) { exprNodeShouldBePostUpdateNode(this, result, n) }
   }
 
   /**
