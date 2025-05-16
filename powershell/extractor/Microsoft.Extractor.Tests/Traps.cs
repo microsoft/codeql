@@ -13,7 +13,7 @@ internal static class PathHolder
 {
     internal static string powershellSource = Path.Join("..", "..", "..", "..", "..", "samples", "code");
     internal static string expectedTraps = Path.Join("..", "..", "..", "..", "..", "samples", "traps");
-    internal static string schemaPath = Path.Join("..", "..", "..", "..", "..", "config", "semmlecode.powershell.dbscheme");
+    internal static string schemaPath = Path.Join("..", "..", "..", "..", "..", "ql", "lib", "semmlecode.powershell.dbscheme");
     internal static string generatedTraps = Path.Join(".", Path.GetFullPath(powershellSource).Replace(":", "_"));
 }
 public class TrapTestFixture : IDisposable

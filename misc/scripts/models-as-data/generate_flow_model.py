@@ -183,9 +183,12 @@ extensions:
             # Replace problematic characters with dashes, and collapse multiple dashes.
             sanitizedEntry = re.sub(r'-+', '-', entry.replace('/', '-').replace(':', '-'))
             target = os.path.join(self.generatedFrameworks, sanitizedEntry + extension)
-            with open(target, "w") as f:
-                f.write(extensionTemplate.format(extensions[entry]))
-            print("Models as data extensions written to " + target)
+            try:
+                with open(target, "w") as f:
+                    f.write(extensionTemplate.format(extensions[entry]))
+                print("Models as data extensions written to " + target)
+            except Exception as e:
+                print(f"Error writing to {target}: {e}")
 
 
     def run(self):
