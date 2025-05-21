@@ -62,3 +62,13 @@ abstract class SimpleSummarizedCallable extends SummarizedCallable {
 
   final override CallExpr getACallSimple() { result = c }
 }
+
+/** A string representing a synthetic instance field. */
+class SyntheticField extends string {
+  SyntheticField() {
+    exists(Impl::Private::AccessPathToken c |
+      c.getName() = "SyntheticField" and
+      this = c.getAnArgument()
+    )
+  }
+}

@@ -6,6 +6,7 @@ private import semmle.code.powershell.dataflow.Ssa
 private import DataFlowPublic
 private import DataFlowDispatch
 private import SsaImpl as SsaImpl
+private import semmle.code.powershell.dataflow.FlowSummary
 private import FlowSummaryImpl as FlowSummaryImpl
 private import semmle.code.powershell.frameworks.data.ModelsAsData
 private import PipelineReturns as PipelineReturns
@@ -366,7 +367,8 @@ private module Cached {
     // An unknown positional element
     TUnknownPositionalContent() or
     // A unknown position or key - and we dont even know what kind it is
-    TUnknownKeyOrPositionContent()
+    TUnknownKeyOrPositionContent() or
+    TSyntheticFieldContent(SyntheticField s)
 
   cached
   newtype TContentApprox =
@@ -380,7 +382,8 @@ private module Cached {
     TKnownPositionalContentApprox() or
     // An unknown positional element
     TUnknownPositionalContentApprox() or
-    TUnknownContentApprox()
+    TUnknownContentApprox() or
+    TSyntheticFieldApproxContent()
 
   cached
   newtype TDataFlowType = TUnknownDataFlowType()
@@ -1356,6 +1359,26 @@ class ContentApprox extends TContentApprox {
       this = TNonElementContentApprox(c) and
       result = c.toString()
     )
+    or
+    this = TUnkownKeyContentApprox() and
+    result = "approximated unknown key"
+    or
+    exists(string s |
+      this = TKnownKeyContentApprox(s) and
+      result = "approximated known key: " + s
+    )
+    or
+    this = TKnownPositionalContentApprox() and
+    result = "known positional"
+    or
+    this = TUnknownPositionalContentApprox() and
+    result = "approximated unknown positional"
+    or
+    this = TUnknownContentApprox() and
+    result = "approximated unknown"
+    or
+    this = TSyntheticFieldApproxContent() and
+    result = "approximated synthetic"
   }
 }
 
@@ -1376,23 +1399,10 @@ ContentApprox getContentApprox(Content c) {
   or
   c instanceof Content::UnknownKeyOrPositionContent and
   result = TUnknownContentApprox()
+  or
+  c instanceof Content::SyntheticFieldContent and result = TSyntheticFieldApproxContent()
 }
 
-// TFieldContent(string name) {
-//   name = any(PropertyMember member).getName()
-//   or
-//   name = any(MemberExpr me).getMemberName()
-// } or
-// // A known map key
-// TKnownKeyContent(ConstantValue cv) { exists(cv.asString()) } or
-// // A known array index
-// TKnownPositionalContent(ConstantValue cv) { cv.asInt() = [0 .. 10] } or
-// // An unknown key
-// TUnknownKeyContent() or
-// // An unknown positional element
-// TUnknownPositionalContent() or
-// // A unknown position or key - and we dont even know what kind it is
-// TUnknownKeyOrPositionContent()
 /**
  * A unit class for adding additional jump steps.
  *

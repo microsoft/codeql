@@ -64,6 +64,8 @@ module Input implements InputSig<Location, DataFlowImplSpecific::PowershellDataF
         result = "Element" and
         arg = cv.serialize() + "!"
       )
+      or
+      c = TSyntheticFieldContent(arg) and result = "SyntheticField"
     )
     or
     cs.isAnyPositional() and result = "Element" and arg = "?"

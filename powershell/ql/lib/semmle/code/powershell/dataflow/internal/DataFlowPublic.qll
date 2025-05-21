@@ -3,6 +3,7 @@ private import DataFlowDispatch
 private import DataFlowPrivate
 private import semmle.code.powershell.typetracking.internal.TypeTrackingImpl
 private import semmle.code.powershell.ApiGraphs
+private import semmle.code.powershell.dataflow.FlowSummary
 private import semmle.code.powershell.Cfg
 
 /**
@@ -319,6 +320,17 @@ module Content {
    */
   ConstantValue getKnownElementIndex(Expr e) {
     result = getKnownElementContent(e.getValue()).getIndex()
+  }
+
+  /** A reference through a synthetic instance field. */
+  class SyntheticFieldContent extends Content, TSyntheticFieldContent {
+    SyntheticField s;
+
+    SyntheticFieldContent() { this = TSyntheticFieldContent(s) }
+
+    SyntheticField getField() { result = s }
+
+    override string toString() { result = s.toString() }
   }
 }
 
