@@ -5,8 +5,9 @@ class TypeNameExpr extends Expr, TTypeNameExpr {
     exists(string fullName | fullName = this.getPossiblyQualifiedName() |
       if fullName.matches("%.%")
       then
-        namespace = fullName.regexpCapture("([a-zA-Z0-9\\.]+)\\.([a-zA-Z0-9]+)", 1) and
-        typename = fullName.regexpCapture("([a-zA-Z0-9\\.]+)\\.([a-zA-Z0-9]+)", 2)
+        namespace =
+          fullName.regexpCapture("([a-zA-Z0-9\\.]+)\\.([^\\.\\[]+)(?:\\[([^\\]]+)\\]?)", 1) and
+        typename = fullName.regexpCapture("([a-zA-Z0-9\\.]+)\\.([^\\.\\[]+)(?:\\[([^\\]]+)\\]?)", 2)
       else (
         namespace = "" and
         typename = fullName
@@ -14,6 +15,7 @@ class TypeNameExpr extends Expr, TTypeNameExpr {
     )
   }
 
+  /** Gets the name of this type without the namespace. Note: Also strips away type parameters */
   string getName() { this.parseName(_, result) }
 
   /** If any */
@@ -26,6 +28,12 @@ class TypeNameExpr extends Expr, TTypeNameExpr {
 
   predicate isQualified() { this.getNamespace() != "" }
 
+  /**
+   * Holds if this `TypeNameExpr` constructs a type with the name `typename`
+   * from the namespace `namespace`.
+   *
+   * Note: Also strips away type parameters on `typename`.
+   */
   predicate hasQualifiedName(string namespace, string typename) {
     this.isQualified() and
     this.parseName(namespace, typename)
