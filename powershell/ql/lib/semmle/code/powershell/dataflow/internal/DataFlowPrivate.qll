@@ -267,6 +267,8 @@ private module Cached {
       )
     ) and
     model = ""
+    or
+    LocalFlow::flowSummaryLocalStep(nodeFrom, nodeTo, _, model)
   }
 
   /** This is the local flow predicate that is exposed. */
@@ -289,6 +291,9 @@ private module Cached {
     LocalFlow::localFlowStepCommon(nodeFrom, nodeTo)
     or
     SsaFlow::localFlowStep(_, nodeFrom, nodeTo, _)
+    or
+    LocalFlow::flowSummaryLocalStep(nodeFrom, nodeTo, any(LibraryCallableToIncludeInTypeTracking c),
+      _)
   }
 
   /** Holds if `n` wraps an SSA definition without ingoing flow. */
