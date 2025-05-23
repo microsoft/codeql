@@ -1,0 +1,37 @@
+# THIS FILE IS AN AUTO-GENERATED MODELS AS DATA FILE. DO NOT EDIT.
+extensions:
+  - addsTo:
+      pack: codeql/csharp-all
+      extensible: summaryModel
+    data:
+      - ["Azure.Data.Tables", "TableClient", False, "CreateQueryFilter", "(System.FormattableString)", "", "Argument[0].Property[System.FormattableString.Format]", "ReturnValue", "taint", "dfc-generated"]
+      - ["Azure.Data.Tables", "TableClient", False, "CreateQueryFilter", "(System.FormattableString)", "", "Argument[0]", "ReturnValue", "taint", "dfc-generated"]
+      - ["Azure.Data.Tables", "TableClient", False, "TableClient", "(System.String,System.String,Azure.Data.Tables.TableClientOptions)", "", "Argument[2]", "Argument[this]", "taint", "df-generated"]
+      - ["Azure.Data.Tables", "TableClient", False, "TableClient", "(System.Uri,System.String,Azure.Core.TokenCredential,Azure.Data.Tables.TableClientOptions)", "", "Argument[0]", "Argument[this]", "taint", "df-generated"]
+      - ["Azure.Data.Tables", "TableClient", False, "TableClient", "(System.Uri,System.String,Azure.Core.TokenCredential,Azure.Data.Tables.TableClientOptions)", "", "Argument[3]", "Argument[this]", "taint", "df-generated"]
+      - ["Azure.Data.Tables", "TableClient", False, "TableClient", "(System.Uri,System.String,Azure.Data.Tables.TableSharedKeyCredential)", "", "Argument[2]", "Argument[this]", "taint", "df-generated"]
+      - ["Azure.Data.Tables", "TableClient", False, "TableClient", "(System.Uri,System.String,Azure.Data.Tables.TableSharedKeyCredential,Azure.Data.Tables.TableClientOptions)", "", "Argument[2]", "Argument[this]", "taint", "df-generated"]
+      - ["Azure.Data.Tables", "TableClient", True, "GetSasBuilder", "(Azure.Data.Tables.Sas.TableSasPermissions,System.DateTimeOffset)", "", "Argument[this]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Data.Tables", "TableClient", True, "GetSasBuilder", "(System.String,System.DateTimeOffset)", "", "Argument[this]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Data.Tables", "TableClient", True, "Query<T>", "(System.Linq.Expressions.Expression<System.Func<T,System.Boolean>>,System.Nullable<System.Int32>,System.Collections.Generic.IEnumerable<System.String>,System.Threading.CancellationToken)", "", "Argument[1]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Data.Tables", "TableClient", True, "Query<T>", "(System.String,System.Nullable<System.Int32>,System.Collections.Generic.IEnumerable<System.String>,System.Threading.CancellationToken)", "", "Argument[1]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Data.Tables", "TableClient", True, "QueryAsync<T>", "(System.Linq.Expressions.Expression<System.Func<T,System.Boolean>>,System.Nullable<System.Int32>,System.Collections.Generic.IEnumerable<System.String>,System.Threading.CancellationToken)", "", "Argument[1]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Data.Tables", "TableClient", True, "QueryAsync<T>", "(System.String,System.Nullable<System.Int32>,System.Collections.Generic.IEnumerable<System.String>,System.Threading.CancellationToken)", "", "Argument[1]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Data.Tables", "TableClient", True, "get_AccountName", "()", "", "Argument[this]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Data.Tables", "TableServiceClient", False, "CreateQueryFilter", "(System.FormattableString)", "", "Argument[0].Property[System.FormattableString.Format]", "ReturnValue", "taint", "dfc-generated"]
+      - ["Azure.Data.Tables", "TableServiceClient", False, "CreateQueryFilter", "(System.FormattableString)", "", "Argument[0]", "ReturnValue", "taint", "dfc-generated"]
+      - ["Azure.Data.Tables", "TableServiceClient", False, "TableServiceClient", "(System.String,Azure.Data.Tables.TableClientOptions)", "", "Argument[1]", "Argument[this]", "taint", "df-generated"]
+      - ["Azure.Data.Tables", "TableServiceClient", False, "TableServiceClient", "(System.Uri,Azure.Core.TokenCredential,Azure.Data.Tables.TableClientOptions)", "", "Argument[0]", "Argument[this]", "taint", "df-generated"]
+      - ["Azure.Data.Tables", "TableServiceClient", False, "TableServiceClient", "(System.Uri,Azure.Core.TokenCredential,Azure.Data.Tables.TableClientOptions)", "", "Argument[2]", "Argument[this]", "taint", "df-generated"]
+      - ["Azure.Data.Tables", "TableServiceClient", False, "TableServiceClient", "(System.Uri,Azure.Data.Tables.TableSharedKeyCredential)", "", "Argument[1]", "Argument[this]", "taint", "df-generated"]
+      - ["Azure.Data.Tables", "TableServiceClient", False, "TableServiceClient", "(System.Uri,Azure.Data.Tables.TableSharedKeyCredential,Azure.Data.Tables.TableClientOptions)", "", "Argument[1]", "Argument[this]", "taint", "df-generated"]
+      - ["Azure.Data.Tables", "TableServiceClient", True, "GetSasBuilder", "(Azure.Data.Tables.Sas.TableAccountSasPermissions,Azure.Data.Tables.Sas.TableAccountSasResourceTypes,System.DateTimeOffset)", "", "Argument[2]", "ReturnValue.Property[Azure.Data.Tables.Sas.TableAccountSasBuilder.ExpiresOn]", "value", "dfc-generated"]
+      - ["Azure.Data.Tables", "TableServiceClient", True, "GetSasBuilder", "(System.String,Azure.Data.Tables.Sas.TableAccountSasResourceTypes,System.DateTimeOffset)", "", "Argument[0]", "ReturnValue.Property[Azure.Data.Tables.Sas.TableAccountSasBuilder.Permissions]", "value", "dfc-generated"]
+      - ["Azure.Data.Tables", "TableServiceClient", True, "GetSasBuilder", "(System.String,Azure.Data.Tables.Sas.TableAccountSasResourceTypes,System.DateTimeOffset)", "", "Argument[2]", "ReturnValue.Property[Azure.Data.Tables.Sas.TableAccountSasBuilder.ExpiresOn]", "value", "dfc-generated"]
+      - ["Azure.Data.Tables", "TableServiceClient", True, "GetTableClient", "(System.String)", "", "Argument[this]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Data.Tables", "TableServiceClient", True, "Query", "(System.String,System.Nullable<System.Int32>,System.Threading.CancellationToken)", "", "Argument[1]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Data.Tables", "TableServiceClient", True, "QueryAsync", "(System.String,System.Nullable<System.Int32>,System.Threading.CancellationToken)", "", "Argument[1]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Data.Tables", "TableServiceClient", True, "get_AccountName", "()", "", "Argument[this]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Data.Tables", "TableSharedKeyCredential", False, "TableSharedKeyCredential", "(System.String,System.String)", "", "Argument[0]", "Argument[this].Property[Azure.Data.Tables.TableSharedKeyCredential.AccountName]", "value", "dfc-generated"]
+      - ["Azure.Data.Tables", "TableUriBuilder", False, "TableUriBuilder", "(System.Uri)", "", "Argument[0]", "Argument[this]", "taint", "df-generated"]
+      - ["Azure.Data.Tables", "TableUriBuilder", False, "ToUri", "()", "", "Argument[this]", "ReturnValue", "taint", "df-generated"]

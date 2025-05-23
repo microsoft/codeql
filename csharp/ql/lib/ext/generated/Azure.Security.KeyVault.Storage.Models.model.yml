@@ -1,0 +1,10 @@
+# THIS FILE IS AN AUTO-GENERATED MODELS AS DATA FILE. DO NOT EDIT.
+extensions:
+  - addsTo:
+      pack: codeql/csharp-all
+      extensible: summaryModel
+    data:
+      - ["Azure.Security.KeyVault.Storage.Models", "DeletionRecoveryLevel", False, "DeletionRecoveryLevel", "(System.String)", "", "Argument[0]", "Argument[this].SyntheticField[Azure.Security.KeyVault.Storage.Models.DeletionRecoveryLevel._value]", "value", "dfc-generated"]
+      - ["Azure.Security.KeyVault.Storage.Models", "DeletionRecoveryLevel", False, "ToString", "()", "", "Argument[this].SyntheticField[Azure.Security.KeyVault.Storage.Models.DeletionRecoveryLevel._value]", "ReturnValue", "value", "dfc-generated"]
+      - ["Azure.Security.KeyVault.Storage.Models", "SasTokenType", False, "SasTokenType", "(System.String)", "", "Argument[0]", "Argument[this].SyntheticField[Azure.Security.KeyVault.Storage.Models.SasTokenType._value]", "value", "dfc-generated"]
+      - ["Azure.Security.KeyVault.Storage.Models", "SasTokenType", False, "ToString", "()", "", "Argument[this].SyntheticField[Azure.Security.KeyVault.Storage.Models.SasTokenType._value]", "ReturnValue", "value", "dfc-generated"]
