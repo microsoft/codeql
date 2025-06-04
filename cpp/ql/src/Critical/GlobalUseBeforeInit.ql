@@ -38,7 +38,7 @@ predicate uninitialisedBefore(GlobalVariable v, Function f) {
   exists(Call call, Function g |
     uninitialisedBefore(v, g) and
     call.getEnclosingFunction() = g and
-    (not functionInitialises(f, v) or locallyUninitialisedAt(v, call)) and
+    (not functionInitialises(g, v) or locallyUninitialisedAt(v, call)) and
     resolvedCall(call, f)
   )
 }
