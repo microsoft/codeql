@@ -9,18 +9,12 @@ private class ExtractStringExpr extends Expr {
     this instanceof StringLiteral
     or
     this instanceof VariableAccess
-  }
-}
-
-private class StringExpr extends Expr {
-  StringExpr() {
-    this instanceof StringLiteral
     or
     this instanceof AddExprOfInterest
   }
 }
 
-private string getString(StringExpr e) {
+private string getString(ExtractStringExpr e) {
   result = e.(StringLiteral).getValue()
   or
   result = getAddExprValue(e)
@@ -119,7 +113,7 @@ private class InterpolatedStringSanitizer extends StringCreationSanitizer::Range
       ei = ise.getChild(index).(InterpolatedStringInsertExpr).getInsert() and
       index >= 1 and
       preIndex in [0 .. (index - 1)]
-      |
+    |
       if ise.getChild(preIndex) instanceof InterpolatedStringInsertExpr
       then predecessor = ise.getChild(preIndex).(InterpolatedStringInsertExpr).getInsert()
       else predecessor = ise.getChild(preIndex)
@@ -225,15 +219,16 @@ private class StringFormatSanitizer extends StringCreationSanitizer::Range, Data
         // the inserts start 1
         not exists(Expr e | e = c.getArgumentForName("provider")) and
         index >= 1 and
-        predecessor = c.getArgument(0) // not actually the predecessor, however something needs to be set to prevent a cartesian product
+        predecessor = c.getArgument(0) and // not actually the predecessor, however something needs to be set to prevent a cartesian product
+        preIndex in [0 .. (index - 1)]
         or
         // IFormatProvider is argument 0 of the `FormatMethod`
         // formatString is argument 1; the inserts start 2
         exists(Expr e | e = c.getArgumentForName("provider")) and
         index >= 2 and
-        predecessor = c.getArgument(1) // not actually the predecessor, however something needs to be set to prevent a cartesian product
+        predecessor = c.getArgument(1) and // not actually the predecessor, however something needs to be set to prevent a cartesian product
+        preIndex in [0 .. (index - 2)]
       ) and
-      preIndex in [0 .. (index - 1)] and
       if preIndex = 0
       then
         // Starting at char position 0 of the formatString, get the text before the first insert (`indexOf` uses a 0-based array for the nth occurrance within the string)

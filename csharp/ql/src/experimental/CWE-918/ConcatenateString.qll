@@ -338,19 +338,44 @@ private ValueExpr getExprFromAccess0(AccessExpr e) {
   (
     result = e.(VariableAccess).getTarget().getInitializer()
     or
-    result = e.(VariableAccess).getTarget().getAnAssignedValue()
+    exists(ValueExpr ve |
+      ve = e.(VariableAccess).getTarget().getAnAssignedValue() and
+      getExprFromAssignedValue(e, ve) and
+      result = ve
+    )
     or
     result = e.(ParameterAccess).getTarget().getDefaultValue()
-    or
-    result = e.(ParameterAccess).getTarget().getAnAssignedValue()
     or
     result = e.(PropertyRead).getTarget().getInitializer()
     or
     result = e.(PropertyRead).getTarget().getExpressionBody()
     or
     e instanceof PropertyRead and
-    result = getValueforPropRead(e)
+    exists(ValueExpr ve |
+      ve = getValueforPropRead(e) and
+      getExprFromAssignedValue(e, ve) and
+      result = ve
+    )
   )
+}
+
+/**
+ * Holds when the Expr is an assigned value of a variable, parameter, or property access
+ */
+bindingset[e, ve]
+pragma[inline_late]
+private predicate getExprFromAssignedValue(AccessExpr e, ValueExpr ve) {
+  e = getExprOfInterest() and
+  (
+    ve.getEnclosingCallable() instanceof Constructor
+    or
+    ve.getEnclosingCallable() instanceof Getter
+    or
+    ve.getEnclosingCallable() instanceof Setter
+  ) and
+  not exists(ValueExpr ve2 | DataFlow::localFlow(DataFlow::exprNode(ve2), DataFlow::exprNode(e)))
+  or
+  DataFlow::localFlow(DataFlow::exprNode(ve), DataFlow::exprNode(e))
 }
 
 /**

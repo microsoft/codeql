@@ -6,7 +6,9 @@ import ConcatenateStringSantizer
  */
 private class RequestMessageConstructorBarrier extends Barrier {
   RequestMessageConstructorBarrier() {
-    exists(ObjectCreation oc | oc.getType().hasFullyQualifiedName("System.Net.Http", "HttpRequestMessage") |
+    exists(ObjectCreation oc |
+      oc.getType().hasFullyQualifiedName("System.Net.Http", "HttpRequestMessage")
+    |
       oc.getArgumentForName("method") = this.asExpr()
       or
       // property assignment to `HttpRequestMessage.RequestUri` overrides the RequestUri from HttpRequestMessage constructor, would have its own alert
@@ -85,7 +87,7 @@ private class UriBuilderConstructorBarrier extends Barrier {
 
 /**
  * Holds for parameter read or write of `System.UriBuilder` other than
- * `Host`, `Port`, `Scheme`, and `Uri`
+ * `Host` and `Uri`
  * For example:
  * `uriBuilder.Path = node;` will hold
  * `string url2 = $"https://something.com/{uriBuilder.Path}"` will hold
@@ -123,8 +125,8 @@ private class UriBuilderPropertyBarrier extends Barrier {
         ] and
       not s =
         [
-          "AccountName", "BlobName", "BlobContainerName", "FileSystemName", "Host", "Port",
-          "QueueName", "Scheme", "ShareName", "Tablename", "Uri"
+          "AccountName", "BlobName", "BlobContainerName", "FileSystemName", "Host", "QueueName",
+          "ShareName", "Tablename", "Uri"
         ]
     )
   }
@@ -149,7 +151,7 @@ private class UriQueryBuilderBarrier extends Barrier {
 
 /**
  * Holds for parameter read or write of `System.Uri` other than
- * `AbsoluteUri`, `Authority`, `DnsSafeHost`, `Host`, `IdnHost`, `LocalPath`, `OriginalString`, `Port`, and `Scheme`
+ * `AbsoluteUri`, `Authority`, `DnsSafeHost`, `Host`, `IdnHost`, `LocalPath`, and `OriginalString`
  * For example:
  * `Uri uri = new Uri(myUri.PathAndQuery, UriKind.Relative);` will hold
  * `Uri uri = new Uri(myUri.Host);` will not hold
@@ -163,7 +165,7 @@ private class UriPropertyBarrier extends Barrier {
       not s =
         [
           "AbsoluteUri", "Authority", "DnsSafeHost", "Host", "IdnHost", "LocalPath",
-          "OriginalString", "Port", "Scheme"
+          "OriginalString"
         ]
     )
     // System.Uri does not have any properties that can be set
@@ -214,14 +216,7 @@ private class StringCreationSanitizerSSRF extends StringCreationSanitizer {
       // matches 'https://something/'
       s.matches("%://%/%")
       or
-      // matches '?' in 'something?'
-      s.matches("%?%")
-      or
-      // matches '&' in 'something&'
-      s.matches("%&%")
-      or
-      // matches '#' in 'something#'
-      s.matches("%#%")
+      s.regexpMatch(".*[?#&=()].*")
     )
   }
 }

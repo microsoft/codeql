@@ -63,7 +63,7 @@ private predicate uriVariableHasBeenCheckedForUriSchemeHttps(
  *
  * Example:
  *  `Uri myUri = new Uri("http://www.subdomain.something.com/");
- *   List<string> hostList = new List<string> { ".something.com"};
+ *   List<string> hostList = new List<string> { "something.com", ".something.com"};
  *   if (myUri.Host.EndsWith(hostList[0])) { ... }`
  */
 private predicate uriVariableHostHasBeenUsedInASelectionStmt(
