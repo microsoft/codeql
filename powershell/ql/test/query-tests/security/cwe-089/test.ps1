@@ -84,5 +84,5 @@ function safe_env_read {
     $userinput = $Env:number_of_processors
 
     $query = "SELECT * FROM MyTable WHERE MyColumn = '$userinput'"
-    Invoke-Sqlcmd -ServerInstance "MyServer" -Database "MyDatabase" -Query $query # GOOD [FALSE POSITIVE]
+    Invoke-Sqlcmd -ServerInstance "MyServer" -Database "MyDatabase" -Query $query # GOOD
 }
