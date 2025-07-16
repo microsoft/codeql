@@ -117,14 +117,14 @@ namespace Test
             (new HttpClient()).GetAsync(new Uri(absoluteUri, combinedUri)); // Second arg is absolute
             
             // Visual Studio Sink
-            var client = new VssConnection(new Uri($"https://{env}/")); // TODO
+            var client = new VssConnection(new Uri($"https://{env}/")); // TODO finish MaD for VssConnection
 
             // Custom HttpClient
             var uri3 = $"https://{env}/";
             var request2 = new HttpRequestMessage(HttpMethod.Get, uri3);
             var target = new IPAddress(new byte[] { 127, 0, 0, 1 });
             // HttpRequestMessage is flagged
-            this.Send("message", 443, request2, target); // TODO
+            this.Send("message", 443, request2, target); // TODO add back sink for custom extension
 
             // HttpClient wrapper
             this.SendAsync(request2);
@@ -132,7 +132,7 @@ namespace Test
             // HttpRequestMessage property assignment
             var request3 = new HttpRequestMessage();
             request3.RequestUri = new Uri($"https://{env}/");
-            (new HttpClient()).SendAsync(request3); // TODO
+            (new HttpClient()).SendAsync(request3); // TODO add to query instead of local MaD
         }
 
         public void Send(string message, int servicePort,
