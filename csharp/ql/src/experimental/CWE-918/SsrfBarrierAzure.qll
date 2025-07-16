@@ -239,7 +239,7 @@ predicate uriCreationStep(DataFlow::Node pred, DataFlow::Node succ) {
  */
 predicate doesNodeFlowToSchemaAndHostSanitizer(Expr nodeExpr) {
   exists(SchemaAndHostSanitizerFlow::PathNode node | node.getNode().asExpr() = nodeExpr |
-  SchemaAndHostSanitizerFlow::flowPath(node, _)
+    SchemaAndHostSanitizerFlow::flowPath(node, _)
   )
 }
 

@@ -19,15 +19,11 @@ import semmle.code.csharp.dataflow.internal.ExternalFlow
  * Holds when source is a `RemoteFlowSource`
  */
 class RequestForgerySource extends Source {
-  RequestForgerySource() {
-    this instanceof RemoteFlowSource
-  }
+  RequestForgerySource() { this instanceof RemoteFlowSource }
 }
 
 class GeneralHttpClientSink extends Sink {
-  GeneralHttpClientSink() {
-    sinkNode(this, "ssrf")
-  }
+  GeneralHttpClientSink() { sinkNode(this, "ssrf") }
 }
 
 from RequestForgeryFlow::PathNode source, RequestForgeryFlow::PathNode sink, string className

@@ -19,15 +19,11 @@ import semmle.code.csharp.dataflow.internal.ExternalFlow
  * Holds when source is a `RemoteFlowSource`
  */
 class RequestForgerySource extends Source {
-  RequestForgerySource() {
-    this instanceof RemoteFlowSource
-  }
+  RequestForgerySource() { this instanceof RemoteFlowSource }
 }
 
 class GeneralHttpClientSink extends Sink {
-  GeneralHttpClientSink() {
-    sinkNode(this, "ssrf")
-  }
+  GeneralHttpClientSink() { sinkNode(this, "ssrf") }
 }
 
 predicate isRequestVariable(Variable v) {
@@ -39,9 +35,9 @@ predicate isRequestVariable(Variable v) {
 }
 
 VariableAccess getRequestForSink(Sink sink) {
-  exists(Expr e, VariableAccess va | e = sink.asExpr() and isRequestVariable(va.getTarget()) 
-  | TaintTracking::localTaint(DataFlow::exprNode(e), DataFlow::exprNode(va)) and
-  result = va
+  exists(Expr e, VariableAccess va | e = sink.asExpr() and isRequestVariable(va.getTarget()) |
+    TaintTracking::localTaint(DataFlow::exprNode(e), DataFlow::exprNode(va)) and
+    result = va
   )
 }
 
@@ -129,7 +125,8 @@ where
     or
     not isSinkAnArgumentForAClassCallable(sink, _) and
     className = "(Sink was not detected as an argument for a callable)"
-  )
-  and hasPotentialTokenLeak(sink.getNode())
+  ) and
+  hasPotentialTokenLeak(sink.getNode())
 select sink.getNode(), source, sink,
-  "Potential server side request forgery due to $@ flowing to a constructor or method from class $@.", source.getNode(), "a user-provided value", className, className
+  "Potential server side request forgery due to $@ flowing to a constructor or method from class $@.",
+  source.getNode(), "a user-provided value", className, className

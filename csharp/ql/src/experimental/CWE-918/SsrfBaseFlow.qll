@@ -113,23 +113,23 @@ private class UriHostAdditionalFlowStep extends RequestForgeryAdditionalFlowStep
  * `await MyMethod(myString).ConfigureAwait(false);`
  *
  * `private async Task<string> MyMethod(string s) { return s; }`
- * 
+ *
  * NOTE: this fixes a false negative in the csharp dataflow library until
  * https://github.com/github/codeql-csharp-team/issues/95 is addressed
  */
 private class TaskAwaitAdditionalFlowStep extends RequestForgeryAdditionalFlowStep {
   override predicate propagatesTaint(DataFlow::Node pred, DataFlow::Node succ) {
-  exists(MethodCall mc, SystemThreadingTasksTaskTClass c, ReturnStmt rs |
-    c.getAConstructedGeneric().getAMethod().getACall() = mc and
-    (
-      rs.getEnclosingCallable() = mc.getQualifier().(MethodCall).getTarget()
-      or
-      returnStmtGenericMethodCall(mc, rs)
+    exists(MethodCall mc, SystemThreadingTasksTaskTClass c, ReturnStmt rs |
+      c.getAConstructedGeneric().getAMethod().getACall() = mc and
+      (
+        rs.getEnclosingCallable() = mc.getQualifier().(MethodCall).getTarget()
+        or
+        returnStmtGenericMethodCall(mc, rs)
+      )
+    |
+      pred.asExpr() = rs.getExpr() and
+      succ.asExpr() = mc
     )
-  |
-    pred.asExpr() = rs.getExpr() and
-    succ.asExpr() = mc
-  )
   }
 }
 
@@ -165,12 +165,10 @@ predicate isSinkAnArgumentForAClassCallable(RequestForgeryFlow::PathNode sink, s
  * Returns the fully qualified name of the given element, with a period `.` between the namespace and the identifier.
  */
 pragma[inline]
-string getFullyQualifiedName(NamedElement e){
+string getFullyQualifiedName(NamedElement e) {
   exists(string a, string b |
     e.hasFullyQualifiedName(a, b) and
-    if a = ""
-    then result = b
-    else result = a  + "." + b
+    if a = "" then result = b else result = a + "." + b
   )
 }
 

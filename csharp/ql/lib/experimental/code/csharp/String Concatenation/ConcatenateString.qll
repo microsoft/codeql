@@ -274,15 +274,14 @@ private class MethodCallOfInterest extends MethodCall {
 }
 
 /**
- * Gets the value of a `PropertyRead` from assigned proprty values
- * 
+ * Gets the value of a `PropertyRead` from assigned property values
  */
 Expr getValueforPropRead(PropertyRead pr) {
-  exists(VariableAccess va_pr, Variable v, ObjectCreation oc|
+  exists(VariableAccess va_pr, Variable v, ObjectCreation oc |
     va_pr = pr.getQualifier() and
     v.getInitializer() = oc and
     va_pr.getTarget() = v
-    |
+  |
     result = getAValueForProp(oc, pr.getTarget().getName())
   )
 }
