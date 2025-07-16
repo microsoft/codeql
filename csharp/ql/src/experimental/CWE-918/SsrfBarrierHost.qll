@@ -1,5 +1,5 @@
 import SsrfBaseFlow
-import ConcatenateStringSantizer
+import experimental.code.csharp.String_Concatenation.ConcatenateStringSantizer
 
 /**
  * Holds for `HttpMethod` argument in `System.Net.Http.HttpRequestMessage` constructor

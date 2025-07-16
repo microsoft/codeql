@@ -305,6 +305,13 @@ Expr getAValueForProp(ObjectCreation create, string prop) {
     propAssign.getLValue().(PropertyAccess).getTarget().hasName(prop) and
     result = propAssign.getRValue()
   )
+  or
+  // property assignment in constructor
+  exists(Assignment propAssign |
+    propAssign.getEnclosingCallable() = create.getTarget() and
+    propAssign.getLValue().(PropertyAccess).getTarget().hasName(prop) and
+    result = propAssign.getRValue()
+  )
 }
 
 /**
