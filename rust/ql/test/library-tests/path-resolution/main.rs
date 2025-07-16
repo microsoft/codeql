@@ -75,7 +75,7 @@ fn i() {
 
     {
         struct Foo {
-            x: i32,
+            x: i32, // $ item=i32
         } // I30
 
         let _ = Foo { x: 0 }; // $ item=I30
@@ -121,9 +121,13 @@ mod m6 {
 
 mod m7 {
     pub enum MyEnum {
-        A(i32),       // I42
-        B { x: i32 }, // I43
-        C,            // I44
+        A(
+            i32, // $ item=i32
+        ), // I42
+        B {
+            x: i32, // $ item=i32
+        }, // I43
+        C, // I44
     } // I41
 
     #[rustfmt::skip]
@@ -281,7 +285,7 @@ mod m13 {
     pub struct f {} // I72
 
     mod m14 {
-        use crate::m13::f; // $ item=I71 item=I72
+        use zelf::m13::f; // $ item=I71 item=I72
 
         #[rustfmt::skip]
         fn g(x: f) { // $ item=I72
@@ -606,8 +610,8 @@ mod m24 {
         let impl_obj = Implementor; // $ item=I118
         let generic = GenericStruct { data: impl_obj }; // $ item=I115
         
-        generic.call_trait_a(); // $ MISSING: item=I116
-        generic.call_both(); // $ MISSING: item=I117
+        generic.call_trait_a(); // $ item=I116
+        generic.call_both(); // $ item=I117
         
         // Access through where clause type parameter constraint
         GenericStruct::<Implementor>::call_trait_a(&generic); // $ item=I116 item=I118
@@ -616,6 +620,25 @@ mod m24 {
         GenericStruct::<Implementor>::call_both(&generic); // $ item=I117 item=I118
     } // I121
 }
+
+extern crate self as zelf;
+
+#[proc_macro::add_suffix("changed")] // $ item=add_suffix
+fn z() {} // I122
+
+struct AStruct {} //I123
+impl AStruct // $ item=I123
+{
+    #[proc_macro::add_suffix("on_type")] // $ item=add_suffix
+    pub fn z() {} // I124
+
+    #[proc_macro::add_suffix("on_instance")] // $ item=add_suffix
+    pub fn z(&self) {} // I125
+}
+
+use std::{self as ztd}; // $ item=std
+
+fn use_ztd(x: ztd::string::String) {} // $ item=String
 
 fn main() {
     my::nested::nested1::nested2::f(); // $ item=I4
@@ -646,4 +669,9 @@ fn main() {
     m18::m19::m20::g(); // $ item=I103
     m23::f(); // $ item=I108
     m24::f(); // $ item=I121
+    zelf::h(); // $ item=I25
+    z_changed(); // $ MISSING: item=I122
+    AStruct::z_on_type(); // $ MISSING: item=I124
+    AStruct {} // $ item=I123
+        .z_on_instance(); // MISSING: item=I125
 }

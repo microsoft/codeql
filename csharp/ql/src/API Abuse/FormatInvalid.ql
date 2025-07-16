@@ -6,31 +6,15 @@
  * @problem.severity error
  * @precision high
  * @id cs/invalid-string-formatting
- * @tags reliability
- *       maintainability
- *       quality
+ * @tags quality
+ *       reliability
+ *       correctness
  */
 
 import csharp
 import semmle.code.csharp.frameworks.system.Text
 import semmle.code.csharp.frameworks.Format
 import FormatFlow::PathGraph
-
-abstract class FormatStringParseCall extends MethodCall {
-  abstract Expr getFormatExpr();
-}
-
-class OrdinaryFormatCall extends FormatStringParseCall instanceof FormatCall {
-  override Expr getFormatExpr() { result = FormatCall.super.getFormatExpr() }
-}
-
-class ParseFormatStringCall extends FormatStringParseCall {
-  ParseFormatStringCall() {
-    this.getTarget() = any(SystemTextCompositeFormatClass x).getParseMethod()
-  }
-
-  override Expr getFormatExpr() { result = this.getArgument(0) }
-}
 
 module FormatInvalidConfig implements DataFlow::ConfigSig {
   predicate isSource(DataFlow::Node n) { n.asExpr() instanceof StringLiteral }

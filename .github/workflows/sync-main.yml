@@ -23,6 +23,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+          token: ${{ secrets.WORKFLOW_TOKEN }}
       - name: Git config
         shell: bash
         run: |
@@ -64,6 +65,7 @@ jobs:
         run: |
           git push origin auto/sync-main-pr
         env:
+          GITHUB_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
           GH_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
       - name: Create PR if it doesn't exist
         shell: bash
@@ -86,3 +88,4 @@ jobs:
           fi
         env:
           GH_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
+

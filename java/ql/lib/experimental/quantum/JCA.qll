@@ -353,7 +353,7 @@ module JCAModel {
       else result instanceof KeyOpAlg::TUnknownKeyOperationAlgorithmType
     }
 
-    override string getKeySizeFixed() {
+    override int getKeySizeFixed() {
       none() // TODO: implement to handle variants such as AES-128
     }
 
@@ -611,6 +611,8 @@ module JCAModel {
   }
 
   class CipherOperationInstance extends Crypto::KeyOperationInstance instanceof CipherOperationCall {
+    CipherOperationInstance() { not this.isIntermediate() }
+
     override Crypto::KeyOperationSubtype getKeyOperationSubtype() {
       if CipherFlowAnalysisImpl::hasInit(this)
       then result = CipherFlowAnalysisImpl::getInitFromUse(this, _, _).getCipherOperationModeType()
@@ -1102,7 +1104,7 @@ module JCAModel {
       KeyGeneratorFlowAnalysisImpl::getInitFromUse(this, _, _).getKeySizeArg() = result.asExpr()
     }
 
-    override string getKeySizeFixed() { none() }
+    override int getKeySizeFixed() { none() }
   }
 
   class KeyGeneratorCipherAlgorithm extends CipherStringLiteralAlgorithmInstance {
@@ -1241,7 +1243,7 @@ module JCAModel {
       exists(hash_name_to_type_known(this.getRawHashAlgorithmName(), result))
     }
 
-    override string getRawMACAlgorithmName() {
+    override string getRawMacAlgorithmName() {
       result = super.getRawKDFAlgorithmName().splitAt("PBKDF2With", 1)
     }
 
@@ -1249,7 +1251,7 @@ module JCAModel {
       result = super.getRawKDFAlgorithmName().splitAt("WithHmac", 1)
     }
 
-    override Crypto::TMACType getMACType() { result instanceof Crypto::THMAC }
+    override Crypto::TMACType getMacType() { result instanceof Crypto::THMAC }
 
     override Crypto::AlgorithmValueConsumer getHMACAlgorithmValueConsumer() { result = this }
 
@@ -1308,7 +1310,7 @@ module JCAModel {
       result.asExpr() = this.getKeySpecInstantiation().(PBEKeySpecInstantiation).getKeyLengthArg()
     }
 
-    override string getKeySizeFixed() { none() }
+    override int getKeySizeFixed() { none() }
 
     override string getOutputKeySizeFixed() { none() }
 
@@ -1386,7 +1388,7 @@ module JCAModel {
     override Crypto::TKeyAgreementType getKeyAgreementType() {
       if key_agreement_name_to_type_known(_, super.getValue())
       then key_agreement_name_to_type_known(result, super.getValue())
-      else result = Crypto::UnknownKeyAgreementType()
+      else result = Crypto::OtherKeyAgreementType()
     }
 
     KeyAgreementAlgorithmValueConsumer getConsumer() { result = consumer }
@@ -1485,9 +1487,9 @@ module JCAModel {
 
     MACGetInstanceAlgorithmValueConsumer getConsumer() { result = consumer }
 
-    override string getRawMACAlgorithmName() { result = super.getValue() }
+    override string getRawMacAlgorithmName() { result = super.getValue() }
 
-    override Crypto::TMACType getMACType() {
+    override Crypto::TMACType getMacType() {
       if mac_name_to_mac_type_known(_, super.getValue())
       then mac_name_to_mac_type_known(result, super.getValue())
       else result instanceof Crypto::TOtherMACType
@@ -1604,13 +1606,8 @@ module JCAModel {
       else result = Crypto::OtherEllipticCurveType()
     }
 
-    override string getKeySize() {
-      exists(int keySize |
-        Crypto::ellipticCurveNameToKeySizeAndFamilyMapping(this.getRawEllipticCurveName(), keySize,
-          _)
-      |
-        result = keySize.toString()
-      )
+    override int getKeySize() {
+      Crypto::ellipticCurveNameToKeySizeAndFamilyMapping(this.getRawEllipticCurveName(), result, _)
     }
 
     EllipticCurveAlgorithmValueConsumer getConsumer() { result = consumer }

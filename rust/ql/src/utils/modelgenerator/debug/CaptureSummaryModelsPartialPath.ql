@@ -15,7 +15,7 @@ import PartialFlow::PartialPathGraph
 
 int explorationLimit() { result = 3 }
 
-module PartialFlow = Heuristic::PropagateFlow::FlowExplorationFwd<explorationLimit/0>;
+module PartialFlow = Heuristic::PropagateTaintFlow::FlowExplorationFwd<explorationLimit/0>;
 
 from
   PartialFlow::PartialPathNode source, PartialFlow::PartialPathNode sink,
@@ -23,6 +23,6 @@ from
 where
   PartialFlow::partialFlow(source, sink, _) and
   p = source.getNode() and
-  p.asParameter() = api.getParamList().getAParamBase()
+  p.asParameter() = api.getFunction().getParamList().getAParamBase()
 select sink.getNode(), source, sink, "There is flow from a $@ to $@.", source.getNode(),
   "parameter", sink.getNode(), "intermediate value"

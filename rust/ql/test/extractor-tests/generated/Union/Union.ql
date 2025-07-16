@@ -3,7 +3,8 @@ import codeql.rust.elements
 import TestUtils
 
 from
-  Union x, string hasExtendedCanonicalPath, string hasCrateOrigin, int getNumberOfAttrs,
+  Union x, string hasExtendedCanonicalPath, string hasCrateOrigin,
+  string hasAttributeMacroExpansion, int getNumberOfDeriveMacroExpansions, int getNumberOfAttrs,
   string hasGenericParamList, string hasName, string hasStructFieldList, string hasVisibility,
   string hasWhereClause
 where
@@ -15,6 +16,12 @@ where
     else hasExtendedCanonicalPath = "no"
   ) and
   (if x.hasCrateOrigin() then hasCrateOrigin = "yes" else hasCrateOrigin = "no") and
+  (
+    if x.hasAttributeMacroExpansion()
+    then hasAttributeMacroExpansion = "yes"
+    else hasAttributeMacroExpansion = "no"
+  ) and
+  getNumberOfDeriveMacroExpansions = x.getNumberOfDeriveMacroExpansions() and
   getNumberOfAttrs = x.getNumberOfAttrs() and
   (if x.hasGenericParamList() then hasGenericParamList = "yes" else hasGenericParamList = "no") and
   (if x.hasName() then hasName = "yes" else hasName = "no") and
@@ -22,6 +29,7 @@ where
   (if x.hasVisibility() then hasVisibility = "yes" else hasVisibility = "no") and
   if x.hasWhereClause() then hasWhereClause = "yes" else hasWhereClause = "no"
 select x, "hasExtendedCanonicalPath:", hasExtendedCanonicalPath, "hasCrateOrigin:", hasCrateOrigin,
-  "getNumberOfAttrs:", getNumberOfAttrs, "hasGenericParamList:", hasGenericParamList, "hasName:",
-  hasName, "hasStructFieldList:", hasStructFieldList, "hasVisibility:", hasVisibility,
-  "hasWhereClause:", hasWhereClause
+  "hasAttributeMacroExpansion:", hasAttributeMacroExpansion, "getNumberOfDeriveMacroExpansions:",
+  getNumberOfDeriveMacroExpansions, "getNumberOfAttrs:", getNumberOfAttrs, "hasGenericParamList:",
+  hasGenericParamList, "hasName:", hasName, "hasStructFieldList:", hasStructFieldList,
+  "hasVisibility:", hasVisibility, "hasWhereClause:", hasWhereClause

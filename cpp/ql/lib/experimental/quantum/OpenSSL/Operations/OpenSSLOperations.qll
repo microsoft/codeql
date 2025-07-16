@@ -1,3 +1,6 @@
 import OpenSSLOperationBase
 import EVPCipherOperation
 import EVPHashOperation
+import ECKeyGenOperation
+import EVPSignatureOperation
+import EVPKeyGenOperation
