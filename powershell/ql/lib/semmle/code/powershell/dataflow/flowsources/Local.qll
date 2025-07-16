@@ -31,7 +31,7 @@ abstract class EnvironmentVariableSource extends LocalFlowSource {
 }
 
 private class EnvironmentVariableEnv extends EnvironmentVariableSource {
-  EnvironmentVariableEnv() { this.asExpr().getExpr() instanceof EnvVariable }
+  EnvironmentVariableEnv() { this.asExpr().getExpr().(EnvVariable).isUserControlled() }
 }
 
 private class ExternalEnvironmentVariableSource extends EnvironmentVariableSource {
