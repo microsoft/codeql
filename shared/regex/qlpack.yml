@@ -1,5 +1,9 @@
 name: codeql/regex
+<<<<<<< HEAD
 version: 1.0.26
+=======
+version: 1.0.27
+>>>>>>> ff54dfe8aae (Merge pull request #20112 from github/release-prep/2.22.2)
 groups: shared
 library: true
 dependencies:
