@@ -441,3 +441,327 @@ pub fn test_rc() {
 	// note: simialar things are likely possible with Ref, RefMut, RefCell,
 	//       Vec and others.
 }
+
+// --- closures ---
+
+fn get_closure(p3: *const i64, p4: *const i64) -> impl FnOnce() {
+	let my_local1: i64 = 1;
+	let my_local2: i64 = 2;
+	let p1: *const i64 = &my_local1; // $ MISSING: Source[rust/access-after-lifetime-ended]=local1
+
+	return move || { // captures `my_local2`, `p1`, `p3`, `p4` by value (due to `move`)
+		let p2: *const i64 = &my_local2;
+
+		unsafe {
+			let v1 = *p1; // $ MISSING: Alert[rust/access-after-lifetime-ended]=local1
+			let v2 = *p2; // GOOD
+			let v3 = *p3; // GOOD
+			let v4 = *p4; // $ MISSING: Alert[rust/access-after-lifetime-ended]=local4
+			println!("	v1 = {v1} (!)"); // corrupt in practice
+			println!("	v2 = {v2}");
+			println!("	v3 = {v3}");
+			println!("	v4 = {v4} (!)");
+		}
+	};
+} // (`my_local1` goes out of scope, thus `p1` is dangling)
+
+fn with_closure(ptr: *const i64, closure: fn(*const i64, *const i64)) {
+	let my_local5: i64 = 5;
+
+	closure(ptr,
+		&my_local5);
+}
+
+pub fn test_closures() {
+	let closure;
+	let my_local3: i64 = 3;
+	{
+		let my_local4: i64 = 4;
+		closure = get_closure( &my_local3,
+			&my_local4); // $ MISSING: Source[rust/access-after-lifetime-ended]=local4
+	} // (`my_local4` goes out of scope, so `p4` is dangling)
+
+	use_the_stack();
+
+	closure();
+
+	with_closure(&my_local3, |p1, p2| {
+		unsafe {
+			let v5 = *p1; // GOOD
+			let v6 = *p2; // $ GOOD
+			println!("	v5 = {v5}");
+			println!("	v6 = {v6}");
+		}
+	});
+}
+
+// --- async ---
+
+fn get_async_closure(p3: *const i64, p4: *const i64) -> impl std::future::Future<Output = ()> {
+	let my_local1: i64 = 1;
+	let my_local2: i64 = 2;
+	let p1: *const i64 = &my_local1;
+
+	return async move { // captures `my_local2`, `p1`, `p3`, `p4` by value (due to `move`)
+		let p2: *const i64 = &my_local2;
+
+		unsafe {
+			let v1 = *p1; // $ MISSING: Alert
+			let v2 = *p2; // GOOD
+			let v3 = *p3; // GOOD
+			let v4 = *p4; // $ MISSING: Alert
+			println!("	v1 = {v1} (!)"); // corrupt in practice
+			println!("	v2 = {v2}");
+			println!("	v3 = {v3}");
+			println!("	v4 = {v4} (!)");
+		}
+	};
+} // (`my_local1` goes out of scope, thus `p1` is dangling)
+
+pub fn test_async() {
+	let async_closure;
+	let my_local3: i64 = 3;
+	{
+		let my_local4: i64 = 4;
+		async_closure = get_async_closure(&my_local3,
+			&my_local4);
+	} // (`my_local4` goes out of scope, so `p4` is dangling)
+
+	use_the_stack();
+
+	futures::executor::block_on(async_closure);
+}
+
+// --- lifetime annotations ---
+
+fn select_str<'a>(cond: bool, a: &'a str, b: &'a str) -> &'a str {
+	if cond { a } else { b }
+}
+
+struct MyRefStr<'a> {
+	ref_str: &'a str,
+}
+
+pub fn test_lifetime_annotations() {
+	let str1: *const str;
+	{
+		let foo = String::from("foo");
+		let bar = String::from("bar");
+		str1 = select_str(true, foo.as_str(), bar.as_str());
+
+		unsafe {
+			let v1 = &*str1; // GOOD
+			println!("	v1 = {v1}");
+		}
+	} // (`foo`, `bar` go out of scope, the return value of `select_str` has the same lifetime, thus `str1` is dangling)
+
+	unsafe {
+		let v2 = &*str1; // $ MISSING: Alert
+		println!("	v2 = {v2} (!)"); // corrupt in practice
+	}
+
+	let my_ref;
+	let str2: *const str;
+	{
+		let baz = String::from("baz");
+		my_ref = MyRefStr { ref_str: baz.as_str() };
+		str2 = &*my_ref.ref_str;
+
+		unsafe {
+			let v3 = &*str2; // GOOD
+			println!("	v3 = {v3}");
+		}
+	} // (`baz` goes out of scope, `ref_str` has the same lifetime, thus `str2` is dangling)
+
+	use_the_stack();
+
+	unsafe {
+		let v4 = &*str2; // $ MISSING: Alert
+		println!("	v4 = {v4} (!)"); // corrupt in practice
+	}
+}
+
+// --- implicit dereferences ---
+
+pub fn test_implicit_derefs() {
+	let ref1;
+	{
+		let str2;
+		{
+			let str1 = "bar";
+			str2 = "foo".to_string() + &str1;
+			ref1 = &raw const str2; // $ Source[rust/access-after-lifetime-ended]=str2
+		} // (str1 goes out of scope, but it's been copied into str2)
+
+		unsafe {
+			let v1 = &*ref1;
+			println!("	v1 = {v1}");
+		}
+	} // (str2 goes out of scope, thus ref1 is dangling)
+
+	use_the_stack();
+
+	unsafe {
+		let v2 = &*ref1; // $ Alert[rust/access-after-lifetime-ended]=str2
+		println!("	v2 = {v2} (!)"); // corrupt in practice
+	}
+}
+
+// --- members ---
+
+struct MyType {
+	value: i64,
+}
+
+impl MyType {
+	fn test(&self) {
+		let r1 = unsafe {
+			let v1 = &self;
+			&v1.value
+		};
+		let (r2, r3) = unsafe {
+			let v2 = &self;
+			(&v2.value,
+			 &self.value)
+		};
+
+		use_the_stack();
+
+		let v1 = *r1;
+		let v2 = *r2;
+		let v3 = *r3;
+		println!("	v1 = {v1}");
+		println!("	v2 = {v2}");
+		println!("	v3 = {v3}");
+	}
+}
+
+pub fn test_members() {
+	let mt = MyType { value: 1 };
+	mt.test();
+}
+
+// --- enum members ---
+
+struct MyValue2 {
+	value: i64
+}
+
+enum MyEnum3 {
+	Value(MyValue2),
+}
+
+impl MyEnum3 {
+	pub fn test_match(&self) -> &i64 {
+		let r1 = match self {
+			MyEnum3::Value(v2) => &v2.value,
+		};
+
+		r1
+	}
+}
+
+pub fn test_enum_members() {
+	let v1 = MyValue2 { value: 1 };
+	let e1 = MyEnum3::Value(v1);
+
+	let r1 = e1.test_match();
+
+	use_the_stack();
+
+	let v3 = *r1;
+	println!("	v3 = {v3}");
+}
+
+// --- macros ---
+
+macro_rules! my_macro1 {
+	() => {
+		let ptr: *const i64;
+		{
+			let val: i64 = 1;
+			ptr = &val;
+		}
+
+		unsafe {
+			let v = *ptr;
+			println!("	v = {v}");
+		}
+	}
+}
+
+macro_rules! my_macro2 {
+	() => {
+		{
+			let val: i64 = 1;
+			let ptr: *const i64 = &val;
+			ptr
+		}
+	}
+}
+
+pub fn test_macros() {
+	my_macro1!();
+	my_macro1!();
+
+	let ptr = my_macro2!();
+	unsafe {
+		let v = *ptr;
+		println!("	v = {v}");
+	}
+}
+
+// --- unsafe function ---
+
+fn get_local_for_unsafe_function() -> *const f64 {
+	let my_local10: f64 = 1.23;
+
+	return &my_local10; // $ Source[rust/access-after-lifetime-ended]=local10
+} // (return value immediately becomes dangling)
+
+pub unsafe fn test_unsafe_function() {
+	let p1 = get_local_for_unsafe_function();
+
+	use_the_stack();
+
+	let v1 = *p1; // $ Alert[rust/access-after-lifetime-ended]=local10
+	println!("	v1 = {v1} (!)"); // corrupt in practice
+}
+
+// --- examples from qhelp ---
+
+fn get_pointer() -> *const i64 {
+	let val = 123;
+
+	return &val; // $ Source[rust/access-after-lifetime-ended]=val
+} // lifetime of `val` ends here, the pointer becomes dangling
+
+pub fn test_lifetimes_example_bad() {
+	let ptr = get_pointer();
+	let dereferenced_ptr;
+
+	use_the_stack();
+
+	unsafe {
+		dereferenced_ptr = *ptr; // $ Alert[rust/access-after-lifetime-ended]=val
+	}
+
+	println!("	val = {dereferenced_ptr} (!)"); // corrupt in practice
+}
+
+fn get_box() -> Box<i64> {
+	let val = 123;
+
+	return Box::new(val);
+}
+
+pub fn test_lifetimes_example_good() {
+	let ptr = get_box();
+	let dereferenced_ptr;
+
+	use_the_stack();
+
+	dereferenced_ptr = *ptr; // GOOD
+
+	println!("	val = {dereferenced_ptr}");
+}
