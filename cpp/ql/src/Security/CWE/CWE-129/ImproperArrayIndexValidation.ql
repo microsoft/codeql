@@ -51,10 +51,7 @@ predicate offsetIsAlwaysInBounds(ArrayExpr arrayExpr, VariableAccess offsetExpr)
 }
 
 module ImproperArrayIndexValidationConfig implements DataFlow::ConfigSig {
-  predicate isSource(DataFlow::Node source) {
-    isFlowSource(source, _) and
-    not source.getLocation().getFile().getRelativePath().regexpMatch("(.*/)?tests?/.*")
-  }
+  predicate isSource(DataFlow::Node source) { isFlowSource(source, _) }
 
   predicate isBarrier(DataFlow::Node node) {
     node = DataFlow::BarrierGuard<guardChecks/3>::getABarrierNode()
@@ -76,8 +73,7 @@ module ImproperArrayIndexValidationConfig implements DataFlow::ConfigSig {
 module ImproperArrayIndexValidation = TaintTracking::Global<ImproperArrayIndexValidationConfig>;
 
 from
-  ImproperArrayIndexValidation::PathNode source,
-  ImproperArrayIndexValidation::PathNode sink,
+  ImproperArrayIndexValidation::PathNode source, ImproperArrayIndexValidation::PathNode sink,
   string sourceType
 where
   ImproperArrayIndexValidation::flowPath(source, sink) and

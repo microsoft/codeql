@@ -865,7 +865,7 @@ class BodyLessParameterNodeImpl extends Node, TBodyLessParameterNodeImpl {
     result = unique( | | p.getLocation())
     or
     count(p.getLocation()) != 1 and
-    result instanceof UnknownDefaultLocation
+    result instanceof UnknownLocation
   }
 
   final override string toStringImpl() {
@@ -1133,7 +1133,7 @@ private module RawIndirectNodes {
     final override Location getLocationImpl() {
       if exists(this.getOperand().getLocation())
       then result = this.getOperand().getLocation()
-      else result instanceof UnknownDefaultLocation
+      else result instanceof UnknownLocation
     }
 
     override string toStringImpl() {
@@ -1179,7 +1179,7 @@ private module RawIndirectNodes {
     final override Location getLocationImpl() {
       if exists(this.getInstruction().getLocation())
       then result = this.getInstruction().getLocation()
-      else result instanceof UnknownDefaultLocation
+      else result instanceof UnknownLocation
     }
 
     override string toStringImpl() {
@@ -1275,7 +1275,7 @@ class FinalParameterNode extends Node, TFinalParameterNode {
     result = unique( | | p.getLocation())
     or
     not exists(unique( | | p.getLocation())) and
-    result instanceof UnknownDefaultLocation
+    result instanceof UnknownLocation
   }
 
   override string toStringImpl() { result = stars(this) + p.toString() }
@@ -1647,7 +1647,7 @@ class VariableNode extends Node, TGlobalLikeVariableNode {
     result = unique( | | v.getLocation())
     or
     not exists(unique( | | v.getLocation())) and
-    result instanceof UnknownDefaultLocation
+    result instanceof UnknownLocation
   }
 
   override string toStringImpl() { result = stars(this) + v.toString() }
