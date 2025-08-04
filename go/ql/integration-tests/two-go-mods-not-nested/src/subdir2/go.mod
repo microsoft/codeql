@@ -1,9 +1,5 @@
-go 1.23.0
+go 1.14
 
-toolchain go1.23.2
-
-require golang.org/x/net v0.39.0
-
-require golang.org/x/sys v0.32.0 // indirect
+require golang.org/x/net v0.0.0-20200505041828-1ed23360d12c
 
 module subdir2
