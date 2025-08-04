@@ -406,12 +406,12 @@ mod impl_overlap {
     impl OverlappingTrait for S1 {
         // <S1_as_OverlappingTrait>::common_method
         fn common_method(self) -> S1 {
-            panic!("not called");
+            S1
         }
 
         // <S1_as_OverlappingTrait>::common_method_2
         fn common_method_2(self, s1: S1) -> S1 {
-            panic!("not called");
+            S1
         }
     }
 
@@ -423,6 +423,65 @@ mod impl_overlap {
 
         // S1::common_method_2
         fn common_method_2(self) -> S1 {
+            self
+        }
+    }
+
+    struct S2<T2>(T2);
+
+    impl S2<i32> {
+        // S2<i32>::common_method
+        fn common_method(self) -> S1 {
+            S1
+        }
+
+        // S2<i32>::common_method
+        fn common_method_2(self) -> S1 {
+            S1
+        }
+    }
+
+    impl OverlappingTrait for S2<i32> {
+        // <S2<i32>_as_OverlappingTrait>::common_method
+        fn common_method(self) -> S1 {
+            S1
+        }
+
+        // <S2<i32>_as_OverlappingTrait>::common_method_2
+        fn common_method_2(self, s1: S1) -> S1 {
+            S1
+        }
+    }
+
+    impl OverlappingTrait for S2<S1> {
+        // <S2<S1>_as_OverlappingTrait>::common_method
+        fn common_method(self) -> S1 {
+            S1
+        }
+
+        // <S2<S1>_as_OverlappingTrait>::common_method_2
+        fn common_method_2(self, s1: S1) -> S1 {
+            S1
+        }
+    }
+
+    #[derive(Debug)]
+    struct S3<T3>(T3);
+
+    trait OverlappingTrait2<T> {
+        fn m(&self, x: &T) -> &Self;
+    }
+
+    impl<T> OverlappingTrait2<T> for S3<T> {
+        // <S3<T>_as_OverlappingTrait2<T>>::m
+        fn m(&self, x: &T) -> &Self {
+            self
+        }
+    }
+
+    impl<T> S3<T> {
+        // S3<T>::m
+        fn m(&self, x: T) -> &Self {
             self
         }
     }

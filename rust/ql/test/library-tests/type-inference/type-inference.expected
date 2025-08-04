@@ -1186,11 +1186,11 @@ inferType
 | main.rs:403:34:403:35 | s1 |  | main.rs:397:5:398:14 | S1 |
 | main.rs:408:26:408:29 | SelfParam |  | main.rs:397:5:398:14 | S1 |
 | main.rs:408:38:410:9 | { ... } |  | main.rs:397:5:398:14 | S1 |
-| main.rs:409:20:409:31 | "not called" |  | {EXTERNAL LOCATION} | str |
+| main.rs:409:13:409:14 | S1 |  | main.rs:397:5:398:14 | S1 |
 | main.rs:413:28:413:31 | SelfParam |  | main.rs:397:5:398:14 | S1 |
 | main.rs:413:34:413:35 | s1 |  | main.rs:397:5:398:14 | S1 |
 | main.rs:413:48:415:9 | { ... } |  | main.rs:397:5:398:14 | S1 |
-| main.rs:414:20:414:31 | "not called" |  | {EXTERNAL LOCATION} | str |
+| main.rs:414:13:414:14 | S1 |  | main.rs:397:5:398:14 | S1 |
 | main.rs:420:26:420:29 | SelfParam |  | main.rs:397:5:398:14 | S1 |
 | main.rs:420:38:422:9 | { ... } |  | main.rs:397:5:398:14 | S1 |
 | main.rs:421:13:421:16 | self |  | main.rs:397:5:398:14 | S1 |

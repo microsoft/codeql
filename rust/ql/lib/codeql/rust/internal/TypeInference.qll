@@ -856,7 +856,7 @@ private module CallExprBaseMatchingInput implements MatchingInputSig {
     }
 
     Declaration getTarget() {
-      result = inferMethodCallTarget(this) // mutual recursion; resolving method calls requires resolving types and vice versa
+      result = resolveMethodCallTarget(this) // mutual recursion; resolving method calls requires resolving types and vice versa
       or
       result = resolveFunctionCallTarget(this) // potential mutual recursion; resolving some associated function calls requires resolving types
     }
@@ -1649,14 +1649,14 @@ private predicate methodCandidateTrait(Type type, Trait trait, string name, int 
   methodCandidate(type, name, arity, impl)
 }
 
-private module IsInstantiationOfInput implements IsInstantiationOfInputSig<MethodCall> {
-  pragma[nomagic]
-  private predicate isMethodCall(MethodCall mc, Type rootType, string name, int arity) {
-    rootType = mc.getTypeAt(TypePath::nil()) and
-    name = mc.getMethodName() and
-    arity = mc.getNumberOfArguments()
-  }
+pragma[nomagic]
+private predicate isMethodCall(MethodCall mc, Type rootType, string name, int arity) {
+  rootType = mc.getTypeAt(TypePath::nil()) and
+  name = mc.getMethodName() and
+  arity = mc.getNumberOfArguments()
+}
 
+private module IsInstantiationOfInput implements IsInstantiationOfInputSig<MethodCall> {
   pragma[nomagic]
   predicate potentialInstantiationOf(MethodCall mc, TypeAbstraction impl, TypeMention constraint) {
     exists(Type rootType, string name, int arity |
@@ -1819,11 +1819,41 @@ private predicate functionResolutionDependsOnArgument(
   )
 }
 
+/**
+ * Holds if the method call `mc` has no inherent target, i.e., it does not
+ * resolve to a method in an `impl` block for the type of the receiver.
+ */
+pragma[nomagic]
+private predicate methodCallHasNoInherentTarget(MethodCall mc) {
+  exists(Type rootType, string name, int arity |
+    isMethodCall(mc, rootType, name, arity) and
+    forall(Impl impl |
+      methodCandidate(rootType, name, arity, impl) and
+      not impl.hasTrait()
+    |
+      IsInstantiationOf<MethodCall, IsInstantiationOfInput>::isNotInstantiationOf(mc, impl, _)
+    )
+  )
+}
+
+pragma[nomagic]
+private predicate methodCallHasImplCandidate(MethodCall mc, Impl impl) {
+  IsInstantiationOf<MethodCall, IsInstantiationOfInput>::isInstantiationOf(mc, impl, _) and
+  if impl.hasTrait() and not exists(mc.getTrait())
+  then
+    // inherent methods take precedence over trait methods, so only allow
+    // trait methods when there are no matching inherent methods
+    methodCallHasNoInherentTarget(mc)
+  else any()
+}
+
 /** Gets a method from an `impl` block that matches the method call `mc`. */
+pragma[nomagic]
 private Function getMethodFromImpl(MethodCall mc) {
-  exists(Impl impl |
-    IsInstantiationOf<MethodCall, IsInstantiationOfInput>::isInstantiationOf(mc, impl, _) and
-    result = getMethodSuccessor(impl, mc.getMethodName())
+  exists(Impl impl, string name |
+    methodCallHasImplCandidate(mc, impl) and
+    name = mc.getMethodName() and
+    result = getMethodSuccessor(impl, name)
   |
     not functionResolutionDependsOnArgument(impl, name, _, _, _, _)
     or

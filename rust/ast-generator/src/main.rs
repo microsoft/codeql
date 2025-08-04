@@ -363,6 +363,7 @@ struct ExtractorEnumInfo {
     snake_case_name: String,
     ast_name: String,
     variants: Vec<EnumVariantInfo>,
+    has_special_emission: bool,
 }
 
 #[derive(Serialize, Default)]
@@ -384,6 +385,7 @@ struct ExtractorNodeInfo {
     ast_name: String,
     fields: Vec<ExtractorNodeFieldInfo>,
     has_attrs: bool,
+    has_special_emission: bool,
 }
 
 #[derive(Serialize)]
@@ -465,6 +467,7 @@ fn node_to_extractor_info(node: &AstNodeSrc) -> ExtractorNodeInfo {
         ast_name: node.name.clone(),
         fields,
         has_attrs,
+        has_special_emission: has_special_emission(&node.name),
     }
 }
 

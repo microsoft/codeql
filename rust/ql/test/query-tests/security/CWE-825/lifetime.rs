@@ -18,36 +18,36 @@ impl Drop for MyValue {
 fn get_local_dangling() -> *const i64 {
 	let my_local1: i64 = 1;
 
-	return &my_local1;
+	return &my_local1; // $ Source[rust/access-after-lifetime-ended]=local1
 } // (return value immediately becomes dangling)
 
 fn get_local_dangling_mut() -> *mut i64 {
 	let mut my_local2: i64 = 2;
 
-	return &mut my_local2;
+	return &mut my_local2; // $ Source[rust/access-after-lifetime-ended]=local2
 } // (return value immediately becomes dangling)
 
 fn get_local_dangling_raw_const() -> *const i64 {
 	let my_local3: i64 = 3;
 
-	return &raw const my_local3;
+	return &raw const my_local3; // $ Source[rust/access-after-lifetime-ended]=local3
 } // (return value immediately becomes dangling)
 
 fn get_local_dangling_raw_mut() -> *mut i64 {
 	let mut my_local4: i64 = 4;
 
-	return &raw mut my_local4;
+	return &raw mut my_local4; // $ Source[rust/access-after-lifetime-ended]=local4
 } // (return value immediately becomes dangling)
 
 fn get_param_dangling(param5: i64) -> *const i64 {
-	return &param5;
+	return &param5; // $ Source[rust/access-after-lifetime-ended]=param5
 } // (return value immediately becomes dangling)
 
 fn get_local_field_dangling() -> *const i64 {
 	let val: MyValue;
 
 	val = MyValue { value: 6 };
-	return &val.value;
+	return &val.value; // $ Source[rust/access-after-lifetime-ended]=localfield
 }
 
 pub fn test_local_dangling() {
@@ -60,21 +60,21 @@ pub fn test_local_dangling() {
 	let p7: *const i64;
 	{
 		let my_local7 = 7;
-		p7 = &raw const my_local7;
+		p7 = &raw const my_local7; // $ Source[rust/access-after-lifetime-ended]=local7
 	} // (my_local goes out of scope, thus p7 is dangling)
 
 	use_the_stack();
 
 	unsafe {
-		let v1 = *p1; // $ MISSING: Alert
-		let v2 = *p2; // $ MISSING: Alert
-		let v3 = *p3; // $ MISSING: Alert
-		let v4 = *p4; // $ MISSING: Alert
-		let v5 = *p5; // $ MISSING: Alert
-		let v6 = *p6; // $ MISSING: Alert
-		let v7 = *p7; // $ MISSING: Alert
-		*p2 = 8; // $ MISSING: Alert
-		*p4 = 9; // $ MISSING: Alert
+		let v1 = *p1; // $ Alert[rust/access-after-lifetime-ended]=local1
+		let v2 = *p2; // $ Alert[rust/access-after-lifetime-ended]=local2
+		let v3 = *p3; // $ Alert[rust/access-after-lifetime-ended]=local3
+		let v4 = *p4; // $ Alert[rust/access-after-lifetime-ended]=local4
+		let v5 = *p5; // $ Alert[rust/access-after-lifetime-ended]=param5
+		let v6 = *p6; // $ Alert[rust/access-after-lifetime-ended]=localfield
+		let v7 = *p7; // $ Alert[rust/access-after-lifetime-ended]=local7
+		*p2 = 8; // $ Alert[rust/access-after-lifetime-ended]=local2
+		*p4 = 9; // $ Alert[rust/access-after-lifetime-ended]=local4
 
 		println!("	v1 = {v1} (!)"); // corrupt in practice
 		println!("	v2 = {v2} (!)"); // corrupt in practice
@@ -96,7 +96,7 @@ fn use_pointers(p1: *const i64, p2: *mut i64, mode: i32) {
 	use_the_stack();
 
 	unsafe {
-		if (mode == 0) {
+		if mode == 0 {
 			// reads
 			let v1 = *p1; // GOOD
 			let v2 = *p2; // GOOD
@@ -105,7 +105,7 @@ fn use_pointers(p1: *const i64, p2: *mut i64, mode: i32) {
 			println!("	v2 = {v2}");
 			println!("	v3 = {v3}");
 		}
-		if (mode == 200) {
+		if mode == 200 {
 			// writes
 			*p2 = 2; // GOOD
 		}
@@ -142,14 +142,14 @@ pub fn test_static(mode: i32) {
 	use_the_stack();
 
 	unsafe {
-		if (mode == 0) {
+		if mode == 0 {
 			// reads
 			let v1 = *p1; // GOOD
 			let v2 = *p2; // GOOD
 			println!("	v1 = {v1}");
 			println!("	v2 = {v2}");
 		}
-		if (mode == 210) {
+		if mode == 210 {
 			// writes
 			*p2 = 3; // GOOD
 		}
@@ -169,7 +169,7 @@ fn access_ptr_1(ptr: *const i64) {
 fn access_ptr_2(ptr: *const i64) {
 	// only called with `ptr` dangling
 	unsafe {
-		let v2 = *ptr; // $ MISSING: Alert
+		let v2 = *ptr; // $ Alert[rust/access-after-lifetime-ended]=local1
 		println!("	v2 = {v2} (!)"); // corrupt in practice
 	}
 }
@@ -184,7 +184,7 @@ fn access_ptr_3(ptr: *const i64) {
 
 fn access_and_get_dangling() -> *const i64 {
 	let my_local1 = 1;
-	let ptr = &my_local1;
+	let ptr = &my_local1; // $ Source[rust/access-after-lifetime-ended]=local1
 
 	access_ptr_1(ptr);
 	access_ptr_3(ptr);
@@ -244,54 +244,116 @@ pub fn test_loop() {
 		use_the_stack();
 
 		unsafe {
-			let v1 = (*prev)[0]; // $ MISSING: Alert
+			let v1 = (*prev)[0]; // $ MISSING: Alert[rust/access-after-lifetime-ended]=local2
 			println!("	v1 = {v1} (!)"); // incorrect values in practice (except first iteration)
 		}
 
-		prev = &my_local2;
+		prev = &my_local2; // $ Source[rust/access-after-lifetime-ended]=local2
 	} // (my_local2 goes out of scope, thus prev is dangling)
 
 	unsafe {
-		let v2 = (*prev)[0]; // $ MISSING: Alert
+		let v2 = (*prev)[0]; // $ Alert[rust/access-after-lifetime-ended]=local2
 		println!("	v2 = {v2} (!)"); // corrupt in practice
 	}
 }
 
-// --- enum ---
+// --- enums ---
 
 enum MyEnum {
 	Value(i64),
 }
 
-impl Drop for MyEnum {
-	fn drop(&mut self) {
-		println!("	drop MyEnum");
-	}
+enum MyEnum2 {
+	Pointer(*const i64),
 }
 
-pub fn test_enum() {
+pub fn get_pointer_to_enum() -> *const MyEnum {
+	let e1 = MyEnum::Value(1);
+	let result: *const MyEnum = &e1; // $ Source[rust/access-after-lifetime-ended]=e1
+
+	result
+} // (e1 goes out of scope, so result is dangling)
+
+pub fn get_pointer_in_enum() -> MyEnum2 {
+	let v2 = 2;
+	let e2 = MyEnum2::Pointer(&v2); // $ MISSING: Source[rust/access-after-lifetime-ended]=v2
+
+	e2
+} // (v2 goes out of scope, so the contained pointer is dangling)
+
+pub fn get_pointer_from_enum() -> *const i64 {
+	let e3 = MyEnum::Value(3);
 	let result: *const i64;
 
-	{
-		let e1 = MyEnum::Value(1);
-
-		result = match e1 {
-			MyEnum::Value(x) => { &x }
-		}; // (x goes out of scope, so result is dangling, I think; seen in real world code)
-
-		use_the_stack();
-
-		unsafe {
-			let v1 = *result; // $ MISSING: Alert
-			println!("	v1 = {v1}");
-		}
-	} // (e1 goes out of scope, so result is definitely dangling now)
+	result = match e3 {
+		MyEnum::Value(x) => { &x } // $ Source[rust/access-after-lifetime-ended]=match_x
+	}; // (x goes out of scope, so result is possibly dangling already)
 
 	use_the_stack();
 
 	unsafe {
-		let v2 = *result; // $ MISSING: Alert
-		println!("	v2 = {v2}"); // dropped in practice
+		let v0 = *result; // ?
+		println!("	v0 = {v0} (?)");
+	}
+
+	result
+} // (e3 goes out of scope, so result is definitely dangling now)
+
+pub fn test_enums() {
+	let e1 = get_pointer_to_enum();
+	let e2 = get_pointer_in_enum();
+	let result = get_pointer_from_enum();
+
+	use_the_stack();
+
+	unsafe {
+		if let MyEnum::Value(v1) = *e1 { // $ Alert[rust/access-after-lifetime-ended]=e1
+			println!("	v1 = {v1} (!)"); // corrupt in practice
+		}
+		if let MyEnum2::Pointer(p2) = e2 {
+			let v2 = unsafe { *p2 }; // $ MISSING: Alert[rust/access-after-lifetime-ended]=v2
+			println!("	v2 = {v2} (!)"); // corrupt in practice
+		}
+		let v3 = *result; // $ Alert[rust/access-after-lifetime-ended]=match_x
+		println!("	v3 = {v3} (!)"); // corrupt in practice
+	}
+}
+
+// --- recursive enum ---
+
+enum RecursiveEnum {
+	Wrapper(Box<RecursiveEnum>),
+	Pointer(*const i64),
+}
+
+pub fn get_recursive_enum() -> Box<RecursiveEnum> {
+	let v1 = 1;
+	let enum1 = RecursiveEnum::Wrapper(Box::new(RecursiveEnum::Pointer(&v1))); // Source[rust/access-after-lifetime-ended]=v1
+	let mut ref1 = &enum1;
+
+	while let RecursiveEnum::Wrapper(inner) = ref1 {
+		println!("	wrapper");
+		ref1 = &inner;
+	}
+	if let RecursiveEnum::Pointer(ptr) = ref1 {
+		let v2: i64 = unsafe { **ptr }; // GOOD
+		println!("	v2 = {v2}");
+	}
+
+	return Box::new(enum1);
+} // (v1 goes out of scope, thus the contained pointer is dangling)
+
+pub fn test_recursive_enums() {
+	let enum1 = *get_recursive_enum();
+	let mut ref1 = &enum1;
+
+	while let RecursiveEnum::Wrapper(inner) = ref1 {
+		println!("	wrapper");
+		ref1 = &inner;
+	}
+	if let RecursiveEnum::Pointer(ptr) = ref1 {
+		let v3: i64 = unsafe { **ptr }; // Alert[rust/access-after-lifetime-ended]=v1
+		println!("	v3 = {v3} (!)"); // corrupt in practice
 	}
 }
 
@@ -318,9 +380,9 @@ pub fn test_ptr_to_struct(mode: i32) {
 
 	{
 		let mut my_pair = MyPair { a: 1, b: 2};
-		p1 = std::ptr::addr_of_mut!(my_pair);
-		p2 = std::ptr::addr_of!(my_pair.a);
-		p3 = std::ptr::addr_of_mut!(my_pair.b);
+		p1 = std::ptr::addr_of_mut!(my_pair); // $ Source[rust/access-after-lifetime-ended]=my_pair
+		p2 = std::ptr::addr_of!(my_pair.a); // $ MISSING: Source[rust/access-after-lifetime-ended]=my_pair_a
+		p3 = std::ptr::addr_of_mut!(my_pair.b); // $ MISSING: Source[rust/access-after-lifetime-ended]=my_pair_b
 
 		unsafe {
 			let v1 = (*p1).a; // GOOD
@@ -346,12 +408,12 @@ pub fn test_ptr_to_struct(mode: i32) {
 		match mode {
 			0 => {
 				// read
-				let v5 = (*p1).a; // $ MISSING: Alert
+				let v5 = (*p1).a; // $ Alert[rust/access-after-lifetime-ended]=my_pair
 				println!("	v5 = {v5} (!)"); // dropped in practice
 			},
 			220 => {
 				// another read
-				let v6 = (*p1).b; // $ MISSING: Alert
+				let v6 = (*p1).b; // $ Alert[rust/access-after-lifetime-ended]=my_pair
 				println!("	v6 = {v6} (!)"); // dropped in practice
 			},
 			221 => {
@@ -363,12 +425,12 @@ pub fn test_ptr_to_struct(mode: i32) {
 			},
 			222 => {
 				// writes
-				(*p1).a = 6; // $ MISSING: Alert
+				(*p1).a = 6; // $ Alert[rust/access-after-lifetime-ended]=my_pair
 				*p3 = 7; // $ MISSING: Alert
 			},
 			223 => {
 				// another write
-				(*p1).b = 8; // $ MISSING: Alert
+				(*p1).b = 8; // $ Alert[rust/access-after-lifetime-ended]=my_pair
 			},
 			_ => {}
 		}
@@ -377,7 +439,7 @@ pub fn test_ptr_to_struct(mode: i32) {
 
 fn get_ptr_from_ref(val: i32) -> *const i32 {
 	let my_val = val;
-	let r1: &i32 = &my_val;
+	let r1: &i32 = &my_val; // $ Source[rust/access-after-lifetime-ended]=my_val
 	let p1: *const i32 = std::ptr::from_ref(r1);
 
 	unsafe {
@@ -394,8 +456,8 @@ pub fn test_ptr_from_ref() {
 	use_the_stack();
 
 	unsafe {
-		let v2 = *p1; // $ MISSING: Alert
-		let v3 = *get_ptr_from_ref(2); // $ MISSING: Alert
+		let v2 = *p1; // $ Alert[rust/access-after-lifetime-ended]=my_val
+		let v3 = *get_ptr_from_ref(2); // $ Alert[rust/access-after-lifetime-ended]=my_val
 		println!("	v2 = {v2} (!)"); // corrupt in practice
 		println!("	v3 = {v3} (!)");
 	}
@@ -429,7 +491,7 @@ pub fn test_rc() {
 			println!("	v3 = {v3}");
 			println!("	v4 = {v4}");
 		}
-	} // rc1 go out of scope, the reference count is 0, so p1, p2 are dangling
+	} // rc1 goes out of scope, the reference count is 0, so p1, p2 are dangling
 
 	unsafe {
 		let v5 = *p1; // $ MISSING: Alert

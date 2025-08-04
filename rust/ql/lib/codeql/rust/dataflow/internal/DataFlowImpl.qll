@@ -21,7 +21,6 @@ private import Node
 private import Content
 private import FlowSummaryImpl as FlowSummaryImpl
 
-
 /**
  * A return kind. A return kind describes how a value can be returned from a
  * callable.
@@ -55,10 +54,6 @@ final class DataFlowCallable extends TDataFlowCallable {
 
   /** Gets the location of this callable. */
   Location getLocation() { result = this.asCfgScope().getLocation() }
-
-  //** TODO JB1: Move to subclass, monkey patching for #153 */
-  int totalorder(){ none() }
-  //** TODO JB1: end stubs for #153 */
 }
 
 final class DataFlowCall extends TDataFlowCall {
@@ -89,12 +84,6 @@ final class DataFlowCall extends TDataFlowCall {
   }
 
   Location getLocation() { result = this.asCallCfgNode().getLocation() }
-
-  //** TODO JB1: Move to subclass, monkey patching for #153 */
-  DataFlowCallable getARuntimeTarget(){ none() }
-  ArgumentNode getAnArgumentNode(){ none() }
-  int totalorder(){ none() }
-  //** TODO JB1: end stubs for #153 */
 }
 
 /**
@@ -415,10 +404,20 @@ module RustDataFlow implements InputSig<Location> {
 
   /** Gets a viable implementation of the target of the given `Call`. */
   DataFlowCallable viableCallable(DataFlowCall call) {
-    exists(Callable target | target = call.asCallCfgNode().getCall().getStaticTarget() |
-      target = result.asCfgScope()
+    exists(Call c | c = call.asCallCfgNode().getCall() |
+      result.asCfgScope() = c.getARuntimeTarget()
       or
-      target = result.asSummarizedCallable()
+      exists(SummarizedCallable sc, Function staticTarget |
+        staticTarget = c.getStaticTarget() and
+        sc = result.asSummarizedCallable()
+      |
+        sc = staticTarget
+        or
+        // only apply trait models to concrete implementations when they are not
+        // defined in source code
+        staticTarget.implements(sc) and
+        not staticTarget.fromSource()
+      )
     )
   }
 
@@ -756,10 +755,6 @@ module RustDataFlow implements InputSig<Location> {
     string toString() { result = "NodeRegion" }
 
     predicate contains(Node n) { none() }
-
-    //** TODO JB1: Move to subclass, monkey patching for #153 */
-    int totalOrder(){ none() }
-    //** TODO JB1: end stubs for #153 */
   }
 
   /**
@@ -915,7 +910,11 @@ module VariableCapture {
       CapturedVariable v;
 
       VariableRead() {
-        exists(VariableReadAccess read | this.getExpr() = read and v = read.getVariable())
+        exists(VariableAccess read | this.getExpr() = read and v = read.getVariable() |
+          read instanceof VariableReadAccess
+          or
+          read = any(RefExpr re).getExpr()
+        )
       }
 
       CapturedVariable getVariable() { result = v }
