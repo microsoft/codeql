@@ -3,9 +3,12 @@
  *
  * Locations represent parts of files and are used to map elements to their source location.
  */
+overlay[local?]
+module;
 
 import FileSystem
 import semmle.code.java.Element
+private import semmle.code.java.Overlay
 private import semmle.code.SMAP
 
 /** Holds if element `e` has name `name`. */

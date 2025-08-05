@@ -9,6 +9,8 @@
  * Classes and interfaces can also be local (`LocalClassOrInterface`, `LocalClass`) or anonymous (`AnonymousClass`).
  * Enumerated types (`EnumType`) and records (`Record`) are special kinds of classes.
  */
+overlay[local?]
+module;
 
 import Member
 import Modifier
@@ -669,6 +671,7 @@ class RefType extends Type, Annotatable, Modifiable, @reftype {
    *
    * For the definition of the notion of *erasure* see JLS v8, section 4.6 (Type Erasure).
    */
+  overlay[caller?]
   pragma[inline]
   RefType commonSubtype(RefType other) {
     result.getASourceSupertype*() = erase(this) and

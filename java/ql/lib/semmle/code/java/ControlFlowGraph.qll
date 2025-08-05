@@ -7,6 +7,8 @@
  * statement, an expression, or an exit node for a callable, indicating that
  * execution of the callable terminates.
  */
+overlay[local?]
+module;
 
 /*
  * The implementation is centered around the concept of a _completion_, which
@@ -239,6 +241,25 @@ module ControlFlow {
     /** Gets the source location for this element. */
     override Location getLocation() { result = c.getLocation() }
   }
+
+  /** A control flow node indicating a failing assertion. */
+  class AssertThrowNode extends Node, TAssertThrowNode {
+    AssertStmt s;
+
+    AssertThrowNode() { this = TAssertThrowNode(s) }
+
+    override Stmt getEnclosingStmt() { result = s }
+
+    override Callable getEnclosingCallable() { result = s.getEnclosingCallable() }
+
+    override ExprParent getAstNode() { result = s }
+
+    /** Gets a textual representation of this element. */
+    override string toString() { result = "Assert Throw" }
+
+    /** Gets the source location for this element. */
+    override Location getLocation() { result = s.getLocation() }
+  }
 }
 
 class ControlFlowNode = ControlFlow::Node;
@@ -362,7 +383,17 @@ private module ControlFlowGraphImpl {
     )
   }
 
-  private ThrowableType assertionError() { result.hasQualifiedName("java.lang", "AssertionError") }
+  private ThrowableType actualAssertionError() {
+    result.hasQualifiedName("java.lang", "AssertionError")
+  }
+
+  private ThrowableType assertionError() {
+    result = actualAssertionError()
+    or
+    // In case `AssertionError` is not extracted, we use `Error` as a fallback.
+    not exists(actualAssertionError()) and
+    result.hasQualifiedName("java.lang", "Error")
+  }
 
   /**
    * Gets an exception type that may be thrown during execution of the
@@ -1158,12 +1189,7 @@ private module ControlFlowGraphImpl {
       or
       // `assert` statements may throw
       completion = ThrowCompletion(assertionError()) and
-      (
-        last(assertstmt.getMessage(), last, NormalCompletion())
-        or
-        not exists(assertstmt.getMessage()) and
-        last(assertstmt.getExpr(), last, BooleanCompletion(false, _))
-      )
+      last.(AssertThrowNode).getAstNode() = assertstmt
     )
     or
     // `throw` statements or throwing calls give rise to `Throw` completion

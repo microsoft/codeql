@@ -218,9 +218,6 @@ abstract class MethodCallInsecureFileCreation extends MethodCall {
    * Gets the dataflow node representing the file system entity created.
    */
   DataFlow::Node getNode() { result.asExpr() = this }
-
-  /** Holds if this node is a source. */
-  predicate isSource() { any() }
 }
 
 /**
