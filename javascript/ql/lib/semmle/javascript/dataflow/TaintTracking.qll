@@ -37,7 +37,7 @@ module TaintTracking {
    * If a different set of flow edges is desired, extend this class and override
    * `isAdditionalTaintStep`.
    */
-  abstract class Configuration extends DataFlow::Configuration {
+  abstract deprecated class Configuration extends DataFlow::Configuration {
     bindingset[this]
     Configuration() { any() }
 
@@ -210,16 +210,16 @@ module TaintTracking {
   abstract private class LegacyAdditionalBarrierGuard extends AdditionalBarrierGuard,
     AdditionalSanitizerGuardNodeDeprecated
   {
-    override predicate sanitizes(boolean outcome, Expr e) { this.blocksExpr(outcome, e) }
+    deprecated override predicate sanitizes(boolean outcome, Expr e) { this.blocksExpr(outcome, e) }
 
-    override predicate appliesTo(Configuration cfg) { any() }
+    deprecated override predicate appliesTo(Configuration cfg) { any() }
   }
 
   /**
    * DEPRECATED. This class was part of the old data flow library which is now deprecated.
    * Use `TaintTracking::AdditionalBarrierGuard` instead.
    */
-  class AdditionalSanitizerGuardNode = AdditionalSanitizerGuardNodeDeprecated;
+  deprecated class AdditionalSanitizerGuardNode = AdditionalSanitizerGuardNodeDeprecated;
 
   cached
   abstract private class AdditionalSanitizerGuardNodeDeprecated extends DataFlow::Node {
@@ -229,20 +229,20 @@ module TaintTracking {
      * Holds if this node blocks expression `e`, provided it evaluates to `outcome`.
      */
     cached
-    predicate blocks(boolean outcome, Expr e) { none() }
+    deprecated predicate blocks(boolean outcome, Expr e) { none() }
 
     /**
      * Holds if this node sanitizes expression `e`, provided it evaluates
      * to `outcome`.
      */
     cached
-    abstract predicate sanitizes(boolean outcome, Expr e);
+    abstract deprecated predicate sanitizes(boolean outcome, Expr e);
 
     /**
      * Holds if this node blocks expression `e` from flow of type `label`, provided it evaluates to `outcome`.
      */
     cached
-    predicate blocks(boolean outcome, Expr e, DataFlow::FlowLabel label) {
+    deprecated predicate blocks(boolean outcome, Expr e, DataFlow::FlowLabel label) {
       this.sanitizes(outcome, e) and label.isTaint()
       or
       this.sanitizes(outcome, e, label)
@@ -253,13 +253,13 @@ module TaintTracking {
      * to `outcome`.
      */
     cached
-    predicate sanitizes(boolean outcome, Expr e, DataFlow::FlowLabel label) { none() }
+    deprecated predicate sanitizes(boolean outcome, Expr e, DataFlow::FlowLabel label) { none() }
 
     /**
      * Holds if this guard applies to the flow in `cfg`.
      */
     cached
-    abstract predicate appliesTo(Configuration cfg);
+    abstract deprecated predicate appliesTo(Configuration cfg);
   }
 
   /**
@@ -274,7 +274,7 @@ module TaintTracking {
    * implementations of `sanitizes` will _both_ apply to any configuration that includes either of
    * them.
    */
-  abstract class SanitizerGuardNode extends DataFlow::BarrierGuardNode {
+  abstract deprecated class SanitizerGuardNode extends DataFlow::BarrierGuardNode {
     override predicate blocks(boolean outcome, Expr e) { none() }
 
     /**
@@ -299,7 +299,7 @@ module TaintTracking {
   /**
    * A sanitizer guard node that only blocks specific flow labels.
    */
-  abstract class LabeledSanitizerGuardNode extends SanitizerGuardNode,
+  abstract deprecated class LabeledSanitizerGuardNode extends SanitizerGuardNode,
     DataFlow::BarrierGuardNode
   {
     override predicate sanitizes(boolean outcome, Expr e) { none() }
@@ -903,7 +903,7 @@ module TaintTracking {
     }
   }
 
-  private class AdHocWhitelistCheckSanitizerAsSanitizerGuardNode extends SanitizerGuardNode instanceof AdHocWhitelistCheckSanitizer
+  deprecated private class AdHocWhitelistCheckSanitizerAsSanitizerGuardNode extends SanitizerGuardNode instanceof AdHocWhitelistCheckSanitizer
   {
     override predicate sanitizes(boolean outcome, Expr e) { super.blocksExpr(outcome, e) }
   }

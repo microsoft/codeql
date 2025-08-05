@@ -5,7 +5,7 @@
  */
 
 import javascript
-import semmle.javascript.dataflow.Configuration
+deprecated import semmle.javascript.dataflow.Configuration
 import semmle.javascript.dataflow.internal.CallGraphs
 private import semmle.javascript.internal.CachedStages
 
@@ -49,7 +49,7 @@ private predicate legacyPostUpdateStep(DataFlow::Node pred, DataFlow::Node succ)
  * additional steps from the configuration into account.
  */
 pragma[inline]
-predicate localFlowStep(
+deprecated predicate localFlowStep(
   DataFlow::Node pred, DataFlow::Node succ, DataFlow::Configuration configuration,
   FlowLabel predlbl, FlowLabel succlbl
 ) {
@@ -545,9 +545,9 @@ class Boolean extends boolean {
 /**
  * A summary of an inter-procedural data flow path.
  */
-newtype TPathSummary =
+deprecated newtype TPathSummary =
   /** A summary of an inter-procedural data flow path. */
-  MkPathSummary(Boolean hasReturn, Boolean hasCall, FlowLabel start, FlowLabel end)
+  deprecated MkPathSummary(Boolean hasReturn, Boolean hasCall, FlowLabel start, FlowLabel end)
 
 /**
  * A summary of an inter-procedural data flow path.
@@ -560,7 +560,7 @@ newtype TPathSummary =
  * We only want to build properly matched call/return sequences, so if a path has both
  * call steps and return steps, all return steps must precede all call steps.
  */
-class PathSummary extends TPathSummary {
+deprecated class PathSummary extends TPathSummary {
   Boolean hasReturn;
   Boolean hasCall;
   FlowLabel start;
@@ -634,7 +634,7 @@ class PathSummary extends TPathSummary {
   }
 }
 
-module PathSummary {
+deprecated module PathSummary {
   /**
    * Gets a summary describing a path without any calls or returns.
    */

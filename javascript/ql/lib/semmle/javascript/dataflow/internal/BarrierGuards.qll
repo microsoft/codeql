@@ -36,7 +36,7 @@ module MakeBarrierGuard<BarrierGuardSig BaseGuard> {
   }
 }
 
-private module DeprecationWrapper {
+deprecated private module DeprecationWrapper {
   signature class LabeledBarrierGuardSig extends DataFlow::Node {
     /**
      * Holds if this node acts as a barrier for `label`, blocking further flow from `e` if `this` evaluates to `outcome`.
@@ -48,7 +48,7 @@ private module DeprecationWrapper {
 /**
  * Converts a barrier guard class to a set of nodes to include in an implementation of `isBarrier(node, label)`.
  */
-module MakeLabeledBarrierGuard<DeprecationWrapper::LabeledBarrierGuardSig BaseGuard> {
+deprecated module MakeLabeledBarrierGuard<DeprecationWrapper::LabeledBarrierGuardSig BaseGuard> {
   final private class FinalBaseGuard = BaseGuard;
 
   private class Adapter extends FinalBaseGuard {
@@ -71,7 +71,7 @@ module MakeLabeledBarrierGuard<DeprecationWrapper::LabeledBarrierGuardSig BaseGu
  * This module is a workaround for the fact that deprecated signatures can't refer to deprecated classes
  * without getting a deprecation warning
  */
-private module DeprecatedSigs {
+deprecated private module DeprecatedSigs {
   signature predicate isBarrierGuardSig(DataFlow::BarrierGuardNode node);
 }
 
@@ -79,7 +79,7 @@ private module DeprecatedSigs {
  * Converts a labeled barrier guard class to a set of nodes to include in an implementation of `isBarrier(node)` and `isBarrier(node, label)`
  * in a `DataFlow::StateConfigSig` implementation.
  */
-module MakeLegacyBarrierGuardLabeled<DeprecatedSigs::isBarrierGuardSig/1 isBarrierGuard> {
+deprecated module MakeLegacyBarrierGuardLabeled<DeprecatedSigs::isBarrierGuardSig/1 isBarrierGuard> {
   final private class FinalNode = DataFlow::Node;
 
   private class Adapter extends FinalNode instanceof DataFlow::BarrierGuardNode {
@@ -110,7 +110,7 @@ module MakeLegacyBarrierGuardLabeled<DeprecatedSigs::isBarrierGuardSig/1 isBarri
 /**
  * Converts a barrier guard class to a set of nodes to include in an implementation of `isBarrier(node)` in a `DataFlow::ConfigSig` implementation.
  */
-module MakeLegacyBarrierGuard<DeprecatedSigs::isBarrierGuardSig/1 isBarrierGuard> {
+deprecated module MakeLegacyBarrierGuard<DeprecatedSigs::isBarrierGuardSig/1 isBarrierGuard> {
   final private class FinalNode = DataFlow::Node;
 
   private class Adapter extends FinalNode instanceof DataFlow::BarrierGuardNode {

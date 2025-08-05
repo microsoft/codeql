@@ -41,7 +41,7 @@ module PolynomialReDoSFlow = TaintTracking::Global<PolynomialReDoSConfig>;
 /**
  * DEPRECATED. Use the `PolynomialReDoSFlow` module instead.
  */
-class Configuration extends TaintTracking::Configuration {
+deprecated class Configuration extends TaintTracking::Configuration {
   Configuration() { this = "PolynomialReDoS" }
 
   override predicate isSource(DataFlow::Node source) { source instanceof Source }
