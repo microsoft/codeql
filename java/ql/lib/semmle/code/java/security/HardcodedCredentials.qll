@@ -1,6 +1,8 @@
 /**
  * Provides classes and predicates relating to hardcoded credentials.
  */
+overlay[local?]
+module;
 
 import java
 import SensitiveApi
@@ -66,7 +68,7 @@ class CredentialsApiSink extends CredentialsSink {
  */
 class PasswordVariable extends Variable {
   PasswordVariable() {
-    this.getName().regexpMatch("(?i).*pass(w|wd|wrd|word|code|phrase|key|_)(chars|value)?(?!.*(size|length|question|path|prompt)).*") or
+    this.getName().regexpMatch("(?i)(encrypted|old|new)?pass(w|wd|wrd|word|code|phrase|key|_)(chars|value)?(?!.*(size|length|question|path|prompt)).*") or
     this.getName().regexpMatch("(?i)pwd")
   }
 }

@@ -75,7 +75,6 @@ predicate isExternsFile(File f) {
 /**
  * Holds if `f` contains library code.
  */
-pragma[nomagic]
 predicate isLibraryFile(File f) { f.getATopLevel() instanceof FrameworkLibraryInstance }
 
 /**

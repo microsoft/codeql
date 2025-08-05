@@ -1137,7 +1137,7 @@ abstract private class BarrierGuardAdapter extends DataFlow::Node {
   predicate blocksExpr(boolean outcome, Expr e) { none() }
 }
 
-private class BarrierGuardAdapterSubclass extends BarrierGuardAdapter instanceof DataFlow::AdditionalBarrierGuardNode
+deprecated private class BarrierGuardAdapterSubclass extends BarrierGuardAdapter instanceof DataFlow::AdditionalBarrierGuardNode
 {
   override predicate blocksExpr(boolean outcome, Expr e) { super.blocks(outcome, e) }
 }
