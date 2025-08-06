@@ -1,0 +1,8 @@
+extensions:
+  - addsTo:
+      pack: codeql/csharp-all
+      extensible: sinkModel
+    data:
+      - ["Microsoft.VisualStudio.Services.WebApi", "VssConnection", False, "VssConnection", "(System.Uri,Microsoft.VisualStudio.Services.Common.VssCredentials)", "", "Argument[0]", "ssrf", "manual"]
+      - ["Microsoft.VisualStudio.Services.WebApi", "VssConnection", False, "VssConnection", "(System.Uri,Microsoft.VisualStudio.Services.Common.VssCredentials,Microsoft.VisualStudio.Services.Common.VssHttpRequestSettings)", "", "Argument[0]", "ssrf", "manual"]
+      - ["Microsoft.VisualStudio.Services.WebApi", "VssConnection", False, "VssConnection", "(System.Uri,Microsoft.VisualStudio.Services.Common.VssHttpMessageHandler,System.Collections.Generic.IEnumerable<System.Net.Http.DelegatingHandler>)", "", "Argument[0]", "ssrf", "manual"]
