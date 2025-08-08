@@ -1,4 +1,4 @@
-name: microsoft-sdl/powershell-all
+name: microsoft/powershell-all
 version: 0.0.1
 groups: 
   - powershell
@@ -14,6 +14,6 @@ dependencies:
   codeql/util: ${workspace}
   codeql/mad: ${workspace}
 dataExtensions:
-  - semmle/code/powershell/frameworks/**/model.yml
   - semmle/code/powershell/frameworks/**/*.model.yml
+  - semmle/code/powershell/frameworks/**/*.typemodel.yml
 warnOnImplicitThis: true

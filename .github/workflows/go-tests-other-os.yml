@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - "go/**"
+      - "!go/documentation/**"
       - "!go/ql/**" # don't run other-os if only ql/ files changed
       - .github/workflows/go-tests-other-os.yml
       - .github/actions/**
@@ -25,9 +26,8 @@ jobs:
         uses: ./go/actions/test
 
   test-win:
-    if: github.repository_owner == 'github'
     name: Test Windows
-    runs-on: windows-latest-xl
+    runs-on: windows-latest
     steps:
       - name: Check out code
         uses: actions/checkout@v4

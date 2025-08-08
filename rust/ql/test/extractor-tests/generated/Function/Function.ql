@@ -3,21 +3,28 @@ import codeql.rust.elements
 import TestUtils
 
 from
-  Function x, string hasParamList, int getNumberOfAttrs, string hasExtendedCanonicalPath,
-  string hasCrateOrigin, string hasAbi, string hasBody, string hasGenericParamList, string isAsync,
-  string isConst, string isDefault, string isGen, string isUnsafe, string hasName,
-  string hasRetType, string hasVisibility, string hasWhereClause
+  Function x, string hasParamList, int getNumberOfAttrs, int getNumberOfParams,
+  string hasExtendedCanonicalPath, string hasCrateOrigin, string hasAttributeMacroExpansion,
+  string hasAbi, string hasBody, string hasGenericParamList, string isAsync, string isConst,
+  string isDefault, string isGen, string isUnsafe, string hasName, string hasRetType,
+  string hasVisibility, string hasWhereClause, string hasImplementation
 where
   toBeTested(x) and
   not x.isUnknown() and
   (if x.hasParamList() then hasParamList = "yes" else hasParamList = "no") and
   getNumberOfAttrs = x.getNumberOfAttrs() and
+  getNumberOfParams = x.getNumberOfParams() and
   (
     if x.hasExtendedCanonicalPath()
     then hasExtendedCanonicalPath = "yes"
     else hasExtendedCanonicalPath = "no"
   ) and
   (if x.hasCrateOrigin() then hasCrateOrigin = "yes" else hasCrateOrigin = "no") and
+  (
+    if x.hasAttributeMacroExpansion()
+    then hasAttributeMacroExpansion = "yes"
+    else hasAttributeMacroExpansion = "no"
+  ) and
   (if x.hasAbi() then hasAbi = "yes" else hasAbi = "no") and
   (if x.hasBody() then hasBody = "yes" else hasBody = "no") and
   (if x.hasGenericParamList() then hasGenericParamList = "yes" else hasGenericParamList = "no") and
@@ -29,10 +36,12 @@ where
   (if x.hasName() then hasName = "yes" else hasName = "no") and
   (if x.hasRetType() then hasRetType = "yes" else hasRetType = "no") and
   (if x.hasVisibility() then hasVisibility = "yes" else hasVisibility = "no") and
-  if x.hasWhereClause() then hasWhereClause = "yes" else hasWhereClause = "no"
+  (if x.hasWhereClause() then hasWhereClause = "yes" else hasWhereClause = "no") and
+  if x.hasImplementation() then hasImplementation = "yes" else hasImplementation = "no"
 select x, "hasParamList:", hasParamList, "getNumberOfAttrs:", getNumberOfAttrs,
-  "hasExtendedCanonicalPath:", hasExtendedCanonicalPath, "hasCrateOrigin:", hasCrateOrigin,
+  "getNumberOfParams:", getNumberOfParams, "hasExtendedCanonicalPath:", hasExtendedCanonicalPath,
+  "hasCrateOrigin:", hasCrateOrigin, "hasAttributeMacroExpansion:", hasAttributeMacroExpansion,
   "hasAbi:", hasAbi, "hasBody:", hasBody, "hasGenericParamList:", hasGenericParamList, "isAsync:",
   isAsync, "isConst:", isConst, "isDefault:", isDefault, "isGen:", isGen, "isUnsafe:", isUnsafe,
   "hasName:", hasName, "hasRetType:", hasRetType, "hasVisibility:", hasVisibility,
-  "hasWhereClause:", hasWhereClause
+  "hasWhereClause:", hasWhereClause, "hasImplementation:", hasImplementation

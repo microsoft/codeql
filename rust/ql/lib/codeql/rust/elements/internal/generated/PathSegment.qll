@@ -22,6 +22,12 @@ import codeql.rust.elements.TypeRepr
 module Generated {
   /**
    * A path segment, which is one part of a whole path.
+   * For example:
+   * - `HashMap`
+   * - `HashMap<K, V>`
+   * - `Fn(i32) -> i32`
+   * - `widgets(..)`
+   * - `<T as Iterator>`
    * INTERNAL: Do not reference the `Generated::PathSegment` class directly.
    * Use the subclass `PathSegment`, where the following predicates are available.
    */
@@ -44,19 +50,19 @@ module Generated {
     final predicate hasGenericArgList() { exists(this.getGenericArgList()) }
 
     /**
-     * Gets the name reference of this path segment, if it exists.
+     * Gets the identifier of this path segment, if it exists.
      */
-    NameRef getNameRef() {
+    NameRef getIdentifier() {
       result =
         Synth::convertNameRefFromRaw(Synth::convertPathSegmentToRaw(this)
               .(Raw::PathSegment)
-              .getNameRef())
+              .getIdentifier())
     }
 
     /**
-     * Holds if `getNameRef()` exists.
+     * Holds if `getIdentifier()` exists.
      */
-    final predicate hasNameRef() { exists(this.getNameRef()) }
+    final predicate hasIdentifier() { exists(this.getIdentifier()) }
 
     /**
      * Gets the parenthesized argument list of this path segment, if it exists.
@@ -72,21 +78,6 @@ module Generated {
      * Holds if `getParenthesizedArgList()` exists.
      */
     final predicate hasParenthesizedArgList() { exists(this.getParenthesizedArgList()) }
-
-    /**
-     * Gets the path type of this path segment, if it exists.
-     */
-    PathTypeRepr getPathType() {
-      result =
-        Synth::convertPathTypeReprFromRaw(Synth::convertPathSegmentToRaw(this)
-              .(Raw::PathSegment)
-              .getPathType())
-    }
-
-    /**
-     * Holds if `getPathType()` exists.
-     */
-    final predicate hasPathType() { exists(this.getPathType()) }
 
     /**
      * Gets the ret type of this path segment, if it exists.
@@ -132,5 +123,20 @@ module Generated {
      * Holds if `getTypeRepr()` exists.
      */
     final predicate hasTypeRepr() { exists(this.getTypeRepr()) }
+
+    /**
+     * Gets the trait type representation of this path segment, if it exists.
+     */
+    PathTypeRepr getTraitTypeRepr() {
+      result =
+        Synth::convertPathTypeReprFromRaw(Synth::convertPathSegmentToRaw(this)
+              .(Raw::PathSegment)
+              .getTraitTypeRepr())
+    }
+
+    /**
+     * Holds if `getTraitTypeRepr()` exists.
+     */
+    final predicate hasTraitTypeRepr() { exists(this.getTraitTypeRepr()) }
   }
 }

@@ -5,6 +5,7 @@ include("prefix.dbscheme")
 
 File = imported("File", "codeql.files.FileSystem")
 
+
 @qltest.skip
 class Element:
     pass
@@ -72,6 +73,7 @@ class Callable(AstNode):
     """
     param_list: optional["ParamList"] | child
     attrs: list["Attr"] | child
+    params: list["Param"] | synth
 
 
 class Addressable(AstNode):
@@ -85,7 +87,8 @@ class Addressable(AstNode):
         or `{<block id>}::name` for addressable items defined in an anonymous block (and only
         addressable there-in).
     """) | rust.detach | ql.internal
-    crate_origin: optional[string] | desc("One of `rustc:<name>`, `repo:<repository>:<name>` or `lang:<name>`.") | rust.detach | ql.internal
+    crate_origin: optional[string] | desc(
+        "One of `rustc:<name>`, `repo:<repository>:<name>` or `lang:<name>`.") | rust.detach | ql.internal
 
 
 class Resolvable(AstNode):
@@ -109,3 +112,17 @@ class ExtractorStep(Element):
     action: string
     file: optional[File]
     duration_ms: int
+
+
+class Crate(Locatable):
+    name: optional[string]
+    version: optional[string]
+    cfg_options: list[string]
+    named_dependencies: list["NamedCrate"] | ql.internal
+
+
+@qltest.skip
+@ql.internal
+class NamedCrate(Element):
+    name: string
+    crate: "Crate"

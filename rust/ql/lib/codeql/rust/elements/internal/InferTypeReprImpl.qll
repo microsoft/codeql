@@ -13,13 +13,16 @@ private import codeql.rust.elements.internal.generated.InferTypeRepr
 module Impl {
   // the following QLdoc is generated: if you need to edit it, do it in the schema file
   /**
-   * A InferTypeRepr. For example:
+   * An inferred type (`_`).
+   *
+   * For example:
    * ```rust
-   * todo!()
+   * let x: _ = 42;
+   * //     ^
    * ```
    */
   class InferTypeRepr extends Generated::InferTypeRepr {
-    override string toString() { result = this.toAbbreviatedString() }
+    override string toStringImpl() { result = this.toAbbreviatedString() }
 
     override string toAbbreviatedString() { result = "_" }
   }

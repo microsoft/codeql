@@ -7,10 +7,10 @@
  * @problem.severity warning
  * @precision high
  * @id go/unhandled-writable-file-close
- * @tags maintainability
- *  correctness
- *  call
- *  defer
+ * @tags quality
+ *       reliability
+ *       error-handling
+ *       external/cwe/cwe-252
  */
 
 import go
@@ -97,6 +97,7 @@ predicate isCloseSink(DataFlow::Node sink, DataFlow::CallNode closeCall) {
   // where the function is called on the sink
   closeCall.getReceiver() = sink and
   // and check that it is not dominated by a call to `os.File.Sync`.
+  // TODO: fix this logic when `closeCall` is in a defer statement.
   not exists(IR::Instruction syncInstr, DataFlow::Node syncReceiver, DataFlow::CallNode syncCall |
     // match the instruction corresponding to an `os.File.Sync` call with the predecessor
     syncCall.asInstruction() = syncInstr and

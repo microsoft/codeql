@@ -4,6 +4,7 @@
 
 import javascript
 private import semmle.javascript.internal.CachedStages
+private import semmle.javascript.internal.TypeResolution
 
 /**
  * A program element that is either an expression or a type annotation.
@@ -480,6 +481,9 @@ class RegExpLiteral extends @regexp_literal, Literal, RegExpParent {
 
   /** Holds if this regular expression has an `s` flag. */
   predicate isDotAll() { RegExp::isDotAll(this.getFlags()) }
+
+  /** Holds if this regular expression has an `v` flag. */
+  predicate isUnicodeSets() { RegExp::isUnicodeSets(this.getFlags()) }
 
   override string getAPrimaryQlClass() { result = "RegExpLiteral" }
 }
@@ -1014,7 +1018,11 @@ class InvokeExpr extends @invokeexpr, Expr {
    * Note that the resolved function may be overridden in a subclass and thus is not
    * necessarily the actual target of this invocation at runtime.
    */
-  Function getResolvedCallee() { result = this.getResolvedCalleeName().getImplementation() }
+  Function getResolvedCallee() {
+    TypeResolution::callTarget(this, result)
+    or
+    result = this.getResolvedCalleeName().getImplementation()
+  }
 }
 
 /**
@@ -2818,7 +2826,7 @@ class DynamicImportExpr extends @dynamic_import, Expr, Import {
     result = this.getSource().getFirstControlFlowNode()
   }
 
-  override PathExpr getImportedPath() { result = this.getSource() }
+  override Expr getImportedPathExpr() { result = this.getSource() }
 
   /**
    * Gets the second "argument" to the import expression, that is, the `Y` in `import(X, Y)`.
@@ -2849,7 +2857,7 @@ class DynamicImportExpr extends @dynamic_import, Expr, Import {
 }
 
 /** A literal path expression appearing in a dynamic import. */
-private class LiteralDynamicImportPath extends PathExpr, ConstantString {
+deprecated private class LiteralDynamicImportPath extends PathExpr, ConstantString {
   LiteralDynamicImportPath() {
     exists(DynamicImportExpr di | this.getParentExpr*() = di.getSource())
   }

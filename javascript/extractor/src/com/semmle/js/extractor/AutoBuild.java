@@ -39,6 +39,8 @@ import java.util.stream.Stream;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
+import com.semmle.js.extractor.tsconfig.TsConfigJson;
+import com.semmle.js.extractor.tsconfig.CompilerOptions;
 import com.semmle.js.dependencies.AsyncFetcher;
 import com.semmle.js.dependencies.DependencyResolver;
 import com.semmle.js.dependencies.packument.PackageJson;
@@ -160,6 +162,9 @@ import com.semmle.util.trap.TrapWriter;
  *       is of the form "codeql-javascript-*.json".
  *   <li>JavaScript, JSON or YAML files whose base name starts with ".eslintrc".
  *   <li>JSON files whose base name is ".xsaccess".
+ *   <li>JSON files whose base name is "xs-app.json".
+ *   <li>JSON files whose base name ends with ".view.json".
+ *   <li>JSON files whose base name is "manifest.json".
  *   <li>All extension-less files.
  * </ul>
  *
@@ -394,12 +399,14 @@ public class AutoBuild {
     for (FileType filetype : defaultExtract)
       for (String extension : filetype.getExtensions()) patterns.add("**/*" + extension);
 
-    // include .eslintrc files, .xsaccess files, package.json files,
-    // tsconfig.json files, and codeql-javascript-*.json files
+    // include JSON files which are relevant to our analysis
     patterns.add("**/.eslintrc*");
-    patterns.add("**/.xsaccess");
+    patterns.add("**/.xsaccess"); // SAP XSJS
+    patterns.add("**/xs-app.json"); // SAP XSJS
+    patterns.add("**/*.view.json"); // SAP UI5
+    patterns.add("**/manifest.json");
     patterns.add("**/package.json");
-    patterns.add("**/tsconfig*.json");
+    patterns.add("**/*tsconfig*.json");
     patterns.add("**/codeql-javascript-*.json");
 
     // include any explicitly specified extensions
@@ -740,6 +747,26 @@ public class AutoBuild {
         .filter(p -> !isFileTooLarge(p))
         .sorted(PATH_ORDERING)
         .collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
+    // gather all output directories specified in tsconfig.json files
+    final List<Path> outDirs = new ArrayList<>();
+    for (Path cfg : tsconfigFiles) {
+      try {
+        String txt = new WholeIO().read(cfg);
+        TsConfigJson root = new Gson().fromJson(txt, TsConfigJson.class);
+        if (root != null && root.getCompilerOptions() != null) {
+          if (root.getCompilerOptions().getOutDir() == null) {
+            // no outDir specified, so skip this tsconfig.json
+            continue;
+          }
+          Path odir = cfg.getParent().resolve(root.getCompilerOptions().getOutDir()).toAbsolutePath().normalize();
+          outDirs.add(odir);
+        }
+      } catch (Exception e) {
+        // ignore malformed tsconfig or missing fields
+      }
+    }
+    // exclude files in output directories as configured in tsconfig.json
+    filesToExtract.removeIf(f -> outDirs.stream().anyMatch(od -> f.startsWith(od)));
 
     DependencyInstallationResult dependencyInstallationResult = DependencyInstallationResult.empty;
     if (!tsconfigFiles.isEmpty()) {
@@ -791,9 +818,19 @@ public class AutoBuild {
    */
   private boolean isFileDerivedFromTypeScriptFile(Path path, Set<Path> extractedFiles) {
     String name = path.getFileName().toString();
-    if (!name.endsWith(".js"))
+    // only skip JS variants when a corresponding TS/TSX file was already extracted
+    if (!(name.endsWith(".js")
+          || name.endsWith(".cjs")
+          || name.endsWith(".mjs")
+          || name.endsWith(".jsx")
+          || name.endsWith(".cjsx")
+          || name.endsWith(".mjsx"))) {
       return false;
-    String stem = name.substring(0, name.length() - ".js".length());
+    }
+    // strip off extension
+    int dot = name.lastIndexOf('.');
+    String stem = dot != -1 ? name.substring(0, dot) : name;
+    // if a TS/TSX file with same base name was extracted, skip this file
     for (String ext : FileType.TYPESCRIPT.getExtensions()) {
       if (extractedFiles.contains(path.getParent().resolve(stem + ext))) {
         return true;
@@ -1087,6 +1124,12 @@ protected DependencyInstallationResult preparePackagesAndDependencies(Set<Path> 
           remainingTypeScriptFiles.add(f);
         }
       }
+      for (Map.Entry<Path, FileSnippet> entry : state.getSnippets().entrySet()) {
+        if (!extractedFiles.contains(entry.getKey())
+            && FileType.forFileExtension(entry.getKey().toFile()) == FileType.TYPESCRIPT) {
+            remainingTypeScriptFiles.add(entry.getKey());
+        }
+      }
       if (!remainingTypeScriptFiles.isEmpty()) {
         extractTypeScriptFiles(remainingTypeScriptFiles, extractedFiles, extractors);
       }
@@ -1143,7 +1186,7 @@ protected DependencyInstallationResult preparePackagesAndDependencies(Set<Path> 
             }
 
             // extract TypeScript projects from 'tsconfig.json'
-            if (typeScriptMode == TypeScriptMode.FULL
+            if (typeScriptMode != TypeScriptMode.NONE
                 && treatAsTSConfig(file.getFileName().toString())
                 && !excludes.contains(file)
                 && isFileIncluded(file)) {

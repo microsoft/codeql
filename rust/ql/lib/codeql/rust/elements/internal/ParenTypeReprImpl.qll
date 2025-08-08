@@ -13,12 +13,15 @@ private import codeql.rust.elements.internal.generated.ParenTypeRepr
 module Impl {
   // the following QLdoc is generated: if you need to edit it, do it in the schema file
   /**
-   * A ParenTypeRepr. For example:
+   * A parenthesized type.
+   *
+   * For example:
    * ```rust
-   * todo!()
+   * let x: (i32);
+   * //     ^^^^^
    * ```
    */
   class ParenTypeRepr extends Generated::ParenTypeRepr {
-    override string toString() { result = "(" + this.getTypeRepr().toAbbreviatedString() + ")" }
+    override string toStringImpl() { result = "(" + this.getTypeRepr().toAbbreviatedString() + ")" }
   }
 }

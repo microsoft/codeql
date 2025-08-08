@@ -42,7 +42,7 @@ public class Main {
    * A version identifier that should be updated every time the extractor changes in such a way that
    * it may produce different tuples for the same file under the same {@link ExtractorConfig}.
    */
-  public static final String EXTRACTOR_VERSION = "2025-01-21";
+  public static final String EXTRACTOR_VERSION = "2025-04-10";
 
   public static final Pattern NEWLINE = Pattern.compile("\n");
 
@@ -301,9 +301,14 @@ public class Main {
     // only extract HTML and JS by default
     addIncludesFor(includes, FileType.HTML);
     addIncludesFor(includes, FileType.JS);
+    includes.add("**/.babelrc*.json");
+
 
     // extract TypeScript if `--typescript` or `--typescript-full` was specified
-    if (getTypeScriptMode(ap) != TypeScriptMode.NONE) addIncludesFor(includes, FileType.TYPESCRIPT);
+    if (getTypeScriptMode(ap) != TypeScriptMode.NONE) {
+      addIncludesFor(includes, FileType.TYPESCRIPT);
+      includes.add("**/*tsconfig*.json");
+    }
 
     // add explicit include patterns
     for (String pattern : ap.getZeroOrMore(P_INCLUDE))

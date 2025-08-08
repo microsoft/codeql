@@ -83,11 +83,11 @@ private module CaptureInput implements VariableCapture::InputSig<Location> {
 
   class ControlFlowNode = J::ControlFlowNode;
 
-  BasicBlock getImmediateBasicBlockDominator(BasicBlock bb) { bbIDominates(result, bb) }
-
-  BasicBlock getABasicBlockSuccessor(BasicBlock bb) {
-    result = bb.(J::BasicBlock).getABBSuccessor()
+  BasicBlock getImmediateBasicBlockDominator(BasicBlock bb) {
+    result.(J::BasicBlock).immediatelyDominates(bb)
   }
+
+  BasicBlock getABasicBlockSuccessor(BasicBlock bb) { result = bb.(J::BasicBlock).getASuccessor() }
 
   //TODO: support capture of `this` in lambdas
   class CapturedVariable instanceof LocalScopeVariable {
@@ -581,7 +581,11 @@ predicate forceHighPrecision(Content c) {
 }
 
 /** Holds if `n` should be hidden from path explanations. */
-predicate nodeIsHidden(Node n) { n instanceof FlowSummaryNode }
+predicate nodeIsHidden(Node n) {
+  n instanceof FlowSummaryNode
+  or
+  n instanceof SsaNode
+}
 
 class LambdaCallKind = Method; // the "apply" method in the functional interface
 

@@ -618,9 +618,9 @@ module Express {
         kind = "body" and
         this = ref.getAPropertyRead("body")
         or
-        // `req.path`
+        // `req.path` and `req._parsedUrl`
         kind = "url" and
-        this = ref.getAPropertyRead("path")
+        this = ref.getAPropertyRead(["path", "_parsedUrl"])
       )
     }
 
@@ -957,6 +957,23 @@ module Express {
 
     override predicate isUpwardNavigationRejected(DataFlow::Node argument) {
       argument = this.getAPathArgument()
+    }
+  }
+
+  /** A call to `response.download`, considered as a file system access. */
+  private class ResponseDownloadAsFileSystemAccess extends FileSystemReadAccess,
+    DataFlow::MethodCallNode
+  {
+    ResponseDownloadAsFileSystemAccess() {
+      exists(string name | name = "download" | this.calls(any(ResponseNode res), name))
+    }
+
+    override DataFlow::Node getADataNode() { none() }
+
+    override DataFlow::Node getAPathArgument() { result = this.getArgument(0) }
+
+    override DataFlow::Node getRootPathArgument() {
+      result = this.(DataFlow::CallNode).getOptionArgument([1, 2], "root")
     }
   }
 
