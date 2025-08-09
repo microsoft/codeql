@@ -10,6 +10,7 @@ private import semmle.code.powershell.dataflow.DataFlow
 private import semmle.code.powershell.typetracking.ApiGraphShared
 private import semmle.code.powershell.typetracking.internal.TypeTrackingImpl
 private import semmle.code.powershell.controlflow.Cfg
+private import frameworks.data.internal.ApiGraphModels
 private import frameworks.data.internal.ApiGraphModelsExtensions as Extensions
 private import frameworks.data.internal.ApiGraphModelsSpecific as Specific
 private import semmle.code.powershell.dataflow.internal.DataFlowPrivate as DataFlowPrivate
@@ -262,8 +263,7 @@ module API {
       this = Impl::MkMethodAccessNode(result) or
       this = Impl::MkBackwardNode(result, _) or
       this = Impl::MkForwardNode(result, _) or
-      this = Impl::MkSinkNode(result) or
-      this = Impl::MkNamespaceOfTypeNameNode(result)
+      this = Impl::MkSinkNode(result)
     }
 
     /** Gets the location of this node. */
@@ -271,6 +271,10 @@ module API {
       result = this.getInducingNode().getLocation()
       or
       this instanceof RootNode and
+      result instanceof EmptyLocation
+      or
+      not this instanceof RootNode and
+      not exists(this.getInducingNode()) and
       result instanceof EmptyLocation
     }
 
@@ -331,20 +335,807 @@ module API {
     override string toString() { result = "SinkNode(" + this.getInducingNode() + ")" }
   }
 
-  private class UsingNode extends Node, Impl::MkUsingNode {
-    UsingStmt using; // TODO: This should really be the cfg node, I think
-
-    UsingNode() { this = Impl::MkUsingNode(using) }
-
-    override string toString() { result = "UsingNode(" + using + ")" }
+  bindingset[namespace]
+  private string maybePrefixSystem(string namespace) {
+    if namespace.matches("system.%") then result = namespace else result = "system." + namespace
   }
 
-  private class NamespaceOfTypeNameNode extends Node, Impl::MkNamespaceOfTypeNameNode {
-    DataFlow::QualifiedTypeNameNode typeName;
+  bindingset[name, namespace]
+  private string getANameFullName(string name, string namespace) {
+    exists(string fullName |
+      Specific::parseRelevantType(fullName, result, _) and
+      result.matches(maybePrefixSystem(namespace) + "." + name + "%")
+    )
+  }
 
-    NamespaceOfTypeNameNode() { this = Impl::MkNamespaceOfTypeNameNode(typeName) }
+  private predicate needsExplicitTypeNameNode(
+    CfgNodes::ExprNodes::TypeNameExprCfgNode typeName, string fullName, int index
+  ) {
+    exists(string name, string namespace |
+      name = typeName.getLowerCaseName() and
+      namespace = typeName.getNamespace() and
+      fullName = getANameFullName(name, namespace) and
+      index = [0 .. strictcount(fullName.indexOf(".")) - 1]
+    )
+  }
 
-    override string toString() { result = "NamespaceOfTypeNameNode(" + typeName + ")" }
+  private predicate needsImplicitTypeNameNode(string fullName, int index) {
+    index = [0 .. strictcount(fullName.indexOf("."))] and
+    exists(string implicitImportedFullName |
+      implicitImportedFullName.matches("microsoft.powershell.%") and
+      isRelevantType(implicitImportedFullName) and
+      Specific::parseRelevantType(implicitImportedFullName, fullName, _)
+    )
+  }
+
+  abstract private class AbstractTypeNameNode extends Node {
+    string fullName;
+    int index;
+
+    bindingset[fullName, index]
+    AbstractTypeNameNode() { any() }
+
+    override string toString() { result = "TypeNameNode(" + this.getTypeName() + ")" }
+
+    private string getComponent(int i) { result = fullName.splitAt(".", i) }
+
+    int getNumberOfComponents() { result = strictcount(int i | exists(this.getComponent(i))) }
+
+    string getComponent() { result = this.getComponent(index) }
+
+    string getTypeName() {
+      result =
+        strictconcat(int i, string s | s = this.getComponent(i) and i <= index | s, "." order by i)
+    }
+
+    abstract Node getSuccessor(string name);
+
+    Node memberEdge(string name) { none() }
+
+    Node methodEdge(string name) { none() }
+
+    final predicate isImplicit() { not this.isExplicit(_) }
+
+    predicate isExplicit(CfgNodes::ExprNodes::TypeNameExprCfgNode typeName) { none() }
+  }
+
+  final class TypeNameNode = AbstractTypeNameNode;
+
+  private class ExplicitTypeNameNode extends AbstractTypeNameNode, Impl::MkExplicitTypeNameNode {
+    ExplicitTypeNameNode() { this = Impl::MkExplicitTypeNameNode(fullName, index) }
+
+    final override Node getSuccessor(string name) {
+      exists(ExplicitTypeNameNode succ |
+        succ = Impl::MkExplicitTypeNameNode(fullName, index + 1) and
+        name = succ.getComponent() and
+        result = succ
+      )
+      or
+      exists(CfgNodes::ExprNodes::TypeNameExprCfgNode typeName |
+        needsExplicitTypeNameNode(typeName, fullName, index) and
+        not exists(Impl::MkExplicitTypeNameNode(fullName, index + 1)) and
+        name = fullName.splitAt(".", index + 1) and
+        result = getForwardStartNode(DataFlow::exprNode(typeName))
+      )
+    }
+
+    final override predicate isExplicit(CfgNodes::ExprNodes::TypeNameExprCfgNode typeName) {
+      needsExplicitTypeNameNode(typeName, fullName, _)
+    }
+  }
+
+  private string getAnAlias(string cmdlet) {
+    cmdlet = "add-content" and result = ["ac"]
+    or
+    cmdlet = "clear-content" and result = ["clc"]
+    or
+    cmdlet = "clear-item" and result = ["cli"]
+    or
+    cmdlet = "clear-itemproperty" and result = ["clp"]
+    or
+    cmdlet = "convert-path" and result = ["cvpa"]
+    or
+    cmdlet = "copy-item" and result = ["copy", "cp", "cpi"]
+    or
+    cmdlet = "copy-itemproperty" and result = ["cpp"]
+    or
+    cmdlet = "get-childitem" and result = ["dir", "gci", "ls"]
+    or
+    cmdlet = "get-clipboard" and result = ["gcb"]
+    or
+    cmdlet = "get-computerinfo" and result = ["gin"]
+    or
+    cmdlet = "get-content" and result = ["cat", "gc", "type"]
+    or
+    cmdlet = "get-item" and result = ["gi"]
+    or
+    cmdlet = "get-itemproperty" and result = ["gp"]
+    or
+    cmdlet = "get-itempropertyvalue" and result = ["gpv"]
+    or
+    cmdlet = "get-location" and result = ["gl", "pwd"]
+    or
+    cmdlet = "get-process" and result = ["gps", "ps"]
+    or
+    cmdlet = "get-psdrive" and result = ["gdr"]
+    or
+    cmdlet = "get-service" and result = ["gsv"]
+    or
+    cmdlet = "get-timezone" and result = ["gtz"]
+    or
+    cmdlet = "invoke-item" and result = ["ii"]
+    or
+    cmdlet = "move-item" and result = ["mi", "move", "mv"]
+    or
+    cmdlet = "move-itemproperty" and result = ["mp"]
+    or
+    cmdlet = "new-item" and result = ["ni"]
+    or
+    cmdlet = "new-psdrive" and result = ["mount", "ndr"]
+    or
+    cmdlet = "pop-location" and result = ["popd"]
+    or
+    cmdlet = "push-location" and result = ["pushd"]
+    or
+    cmdlet = "remove-item" and result = ["del", "erase", "rd", "ri", "rm", "rmdir"]
+    or
+    cmdlet = "remove-itemproperty" and result = ["rp"]
+    or
+    cmdlet = "remove-psdrive" and result = ["rdr"]
+    or
+    cmdlet = "rename-item" and result = ["ren", "rni"]
+    or
+    cmdlet = "rename-itemproperty" and result = ["rnp"]
+    or
+    cmdlet = "resolve-path" and result = ["rvpa"]
+    or
+    cmdlet = "set-clipboard" and result = ["scb"]
+    or
+    cmdlet = "set-item" and result = ["si"]
+    or
+    cmdlet = "set-itemproperty" and result = ["sp"]
+    or
+    cmdlet = "set-location" and result = ["cd", "chdir", "sl"]
+    or
+    cmdlet = "set-timezone" and result = ["stz"]
+    or
+    cmdlet = "start-process" and result = ["saps", "start"]
+    or
+    cmdlet = "start-service" and result = ["sasv"]
+    or
+    cmdlet = "stop-process" and result = ["kill", "spps"]
+    or
+    cmdlet = "stop-service" and result = ["spsv"]
+    or
+    cmdlet = "compress-psresource" and result = ["cmres"]
+    or
+    cmdlet = "find-psresource" and result = ["fdres"]
+    or
+    cmdlet = "get-installedpsresource" and result = ["get-psresource"]
+    or
+    cmdlet = "install-psresource" and result = ["isres"]
+    or
+    cmdlet = "publish-psresource" and result = ["pbres"]
+    or
+    cmdlet = "update-psresource" and result = ["udres"]
+    or
+    cmdlet = "clear-variable" and result = ["clv"]
+    or
+    cmdlet = "compare-object" and result = ["compare", "diff"]
+    or
+    cmdlet = "disable-psbreakpoint" and result = ["dbp"]
+    or
+    cmdlet = "enable-psbreakpoint" and result = ["ebp"]
+    or
+    cmdlet = "export-alias" and result = ["epal"]
+    or
+    cmdlet = "export-csv" and result = ["epcsv"]
+    or
+    cmdlet = "format-custom" and result = ["fc"]
+    or
+    cmdlet = "format-hex" and result = ["fhx"]
+    or
+    cmdlet = "format-list" and result = ["fl"]
+    or
+    cmdlet = "format-table" and result = ["ft"]
+    or
+    cmdlet = "format-wide" and result = ["fw"]
+    or
+    cmdlet = "get-alias" and result = ["gal"]
+    or
+    cmdlet = "get-error" and result = ["gerr"]
+    or
+    cmdlet = "get-member" and result = ["gm"]
+    or
+    cmdlet = "get-psbreakpoint" and result = ["gbp"]
+    or
+    cmdlet = "get-pscallstack" and result = ["gcs"]
+    or
+    cmdlet = "get-unique" and result = ["gu"]
+    or
+    cmdlet = "get-variable" and result = ["gv"]
+    or
+    cmdlet = "group-object" and result = ["group"]
+    or
+    cmdlet = "import-alias" and result = ["ipal"]
+    or
+    cmdlet = "import-csv" and result = ["ipcsv"]
+    or
+    cmdlet = "invoke-expression" and result = ["iex"]
+    or
+    cmdlet = "invoke-restmethod" and result = ["irm"]
+    or
+    cmdlet = "invoke-webrequest" and result = ["iwr"]
+    or
+    cmdlet = "measure-object" and result = ["measure"]
+    or
+    cmdlet = "new-alias" and result = ["nal"]
+    or
+    cmdlet = "new-variable" and result = ["nv"]
+    or
+    cmdlet = "out-gridview" and result = ["ogv"]
+    or
+    cmdlet = "remove-psbreakpoint" and result = ["rbp"]
+    or
+    cmdlet = "remove-variable" and result = ["rv"]
+    or
+    cmdlet = "select-object" and result = ["select"]
+    or
+    cmdlet = "select-string" and result = ["sls"]
+    or
+    cmdlet = "set-alias" and result = ["sal"]
+    or
+    cmdlet = "set-psbreakpoint" and result = ["sbp"]
+    or
+    cmdlet = "set-variable" and result = ["set", "sv"]
+    or
+    cmdlet = "show-command" and result = ["shcm"]
+    or
+    cmdlet = "sort-object" and result = ["sort"]
+    or
+    cmdlet = "start-sleep" and result = ["sleep"]
+    or
+    cmdlet = "tee-object" and result = ["tee"]
+    or
+    cmdlet = "write-output" and result = ["echo", "write"]
+    or
+    cmdlet = "add-localgroupmember" and result = ["algm"]
+    or
+    cmdlet = "disable-localuser" and result = ["dlu"]
+    or
+    cmdlet = "enable-localuser" and result = ["elu"]
+    or
+    cmdlet = "get-localgroup" and result = ["glg"]
+    or
+    cmdlet = "get-localgroupmember" and result = ["glgm"]
+    or
+    cmdlet = "get-localuser" and result = ["glu"]
+    or
+    cmdlet = "new-localgroup" and result = ["nlg"]
+    or
+    cmdlet = "new-localuser" and result = ["nlu"]
+    or
+    cmdlet = "remove-localgroup" and result = ["rlg"]
+    or
+    cmdlet = "remove-localgroupmember" and result = ["rlgm"]
+    or
+    cmdlet = "remove-localuser" and result = ["rlu"]
+    or
+    cmdlet = "rename-localgroup" and result = ["rnlg"]
+    or
+    cmdlet = "rename-localuser" and result = ["rnlu"]
+    or
+    cmdlet = "set-localgroup" and result = ["slg"]
+    or
+    cmdlet = "set-localuser" and result = ["slu"]
+  }
+
+  predicate implicitCmdlet(string mod, string cmdlet) {
+    exists(string cmdlet0 |
+      mod = "cimcmdlets" and
+      cmdlet0 =
+        [
+          "remove-ciminstance",
+          "import-binarymilog",
+          "get-cimclass",
+          "new-ciminstance",
+          "cimcmdlets",
+          "get-cimsession",
+          "new-cimsession",
+          "get-cimassociatedinstance",
+          "export-binarymilog",
+          "new-cimsessionoption",
+          "set-ciminstance",
+          "invoke-cimmethod",
+          "get-ciminstance",
+          "remove-cimsession",
+          "register-cimindicationevent"
+        ]
+      or
+      mod = "ise" and
+      cmdlet0 =
+        [
+          "new-isesnippet",
+          "import-isesnippet",
+          "get-isesnippet",
+          "ise"
+        ]
+      or
+      mod = "microsoft.powershell.archive" and
+      cmdlet0 =
+        [
+          "microsoft.powershell.archive",
+          "expand-archive",
+          "compress-archive"
+        ]
+      or
+      mod = "microsoft.powershell.core" and
+      cmdlet0 =
+        [
+          "test-pssessionconfigurationfile",
+          "export-modulemember",
+          "get-pssubsystem",
+          "where-object",
+          "new-pssessionconfigurationfile",
+          "get-pssnapin",
+          "tabexpansion2",
+          "clear-history",
+          "get-history",
+          "remove-pssession",
+          "debug-job",
+          "register-pssessionconfiguration",
+          "new-modulemanifest",
+          "disable-pssessionconfiguration",
+          "invoke-command",
+          "get-pshostprocessinfo",
+          "get-pssessionconfiguration",
+          "wait-job",
+          "enable-experimentalfeature",
+          "add-pssnapin",
+          "new-psrolecapabilityfile",
+          "new-pssessionoption",
+          "receive-job",
+          "disconnect-pssession",
+          "set-pssessionconfiguration",
+          "add-history",
+          "remove-pssnapin",
+          "export-console",
+          "get-help",
+          "suspend-job",
+          "switch-process",
+          "remove-job",
+          "receive-pssession",
+          "save-help",
+          "connect-pssession",
+          "get-experimentalfeature",
+          "import-module",
+          "remove-module",
+          "get-pssessioncapability",
+          "new-module",
+          "set-psdebug",
+          "enable-psremoting",
+          "get-job",
+          "out-null",
+          "get-pssession",
+          "start-job",
+          "exit-pssession",
+          "register-argumentcompleter",
+          "invoke-history",
+          "new-pstransportoption",
+          "new-pssession",
+          "disable-experimentalfeature",
+          "enable-pssessionconfiguration",
+          "foreach-object",
+          "disable-psremoting",
+          "enter-pssession",
+          "set-strictmode",
+          "stop-job",
+          "get-verb",
+          "update-help",
+          "resume-job",
+          "microsoft.powershell.core",
+          "get-module",
+          "clear-host",
+          "enter-pshostprocess",
+          "get-command",
+          "test-modulemanifest",
+          "unregister-pssessionconfiguration",
+          "exit-pshostprocess",
+          "out-default",
+          "out-host"
+        ]
+      or
+      mod = "microsoft.powershell.diagnostics" and
+      cmdlet0 =
+        [
+          "get-counter",
+          "export-counter",
+          "get-winevent",
+          "new-winevent",
+          "microsoft.powershell.diagnostics",
+          "import-counter"
+        ]
+      or
+      mod = "microsoft.powershell.host" and
+      cmdlet0 =
+        [
+          "start-transcript",
+          "stop-transcript"
+        ]
+      or
+      mod = "microsoft.powershell.localaccounts" and
+      cmdlet0 =
+        [
+          "new-localgroup",
+          "rename-localuser",
+          "new-localuser",
+          "add-localgroupmember",
+          "set-localgroup",
+          "enable-localuser",
+          "disable-localuser",
+          "get-localgroup",
+          "remove-localgroup",
+          "set-localuser",
+          "remove-localgroupmember",
+          "remove-localuser",
+          "get-localgroupmember",
+          "get-localuser",
+          "rename-localgroup",
+        ]
+      or
+      mod = "microsoft.powershell.management" and
+      cmdlet0 =
+        [
+          "reset-computermachinepassword",
+          "rename-itemproperty",
+          "set-itemproperty",
+          "get-itemproperty",
+          "remove-item",
+          "set-service",
+          "restore-computer",
+          "test-path",
+          "copy-itemproperty",
+          "get-wmiobject",
+          "show-controlpanelitem",
+          "test-computersecurechannel",
+          "clear-eventlog",
+          "remove-psdrive",
+          "get-itempropertyvalue",
+          "convert-path",
+          "remove-wmiobject",
+          "show-eventlog",
+          "resolve-path",
+          "get-location",
+          "stop-computer",
+          "move-item",
+          "invoke-wmimethod",
+          "add-content",
+          "split-path",
+          "undo-transaction",
+          "set-location",
+          "get-childitem",
+          "start-transaction",
+          "suspend-service",
+          "set-timezone",
+          "wait-process",
+          "stop-service",
+          "new-webserviceproxy",
+          "get-content",
+          "set-wmiinstance",
+          "stop-process",
+          "clear-content",
+          "checkpoint-computer",
+          "complete-transaction",
+          "get-eventlog",
+          "debug-process",
+          "clear-recyclebin",
+          "start-process",
+          "copy-item",
+          "write-eventlog",
+          "set-content",
+          "new-itemproperty",
+          "restart-service",
+          "get-controlpanelitem",
+          "move-itemproperty",
+          "get-transaction",
+          "new-eventlog",
+          "get-hotfix",
+          "add-computer",
+          "push-location",
+          "start-service",
+          "join-path",
+          "test-connection",
+          "set-clipboard",
+          "get-timezone",
+          "get-service",
+          "restart-computer",
+          "clear-itemproperty",
+          "resume-service",
+          "new-psdrive",
+          "get-psprovider",
+          "get-psdrive",
+          "limit-eventlog",
+          "rename-computer",
+          "get-computerrestorepoint",
+          "pop-location",
+          "rename-item",
+          "remove-itemproperty",
+          "enable-computerrestore",
+          "register-wmievent",
+          "get-computerinfo",
+          "remove-service",
+          "disable-computerrestore",
+          "set-item",
+          "remove-computer",
+          "invoke-item",
+          "use-transaction",
+          "get-process",
+          "get-item",
+          "new-item",
+          "get-clipboard",
+          "remove-eventlog",
+          "clear-item",
+          "new-service"
+        ]
+      or
+      mod = "microsoft.powershell.odatautils" and
+      cmdlet0 = ["export-odataendpointproxy"]
+      or
+      mod = "microsoft.powershell.operation.validation" and
+      cmdlet0 =
+        [
+          "get-operationvalidation",
+          "invoke-operationvalidation"
+        ]
+      or
+      mod = "microsoft.powershell.security" and
+      cmdlet0 =
+        [
+          "get-pfxcertificate",
+          "set-authenticodesignature",
+          "get-acl",
+          "get-credential",
+          "get-executionpolicy",
+          "protect-cmsmessage",
+          "set-acl",
+          "get-authenticodesignature",
+          "get-cmsmessage",
+          "new-filecatalog",
+          "unprotect-cmsmessage",
+          "set-executionpolicy",
+          "convertto-securestring",
+          "test-filecatalog",
+          "convertfrom-securestring"
+        ]
+      or
+      mod = "microsoft.powershell.utility" and
+      cmdlet0 =
+        [
+          "convertfrom-string",
+          "remove-typedata",
+          "set-markdownoption",
+          "import-powershelldatafile",
+          "get-markdownoption",
+          "tee-object",
+          "get-event",
+          "write-debug",
+          "import-pssession",
+          "select-string",
+          "register-engineevent",
+          "convertfrom-stringdata",
+          "select-object",
+          "write-progress",
+          "set-tracesource",
+          "group-object",
+          "get-error",
+          "update-typedata",
+          "get-uptime",
+          "new-event",
+          "write-error",
+          "add-member",
+          "get-filehash",
+          "import-alias",
+          "get-pscallstack",
+          "disable-runspacedebug",
+          "unblock-file",
+          "new-temporaryfile",
+          "debug-runspace",
+          "convertto-xml",
+          "get-verb",
+          "disable-psbreakpoint",
+          "format-wide",
+          "export-csv",
+          "convertto-csv",
+          "new-timespan",
+          "show-markdown",
+          "add-type",
+          "import-clixml",
+          "get-runspacedebug",
+          "get-host",
+          "get-typedata",
+          "update-list",
+          "clear-variable",
+          "get-securerandom",
+          "convertfrom-clixml",
+          "get-member",
+          "invoke-restmethod",
+          "convertfrom-markdown",
+          "show-command",
+          "unregister-event",
+          "export-alias",
+          "convertfrom-csv",
+          "send-mailmessage",
+          "export-formatdata",
+          "out-string",
+          "format-custom",
+          "write-information",
+          "new-alias",
+          "import-localizeddata",
+          "remove-event",
+          "write-warning",
+          "out-file",
+          "write-output",
+          "write-host",
+          "convertfrom-sddlstring",
+          "register-objectevent",
+          "update-formatdata",
+          "invoke-webrequest",
+          "compare-object",
+          "convertto-html",
+          "write-verbose",
+          "format-hex",
+          "get-eventsubscriber",
+          "read-host",
+          "measure-command",
+          "start-sleep",
+          "get-runspace",
+          "out-gridview",
+          "convertto-clixml",
+          "wait-event",
+          "export-pssession",
+          "remove-variable",
+          "get-variable",
+          "remove-alias",
+          "get-random",
+          "set-variable",
+          "set-alias",
+          "get-uiculture",
+          "get-alias",
+          "get-date",
+          "format-table",
+          "get-unique",
+          "set-psbreakpoint",
+          "out-printer",
+          "import-csv",
+          "enable-psbreakpoint",
+          "convert-string",
+          "select-xml",
+          "test-json",
+          "measure-object",
+          "get-psbreakpoint",
+          "sort-object",
+          "new-object",
+          "invoke-expression",
+          "wait-debugger",
+          "remove-psbreakpoint",
+          "new-variable",
+          "get-formatdata",
+          "trace-command",
+          "get-culture",
+          "get-tracesource",
+          "new-guid",
+          "enable-runspacedebug",
+          "join-string",
+          "export-clixml",
+          "convertfrom-json",
+          "format-list",
+          "set-date",
+          "convertto-json"
+        ]
+      or
+      mod = "microsoft.wsman.management" and
+      cmdlet0 =
+        [
+          "connect-wsman",
+          "disconnect-wsman",
+          "remove-wsmaninstance",
+          "new-wsmaninstance",
+          "set-wsmaninstance",
+          "test-wsman",
+          "get-wsmancredssp",
+          "get-wsmaninstance",
+          "disable-wsmancredssp",
+          "new-wsmansessionoption",
+          "invoke-wsmanaction",
+          "set-wsmanquickconfig",
+          "enable-wsmancredssp"
+        ]
+      or
+      mod = "psdiagnostics" and
+      cmdlet0 =
+        [
+          "enable-pstrace",
+          "disable-wsmantrace",
+          "enable-wsmantrace",
+          "disable-pstrace",
+          "set-logproperties",
+          "enable-pswsmancombinedtrace",
+          "get-logproperties",
+          "disable-pswsmancombinedtrace",
+          "start-trace",
+          "stop-trace"
+        ]
+      or
+      mod = "psreadline" and
+      cmdlet0 =
+        [
+          "get-psreadlineoption",
+          "set-psreadlinekeyhandler",
+          "get-psreadlinekeyhandler",
+          "remove-psreadlinekeyhandler",
+          "psconsolehostreadline",
+          "set-psreadlineoption"
+        ]
+      or
+      mod = "psscheduledjob" and
+      cmdlet0 =
+        [
+          "set-jobtrigger",
+          "add-jobtrigger",
+          "enable-jobtrigger",
+          "disable-scheduledjob",
+          "enable-scheduledjob",
+          "new-scheduledjoboption",
+          "unregister-scheduledjob",
+          "remove-jobtrigger",
+          "get-scheduledjoboption",
+          "new-jobtrigger",
+          "disable-jobtrigger",
+          "set-scheduledjob",
+          "get-jobtrigger",
+          "set-scheduledjoboption",
+          "register-scheduledjob",
+          "get-scheduledjob"
+        ]
+      or
+      mod = "psworkflow" and
+      cmdlet0 =
+        [
+          "new-psworkflowsession",
+          "new-psworkflowexecutionoption"
+        ]
+      or
+      mod = "psworkflowutility" and
+      cmdlet0 = "invoke-asworkflow"
+      or
+      mod = "threadjob" and
+      cmdlet0 = "start-threadjob"
+    |
+      cmdlet = [cmdlet0, getAnAlias(cmdlet0)]
+    )
+  }
+
+  private class ImplicitTypeNameNode extends AbstractTypeNameNode, Impl::MkImplicitTypeNameNode {
+    ImplicitTypeNameNode() { this = Impl::MkImplicitTypeNameNode(fullName, index) }
+
+    final override Node getSuccessor(string name) {
+      exists(ImplicitTypeNameNode succ |
+        succ = Impl::MkImplicitTypeNameNode(fullName, index + 1) and
+        name = succ.getComponent() and
+        result = succ
+      )
+    }
+
+    final override Node memberEdge(string name) { result = this.methodEdge(name) }
+
+    final override Node methodEdge(string name) {
+      exists(DataFlow::CallNode call |
+        not exists(this.getSuccessor(_)) and
+        result = Impl::MkMethodAccessNode(call) and
+        name = call.getLowerCaseName() and
+        implicitCmdlet(fullName, name)
+      )
+    }
   }
 
   /**
@@ -438,8 +1229,12 @@ module API {
       MkRoot() or
       /** The method accessed at `call`, synthetically treated as a separate object. */
       MkMethodAccessNode(DataFlow::CallNode call) or
-      MkUsingNode(UsingStmt using) or
-      MkNamespaceOfTypeNameNode(DataFlow::QualifiedTypeNameNode typeName) or
+      MkExplicitTypeNameNode(string fullName, int index) {
+        needsExplicitTypeNameNode(_, fullName, index)
+      } or
+      MkImplicitTypeNameNode(string fullName, int index) {
+        needsImplicitTypeNameNode(fullName, index)
+      } or
       MkForwardNode(DataFlow::LocalSourceNode node, TypeTracker t) { isReachable(node, t) } or
       /** Intermediate node for following backward data flow. */
       MkBackwardNode(DataFlow::LocalSourceNode node, TypeTracker t) { isReachable(node, t) } or
@@ -455,26 +1250,7 @@ module API {
       node = any(EntryPoint e).getASink()
     }
 
-    bindingset[e]
-    pragma[inline_late]
-    private DataFlow::Node getNodeFromExpr(Expr e) { result.asExpr().getExpr() = e }
-
     private import frameworks.data.ModelsAsData
-
-    cached
-    predicate namespace(string name, Node node) {
-      exists(DataFlow::QualifiedTypeNameNode typeName |
-        typeName.getNamespace() = name and
-        node = MkNamespaceOfTypeNameNode(typeName)
-      )
-      or
-      exists(UsingStmt using |
-        using.getName().toLowerCase() = name and
-        node = MkUsingNode(using)
-      )
-      or
-      node = ModelOutput::getATypeNode(name)
-    }
 
     cached
     predicate topLevelMember(string name, Node node) { memberEdge(root(), name, node) }
@@ -492,42 +1268,51 @@ module API {
     predicate memberEdge(Node pred, string name, Node succ) {
       pred = API::root() and
       (
-        exists(StringConstExpr read |
-          succ = getForwardStartNode(getNodeFromExpr(read)) and
-          name = read.getValueString()
-        )
+        succ.(TypeNameNode).getTypeName() = name
         or
         exists(DataFlow::AutomaticVariableNode automatic |
           automatic.getLowerCaseName() = name and
           succ = getForwardStartNode(automatic)
         )
+      )
+      or
+      exists(TypeNameNode typeName | pred = typeName |
+        typeName.getSuccessor(name) = succ
         or
-        succ = getAnImplicitRootMember(name)
+        typeName.memberEdge(name) = succ
       )
       or
-      exists(DataFlow::QualifiedTypeNameNode typeName |
-        typeName.getLowerCaseName() = name and
-        pred = MkNamespaceOfTypeNameNode(typeName) and
-        succ = getForwardStartNode(typeName)
-      )
-      or
-      exists(MemberExprReadAccess read |
-        read.getLowerCaseMemberName().toLowerCase() = name and
-        pred = getForwardEndNode(getALocalSourceStrict(getNodeFromExpr(read.getQualifier()))) and
-        succ = getForwardStartNode(getNodeFromExpr(read))
+      exists(DataFlow::Node qualifier | pred = getForwardEndNode(getALocalSourceStrict(qualifier)) |
+        exists(CfgNodes::ExprNodes::MemberExprReadAccessCfgNode read |
+          read.getQualifier() = qualifier.asExpr() and
+          read.getLowerCaseMemberName() = name and
+          succ = getForwardStartNode(DataFlow::exprNode(read))
+        )
+        or
+        exists(DataFlow::CallNode call |
+          call.getLowerCaseName() = name and
+          call.getQualifier() = qualifier and
+          succ = MkMethodAccessNode(call)
+        )
       )
     }
 
     cached
     predicate methodEdge(Node pred, string name, Node succ) {
       exists(DataFlow::CallNode call |
-        succ = MkMethodAccessNode(call) and name = call.getLowerCaseName()
-      |
+        succ = MkMethodAccessNode(call) and
+        name = call.getLowerCaseName() and
         pred = getForwardEndNode(getALocalSourceStrict(call.getQualifier()))
       )
       or
+      pred.(TypeNameNode).methodEdge(name) = succ
+      or
       pred = API::root() and
-      succ = getAnImplicitRootMember(name)
+      exists(DataFlow::CallNode call |
+        not exists(call.getQualifier()) and
+        succ = MkMethodAccessNode(call) and
+        name = call.getLowerCaseName()
+      )
     }
 
     cached

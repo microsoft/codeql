@@ -26,6 +26,7 @@ private import codeql.dataflow.internal.AccessPathSyntax
 import semmle.code.powershell.ApiGraphs
 import semmle.code.powershell.dataflow.DataFlow::DataFlow as DataFlow
 private import FlowSummaryImpl::Public
+private import semmle.code.powershell.controlflow.Cfg
 private import semmle.code.powershell.dataflow.internal.DataFlowDispatch as DataFlowDispatch
 
 bindingset[rawType]
@@ -40,7 +41,7 @@ private predicate parseType(string rawType, string consts, string suffix) {
   )
 }
 
-private predicate parseRelevantType(string rawType, string consts, string suffix) {
+predicate parseRelevantType(string rawType, string consts, string suffix) {
   isRelevantType(rawType) and
   parseType(rawType, consts, suffix)
 }
@@ -57,58 +58,50 @@ predicate hasImplicitTypeModel(string type, string otherType) {
 
 /** Gets a Powershell-specific interpretation of the `(type, path)` tuple after resolving the first `n` access path tokens. */
 bindingset[type, path]
-API::Node getExtraNodeFromPath(string type, AccessPath path, int n) {
-  // A row of form `any;Method[foo]` should match any method named `foo`.
-  type = "any" and
-  n = 1 and
-  exists(string methodName, DataFlow::CallNode call |
-    methodMatchedByName(path, methodName) and
-    call.matchesName(methodName) and
-    result.(API::MethodAccessNode).asCall() = call
-  )
+API::Node getExtraNodeFromPath(string type, AccessPath path, int n) { none() }
+
+// TODO for monday: Avoid duplicating this logic in both apigraph.qll and here.
+
+bindingset[namespace]
+private string maybePrefixSystem(string namespace) {
+  if namespace.matches("system%")
+  then result = namespace
+  else result = [namespace, "system." + namespace]
 }
 
-/**
- * Gets a string that represents a module that is always implicitly
- * imported in any powershell script.
- */
-string getAnImplicitImport() {
-  result = "microsoft.powershell.management!"
-  or
-  result = "microsoft.powershell.utility!"
+bindingset[name, namespace]
+private string getANameFullName(string rawType, string name, string namespace) {
+  parseRelevantType(rawType, result, _) and
+  result.matches(maybePrefixSystem(namespace) + "." + name + "%")
+}
+
+private DataFlow::TypeNameNode getTypeNameNode(string rawType) {
+  exists(string name, string namespace |
+    name = result.getLowerCaseName() and
+    namespace = result.getNamespace() and
+    exists(getANameFullName(rawType, name, namespace))
+  )
 }
 
 /** Gets a Powershell-specific interpretation of the given `type`. */
 API::Node getExtraNodeFromType(string rawType) {
-  exists(
-    string type, string suffix, DataFlow::QualifiedTypeNameNode qualifiedTypeName, string namespace,
-    string typename
-  |
+  exists(string type, string suffix, DataFlow::TypeNameNode typeName |
     parseRelevantType(rawType, type, suffix) and
-    qualifiedTypeName.hasQualifiedName(namespace, typename) and
-    (namespace + "." + typename).toLowerCase() = type
+    typeName = getTypeNameNode(rawType)
   |
     suffix = "!" and
-    result = qualifiedTypeName.(DataFlow::LocalSourceNode).track()
+    result = typeName.(DataFlow::LocalSourceNode).track()
     or
     suffix = "" and
-    result = qualifiedTypeName.(DataFlow::LocalSourceNode).track().getInstance()
+    result = typeName.(DataFlow::LocalSourceNode).track().getInstance()
   )
   or
-  rawType = ["", getAnImplicitImport()] and
-  result = API::root()
-}
-
-/**
- * Holds if `path` occurs in a CSV row with type `any`, meaning it can start
- * matching anywhere, and the path begins with `Method[methodName]`.
- */
-private predicate methodMatchedByName(AccessPath path, string methodName) {
-  isRelevantFullPath("any", path) and
-  exists(AccessPathToken token |
-    token = path.getToken(0) and
-    token.getName() = "Method" and
-    methodName = token.getAnArgument()
+  exists(string name, API::TypeNameNode typeName |
+    not exists(typeName.getSuccessor(_)) and
+    parseRelevantType(rawType, name, _) and
+    typeName = API::getTopLevelMember(name) and
+    typeName.isImplicit() and
+    result = typeName
   )
 }
 
