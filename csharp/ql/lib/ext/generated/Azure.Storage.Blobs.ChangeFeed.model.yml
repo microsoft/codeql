@@ -1,0 +1,20 @@
+# THIS FILE IS AN AUTO-GENERATED MODELS AS DATA FILE. DO NOT EDIT.
+extensions:
+  - addsTo:
+      pack: codeql/csharp-all
+      extensible: summaryModel
+    data:
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedClient", False, "BlobChangeFeedClient", "(System.String,Azure.Storage.Blobs.BlobClientOptions,Azure.Storage.Blobs.ChangeFeed.BlobChangeFeedClientOptions)", "", "Argument[2]", "Argument[this]", "taint", "df-generated"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedClient", False, "BlobChangeFeedClient", "(System.Uri,Azure.AzureSasCredential,Azure.Storage.Blobs.BlobClientOptions,Azure.Storage.Blobs.ChangeFeed.BlobChangeFeedClientOptions)", "", "Argument[3]", "Argument[this]", "taint", "df-generated"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedClient", False, "BlobChangeFeedClient", "(System.Uri,Azure.Core.TokenCredential,Azure.Storage.Blobs.BlobClientOptions,Azure.Storage.Blobs.ChangeFeed.BlobChangeFeedClientOptions)", "", "Argument[3]", "Argument[this]", "taint", "df-generated"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedClient", False, "BlobChangeFeedClient", "(System.Uri,Azure.Storage.Blobs.BlobClientOptions,Azure.Storage.Blobs.ChangeFeed.BlobChangeFeedClientOptions)", "", "Argument[2]", "Argument[this]", "taint", "df-generated"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedClient", False, "BlobChangeFeedClient", "(System.Uri,Azure.Storage.StorageSharedKeyCredential,Azure.Storage.Blobs.BlobClientOptions,Azure.Storage.Blobs.ChangeFeed.BlobChangeFeedClientOptions)", "", "Argument[3]", "Argument[this]", "taint", "df-generated"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedEvent", False, "ToString", "()", "", "Argument[this].Property[Azure.Storage.Blobs.ChangeFeed.BlobChangeFeedEvent.EventTime]", "ReturnValue", "taint", "dfc-generated"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedEvent", False, "ToString", "()", "", "Argument[this].Property[Azure.Storage.Blobs.ChangeFeed.BlobChangeFeedEvent.EventType]", "ReturnValue", "taint", "dfc-generated"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedEvent", False, "ToString", "()", "", "Argument[this].Property[Azure.Storage.Blobs.ChangeFeed.BlobChangeFeedEvent.Subject]", "ReturnValue", "taint", "dfc-generated"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedEventType", False, "BlobChangeFeedEventType", "(System.String)", "", "Argument[0]", "Argument[this].SyntheticField[Azure.Storage.Blobs.ChangeFeed.BlobChangeFeedEventType._value]", "value", "dfc-generated"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedEventType", False, "ToString", "()", "", "Argument[this].SyntheticField[Azure.Storage.Blobs.ChangeFeed.BlobChangeFeedEventType._value]", "ReturnValue", "value", "dfc-generated"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedExtensions", False, "GetChangeFeedClient", "(Azure.Storage.Blobs.BlobServiceClient,Azure.Storage.Blobs.ChangeFeed.BlobChangeFeedClientOptions)", "", "Argument[0]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedExtensions", False, "GetChangeFeedClient", "(Azure.Storage.Blobs.BlobServiceClient,Azure.Storage.Blobs.ChangeFeed.BlobChangeFeedClientOptions)", "", "Argument[1]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobOperationName", False, "BlobOperationName", "(System.String)", "", "Argument[0]", "Argument[this].SyntheticField[Azure.Storage.Blobs.ChangeFeed.BlobOperationName._value]", "value", "dfc-generated"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobOperationName", False, "ToString", "()", "", "Argument[this].SyntheticField[Azure.Storage.Blobs.ChangeFeed.BlobOperationName._value]", "ReturnValue", "value", "dfc-generated"]
