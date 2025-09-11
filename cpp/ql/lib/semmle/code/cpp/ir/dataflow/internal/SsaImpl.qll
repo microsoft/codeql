@@ -1153,6 +1153,12 @@ class Definition extends SsaImpl::Definition {
     )
   }
 
+  Parameter asParameter() {
+    this.getIndirectionIndex() = 0 and
+    getDefImpl(this).getValue().asInstruction().(InitializeParameterInstruction).getParameter() =
+      result
+  }
+
   /**
    * Gets an `Operand` that represents an indirect use of this definition.
    *
