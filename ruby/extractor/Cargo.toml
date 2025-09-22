@@ -3,7 +3,7 @@ name = "codeql-extractor-ruby"
 description = "CodeQL Ruby extractor"
 version = "0.1.0"
 authors = ["GitHub"]
-edition = "2021"
+edition = "2024"
 
 # When updating these dependencies, run `misc/bazel/3rdparty/update_cargo_deps.sh`
 [dependencies]
@@ -17,5 +17,6 @@ rayon = "1.10.0"
 regex = "1.11.1"
 encoding = "0.2"
 lazy_static = "1.5.0"
+serde_json = "1.0.142"
 
 codeql-extractor = { path = "../../shared/tree-sitter-extractor" }

@@ -293,6 +293,8 @@ private predicate isMatchingConstant(PatternExpr pe, boolean value) {
   value = true
   or
   exists(Type t, Type strippedType |
+    not t instanceof UnknownType and
+    not strippedType instanceof UnknownType and
     typePatternMustHaveMatchingCompletion(pe, t, strippedType) and
     not typePatternCommonSubType(t, strippedType) and
     value = false
@@ -308,10 +310,8 @@ private class Overflowable extends UnaryOperation {
 
 /** A control flow element that is inside a `try` block. */
 private class TriedControlFlowElement extends ControlFlowElement {
-  TryStmt try;
-
   TriedControlFlowElement() {
-    this = try.getATriedElement() and
+    this = any(TryStmt try).getATriedElement() and
     not this instanceof NonReturningCall
   }
 

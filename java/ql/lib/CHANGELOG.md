@@ -1,3 +1,90 @@
+## 7.6.1
+
+No user-facing changes.
+
+## 7.6.0
+
+### Major Analysis Improvements
+
+* Added library models for the relevant method calls under `jakarta.servlet.ServletRequest` and `jakarta.servlet.http.HttpServletRequest` as remote flow sources.
+
+### Minor Analysis Improvements
+
+* Guard implication logic involving wrapper methods has been improved. In particular, this means fewer false positives for `java/dereferenced-value-may-be-null`.
+
+## 7.5.0
+
+### New Features
+
+* Kotlin versions up to 2.2.2\ *x* are now supported.
+
+## 7.4.0
+
+### Deprecated APIs
+
+* The module `semmle.code.java.frameworks.Castor` has been deprecated and will be removed in a future release.
+* The module `semmle.code.java.frameworks.JYaml` has been deprecated and will be removed in a future release.
+* The classes `UnsafeHessianInputReadObjectMethod` and `BurlapInputReadObjectMethod` in the module `semmle.code.java.frameworks.HessianBurlap` have been deprecated and will be removed in a future release.
+* The class `YamlBeansReaderReadMethod` in the module `semmle.code.java.frameworks.YamlBeans` has been deprecated and will be removed in a future release.
+* The class `MethodApacheSerializationUtilsDeserialize` in the module `semmle.code.java.frameworks.apache.Lang` has been deprecated and will be removed in a future release.
+
+### New Features
+
+* You can now add sinks for the query "Deserialization of user-controlled data" (`java/unsafe-deserialization`) using [data extensions](https://codeql.github.com/docs/codeql-language-guides/customizing-library-models-for-java-and-kotlin/#extensible-predicates-used-to-create-custom-models-in-java-and-kotlin) by extending `sinkModel` and using the kind "unsafe-deserialization". The existing sinks that do not require extra logic to determine if they are unsafe are now defined in this way.
+
+### Minor Analysis Improvements
+
+* The qualifiers of a calls to `readObject` on any classes that implement `java.io.ObjectInput` are now recognised as sinks for `java/unsafe-deserialization`. Previously this was only the case for classes which extend `java.io.ObjectInputStream`.
+
+## 7.3.2
+
+### Minor Analysis Improvements
+
+* Java `assert` statements are now assumed to be executed for the purpose of analysing control flow. This improves precision for a number of queries.
+
+## 7.3.1
+
+No user-facing changes.
+
+## 7.3.0
+
+### Deprecated APIs
+
+* The predicate `getValue()` on `SpringRequestMappingMethod` is now deprecated. Use `getAValue()` instead.
+* Java now uses the shared `BasicBlock` library. This means that the names of several member predicates have been changed to align with the names used in other languages. The old predicates have been deprecated. The `BasicBlock` class itself no longer extends `ControlFlowNode` - the predicate `getFirstNode` can be used to fix any QL code that somehow relied on this.
+
+## 7.2.0
+
+### New Features
+
+* Kotlin versions up to 2.2.0\ *x* are now supported. Support for the Kotlin 1.5.x series is dropped (so the minimum Kotlin version is now 1.6.0).
+
+## 7.1.4
+
+No user-facing changes.
+
+## 7.1.3
+
+### Minor Analysis Improvements
+
+* Enum-typed values are now assumed to be safe by most queries. This means that queries may return fewer results where an enum value is used in a sensitive context, e.g. pasted into a query string.
+* All existing modelling and support for `javax.persistence` now applies to `jakarta.persistence` as well.
+
+## 7.1.2
+
+### Minor Analysis Improvements
+
+* Java extraction is now able to download Maven 3.9.x if a Maven Enforcer Plugin configuration indicates it is necessary. Maven 3.8.x is still preferred if the enforcer-plugin configuration (if any) permits it.
+* Added a path injection sanitizer for calls to `java.lang.String.matches`, `java.lang.String.replace`, and `java.lang.String.replaceAll` that make sure `/`, `\\`, `..` are not in the path.
+
+### Bug Fixes
+
+* In `build-mode: none` where the project has a Gradle build system, database creation no longer attempts to download some non-existent jar files relating to non-jar Maven artifacts, such as BOMs. This was harmless, but saves some time and reduces spurious warnings.
+* Java extraction no longer freezes for a long time or times out when using libraries that feature expanding cyclic generic types. For example, this was known to occur when using some classes from the Blazebit Persistence library.
+* Java build-mode `none` no longer fails when a required version of Gradle cannot be downloaded using the `gradle wrapper` command, such as due to a firewall. It will now attempt to use the system version of Gradle if present, or otherwise proceed without detailed dependency information.
+* Java build-mode `none` no longer fails when a required version of Maven cannot be downloaded, such as due to a firewall. It will now attempt to use the system version of Maven if present, or otherwise proceed without detailed dependency information.
+* Java build-mode `none` now correctly uses Maven dependency information on Windows platforms.
+
 ## 7.1.1
 
 No user-facing changes.
@@ -23,8 +110,8 @@ No user-facing changes.
 * Deleted the deprecated `isLValue` and `isRValue` predicates from the `VarAccess` class, use `isVarWrite` and `isVarRead` respectively instead.
 * Deleted the deprecated `getRhs` predicate from the `VarWrite` class, use `getASource` instead.
 * Deleted the deprecated `LValue` and `RValue` classes, use `VarWrite` and `VarRead` respectively instead.
-* Deleted a lot of deprecated classes ending in "*Access", use the corresponding "*Call" classes instead.
-* Deleted a lot of deprecated predicates ending in "*Access", use the corresponding "*Call" predicates instead.
+* Deleted a lot of deprecated classes ending in `*Access`, use the corresponding `*Call` classes instead.
+* Deleted a lot of deprecated predicates ending in `*Access`, use the corresponding `*Call` predicates instead.
 * Deleted the deprecated `EnvInput` and `DatabaseInput` classes from `FlowSources.qll`, use the threat models feature instead.
 * Deleted some deprecated API predicates from `SensitiveApi.qll`, use the Sink classes from that file instead.
 

@@ -2,31 +2,41 @@ extensions:
   # Make sure that the extensible model predicates have at least one definition
   # to avoid errors about undefined extensionals.
   - addsTo:
-      pack: microsoft-sdl/powershell-all
+      pack: microsoft/powershell-all
       extensible: sourceModel
     data: []
 
   - addsTo:
-      pack: microsoft-sdl/powershell-all
+      pack: microsoft/powershell-all
       extensible: sinkModel
     data: []
 
   - addsTo:
-      pack: microsoft-sdl/powershell-all
+      pack: microsoft/powershell-all
       extensible: summaryModel
     data: []
 
   - addsTo:
-      pack: microsoft-sdl/powershell-all
+      pack: microsoft/powershell-all
       extensible: neutralModel
     data: []
 
   - addsTo:
-      pack: microsoft-sdl/powershell-all
+      pack: microsoft/powershell-all
       extensible: typeModel
     data: []
 
   - addsTo:
-      pack: microsoft-sdl/powershell-all
+      pack: microsoft/powershell-all
       extensible: typeVariableModel
+    data: []
+
+  - addsTo:
+      pack: microsoft/powershell-all
+      extensible: cmdletModel
+    data: []
+
+  - addsTo:
+      pack: microsoft/powershell-all
+      extensible: aliasModel
     data: []

@@ -1,3 +1,64 @@
+## 5.2.3
+
+### Minor Analysis Improvements
+
+* A bug has been fixed in the data flow analysis, which means that flow through calls using the `base` qualifier may now be tracked more accurately.
+* Added summary models for `System.Xml.XmlReader`, `System.Xml.XmlTextReader` and `System.Xml.XmlDictionaryReader`.
+* Models-as-data summaries for byte and char arrays and pointers now treat the entire collection as tainted, reflecting their common use as string alternatives.
+* The default taint tracking configuration now allows implicit reads from collections at sinks and in additional flow steps. This increases flow coverage for many taint tracking queries and helps reduce false negatives.
+
+## 5.2.2
+
+No user-facing changes.
+
+## 5.2.1
+
+No user-facing changes.
+
+## 5.2.0
+
+### New Features
+
+* Added a new predicate, `getASuperType()`, to get a direct supertype of this type.
+
+## 5.1.9
+
+No user-facing changes.
+
+## 5.1.8
+
+No user-facing changes.
+
+## 5.1.7
+
+### Minor Analysis Improvements
+
+* The generated Models as Data (MaD) models for .NET 9 Runtime have been updated and are now more precise (due to a recent model generator improvement).
+
+## 5.1.6
+
+No user-facing changes.
+
+## 5.1.5
+
+### Minor Analysis Improvements
+
+* Improved autobuilder logic for detecting whether a project references a SDK (and should be built using `dotnet`).
+
+## 5.1.4
+
+### Minor Analysis Improvements
+
+* The *alignment* and *format* clauses in string interpolation expressions are now extracted. That is, in `$"Hello {name,align:format}"` *name*, *align* and *format* are extracted as children of the string interpolation *insert* `{name,align:format}`.
+* Blazor support can now better recognize when a property being set is specified with a string literal, rather than referenced in a `nameof` expression.
+
+## 5.1.3
+
+### Minor Analysis Improvements
+
+* The models for `System.Uri` have been modified to better model the flow of tainted URIs.
+* Modeled parameter passing between Blazor parent and child components.
+
 ## 5.1.2
 
 No user-facing changes.

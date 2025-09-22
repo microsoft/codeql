@@ -1,3 +1,113 @@
+## 2.6.10
+
+### Minor Analysis Improvements
+
+* Removed `libxmljs` as an XML bomb sink. The underlying libxml2 library now includes [entity reference loop detection](https://github.com/GNOME/libxml2/blob/0c948334a8f5c66d50e9f8992e62998017dc4fc6/NEWS#L905-L908) that prevents XML bomb attacks.
+
+## 2.6.9
+
+### Minor Analysis Improvements
+
+* Improved modeling of command-line argument parsing libraries [arg](https://www.npmjs.com/package/arg), [args](https://www.npmjs.com/package/args), [command-line-args](https://www.npmjs.com/package/command-line-args) and [commander](https://www.npmjs.com/package/commander)
+
+## 2.6.8
+
+### Minor Analysis Improvements
+
+* The regular expressions in `SensitiveDataHeuristics.qll` have been extended to find more instances of sensitive data such as secrets used in authentication, finance and health information, and device data. The heuristics have also been refined to find fewer false positive matches. This will improve results for queries related to sensitive information.
+
+## 2.6.7
+
+### Minor Analysis Improvements
+
+* Enhanced modeling for the `execa` library, adding support for command execution methods `execaCommand`, `execaCommandSync`, `$`, and `$.sync`, as well as file system operations through `inputFile`, `pipeStdout`, `pipeAll`, and `pipeStderr`.
+
+### Bug Fixes
+
+* The JavaScript extractor no longer ignores source files specified in the `tsconfig.json` compiler options `outDir` if doing so would result in excluding all source code.
+
+## 2.6.6
+
+### Minor Analysis Improvements
+
+* Calls to `sinon.match()` are no longer incorrectly identified as regular expression operations.
+* Improved data flow tracking through middleware to handle default value and similar patterns.
+* Added `req._parsedUrl` as a remote input source.
+* Improved taint tracking through calls to `serialize-javascript`.
+* Removed `encodeURI` and `escape` functions from the sanitizer list for request forgery.
+* The JavaScript extractor now skips generated JavaScript files if the original TypeScript files are already present. It also skips any files in the output directory specified in the `compilerOptions` part of the `tsconfig.json` file.
+* Added support for Axios instances in the `axios` module.
+
+## 2.6.5
+
+### Minor Analysis Improvements
+
+* Added taint flow through the `URL` constructor from the `url` package, improving the identification of SSRF vulnerabilities.
+
+## 2.6.4
+
+### Minor Analysis Improvements
+
+* Improved analysis for `ES6 classes` mixed with `function prototypes`, leading to more accurate call graph resolution.
+
+## 2.6.3
+
+### Minor Analysis Improvements
+
+* Enhanced modeling of the [fastify](https://www.npmjs.com/package/fastify) framework to support the `all` route handler method.
+* Improved modeling of the [`shelljs`](https://www.npmjs.com/package/shelljs) and [`async-shelljs`](https://www.npmjs.com/package/async-shelljs) libraries by adding support for the `which`, `cmd`, `asyncExec` and `env`.
+* Added support for the `fastify` `addHook` method.
+
+## 2.6.2
+
+No user-facing changes.
+
+## 2.6.1
+
+### Minor Analysis Improvements
+
+* Data passed to the [NextResponse](https://nextjs.org/docs/app/api-reference/functions/next-response) constructor is now treated as a sink for `js/reflected-xss`.
+* Data received from [NextRequest](https://nextjs.org/docs/app/api-reference/functions/next-request) and [Request](https://developer.mozilla.org/en-US/docs/Web/API/Request) is now treated as a remote user input `source`.
+* Added support for the `make-dir` package.
+* Added support for the `open` package.
+* Added taint propagation for `Uint8Array`, `ArrayBuffer`, `SharedArrayBuffer` and `TextDecoder.decode()`.
+* Improved detection of `WebSocket` and `SockJS` usage.
+* Added data received from `WebSocket` clients as a remote flow source.
+* Added support for additional `mkdirp` methods as sinks in path-injection queries.
+* Added support for additional `rimraf` methods as sinks in path-injection queries.
+
+## 2.6.0
+
+### New Features
+
+* Extraction now supports regular expressions with the `v` flag, using the new operators:
+  - Intersection `&&`
+  - Subtraction `--`
+  - `\q` quoted string 
+
+### Major Analysis Improvements
+
+* Added support for TypeScript 5.8.
+
+### Minor Analysis Improvements
+
+* Added support for additional `fs-extra` methods as sinks in path-injection queries.
+* Added support for the newer version of `Hapi` with the `@hapi/hapi` import and `server` function.
+* Improved modeling of the `node:fs` module: `await`-ed calls to `read` and `readFile` are now supported.
+* Added support for the `@sap/hana-client`, `@sap/hdbext` and `hdb` packages.
+* Enhanced `axios` support with new methods (`postForm`, `putForm`, `patchForm`, `getUri`, `create`) and added support for `interceptors.request` and `interceptors.response`.
+* Improved support for `got` package with `Options`, `paginate()` and `extend()`
+* Added support for the `ApolloServer` class from `@apollo/server` and similar packages. In particular, the incoming data in a GraphQL resolver is now seen as a source of untrusted user input.
+* Improved support for `superagent` to handle the case where the package is directly called as a function, or via the `.del()` or `.agent()` method.
+* Added support for the `underscore.string` package.
+* Added additional flow step for `unescape()` and `escape()`.
+* Added support for the `@tanstack/vue-query` package.
+* Added taint-steps for `unescape()`.
+* Added support for the `@tanstack/angular-query-experimental` package.
+* Improved support for the `@angular/common/http` package, detecting outgoing HTTP requests in more cases.
+* Improved the modeling of the `markdown-table` package to ensure it handles nested arrays properly.
+* Added support for the `react-relay` library.
+
 ## 2.5.1
 
 No user-facing changes.

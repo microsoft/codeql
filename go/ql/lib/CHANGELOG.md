@@ -1,3 +1,63 @@
+## 4.3.3
+
+No user-facing changes.
+
+## 4.3.2
+
+No user-facing changes.
+
+## 4.3.1
+
+No user-facing changes.
+
+## 4.3.0
+
+### Deprecated APIs
+
+* The class `BuiltinType` is now deprecated. Use the new replacement `BuiltinTypeEntity` instead.
+* The class `DeclaredType` is now deprecated. Use the new replacement `DeclaredTypeEntity` instead.
+
+### Minor Analysis Improvements
+
+* Added models for the `Head` function and the `Client.Head` method, from the `net/http` package, to the `Http::ClientRequest` class. This means that they will be recognized as sinks for the query `go/request-forgery` and the experimental query `go/ssrf`.
+* Previously, `DefinedType.getBaseType` gave the underlying type. It now gives the right hand side of the type declaration, as the documentation indicated that it should.
+
+## 4.2.8
+
+No user-facing changes.
+
+## 4.2.7
+
+### Minor Analysis Improvements
+
+* The first argument of `Client.Query` in `cloud.google.com/go/bigquery` is now recognized as a SQL injection sink.
+
+## 4.2.6
+
+No user-facing changes.
+
+## 4.2.5
+
+No user-facing changes.
+
+## 4.2.4
+
+No user-facing changes.
+
+## 4.2.3
+
+### Minor Analysis Improvements
+
+* Local source models for APIs reading from databases have been added for `github.com/gogf/gf/database/gdb` and `github.com/uptrace/bun`.
+
+## 4.2.2
+
+### Minor Analysis Improvements
+
+* We no longer track taint into a `sync.Map` via the key of a key-value pair, since we do not model any way in which keys can be read from a `sync.Map`.
+* `database` source models have been added for v1 and v2 of the `github.com/couchbase/gocb` package.
+* Added `database` source models for the `github.com/Masterminds/squirrel` ORM package.
+
 ## 4.2.1
 
 No user-facing changes.
@@ -7,10 +67,6 @@ No user-facing changes.
 ### Deprecated APIs
 
 * The member predicate `hasLocationInfo` has been deprecated on the following classes: `BasicBlock`, `Callable`, `Content`, `ContentSet`, `ControlFlow::Node`, `DataFlowCallable`, `DataFlow::Node`, `Entity`, `GVN`, `HtmlTemplate::TemplateStmt`, `IR:WriteTarget`, `SourceSinkInterpretationInput::SourceOrSinkElement`, `SourceSinkInterpretationInput::InterpretNode`, `SsaVariable`, `SsaDefinition`, `SsaWithFields`, `StringOps::ConcatenationElement`, `Type`, and `VariableWithFields`. Use `getLocation()` instead.
-
-### Major Analysis Improvements
-
-* Go 1.24 is now supported. This includes the new language feature of generic type aliases.
 
 ### Minor Analysis Improvements
 
@@ -25,6 +81,10 @@ No user-facing changes.
 * The class `NamedType` has been deprecated. Use the new class `DefinedType` instead. This better matches the terminology used in the Go language specification, which was changed in Go 1.9.
 * The member predicate `getNamedType` on `GoMicro::ServiceInterfaceType` has been deprecated. Use the new member predicate `getDefinedType` instead.
 * The member predicate `getNamedType` on `Twirp::ServiceInterfaceType` has been deprecated. Use the new member predicate `getDefinedType` instead.
+
+### Major Analysis Improvements
+
+* Go 1.24 is now supported. This includes the new language feature of generic type aliases.
 
 ### Minor Analysis Improvements
 

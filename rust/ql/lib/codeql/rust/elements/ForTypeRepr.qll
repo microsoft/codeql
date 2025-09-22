@@ -4,13 +4,16 @@
  */
 
 private import internal.ForTypeReprImpl
-import codeql.rust.elements.GenericParamList
+import codeql.rust.elements.ForBinder
 import codeql.rust.elements.TypeRepr
 
 /**
- * A ForTypeRepr. For example:
+ * A function pointer type with a `for` modifier.
+ *
+ * For example:
  * ```rust
- * todo!()
+ * type RefOp<X> = for<'a> fn(&'a X) -> &'a X;
+ * //              ^^^^^^^^^^^^^^^^^^^^^^^^^^
  * ```
  */
 final class ForTypeRepr = Impl::ForTypeRepr;

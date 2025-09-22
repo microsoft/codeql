@@ -138,6 +138,9 @@ class ValueOrRefType extends Type, Attributable, @value_or_ref_type {
   /** Gets an immediate subtype of this type, if any. */
   ValueOrRefType getASubType() { result.getABaseType() = this }
 
+  /** Gets an immediate supertype of this type, if any. */
+  ValueOrRefType getASuperType() { this.getABaseType() = result }
+
   /** Gets a member of this type, if any. */
   Member getAMember() { result.getDeclaringType() = this }
 
@@ -198,7 +201,7 @@ class ValueOrRefType extends Type, Attributable, @value_or_ref_type {
    */
   pragma[inline]
   predicate hasCallable(Callable c) {
-    this.hasMethod(c)
+    this.hasMember(c)
     or
     this.hasMember(c.(Accessor).getDeclaration())
   }
@@ -1214,6 +1217,8 @@ class ArglistType extends Type, @arglist_type {
 class UnknownType extends Type, @unknown_type {
   /** Holds if this is the canonical unknown type, and not a type that failed to extract properly. */
   predicate isCanonical() { types(this, _, "<unknown type>") }
+
+  override string getAPrimaryQlClass() { result = "UnknownType" }
 }
 
 /**

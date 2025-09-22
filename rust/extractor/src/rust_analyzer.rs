@@ -1,13 +1,13 @@
+use crate::trap;
 use itertools::Itertools;
-use ra_ap_base_db::SourceDatabase;
+use ra_ap_base_db::{EditionedFileId, FileText, RootQueryDb, SourceDatabase};
 use ra_ap_hir::Semantics;
 use ra_ap_ide_db::RootDatabase;
-use ra_ap_load_cargo::{load_workspace_at, LoadCargoConfig};
+use ra_ap_load_cargo::{LoadCargoConfig, load_workspace_at};
 use ra_ap_paths::{AbsPath, Utf8PathBuf};
 use ra_ap_project_model::ProjectManifest;
 use ra_ap_project_model::{CargoConfig, ManifestPath};
 use ra_ap_span::Edition;
-use ra_ap_span::EditionedFileId;
 use ra_ap_span::TextRange;
 use ra_ap_span::TextSize;
 use ra_ap_syntax::SourceFile;
@@ -24,14 +24,45 @@ use std::rc::Rc;
 use tracing::{debug, error, info, trace, warn};
 use triomphe::Arc;
 
+#[derive(Clone, Default)]
+pub struct RustAnalyzerNoSemantics {
+    pub severity: trap::DiagnosticSeverity,
+    pub reason: &'static str,
+}
+
+impl RustAnalyzerNoSemantics {
+    pub fn warning(reason: &'static str) -> Self {
+        RustAnalyzerNoSemantics {
+            severity: trap::DiagnosticSeverity::Warning,
+            reason,
+        }
+    }
+    pub fn info(reason: &'static str) -> Self {
+        RustAnalyzerNoSemantics {
+            severity: trap::DiagnosticSeverity::Info,
+            reason,
+        }
+    }
+}
+
 pub enum RustAnalyzer<'a> {
     WithSemantics {
         vfs: &'a Vfs,
         semantics: &'a Semantics<'a, RootDatabase>,
     },
     WithoutSemantics {
-        reason: &'a str,
+        severity: trap::DiagnosticSeverity,
+        reason: &'static str,
     },
+}
+
+impl From<RustAnalyzerNoSemantics> for RustAnalyzer<'static> {
+    fn from(value: RustAnalyzerNoSemantics) -> Self {
+        RustAnalyzer::WithoutSemantics {
+            severity: value.severity,
+            reason: value.reason,
+        }
+    }
 }
 
 pub struct FileSemanticInformation<'a> {
@@ -43,7 +74,7 @@ pub struct ParseResult<'a> {
     pub ast: SourceFile,
     pub text: Arc<str>,
     pub errors: Vec<SyntaxError>,
-    pub semantics_info: Result<FileSemanticInformation<'a>, &'a str>,
+    pub semantics_info: Result<FileSemanticInformation<'a>, RustAnalyzerNoSemantics>,
 }
 
 impl<'a> RustAnalyzer<'a> {
@@ -52,9 +83,8 @@ impl<'a> RustAnalyzer<'a> {
         config: &CargoConfig,
         load_config: &LoadCargoConfig,
     ) -> Option<(RootDatabase, Vfs)> {
-        let progress = |t| (trace!("progress: {}", t));
-        let manifest = project.manifest_path();
-
+        let progress = |t| trace!("progress: {t}");
+        let manifest: &ManifestPath = project.manifest_path();
         match load_workspace_at(manifest.as_ref(), config, load_config, &progress) {
             Ok((db, vfs, _macro_server)) => Some((db, vfs)),
             Err(err) => {
@@ -66,64 +96,75 @@ impl<'a> RustAnalyzer<'a> {
     pub fn new(vfs: &'a Vfs, semantics: &'a Semantics<'a, RootDatabase>) -> Self {
         RustAnalyzer::WithSemantics { vfs, semantics }
     }
-    pub fn parse(&self, path: &Path) -> ParseResult {
-        let no_semantics_reason;
+    fn get_file_data(
+        &self,
+        path: &Path,
+    ) -> Result<(&Semantics<'_, RootDatabase>, EditionedFileId, FileText), RustAnalyzerNoSemantics>
+    {
         match self {
+            RustAnalyzer::WithoutSemantics { severity, reason } => Err(RustAnalyzerNoSemantics {
+                severity: *severity,
+                reason,
+            }),
             RustAnalyzer::WithSemantics { vfs, semantics } => {
-                if let Some(file_id) = path_to_file_id(path, vfs) {
-                    if let Ok(input) = std::panic::catch_unwind(|| semantics.db.file_text(file_id))
-                    {
-                        let file_id = EditionedFileId::current_edition(file_id);
-                        let source_file = semantics.parse(file_id);
-                        let errors = semantics
-                            .db
-                            .parse_errors(file_id)
-                            .into_iter()
-                            .flat_map(|x| x.to_vec())
-                            .collect();
-
-                        return ParseResult {
-                            ast: source_file,
-                            text: input,
-                            errors,
-                            semantics_info: Ok(FileSemanticInformation { file_id, semantics }),
-                        };
-                    }
-                    debug!(
-                        "No text available for file_id '{:?}', falling back to loading file '{}' from disk.",
-                        file_id,
-                        path.to_string_lossy()
-                    );
-                    no_semantics_reason = "no text available for the file in the project";
-                } else {
-                    no_semantics_reason = "file not found in project";
-                }
-            }
-            RustAnalyzer::WithoutSemantics { reason } => {
-                no_semantics_reason = reason;
+                let file_id = path_to_file_id(path, vfs).ok_or(
+                    RustAnalyzerNoSemantics::warning("file not found in project"),
+                )?;
+                let input = std::panic::catch_unwind(|| semantics.db.file_text(file_id)).or(
+                    Err(RustAnalyzerNoSemantics::warning(
+                        "no text available for the file in the project",
+                    )),
+                )?;
+                let editioned_file_id = semantics.attach_first_edition(file_id).ok_or(
+                    RustAnalyzerNoSemantics::warning("failed to determine rust edition"),
+                )?;
+                Ok((semantics, editioned_file_id, input))
             }
         }
-        let mut errors = Vec::new();
-        let input = match std::fs::read(path) {
-            Ok(data) => data,
-            Err(e) => {
-                errors.push(SyntaxError::new(
-                    format!("Could not read {}: {}", path.to_string_lossy(), e),
-                    TextRange::empty(TextSize::default()),
-                ));
-                vec![]
-            }
-        };
-        let (input, err) = from_utf8_lossy(&input);
+    }
 
-        let parse = ra_ap_syntax::ast::SourceFile::parse(&input, Edition::CURRENT);
-        errors.extend(parse.errors());
-        errors.extend(err);
-        ParseResult {
-            ast: parse.tree(),
-            text: input.as_ref().into(),
-            errors,
-            semantics_info: Err(no_semantics_reason),
+    pub fn parse(&self, path: &Path) -> ParseResult<'_> {
+        match self.get_file_data(path) {
+            Ok((semantics, file_id, input)) => {
+                let source_file = semantics.parse(file_id);
+                let errors = semantics
+                    .db
+                    .parse_errors(file_id)
+                    .into_iter()
+                    .flat_map(|x| x.to_vec())
+                    .collect();
+
+                ParseResult {
+                    ast: source_file,
+                    text: input.text(semantics.db).clone(),
+                    errors,
+                    semantics_info: Ok(FileSemanticInformation { file_id, semantics }),
+                }
+            }
+            Err(reason) => {
+                let mut errors = Vec::new();
+                let input = match std::fs::read(path) {
+                    Ok(data) => data,
+                    Err(e) => {
+                        errors.push(SyntaxError::new(
+                            format!("Could not read {}: {}", path.to_string_lossy(), e),
+                            TextRange::empty(TextSize::default()),
+                        ));
+                        vec![]
+                    }
+                };
+                let (input, err) = from_utf8_lossy(&input);
+
+                let parse = ra_ap_syntax::ast::SourceFile::parse(&input, Edition::CURRENT);
+                errors.extend(parse.errors());
+                errors.extend(err);
+                ParseResult {
+                    ast: parse.tree(),
+                    text: input.as_ref().into(),
+                    errors,
+                    semantics_info: Err(reason),
+                }
+            }
         }
     }
 }
@@ -170,8 +211,10 @@ impl TomlReader {
 }
 
 fn workspace_members_match(workspace_dir: &AbsPath, members: &[String], target: &AbsPath) -> bool {
-    members.iter().any(|p| {
-        glob::Pattern::new(workspace_dir.join(p).as_str()).is_ok_and(|p| p.matches(target.as_str()))
+    target.strip_prefix(workspace_dir).is_some_and(|rel_path| {
+        members
+            .iter()
+            .any(|p| glob::Pattern::new(p).is_ok_and(|p| p.matches(rel_path.as_str())))
     })
 }
 
@@ -297,4 +340,5 @@ pub(crate) fn path_to_file_id(path: &Path, vfs: &Vfs) -> Option<FileId> {
         .and_then(|x| AbsPathBuf::try_from(x).ok())
         .map(VfsPath::from)
         .and_then(|x| vfs.file_id(&x))
+        .map(|(id, _excluded)| id)
 }

@@ -1,3 +1,6 @@
+overlay[local?]
+module;
+
 import java
 private import codeql.ssa.Ssa as SsaImplCommon
 private import semmle.code.java.dataflow.SSA
@@ -144,13 +147,13 @@ private predicate certainVariableUpdate(TrackedVar v, ControlFlowNode n, BasicBl
 pragma[nomagic]
 private predicate hasEntryDef(TrackedVar v, BasicBlock b) {
   exists(LocalScopeVariable l, Callable c |
-    v = TLocalVar(c, l) and c.getBody().getControlFlowNode() = b
+    v = TLocalVar(c, l) and c.getBody().getBasicBlock() = b
   |
     l instanceof Parameter or
     l.getCallable() != c
   )
   or
-  v instanceof SsaSourceField and v.getEnclosingCallable().getBody().getControlFlowNode() = b
+  v instanceof SsaSourceField and v.getEnclosingCallable().getBody().getBasicBlock() = b
 }
 
 /** Holds if `n` might update the locally tracked variable `v`. */
@@ -163,18 +166,7 @@ private predicate uncertainVariableUpdate(TrackedVar v, ControlFlowNode n, Basic
   uncertainVariableUpdate(v.getQualifier(), n, b, i)
 }
 
-private module SsaInput implements SsaImplCommon::InputSig<Location> {
-  private import java as J
-  private import semmle.code.java.controlflow.Dominance as Dom
-
-  class BasicBlock = J::BasicBlock;
-
-  class ControlFlowNode = J::ControlFlowNode;
-
-  BasicBlock getImmediateBasicBlockDominator(BasicBlock bb) { Dom::bbIDominates(result, bb) }
-
-  BasicBlock getABasicBlockSuccessor(BasicBlock bb) { result = bb.getABBSuccessor() }
-
+private module SsaInput implements SsaImplCommon::InputSig<Location, BasicBlock> {
   class SourceVariable = SsaSourceVariable;
 
   /**
@@ -204,16 +196,19 @@ private module SsaInput implements SsaImplCommon::InputSig<Location> {
    * This includes implicit reads via calls.
    */
   predicate variableRead(BasicBlock bb, int i, SourceVariable v, boolean certain) {
-    exists(VarRead use |
-      v.getAnAccess() = use and bb.getNode(i) = use.getControlFlowNode() and certain = true
+    hasDominanceInformation(bb) and
+    (
+      exists(VarRead use |
+        v.getAnAccess() = use and bb.getNode(i) = use.getControlFlowNode() and certain = true
+      )
+      or
+      variableCapture(v, _, bb, i) and
+      certain = false
     )
-    or
-    variableCapture(v, _, bb, i) and
-    certain = false
   }
 }
 
-import SsaImplCommon::Make<Location, SsaInput> as Impl
+import SsaImplCommon::Make<Location, Cfg, SsaInput> as Impl
 
 final class Definition = Impl::Definition;
 
@@ -544,29 +539,33 @@ private module Cached {
     import DataFlowIntegrationImpl
 
     cached
-    predicate localFlowStep(Impl::DefinitionExt def, Node nodeFrom, Node nodeTo, boolean isUseStep) {
-      not def instanceof UntrackedDef and
-      DataFlowIntegrationImpl::localFlowStep(def, nodeFrom, nodeTo, isUseStep)
+    predicate localFlowStep(TrackedVar v, Node nodeFrom, Node nodeTo, boolean isUseStep) {
+      DataFlowIntegrationImpl::localFlowStep(v, nodeFrom, nodeTo, isUseStep)
     }
 
     cached
-    predicate localMustFlowStep(Impl::DefinitionExt def, Node nodeFrom, Node nodeTo) {
-      not def instanceof UntrackedDef and
-      DataFlowIntegrationImpl::localMustFlowStep(def, nodeFrom, nodeTo)
+    predicate localMustFlowStep(TrackedVar v, Node nodeFrom, Node nodeTo) {
+      DataFlowIntegrationImpl::localMustFlowStep(v, nodeFrom, nodeTo)
     }
 
     signature predicate guardChecksSig(Guards::Guard g, Expr e, boolean branch);
 
     cached // nothing is actually cached
     module BarrierGuard<guardChecksSig/3 guardChecks> {
-      private predicate guardChecksAdjTypes(
-        DataFlowIntegrationInput::Guard g, DataFlowIntegrationInput::Expr e, boolean branch
-      ) {
+      private predicate guardChecksAdjTypes(Guards::Guards_v3::Guard g, Expr e, boolean branch) {
         guardChecks(g, e, branch)
       }
 
+      private predicate guardChecksWithWrappers(
+        DataFlowIntegrationInput::Guard g, Definition def, Guards::GuardValue val, Unit state
+      ) {
+        Guards::Guards_v3::ValidationWrapper<guardChecksAdjTypes/3>::guardChecksDef(g, def, val) and
+        exists(state)
+      }
+
       private Node getABarrierNodeImpl() {
-        result = DataFlowIntegrationImpl::BarrierGuard<guardChecksAdjTypes/3>::getABarrierNode()
+        result =
+          DataFlowIntegrationImpl::BarrierGuardDefWithState<Unit, guardChecksWithWrappers/4>::getABarrierNode(_)
       }
 
       predicate getABarrierNode = getABarrierNodeImpl/0;
@@ -646,45 +645,29 @@ private module DataFlowIntegrationInput implements Impl::DataFlowIntegrationInpu
 
   Expr getARead(Definition def) { result = getAUse(def) }
 
-  class Parameter = J::Parameter;
-
-  predicate ssaDefAssigns(Impl::WriteDefinition def, Expr value) {
-    exists(VariableUpdate upd | upd = def.(SsaExplicitUpdate).getDefiningExpr() |
-      value = upd.(VariableAssign).getSource() or
-      value = upd.(AssignOp) or
-      value = upd.(RecordBindingVariableExpr)
-    )
-  }
-
-  predicate ssaDefInitializesParam(Impl::WriteDefinition def, Parameter p) {
-    def.(SsaImplicitInit).getSourceVariable() =
-      any(SsaSourceVariable v |
-        v.getVariable() = p and
-        v.getEnclosingCallable() = p.getCallable()
-      )
+  predicate ssaDefHasSource(WriteDefinition def) {
+    def instanceof SsaExplicitUpdate or def.(SsaImplicitInit).isParameterDefinition(_)
   }
 
   predicate allowFlowIntoUncertainDef(UncertainWriteDefinition def) {
     def instanceof SsaUncertainImplicitUpdate
   }
 
-  class Guard extends Guards::Guard {
-    predicate hasCfgNode(BasicBlock bb, int i) {
-      this = bb.getNode(i).asExpr()
-      or
-      this = bb.getNode(i).asStmt()
-    }
+  class GuardValue = Guards::GuardValue;
+
+  class Guard = Guards::Guard;
+
+  /** Holds if the guard `guard` directly controls block `bb` upon evaluating to `val`. */
+  predicate guardDirectlyControlsBlock(Guard guard, BasicBlock bb, GuardValue val) {
+    guard.directlyValueControls(bb, val)
   }
 
-  /** Holds if the guard `guard` controls block `bb` upon evaluating to `branch`. */
-  predicate guardControlsBlock(Guard guard, BasicBlock bb, boolean branch) {
-    guard.controls(bb, branch)
+  /** Holds if the guard `guard` controls block `bb` upon evaluating to `val`. */
+  predicate guardControlsBlock(Guard guard, BasicBlock bb, GuardValue val) {
+    guard.valueControls(bb, val)
   }
 
-  /** Gets an immediate conditional successor of basic block `bb`, if any. */
-  BasicBlock getAConditionalBasicBlockSuccessor(BasicBlock bb, boolean branch) {
-    result = bb.(Guards::ConditionBlock).getTestSuccessor(branch)
-  }
+  predicate includeWriteDefsInFlowStep() { none() }
 }
 
 private module DataFlowIntegrationImpl = Impl::DataFlowIntegration<DataFlowIntegrationInput>;

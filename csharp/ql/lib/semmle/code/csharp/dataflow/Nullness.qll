@@ -297,7 +297,7 @@ private predicate defNullImpliesStep(
   not exists(SuccessorTypes::ConditionalSuccessor s, NullValue nv |
     bb1.getLastNode() = getANullCheck(def1, s, nv).getAControlFlowNode()
   |
-    bb2 = bb1.getASuccessorByType(s) and
+    bb2 = bb1.getASuccessor(s) and
     nv.isNonNull()
   )
 }
@@ -544,8 +544,13 @@ class Dereference extends G::DereferenceableExpr {
         p.hasExtensionMethodModifier() and
         not emc.isConditional()
       |
-        p.fromSource() // assume all non-source extension methods perform a dereference
-        implies
+        // Assume all non-source extension methods on
+        // (1) nullable types are null-safe
+        // (2) non-nullable types are doing a dereference.
+        p.fromLibrary() and
+        not p.getAnnotatedType().isNullableRefType()
+        or
+        p.fromSource() and
         exists(
           Ssa::ImplicitParameterDefinition def,
           AssignableDefinitions::ImplicitParameterDefinition pdef

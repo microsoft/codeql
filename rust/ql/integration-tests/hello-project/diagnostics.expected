@@ -1,7 +1,15 @@
 {
   "attributes": {
     "durations": {
+      "crateGraph": {
+        "ms": "__REDACTED__",
+        "pretty": "__REDACTED__"
+      },
       "extract": {
+        "ms": "__REDACTED__",
+        "pretty": "__REDACTED__"
+      },
+      "extractLibrary": {
         "ms": "__REDACTED__",
         "pretty": "__REDACTED__"
       },
@@ -18,6 +26,10 @@
         "pretty": "__REDACTED__"
       },
       "parse": {
+        "ms": "__REDACTED__",
+        "pretty": "__REDACTED__"
+      },
+      "parseLibrary": {
         "ms": "__REDACTED__",
         "pretty": "__REDACTED__"
       },

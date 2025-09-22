@@ -13,9 +13,14 @@ private import codeql.rust.elements.internal.generated.TypeBound
  */
 module Impl {
   /**
-   * A TypeBound. For example:
+   * A type bound in a trait or generic parameter.
+   *
+   * For example:
    * ```rust
-   * todo!()
+   * fn foo<T: Debug>(t: T) {}
+   * //        ^^^^^
+   * fn bar(value: impl for<'a> From<&'a str>) {}
+   * //                 ^^^^^^^^^^^^^^^^^^^^^
    * ```
    */
   class TypeBound extends Generated::TypeBound { }
