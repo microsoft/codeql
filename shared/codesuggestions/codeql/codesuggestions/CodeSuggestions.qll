@@ -19,4 +19,20 @@ module CodeSuggestionsMake<LocationSig Location, DF::InputSig<Location> Lang> {
     // /** Holds if data flow out of `node` is prohibited. */
     // default predicate isBarrierOut(Node node) { none() }
   }
+
+  module CodeSuggestionsStateful<DF::Configs<Location, Lang>::StateConfigSig Config> {
+    private module Flow = DataFlow::GlobalWithState<Config>;
+
+    query predicate barriers(Lang::Node node){
+      Config::isBarrier(node)
+    }
+
+    // default predicate isBarrier(Node node) { none() }
+
+    // /** Holds if data flow into `node` is prohibited. */
+    // default predicate isBarrierIn(Node node) { none() }
+
+    // /** Holds if data flow out of `node` is prohibited. */
+    // default predicate isBarrierOut(Node node) { none() }
+  }
 }

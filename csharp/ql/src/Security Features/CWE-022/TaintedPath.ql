@@ -18,6 +18,14 @@ import csharp
 import semmle.code.csharp.security.dataflow.TaintedPathQuery
 import TaintedPath::PathGraph
 
+// TODO: Move to submodule
+private import semmle.code.csharp.dataflow.internal.DataFlowImplSpecific
+private import codeql.codesuggestions.CodeSuggestions
+import CodeSuggestionsMake<Location, CsharpDataFlow>
+
+// Import the CodeSuggestions for this DataFlow
+import CodeSuggestionsStateful<TaintedPathConfig>
+
 from TaintedPath::PathNode source, TaintedPath::PathNode sink
 where TaintedPath::flowPath(source, sink)
 select sink.getNode(), source, sink, "This path depends on a $@.", source.getNode(),

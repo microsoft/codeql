@@ -89,7 +89,7 @@ private class PathCombineStep extends PathNormalizationStep {
 /**
  * A taint-tracking configuration for uncontrolled data in path expression vulnerabilities.
  */
-private module TaintedPathConfig implements DataFlow::StateConfigSig {
+module TaintedPathConfig implements DataFlow::StateConfigSig {
   newtype FlowState =
     additional NotNormalized() or
     additional Normalized()
