@@ -1,6 +1,10 @@
+private import Opcode
+
 newtype TInstructionTag =
   SingleTag() or
   WriteTag() or
+  InitFramePtrTag() or
+  InitStackPtrTag() or
   TestAndTag() or
   TestZeroTag() or
   TestCmpTag() or
@@ -27,7 +31,9 @@ newtype TInstructionTag =
   BtrOneTag() or
   BtrShiftTag() or
   BtrNotTag() or
-  BtrAndTag()
+  BtrAndTag() or
+  Stage1ZeroTag() or
+  Stage1CmpDefTag(ConditionKind k)
 
 class InstructionTag extends TInstructionTag {
   final string toString() {
@@ -36,6 +42,12 @@ class InstructionTag extends TInstructionTag {
     or
     this = WriteTag() and
     result = "Write"
+    or
+    this = InitFramePtrTag() and
+    result = "InitFramePtr"
+    or
+    this = InitStackPtrTag() and
+    result = "InitStackPtr"
     or
     this = TestAndTag() and
     result = "TestAnd"
@@ -102,6 +114,14 @@ class InstructionTag extends TInstructionTag {
     or
     this = BtrAndTag() and
     result = "BtrAnd"
+    or
+    this = Stage1ZeroTag() and
+    result = "Stage1Zero"
+    or
+    exists(ConditionKind k |
+      this = Stage1CmpDefTag(k) and
+      result = "Stage1CmpDef(" + stringOfConditionKind(k) + ")"
+    )
   }
 }
 
@@ -122,7 +142,8 @@ newtype VariableTag =
   BtOneVarTag() or
   BtZeroVarTag() or
   BtrVarTag() or
-  BtrOneVarTag()
+  BtrOneVarTag() or
+  MemToSsaVarTag()
 
 newtype SynthRegisterTag = CmpRegisterTag()
 
@@ -182,66 +203,91 @@ string stringOfVariableTag(VariableTag tag) {
   or
   tag = MemoryOperandAdd2VarTag() and
   result = "m_add2"
+  or
+  tag = MemToSsaVarTag() and
+  result = "mem2ssa"
 }
 
-newtype OperandTag =
+newtype TOperandTag =
   LeftTag() or
   RightTag() or
   UnaryTag() or
-  StoreSourceTag() or
-  StoreDestTag() or
+  StoreValueTag() or
+  StoreAddressTag() or
   CallTargetTag() or
   CondTag() or
+  CondJumpTargetTag() or
   JumpTargetTag()
 
-int getOperandTagIndex(OperandTag tag) {
-  tag = LeftTag() and
-  result = 0
-  or
-  tag = RightTag() and
-  result = 1
-  or
-  tag = UnaryTag() and
-  result = 0
-  or
-  tag = StoreSourceTag() and
-  result = 1
-  or
-  tag = StoreDestTag() and
-  result = 0
-  or
-  tag = CallTargetTag() and
-  result = 0
-  or
-  tag = JumpTargetTag() and
-  result = 0
-  or
-  tag = CondTag() and
-  result = 1
-}
+class OperandTag extends TOperandTag {
+  int getIndex() {
+    this = LeftTag() and
+    result = 0
+    or
+    this = RightTag() and
+    result = 1
+    or
+    this = UnaryTag() and
+    result = 0
+    or
+    this = StoreValueTag() and
+    result = 1
+    or
+    this = StoreAddressTag() and
+    result = 0
+    or
+    this = CallTargetTag() and
+    result = 0
+    or
+    this = CondJumpTargetTag() and
+    result = 0
+    or
+    this = CondTag() and
+    result = 1
+    or
+    this = JumpTargetTag() and
+    result = 0
+  }
 
-string stringOfOperandTag(OperandTag tag) {
-  tag = LeftTag() and
-  result = "Left"
-  or
-  tag = RightTag() and
-  result = "Right"
-  or
-  tag = UnaryTag() and
-  result = "Unary"
-  or
-  tag = StoreSourceTag() and
-  result = "StoreSource"
-  or
-  tag = StoreDestTag() and
-  result = "StoreDest"
-  or
-  tag = CallTargetTag() and
-  result = "CallTarget"
-  or
-  tag = JumpTargetTag() and
-  result = "JumpTarget"
-  or
-  tag = CondTag() and
-  result = "CondJump"
+  OperandTag getSuccessorTag() {
+    this = LeftTag() and
+    result = RightTag()
+    or
+    this = StoreAddressTag() and
+    result = StoreValueTag()
+    or
+    this = CondJumpTargetTag() and
+    result = CondTag()
+  }
+
+  OperandTag getPredecessorTag() { this = result.getSuccessorTag() }
+
+  string toString() {
+    this = LeftTag() and
+    result = "Left"
+    or
+    this = RightTag() and
+    result = "Right"
+    or
+    this = UnaryTag() and
+    result = "Unary"
+    or
+    this = StoreValueTag() and
+    result = "StoreValue"
+    or
+    this = StoreAddressTag() and
+    result = "StoreDest"
+    or
+    this = CallTargetTag() and
+    result = "CallTarget"
+    or
+    this = CondJumpTargetTag() and
+    result = "CondJumpTarget"
+    or
+    this = CondTag() and
+    result = "CondJump"
+    or
+    this = JumpTargetTag() and
+    result = "JumpTarget"
+  }
 }

@@ -2,7 +2,6 @@ private import internal.instructions as Internal
 private import binary
 private import Headers
 private import Sections
-private import semmle.code.binary.controlflow.BasicBlock
 private import Functions
 private import codeql.util.Unit
 
@@ -25,14 +24,34 @@ private module Pre {
               strictconcat(int i, string s | s = this.getOperand(i).toString() | s, ", " order by i)
         else result = this.toString0()
       }
-
-      Operand getOperand(int i) { operand(result, this, i, _) }
-
-      Operand getAnOperand() { result = this.getOperand(_) }
     }
 
+    class BaseRegister extends Internal::Register { }
+
+    class BaseRipRegister extends BaseRegister, Internal::RipRegister { }
+
+    class BaseRspRegister extends BaseRegister, Internal::RspRegister { }
+
+    class BaseRbpRegister extends BaseRegister, Internal::RbpRegister { }
+
+    class BaseOperand extends Internal::Operand { }
+
+    class BaseRegisterAccess extends Internal::RegisterAccess {
+      BaseRegister getTarget() { result = super.getTarget() }
+    }
+
+    class BaseUnusedOperand extends BaseOperand, Internal::UnusedOperand { }
+
+    class BaseRegisterOperand extends BaseOperand, Internal::RegisterOperand {
+      BaseRegisterAccess getAccess() { result = super.getAccess() }
+    }
+
+    class BasePointerOperand extends BaseOperand, Internal::PointerOperand { }
+
+    class BaseImmediateOperand extends BaseOperand, Internal::ImmediateOperand { }
+
     abstract private class MyCall extends BaseInstruction instanceof Internal::Call {
-      Operand op;
+      Internal::Operand op;
 
       MyCall() { op = this.getOperand(0) }
 
@@ -40,7 +59,7 @@ private module Pre {
     }
 
     private class CallImmediate extends MyCall {
-      override ImmediateOperand op;
+      override Internal::ImmediateOperand op;
       BaseInstruction target;
 
       CallImmediate() {
@@ -51,12 +70,26 @@ private module Pre {
       override Internal::Instruction getTarget() { result = target }
     }
 
+    class BaseMemoryOperand extends Operand instanceof Internal::MemoryOperand {
+      predicate hasDisplacement() { super.hasDisplacement() }
+
+      BaseRegisterAccess getSegmentRegister() { result = super.getSegmentRegister() }
+
+      BaseRegisterAccess getBaseRegister() { result = super.getBaseRegister() }
+
+      BaseRegisterAccess getIndexRegister() { result = super.getIndexRegister() }
+
+      int getScaleFactor() { result = super.getScaleFactor() }
+
+      int getDisplacementValue() { result = super.getDisplacementValue() }
+    }
+
     private class CallConstantMemoryOperand extends MyCall {
-      override MemoryOperand op;
+      override Internal::MemoryOperand op;
       int displacement;
 
       CallConstantMemoryOperand() {
-        op.getBaseRegister().getTarget() instanceof RipRegister and
+        op.getBaseRegister().getTarget() instanceof Internal::RipRegister and
         not exists(op.getIndexRegister()) and
         displacement = op.getDisplacementValue()
       }
@@ -102,13 +135,23 @@ private int getOffsetOfEntryPoint() {
   result = any(OptionalHeader x).getEntryPoint() - any(TextSection s).getVirtualAddress()
 }
 
+private int getOffsetOfAnExportedFunction() {
+  result = any(ExportTableEntry e).getAddress() - any(TextSection s).getVirtualAddress()
+}
+
 private module Input implements Internal::InstructionInputSig {
   private class ProgramEntryInstruction0 extends Pre::Instructions::Instruction {
     ProgramEntryInstruction0() { this.getIndex() = getOffsetOfEntryPoint().toBigInt() }
   }
 
+  private class ExportedInstruction0 extends Pre::Instructions::Instruction {
+    ExportedInstruction0() { this.getIndex() = getOffsetOfAnExportedFunction().toBigInt() }
+  }
+
   private predicate fwd(Pre::Instructions::Instruction i) {
     i instanceof ProgramEntryInstruction0
+    or
+    i instanceof ExportedInstruction0
     or
     exists(Pre::Instructions::Instruction i0 | fwd(i0) |
       i0.getASuccessor() = i
@@ -119,15 +162,47 @@ private module Input implements Internal::InstructionInputSig {
 
   class BaseInstruction extends Pre::Instructions::Instruction {
     BaseInstruction() { fwd(this) }
-
-    BasicBlock getBasicBlock() { result.getAnInstruction() = this }
-
-    Function getEnclosingFunction() { result.getABasicBlock() = this.getBasicBlock() }
   }
 
   BaseInstruction getCallTarget(BaseInstruction b) { result = Pre::PreInput::getCallTarget(b) }
 
   BaseInstruction getJumpTarget(BaseInstruction b) { result = Pre::PreInput::getJumpTarget(b) }
+
+  class BaseRegister extends Pre::Instructions::Register { }
+
+  class BaseRipRegister extends BaseRegister, Pre::Instructions::RipRegister { }
+
+  class BaseRspRegister extends BaseRegister, Pre::Instructions::RspRegister { }
+
+  class BaseRbpRegister extends BaseRegister, Pre::Instructions::RbpRegister { }
+
+  class BaseOperand extends Pre::Instructions::Operand {
+    BaseOperand() { this.getUse() instanceof BaseInstruction }
+  }
+
+  class BaseRegisterAccess extends Pre::Instructions::RegisterAccess {
+    BaseRegister getTarget() { result = super.getTarget() }
+  }
+
+  class BaseUnusedOperand extends BaseOperand, Pre::Instructions::UnusedOperand { }
+
+  class BaseRegisterOperand extends BaseOperand, Pre::Instructions::RegisterOperand {
+    BaseRegisterAccess getAccess() { result = super.getAccess() }
+  }
+
+  final private class FinalBaseOperand = BaseOperand;
+
+  class BaseMemoryOperand extends FinalBaseOperand, Pre::Instructions::MemoryOperand {
+    BaseRegisterAccess getSegmentRegister() { result = super.getSegmentRegister() }
+
+    BaseRegisterAccess getBaseRegister() { result = super.getBaseRegister() }
+
+    BaseRegisterAccess getIndexRegister() { result = super.getIndexRegister() }
+  }
+
+  class BasePointerOperand extends BaseOperand, Pre::Instructions::PointerOperand { }
+
+  class BaseImmediateOperand extends BaseOperand, Pre::Instructions::ImmediateOperand { }
 }
 
 import Internal::MakeInstructions<Input>
@@ -136,17 +211,6 @@ class ProgramEntryInstruction extends Instruction {
   ProgramEntryInstruction() { this.getIndex() = getOffsetOfEntryPoint().toBigInt() }
 }
 
-class AdditionalDumpText extends Unit {
-  abstract string getAdditionalDumpText(Instruction i);
-}
-
-string getAdditionalDumpText(Instruction i) {
-  result = any(AdditionalDumpText adt).getAdditionalDumpText(i)
-}
-
-private class CallMemoryOperandWithDisplacementInstructionAdditionalDumpText extends AdditionalDumpText
-{
-  final override string getAdditionalDumpText(Instruction i) {
-    result = i.(Call).getTarget().getEnclosingFunction().getName()
-  }
+class ExportedEntryInstruction extends Instruction {
+  ExportedEntryInstruction() { this.getIndex() = getOffsetOfAnExportedFunction().toBigInt() }
 }
