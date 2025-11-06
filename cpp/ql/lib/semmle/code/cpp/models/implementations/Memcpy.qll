@@ -27,7 +27,9 @@ private class MemcpyFunction extends ArrayFunction, DataFlowFunction, SideEffect
     // bcopy(src, dest, num)
     // mempcpy(dest, src, num)
     // memccpy(dest, src, c, n)
-    this.hasGlobalName(["bcopy", mempcpy(), "memccpy", "__builtin___memcpy_chk"])
+    this.hasGlobalName([
+        "bcopy", mempcpy(), "memccpy", "__builtin___memcpy_chk", "__builtin___memmove_chk"
+      ])
   }
 
   /**
