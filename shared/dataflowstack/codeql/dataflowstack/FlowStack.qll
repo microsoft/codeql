@@ -14,18 +14,30 @@ module LanguageDataFlow<LocationSig Location, DF::InputSig<Location> Lang>{
   module AbstractDataFlowOverlay = DF::DataFlowMakeOverlay<Location, Lang>;
 
   /**
+   * A Flow Type instantiation, DataFlow or TaintFlow, regular or overlay, containing a PathNode class.
+   */
+  signature module FlowTypeImpl{
+    class PathNode{
+      PathNode getASuccessor();
+      Lang::Node getNode();
+      predicate isSource();
+    }
+  }
+
+  /**
    * Signatures and modules bound by a common DataFlow Config
    */
   module DataFlowConfigContext<AbstractDF::ConfigSig Config>{
 
-    signature module FlowInstance{
-      class PathNode;
+    /**
+     * The interface required from a DataFlow implementation to facilitate stack analysis.
+     */
+    signature module FlowInstance<FlowTypeImpl Flow>{
+      Lang::Node getNode(Flow::PathNode n);
 
-      Lang::Node getNode(PathNode n);
+      predicate isSource(Flow::PathNode n);
 
-      predicate isSource(PathNode n);
-
-      PathNode getASuccessor(PathNode n);
+      Flow::PathNode getASuccessor(Flow::PathNode n);
 
       Lang::DataFlowCallable getARuntimeTarget(Lang::DataFlowCall call);
 
@@ -42,21 +54,23 @@ module LanguageDataFlow<LocationSig Location, DF::InputSig<Location> Lang>{
 
   module BiStackAnalysis<
     AbstractDF::ConfigSig ConfigA,
-    DataFlowConfigContext<ConfigA>::FlowInstance FlowA,
+    FlowTypeImpl FlowTypeA,
+    DataFlowConfigContext<ConfigA>::FlowInstance<FlowTypeA> FlowA,
     AbstractDF::ConfigSig ConfigB,
-    DataFlowConfigContext<ConfigB>::FlowInstance FlowB>
+    FlowTypeImpl FlowTypeB,
+    DataFlowConfigContext<ConfigB>::FlowInstance<FlowTypeB> FlowB>
   {
-    module FlowStackA = FlowStack<ConfigA, FlowA>;
+    module FlowStackA = FlowStack<ConfigA, FlowTypeA, FlowA>;
 
-    module FlowStackB = FlowStack<ConfigB, FlowB>;
+    module FlowStackB = FlowStack<ConfigB, FlowTypeB, FlowB>;
 
     /**
      * Holds if either the Stack associated with `sourceNodeA` is a subset of the stack associated with `sourceNodeB`
      * or vice-versa.
      */
     predicate eitherStackSubset(
-      FlowA::PathNode sourceNodeA, FlowA::PathNode sinkNodeA, FlowB::PathNode sourceNodeB,
-      FlowB::PathNode sinkNodeB
+      FlowTypeA::PathNode sourceNodeA, FlowTypeA::PathNode sinkNodeA, FlowTypeB::PathNode sourceNodeB,
+      FlowTypeB::PathNode sinkNodeB
     ) {
       FlowStackA::isSource(sourceNodeA) and
       FlowStackB::isSource(sourceNodeB) and
@@ -66,10 +80,10 @@ module LanguageDataFlow<LocationSig Location, DF::InputSig<Location> Lang>{
         flowStackA = FlowStackA::createFlowStack(sourceNodeA, sinkNodeA) and
         flowStackB = FlowStackB::createFlowStack(sourceNodeB, sinkNodeB) and
         (
-          BiStackAnalysisImpl<ConfigA, FlowA, ConfigB, FlowB>::flowStackIsSubsetOf(flowStackA,
+          BiStackAnalysisImpl<ConfigA, FlowTypeA, FlowA, ConfigB, FlowTypeB, FlowB>::flowStackIsSubsetOf(flowStackA,
             flowStackB)
           or
-          BiStackAnalysisImpl<ConfigB, FlowB, ConfigA, FlowA>::flowStackIsSubsetOf(flowStackB,
+          BiStackAnalysisImpl<ConfigB, FlowTypeB, FlowB, ConfigA, FlowTypeA, FlowA>::flowStackIsSubsetOf(flowStackB,
             flowStackA)
         )
       )
@@ -83,8 +97,8 @@ module LanguageDataFlow<LocationSig Location, DF::InputSig<Location> Lang>{
      * determine whether one Flow's Stack (at time of sink execution) is a subset of the other flow's Stack.
      */
     predicate eitherStackTerminatingSubset(
-      FlowA::PathNode sourceNodeA, FlowA::PathNode sinkNodeA, FlowB::PathNode sourceNodeB,
-      FlowB::PathNode sinkNodeB
+      FlowTypeA::PathNode sourceNodeA, FlowTypeA::PathNode sinkNodeA, FlowTypeB::PathNode sourceNodeB,
+      FlowTypeB::PathNode sinkNodeB
     ) {
       FlowStackA::isSource(sourceNodeA) and
       FlowStackB::isSource(sourceNodeB) and
@@ -94,10 +108,10 @@ module LanguageDataFlow<LocationSig Location, DF::InputSig<Location> Lang>{
         flowStackA = FlowStackA::createFlowStack(sourceNodeA, sinkNodeA) and
         flowStackB = FlowStackB::createFlowStack(sourceNodeB, sinkNodeB) and
         (
-          BiStackAnalysisImpl<ConfigA, FlowA, ConfigB, FlowB>::flowStackIsConvergingTerminatingSubsetOf(flowStackA,
+          BiStackAnalysisImpl<ConfigA, FlowTypeA, FlowA, ConfigB, FlowTypeB, FlowB>::flowStackIsConvergingTerminatingSubsetOf(flowStackA,
             flowStackB)
           or
-          BiStackAnalysisImpl<ConfigB, FlowB, ConfigA, FlowA>::flowStackIsConvergingTerminatingSubsetOf(flowStackB,
+          BiStackAnalysisImpl<ConfigB, FlowTypeB, FlowB, ConfigA, FlowTypeA, FlowA>::flowStackIsConvergingTerminatingSubsetOf(flowStackB,
             flowStackA)
         )
       )
@@ -110,7 +124,7 @@ module LanguageDataFlow<LocationSig Location, DF::InputSig<Location> Lang>{
      * The top of stackA is in stackB and the bottom of stackA is then some successor further down stackB.
      */
     predicate flowStackIsSubsetOf(FlowStackA::FlowStack flowStackA, FlowStackB::FlowStack flowStackB) {
-      BiStackAnalysisImpl<ConfigA, FlowA, ConfigB, FlowB>::flowStackIsSubsetOf(flowStackA,
+      BiStackAnalysisImpl<ConfigA, FlowTypeA, FlowA, ConfigB, FlowTypeB, FlowB>::flowStackIsSubsetOf(flowStackA,
         flowStackB)
     }
 
@@ -122,21 +136,23 @@ module LanguageDataFlow<LocationSig Location, DF::InputSig<Location> Lang>{
     predicate flowStackIsConvergingTerminatingSubsetOf(
       FlowStackA::FlowStack flowStackA, FlowStackB::FlowStack flowStackB
     ) {
-      BiStackAnalysisImpl<ConfigA, FlowA, ConfigB, FlowB>::flowStackIsConvergingTerminatingSubsetOf(flowStackA,
+      BiStackAnalysisImpl<ConfigA, FlowTypeA, FlowA, ConfigB, FlowTypeB, FlowB>::flowStackIsConvergingTerminatingSubsetOf(flowStackA,
         flowStackB)
     }
   }
 
   private module BiStackAnalysisImpl<
     AbstractDF::ConfigSig ConfigA,
-    DataFlowConfigContext<ConfigA>::FlowInstance FlowA,
+    FlowTypeImpl FlowTypeA,
+    DataFlowConfigContext<ConfigA>::FlowInstance<FlowTypeA> FlowA,
     AbstractDF::ConfigSig ConfigB,
-    DataFlowConfigContext<ConfigB>::FlowInstance FlowB>
+    FlowTypeImpl FlowTypeB,
+    DataFlowConfigContext<ConfigB>::FlowInstance<FlowTypeB> FlowB>
   {
 
-    module FlowStackA = FlowStack<ConfigA, FlowA>;
+    module FlowStackA = FlowStack<ConfigA, FlowTypeA, FlowA>;
 
-    module FlowStackB = FlowStack<ConfigB, FlowB>;
+    module FlowStackB = FlowStack<ConfigB, FlowTypeB, FlowB>;
 
     /**
      * Holds if stackA is a subset of stackB,
@@ -182,7 +198,8 @@ module LanguageDataFlow<LocationSig Location, DF::InputSig<Location> Lang>{
 
   module FlowStack<
     AbstractDF::ConfigSig Config,
-    DataFlowConfigContext<Config>::FlowInstance Flow>{
+    FlowTypeImpl FlowType,
+    DataFlowConfigContext<Config>::FlowInstance<FlowType> Flow>{
 
     /**
      * Determines whether or not the given PathNode is a source
@@ -192,11 +209,11 @@ module LanguageDataFlow<LocationSig Location, DF::InputSig<Location> Lang>{
     /**
      * Determines whether or not the given PathNode is a sink
      */
-    predicate isSink(Flow::PathNode node) { not exists(Flow::getASuccessor(node)) }
+    predicate isSink(FlowType::PathNode node) { not exists(Flow::getASuccessor(node)) }
 
     /** A FlowStack encapsulates flows between a source and a sink, and all the pathways inbetween (possibly multiple) */
     private newtype FlowStackType =
-      TFlowStack(Flow::PathNode source, Flow::PathNode sink) {
+      TFlowStack(FlowType::PathNode source, FlowType::PathNode sink) {
         Flow::isSource(source) and
         not exists(Flow::getASuccessor(sink)) and
         Flow::getASuccessor*(source) = sink
@@ -239,14 +256,14 @@ module LanguageDataFlow<LocationSig Location, DF::InputSig<Location> Lang>{
       }
     }
 
-    FlowStack createFlowStack(Flow::PathNode source, Flow::PathNode sink) {
+    FlowStack createFlowStack(FlowType::PathNode source, FlowType::PathNode sink) {
       result = TFlowStack(source, sink)
     }
 
     /** A FlowStackFrame encapsulates a Stack frame that is bound between a given source and sink. */
     private newtype FlowStackFrameType =
       TFlowStackFrame(FlowStack flowStack, CallFrame frame) {
-        exists(Flow::PathNode source, Flow::PathNode sink |
+        exists(FlowType::PathNode source, FlowType::PathNode sink |
           flowStack = TFlowStack(source, sink) and
           frame.getPathNode() = Flow::getASuccessor*(source) and
           Flow::getASuccessor*(frame.getPathNode()) = sink
@@ -301,7 +318,7 @@ module LanguageDataFlow<LocationSig Location, DF::InputSig<Location> Lang>{
       /**
        * Unpacks the PathNode associated with this FlowStackFrame
        */
-      Flow::PathNode getPathNode() {
+      FlowType::PathNode getPathNode() {
         exists(CallFrame callFrame |
           this = TFlowStackFrame(_, callFrame) and
           result = callFrame.getPathNode()
@@ -323,7 +340,7 @@ module LanguageDataFlow<LocationSig Location, DF::InputSig<Location> Lang>{
      * A CallFrame is a PathNode that represents a (DataFlowCall/Accessor).
      */
     private newtype TCallFrameType =
-      TCallFrame(Flow::PathNode node) {
+      TCallFrame(FlowType::PathNode node) {
         exists(Lang::DataFlowCall c |
           Flow::getAnArgumentNode(c) = Flow::getNode(node)
         )
@@ -359,7 +376,7 @@ module LanguageDataFlow<LocationSig Location, DF::InputSig<Location> Lang>{
        * Unpack the CallFrame and retrieve the associated DataFlowCall.
        */
       Lang::DataFlowCall getCall() {
-        exists(Lang::DataFlowCall call, Flow::PathNode node |
+        exists(Lang::DataFlowCall call, FlowType::PathNode node |
           this = TCallFrame(node) and
           Flow::getAnArgumentNode(call) = Flow::getNode(node) and
           result = call
@@ -369,8 +386,8 @@ module LanguageDataFlow<LocationSig Location, DF::InputSig<Location> Lang>{
       /**
        * Unpack the CallFrame and retrieve the associated PathNode.
        */
-      Flow::PathNode getPathNode() {
-        exists(Flow::PathNode n |
+      FlowType::PathNode getPathNode() {
+        exists(FlowType::PathNode n |
           this = TCallFrame(n) and
           result = n
         )
@@ -381,8 +398,8 @@ module LanguageDataFlow<LocationSig Location, DF::InputSig<Location> Lang>{
      * From the given PathNode argument, find the set of successors that are an argument in a DataFlowCall,
      * and return them as the result.
      */
-    private Flow::PathNode getSuccessorCall(Flow::PathNode n) {
-      exists(Flow::PathNode succ |
+    private FlowType::PathNode getSuccessorCall(FlowType::PathNode n) {
+      exists(FlowType::PathNode succ |
         succ = Flow::getASuccessor(n) and
         if
           exists(Lang::DataFlowCall c |
@@ -396,7 +413,7 @@ module LanguageDataFlow<LocationSig Location, DF::InputSig<Location> Lang>{
     /**
      * A user-supplied predicate which given a Stack Frame, returns some Node associated with it.
      */
-    signature Lang::Node extractNodeFromFrame(Flow::PathNode pathNode);
+    signature Lang::Node extractNodeFromFrame(FlowType::PathNode pathNode);
 
     /**
      * Provides some higher-order predicates for analyzing Stacks
