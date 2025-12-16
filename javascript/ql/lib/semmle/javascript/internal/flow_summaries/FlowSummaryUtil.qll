@@ -1,3 +1,6 @@
+overlay[local?]
+module;
+
 private import javascript
 private import semmle.javascript.dataflow.FlowSummary
 private import semmle.javascript.dataflow.internal.Contents::Private
@@ -49,3 +52,10 @@ string getAnArrayContent() {
   // Values stored at an unknown index
   result = "ArrayElement[?]"
 }
+
+/**
+ * Gets an argument position up to a certain limit.
+ *
+ * This can be used to generate flow summaries that should preserve such positions.
+ */
+int getAnArgumentPosition() { result = [0 .. 10] }

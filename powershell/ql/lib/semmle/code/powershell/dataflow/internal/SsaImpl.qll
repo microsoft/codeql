@@ -1,23 +1,17 @@
 private import codeql.ssa.Ssa as SsaImplCommon
 private import powershell
 private import semmle.code.powershell.Cfg as Cfg
+private import semmle.code.powershell.controlflow.BasicBlocks as BasicBlocks
 private import semmle.code.powershell.controlflow.internal.ControlFlowGraphImpl as ControlFlowGraphImpl
 private import semmle.code.powershell.dataflow.Ssa
 import Cfg::CfgNodes
 private import ExprNodes
 private import StmtNodes
 
-module SsaInput implements SsaImplCommon::InputSig<Location> {
+private class BasicBlock = BasicBlocks::Cfg::BasicBlock;
+
+module SsaInput implements SsaImplCommon::InputSig<Location, BasicBlock> {
   private import semmle.code.powershell.controlflow.ControlFlowGraph as Cfg
-  private import semmle.code.powershell.controlflow.BasicBlocks as BasicBlocks
-
-  class BasicBlock = BasicBlocks::BasicBlock;
-
-  class ControlFlowNode = Cfg::CfgNode;
-
-  BasicBlock getImmediateBasicBlockDominator(BasicBlock bb) { result = bb.getImmediateDominator() }
-
-  BasicBlock getABasicBlockSuccessor(BasicBlock bb) { result = bb.getASuccessor() }
 
   class SourceVariable = Variable;
 
@@ -28,6 +22,8 @@ module SsaInput implements SsaImplCommon::InputSig<Location> {
   predicate variableWrite(BasicBlock bb, int i, SourceVariable v, boolean certain) {
     (
       uninitializedWrite(bb, i, v)
+      or
+      envVarWrite(bb, i, v)
       or
       variableWriteActual(bb, i, v, _)
       or
@@ -43,12 +39,16 @@ module SsaInput implements SsaImplCommon::InputSig<Location> {
   }
 
   predicate variableRead(BasicBlock bb, int i, Variable v, boolean certain) {
-    variableReadActual(bb, i, v) and
+    (
+      variableReadActual(bb, i, v)
+      or
+      envVarRead(bb, i, v)
+    ) and
     certain = true
   }
 }
 
-import SsaImplCommon::Make<Location, SsaInput> as Impl
+import SsaImplCommon::Make<Location, BasicBlocks::Cfg, SsaInput> as Impl
 
 class Definition = Impl::Definition;
 
@@ -66,6 +66,14 @@ predicate uninitializedWrite(Cfg::EntryBasicBlock bb, int i, Variable v) {
   bb.getANode().getAstNode() = v
 }
 
+predicate envVarWrite(Cfg::EntryBasicBlock bb, int i, EnvVariable v) {
+  exists(VarReadAccess va |
+    va.getVariable() = v and
+    va.getEnclosingFunction().getBody() = bb.getScope() and
+    i = -1
+  )
+}
+
 predicate parameterWrite(Cfg::EntryBasicBlock bb, int i, Parameter p) {
   bb.getNode(i).getAstNode() = p
 }
@@ -75,6 +83,14 @@ private predicate variableReadActual(Cfg::BasicBlock bb, int i, Variable v) {
   exists(VarReadAccess read |
     read.getVariable() = v and
     read = bb.getNode(i).getAstNode()
+  )
+}
+
+predicate envVarRead(Cfg::ExitBasicBlock bb, int i, EnvVariable v) {
+  exists(VarWriteAccess va |
+    va.getVariable() = v and
+    va.getEnclosingFunction().getBody() = bb.getScope() and
+    bb.getNode(i) instanceof ExitNode
   )
 }
 
@@ -163,9 +179,10 @@ private module Cached {
     cached // nothing is actually cached
     module BarrierGuard<guardChecksSig/3 guardChecks> {
       private predicate guardChecksAdjTypes(
-        DataFlowIntegrationInput::Guard g, DataFlowIntegrationInput::Expr e, boolean branch
+        DataFlowIntegrationInput::Guard g, DataFlowIntegrationInput::Expr e,
+        DataFlowIntegrationInput::GuardValue branch
       ) {
-        guardChecks(g, e, branch)
+        guardChecks(g, e.asExprCfgNode(), branch)
       }
 
       private Node getABarrierNodeImpl() {
@@ -261,15 +278,56 @@ class ParameterExt extends TParameterExt {
 }
 
 private module DataFlowIntegrationInput implements Impl::DataFlowIntegrationInputSig {
-  class Expr extends Cfg::CfgNodes::ExprCfgNode {
-    predicate hasCfgNode(SsaInput::BasicBlock bb, int i) { this = bb.getNode(i) }
+  private import codeql.util.Boolean
+
+  private newtype TExpr =
+    TExprCfgNode(Cfg::CfgNodes::ExprCfgNode e) or
+    TFinalEnvVarRead(Scope scope, EnvVariable v) {
+      exists(Cfg::ExitBasicBlock exit |
+        exit.getScope() = scope and
+        envVarRead(exit, _, v)
+      )
+    }
+
+  class Expr extends TExpr {
+    Cfg::CfgNodes::ExprCfgNode asExprCfgNode() { this = TExprCfgNode(result) }
+
+    predicate isFinalEnvVarRead(Scope scope, EnvVariable v) { this = TFinalEnvVarRead(scope, v) }
+
+    predicate hasCfgNode(BasicBlock bb, int i) {
+      this.asExprCfgNode() = bb.getNode(i)
+      or
+      exists(EnvVariable v |
+        this.isFinalEnvVarRead(bb.getScope(), v) and
+        bb.getNode(i) instanceof ExitNode
+      )
+    }
+
+    string toString() {
+      result = this.asExprCfgNode().toString()
+      or
+      exists(EnvVariable v |
+        this.isFinalEnvVarRead(_, v) and
+        result = v.toString()
+      )
+    }
   }
 
-  Expr getARead(Definition def) { result = Cached::getARead(def) }
+  Expr getARead(Definition def) {
+    result.asExprCfgNode() = Cached::getARead(def)
+    or
+    exists(Variable v, Cfg::BasicBlock bb, int i |
+      Impl::ssaDefReachesRead(v, def, bb, i) and
+      envVarRead(bb, i, v) and
+      result.isFinalEnvVarRead(bb.getScope(), v)
+    )
+  }
 
   predicate ssaDefHasSource(WriteDefinition def) {
     any(ParameterExt p).isInitializedBy(def) or def.(Ssa::WriteDefinition).assigns(_)
   }
+
+  class GuardValue = Boolean;
 
   class Guard extends Cfg::CfgNodes::AstCfgNode {
     /**
@@ -277,8 +335,16 @@ private module DataFlowIntegrationInput implements Impl::DataFlowIntegrationInpu
      * and that the edge from `bb1` to `bb2` corresponds to the evaluation of this
      * guard to `branch`.
      */
-    predicate controlsBranchEdge(SsaInput::BasicBlock bb1, SsaInput::BasicBlock bb2, boolean branch) {
-      exists(Cfg::SuccessorTypes::ConditionalSuccessor s |
+    predicate valueControlsBranchEdge(BasicBlock bb1, BasicBlock bb2, GuardValue branch) {
+      this.hasValueBranchEdge(bb1, bb2, branch)
+    }
+
+    /**
+     * Holds if the evaluation of this guard to `branch` corresponds to the edge
+     * from `bb1` to `bb2`.
+     */
+    predicate hasValueBranchEdge(BasicBlock bb1, BasicBlock bb2, GuardValue branch) {
+      exists(Cfg::ConditionalSuccessor s |
         this.getBasicBlock() = bb1 and
         bb2 = bb1.getASuccessor(s) and
         s.getValue() = branch
@@ -287,9 +353,7 @@ private module DataFlowIntegrationInput implements Impl::DataFlowIntegrationInpu
   }
 
   /** Holds if the guard `guard` controls block `bb` upon evaluating to `branch`. */
-  predicate guardDirectlyControlsBlock(Guard guard, SsaInput::BasicBlock bb, boolean branch) {
-    none()
-  }
+  predicate guardDirectlyControlsBlock(Guard guard, BasicBlock bb, GuardValue branch) { none() }
 }
 
 private module DataFlowIntegrationImpl = Impl::DataFlowIntegration<DataFlowIntegrationInput>;

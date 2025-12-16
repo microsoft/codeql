@@ -2,10 +2,10 @@
  * @name File is not always closed
  * @description Opening a file without ensuring that it is always closed may lead to data loss or resource leaks.
  * @kind problem
- * @tags efficiency
+ * @tags quality
+ *       reliability
  *       correctness
- *       resources
- *       quality
+ *       performance
  *       external/cwe/cwe-772
  * @problem.severity warning
  * @sub-severity high
@@ -15,12 +15,14 @@
 
 import python
 import FileNotAlwaysClosedQuery
+import codeql.util.Option
 
-from FileOpen fo, string msg
+from FileOpen fo, string msg, LocatableOption<Location, DataFlow::Node>::Option exec
 where
   fileNotClosed(fo) and
-  msg = "File is opened but is not closed."
+  msg = "File is opened but is not closed." and
+  exec.isNone()
   or
-  fileMayNotBeClosedOnException(fo, _) and
-  msg = "File may not be closed if an exception is raised."
-select fo, msg
+  fileMayNotBeClosedOnException(fo, exec.asSome()) and
+  msg = "File may not be closed if $@ raises an exception."
+select fo, msg, exec, "this operation"

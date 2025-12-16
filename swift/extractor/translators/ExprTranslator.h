@@ -37,7 +37,6 @@ class ExprTranslator : public AstTranslatorBase<ExprTranslator> {
   codeql::MakeTemporarilyEscapableExpr translateMakeTemporarilyEscapableExpr(
       const swift::MakeTemporarilyEscapableExpr& expr);
   codeql::ObjCSelectorExpr translateObjCSelectorExpr(const swift::ObjCSelectorExpr& expr);
-  codeql::OneWayExpr translateOneWayExpr(const swift::OneWayExpr& expr);
   codeql::OpenExistentialExpr translateOpenExistentialExpr(const swift::OpenExistentialExpr& expr);
   codeql::OptionalEvaluationExpr translateOptionalEvaluationExpr(
       const swift::OptionalEvaluationExpr& expr);
@@ -129,6 +128,7 @@ class ExprTranslator : public AstTranslatorBase<ExprTranslator> {
       const swift::ExtractFunctionIsolationExpr& expr);
   codeql::CurrentContextIsolationExpr translateCurrentContextIsolationExpr(
       const swift::CurrentContextIsolationExpr& expr);
+  codeql::TypeValueExpr translateTypeValueExpr(const swift::TypeValueExpr& expr);
 
  private:
   void fillClosureExpr(const swift::AbstractClosureExpr& expr, codeql::ClosureExpr& entry);

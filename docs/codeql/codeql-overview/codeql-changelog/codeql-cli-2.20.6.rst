@@ -9,7 +9,7 @@ CodeQL 2.20.6 (2025-03-06)
    :local:
    :backlinks: none
 
-This is an overview of changes in the CodeQL CLI and relevant CodeQL query and library packs. For additional updates on changes to the CodeQL code scanning experience, check out the `code scanning section on the GitHub blog <https://github.blog/tag/code-scanning/>`__, `relevant GitHub Changelog updates <https://github.blog/changelog/label/code-scanning/>`__, `changes in the CodeQL extension for Visual Studio Code <https://marketplace.visualstudio.com/items/GitHub.vscode-codeql/changelog>`__, and the `CodeQL Action changelog <https://github.com/github/codeql-action/blob/main/CHANGELOG.md>`__.
+This is an overview of changes in the CodeQL CLI and relevant CodeQL query and library packs. For additional updates on changes to the CodeQL code scanning experience, check out the `code scanning section on the GitHub blog <https://github.blog/tag/code-scanning/>`__, `relevant GitHub Changelog updates <https://github.blog/changelog/label/application-security/>`__, `changes in the CodeQL extension for Visual Studio Code <https://marketplace.visualstudio.com/items/GitHub.vscode-codeql/changelog>`__, and the `CodeQL Action changelog <https://github.com/github/codeql-action/blob/main/CHANGELOG.md>`__.
 
 Security Coverage
 -----------------
@@ -35,7 +35,7 @@ Bug Fixes
 GitHub Actions
 """"""""""""""
 
-*   The :code:`actions/unversioned-immutable-action` query will no longer report any alerts, since the Immutable Actions feature is not yet available for customer use. The query remains in the default Code Scanning suites for use internal to GitHub. Once the Immutable Actions feature is available, the query will be updated to report alerts again.
+*   The :code:`actions/unversioned-immutable-action` query will no longer report any alerts, since the Immutable Actions feature is not yet available for customer use. The query has also been moved to the experimental folder and will not be used in code scanning unless it is explicitly added to a code scanning configuration. Once the Immutable Actions feature is available, the query will be updated to report alerts again.
 
 Major Analysis Improvements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

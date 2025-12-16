@@ -1,6 +1,7 @@
 private import powershell
 private import DataFlowDispatch
 private import DataFlowPrivate
+private import semmle.code.powershell.dataflow.Ssa
 private import semmle.code.powershell.typetracking.internal.TypeTrackingImpl
 private import semmle.code.powershell.ApiGraphs
 private import semmle.code.powershell.Cfg
@@ -12,6 +13,9 @@ private import semmle.code.powershell.Cfg
 class Node extends TNode {
   /** Gets the expression corresponding to this node, if any. */
   CfgNodes::ExprCfgNode asExpr() { result = this.(ExprNode).getExprNode() }
+
+  /** Gets the definition corresponding to this node, if any. */
+  Ssa::Definition asDefinition() { result = this.(SsaDefinitionNodeImpl).getDefinition() }
 
   ScriptBlock asCallable() { result = this.(CallableNode).asCallableAstNode() }
 
@@ -477,14 +481,10 @@ module BarrierGuard<guardChecksSig/3 guardChecks> {
  *
  * For example, `[Foo]::new()` or `New-Object Foo`.
  */
-class ObjectCreationNode extends ExprNode {
-  CfgNodes::ExprNodes::ObjectCreationCfgNode objectCreation;
+class ObjectCreationNode extends CallNode {
+  override CfgNodes::ExprNodes::ObjectCreationCfgNode call;
 
-  ObjectCreationNode() { this.getExprNode() = objectCreation }
-
-  final CfgNodes::ExprNodes::ObjectCreationCfgNode getObjectCreationNode() {
-    result = objectCreation
-  }
+  final CfgNodes::ExprNodes::ObjectCreationCfgNode getObjectCreationNode() { result = call }
 
   /**
    * Gets the node corresponding to the expression that decides which type
@@ -493,9 +493,13 @@ class ObjectCreationNode extends ExprNode {
    * For example, in `[Foo]::new()`, this would be `Foo`, and in
    * `New-Object Foo`, this would be `Foo`.
    */
-  Node getConstructedTypeNode() { result.asExpr() = objectCreation.getConstructedTypeExpr() }
+  Node getConstructedTypeNode() { result.asExpr() = call.getConstructedTypeExpr() }
 
-  string getConstructedTypeName() { result = this.getObjectCreationNode().getConstructedTypeName() }
+  bindingset[result]
+  pragma[inline_late]
+  string getAConstructedTypeName() {
+    result = this.getObjectCreationNode().getAConstructedTypeName()
+  }
 }
 
 /** A call, viewed as a node in a data flow graph. */
@@ -536,13 +540,22 @@ class CallNode extends ExprNode {
    * Note that this predicate doesn't get the pipeline argument, if any.
    */
   Node getAnArgument() { result.asExpr() = call.getAnArgument() }
+
+  Node getCallee() { result.asExpr() = call.getCallee() }
 }
 
-/** A call to operator `&`, viwed as a node in a data flow graph. */
+/** A call to operator `&`, viewed as a node in a data flow graph. */
 class CallOperatorNode extends CallNode {
   override CfgNodes::ExprNodes::CallOperatorCfgNode call;
 
-  Node getCommand() { result.asExpr() = call.getCommand() } // TODO: Alternatively, we could remap calls to & as command expressions.
+  Node getCommand() { result.asExpr() = call.getCommand() }
+}
+
+/** A call to operator `.`, viewed as a node in a data flow graph. */
+class DotSourcingOperatorNode extends CallNode {
+  override CfgNodes::ExprNodes::DotSourcingOperatorCfgNode call;
+
+  Node getCommand() { result.asExpr() = call.getCommand() }
 }
 
 /**
@@ -558,7 +571,11 @@ class TypeNameNode extends ExprNode {
 
   override CfgNodes::ExprNodes::TypeNameExprCfgNode getExprNode() { result = n }
 
-  string getName() { result = n.getName() }
+  bindingset[result]
+  pragma[inline_late]
+  string getAName() { result = n.getAName() }
+
+  string getLowerCaseName() { result = n.getLowerCaseName() }
 
   predicate isQualified() { n.isQualified() }
 
@@ -584,5 +601,9 @@ class AutomaticVariableNode extends ExprNode {
 
   final override CfgNodes::ExprNodes::AutomaticVariableCfgNode getExprNode() { result = n }
 
-  string getName() { result = n.getName() }
+  bindingset[result]
+  pragma[inline_late]
+  string getAName() { result = n.getAName() }
+
+  string getLowerCaseName() { result = n.getLowerCaseName() }
 }

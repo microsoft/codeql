@@ -1,6 +1,8 @@
 /**
  * Provides classes and predicates for working with standard classes and methods from the JDK.
  */
+overlay[local?]
+module;
 
 import Member
 import semmle.code.java.security.ExternalProcess
@@ -209,6 +211,11 @@ class TypeObjectOutputStream extends RefType {
   TypeObjectOutputStream() { this.hasQualifiedName("java.io", "ObjectOutputStream") }
 }
 
+/** The type `java.io.ObjectInput`. */
+class TypeObjectInput extends RefType {
+  TypeObjectInput() { this.hasQualifiedName("java.io", "ObjectInput") }
+}
+
 /** The type `java.io.ObjectInputStream`. */
 class TypeObjectInputStream extends RefType {
   TypeObjectInputStream() { this.hasQualifiedName("java.io", "ObjectInputStream") }
@@ -314,12 +321,7 @@ class WriteObjectMethod extends Method {
 class ReadObjectMethod extends Method {
   ReadObjectMethod() {
     this.getDeclaringType() instanceof TypeObjectInputStream and
-    (
-      this.hasName("readObject") or
-      this.hasName("readObjectOverride") or
-      this.hasName("readUnshared") or
-      this.hasName("resolveObject")
-    )
+    this.hasName(["readObject", "readObjectOverride", "readUnshared", "resolveObject"])
   }
 }
 

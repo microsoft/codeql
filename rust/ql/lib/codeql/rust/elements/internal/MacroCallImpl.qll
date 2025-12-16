@@ -11,14 +11,26 @@ private import codeql.rust.elements.internal.generated.MacroCall
  * be referenced directly.
  */
 module Impl {
+  private import rust
+  private import codeql.rust.internal.PathResolution
+
   // the following QLdoc is generated: if you need to edit it, do it in the schema file
   /**
-   * A MacroCall. For example:
+   * A macro invocation.
+   *
+   * For example:
    * ```rust
-   * todo!()
+   * println!("Hello, world!");
    * ```
    */
   class MacroCall extends Generated::MacroCall {
     override string toStringImpl() { result = this.getPath().toAbbreviatedString() + "!..." }
+
+    /**
+     * Gets the macro definition that this macro call resolves to.
+     *
+     * The result is either a `MacroDef` or a `MacroRules`.
+     */
+    Item resolveMacro() { result = resolvePath(this.getPath()) }
   }
 }

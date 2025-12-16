@@ -1,3 +1,105 @@
+## 6.1.3
+
+No user-facing changes.
+
+## 6.1.2
+
+No user-facing changes.
+
+## 6.1.1
+
+No user-facing changes.
+
+## 6.1.0
+
+### Major Analysis Improvements
+
+* Upgraded to allow analysis of Swift 6.2.1.
+
+## 6.0.0
+
+### Breaking Changes
+
+* The `OpenedArchetypeType` class has been renamed as `ExistentialArchetypeType`.
+* The `OtherAvailabilitySpec` class has been removed. Use `AvailabilitySpec::isWildcard` instead.
+* The `PlatformVersionAvailabilitySpec` has been removed. Use `AvailabilitySpec::getPlatform` and `AvailabilitySpec::getVersion` instead.
+
+### New Features
+
+* Added AST nodes `UsingDecl`, `UnsafeExpr`, and `InlineArrayType` that correspond to new nodes in Swift 6.2.
+* Added new predicates `isDistributedGet`, `isRead2`, `isModify2`, and `isInit` to the `Accessor` class that correspond to new accessors in Swift 6.2.
+* Added a new predicate `isApply` to the `KeyPathComponent` class that corresponds to method and initializer key path components in Swift 6.2.
+
+### Major Analysis Improvements
+
+* Upgraded to allow analysis of Swift 6.2.
+* Support for experimental Embedded Swift has been dropped.
+
+## 5.0.9
+
+No user-facing changes.
+
+## 5.0.8
+
+No user-facing changes.
+
+## 5.0.7
+
+### Minor Analysis Improvements
+
+* Updated to allow analysis of Swift 6.1.3.
+
+## 5.0.6
+
+No user-facing changes.
+
+## 5.0.5
+
+No user-facing changes.
+
+## 5.0.4
+
+### Minor Analysis Improvements
+
+* The regular expressions in `SensitiveDataHeuristics.qll` have been extended to find more instances of sensitive data such as secrets used in authentication, finance and health information, and device data. The heuristics have also been refined to find fewer false positive matches. This will improve results for queries related to sensitive information.
+
+## 5.0.3
+
+No user-facing changes.
+
+## 5.0.2
+
+No user-facing changes.
+
+## 5.0.1
+
+### Minor Analysis Improvements
+
+* Updated to allow analysis of Swift 6.1.2.
+
+## 5.0.0
+
+### Breaking Changes
+
+* Deleted the deprecated `parseContent` predicate from the `ExternalFlow.qll`.
+* Deleted the deprecated `hasLocationInfo` predicate from the `DataFlowPublic.qll`.
+* Deleted the deprecated `SummaryComponent` class from the `FlowSummary.qll`.
+* Deleted the deprecated `SummaryComponentStack` class from the `FlowSummary.qll`.
+* Deleted the deprecated `SummaryComponent` module from the `FlowSummary.qll`.
+* Deleted the deprecated `SummaryComponentStack` module from the `FlowSummary.qll`.
+* Deleted the deprecated `RequiredSummaryComponentStack` class from the `FlowSummary.qll`.
+
+### Minor Analysis Improvements
+
+* Updated to allow analysis of Swift 6.1.1.
+* `TypeValueExpr` experimental AST leaf is now implemented in the control flow library
+
+## 4.3.0
+
+### New Features
+
+* Added AST nodes `UnsafeCastExpr`, `TypeValueExpr`, `IntegerType`, and `BuiltinFixedArrayType` that correspond to new nodes added by Swift 6.1.
+
 ## 4.2.0
 
 ### Major Analysis Improvements
@@ -7,7 +109,7 @@
 ### Minor Analysis Improvements
 
 * Added AST nodes `ActorIsolationErasureExpr`, `CurrentContextIsolationExpr`,
-  `ExtracFunctionIsolationExpr` and `UnreachableExpr` that correspond to new nodes
+  `ExtractFunctionIsolationExpr` and `UnreachableExpr` that correspond to new nodes
   added by Swift 6.0.
 
 ## 4.1.4

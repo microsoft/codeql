@@ -37,6 +37,8 @@ private module UrlRedirectConfig implements DataFlow::ConfigSig {
   predicate isSink(DataFlow::Node sink) { sink instanceof Sink }
 
   predicate isBarrier(DataFlow::Node node) { node instanceof Sanitizer }
+
+  predicate observeDiffInformedIncrementalMode() { any() }
 }
 
 /**
@@ -109,7 +111,7 @@ class HttpServerTransferSink extends Sink {
   }
 }
 
-private predicate isLocalUrlSanitizerMethodCall(MethodCall guard, Expr e, AbstractValue v) {
+private predicate isLocalUrlSanitizerMethodCall(MethodCall guard, Expr e, GuardValue v) {
   exists(Method m | m = guard.getTarget() |
     m.hasName("IsLocalUrl") and
     e = guard.getArgument(0)
@@ -117,10 +119,10 @@ private predicate isLocalUrlSanitizerMethodCall(MethodCall guard, Expr e, Abstra
     m.hasName("IsUrlLocalToHost") and
     e = guard.getArgument(1)
   ) and
-  v.(AbstractValues::BooleanValue).getValue() = true
+  v.asBooleanValue() = true
 }
 
-private predicate isLocalUrlSanitizer(Guard g, Expr e, AbstractValue v) {
+private predicate isLocalUrlSanitizer(Guard g, Expr e, GuardValue v) {
   isLocalUrlSanitizerMethodCall(g, e, v)
 }
 
@@ -135,14 +137,14 @@ class LocalUrlSanitizer extends Sanitizer {
 /**
  * An argument to a call to `List.Contains()` that is a sanitizer for URL redirects.
  */
-private predicate isContainsUrlSanitizer(Guard guard, Expr e, AbstractValue v) {
+private predicate isContainsUrlSanitizer(Guard guard, Expr e, GuardValue v) {
   guard =
     any(MethodCall method |
       exists(Method m | m = method.getTarget() |
         m.hasName("Contains") and
         e = method.getArgument(0)
       ) and
-      v.(AbstractValues::BooleanValue).getValue() = true
+      v.asBooleanValue() = true
     )
 }
 
@@ -161,12 +163,12 @@ class ContainsUrlSanitizer extends Sanitizer {
 /**
  * A check that the URL is relative, and therefore safe for URL redirects.
  */
-private predicate isRelativeUrlSanitizer(Guard guard, Expr e, AbstractValue v) {
+private predicate isRelativeUrlSanitizer(Guard guard, Expr e, GuardValue v) {
   guard =
     any(PropertyAccess access |
       access.getProperty().hasFullyQualifiedName("System", "Uri", "IsAbsoluteUri") and
       e = access.getQualifier() and
-      v.(AbstractValues::BooleanValue).getValue() = false
+      v.asBooleanValue() = false
     )
 }
 
@@ -183,16 +185,14 @@ class RelativeUrlSanitizer extends Sanitizer {
  * A comparison on the `Host` property of a url, that is a sanitizer for URL redirects.
  * E.g. `url.Host == "example.org"`
  */
-private predicate isHostComparisonSanitizer(Guard guard, Expr e, AbstractValue v) {
+private predicate isHostComparisonSanitizer(Guard guard, Expr e, GuardValue v) {
   guard =
     any(EqualityOperation comparison |
       exists(PropertyAccess access | access = comparison.getAnOperand() |
         access.getProperty().hasFullyQualifiedName("System", "Uri", "Host") and
         e = access.getQualifier()
       ) and
-      if comparison instanceof EQExpr
-      then v.(AbstractValues::BooleanValue).getValue() = true
-      else v.(AbstractValues::BooleanValue).getValue() = false
+      if comparison instanceof EQExpr then v.asBooleanValue() = true else v.asBooleanValue() = false
     )
 }
 

@@ -1,6 +1,8 @@
 /**
  * Provides classes and predicates for defining flow summaries.
  */
+overlay[local?]
+module;
 
 private import codeql.dataflow.DataFlow as DF
 private import codeql.util.Location
@@ -53,6 +55,20 @@ signature module InputSig<LocationSig Location, DF::InputSig<Location> Lang> {
 
   /** Gets the return kind corresponding to specification `"ReturnValue"`. */
   Lang::ReturnKind getStandardReturnValueKind();
+
+  /**
+   * Gets the return kind corresponding to specification `"ReturnValue"` when
+   * supplied with the argument `arg`.
+   *
+   * Note that it is expected that the following equality holds:
+   * ```
+   * getReturnValueKind("") = getStandardReturnValueKind()
+   * ```
+   */
+  default Lang::ReturnKind getReturnValueKind(string arg) {
+    arg = "" and
+    result = getStandardReturnValueKind()
+  }
 
   /** Gets the textual representation of parameter position `pos` used in MaD. */
   string encodeParameterPosition(Lang::ParameterPosition pos);
@@ -530,6 +546,93 @@ module Make<
       }
     }
 
+    private predicate isNonLocalSummaryComponent(SummaryComponent c) {
+      c instanceof TArgumentSummaryComponent or
+      c instanceof TParameterSummaryComponent or
+      c instanceof TReturnSummaryComponent
+    }
+
+    private predicate isLocalSummaryComponent(SummaryComponent c) {
+      not isNonLocalSummaryComponent(c)
+    }
+
+    /**
+     * Holds if `s` is a valid input stack, in the sense that we generate a data flow graph
+     * that faithfully represents this flow, and lambda-tracking can be expected to track
+     * lambdas to the relevant callbacks in practice.
+     */
+    private predicate isSupportedInputStack(SummaryComponentStack s) {
+      // Argument[n].*
+      s.length() = 1 and
+      s.head() instanceof TArgumentSummaryComponent
+      or
+      // Argument[n].ReturnValue.*
+      s.length() = 2 and
+      s.head() instanceof TReturnSummaryComponent and
+      s.tail().head() instanceof TArgumentSummaryComponent
+      or
+      // Argument[n].Parameter[n].Content.*
+      s.length() = 3 and
+      s.head() instanceof TContentSummaryComponent and
+      s.tail().head() instanceof TParameterSummaryComponent and
+      s.drop(2).head() instanceof TArgumentSummaryComponent
+      or
+      isSupportedInputStack(s.tail()) and
+      isLocalSummaryComponent(s.head())
+    }
+
+    private predicate isSupportedOutputStack1(SummaryComponentStack s) {
+      // ReturnValue.*
+      s.length() = 1 and
+      s.head() instanceof TReturnSummaryComponent
+      or
+      // Argument[n].Content.*
+      s.length() = 2 and
+      s.head() instanceof TContentSummaryComponent and
+      s.tail().head() instanceof TArgumentSummaryComponent
+      or
+      // Argument[n].Parameter[n].*
+      s.length() = 2 and
+      s.head() instanceof TParameterSummaryComponent and
+      s.tail().head() instanceof TArgumentSummaryComponent
+      or
+      isSupportedOutputStack1(s.tail()) and
+      isLocalSummaryComponent(s.head())
+    }
+
+    /** Like `isSupportedInputStack` but for output stacks. */
+    private predicate isSupportedOutputStack(SummaryComponentStack s) {
+      isSupportedOutputStack1(s)
+      or
+      // `Argument[n]` not followed by anything. Needs to be outside the recursion.
+      s.length() = 1 and
+      s.head() instanceof TArgumentSummaryComponent
+    }
+
+    /**
+     * Holds if `callable` has an unsupported flow `input -> output`.
+     *
+     * `whichOne` indicates if the `input` or `output` contains the unsupported sequence.
+     */
+    predicate unsupportedCallable(
+      SummarizedCallableImpl callable, SummaryComponentStack input, SummaryComponentStack output,
+      string whichOne
+    ) {
+      callable.propagatesFlow(input, output, _, _) and
+      (
+        not isSupportedInputStack(input) and whichOne = "input"
+        or
+        not isSupportedOutputStack(output) and whichOne = "output"
+      )
+    }
+
+    /**
+     * Holds if `callable` has an unsupported flow.
+     */
+    predicate unsupportedCallable(SummarizedCallableImpl callable) {
+      unsupportedCallable(callable, _, _, _)
+    }
+
     private predicate summarySpec(string spec) {
       exists(SummarizedCallable c |
         c.propagatesFlow(spec, _, _, _)
@@ -585,6 +688,11 @@ module Make<
         derivedFluentFlowPush(_, _, _, head, tail, _)
       }
 
+    pragma[nomagic]
+    private string getUniqueMadRepresentation(SummaryComponent c) {
+      result = strictconcat(string s | s = c.getMadRepresentation() | s, "/")
+    }
+
     /**
      * A (non-empty) stack of summary components.
      *
@@ -600,6 +708,9 @@ module Make<
         this = TSingletonSummaryComponentStack(result) or
         this = TConsSummaryComponentStack(result, _)
       }
+
+      /** Gets the head of this stack if it is a singleton. */
+      SummaryComponent headOfSingleton() { this = TSingletonSummaryComponentStack(result) }
 
       /** Gets the tail of this stack, if any. */
       SummaryComponentStack tail() { this = TConsSummaryComponentStack(_, result) }
@@ -631,7 +742,7 @@ module Make<
         exists(SummaryComponent head, SummaryComponentStack tail |
           head = this.head() and
           tail = this.tail() and
-          result = tail.getMadRepresentation() + "." + head.getMadRepresentation()
+          result = tail.getMadRepresentation() + "." + getUniqueMadRepresentation(head)
         )
         or
         exists(SummaryComponent c |
@@ -1098,12 +1209,12 @@ module Make<
        * Holds if this node is an exit node, i.e. after all stores have been performed.
        *
        * A local flow step should be added from this node to a data flow node representing
-       * `sc` inside `source`.
+       * `s` inside `source`.
        */
-      predicate isExit(SourceElement source, SummaryComponent sc, string model) {
+      predicate isExit(SourceElement source, SummaryComponentStack s, string model) {
         source = source_ and
         model = model_ and
-        state_.isSourceOutputState(source, TSingletonSummaryComponentStack(sc), _, model)
+        state_.isSourceOutputState(source, s, _, model)
       }
 
       override predicate isHidden() { not this.isEntry(_, _) }
@@ -1352,7 +1463,7 @@ module Make<
 
       DataFlowType getSyntheticGlobalType(SyntheticGlobal sg);
 
-      DataFlowType getSourceType(SourceBase source, SummaryComponent sc);
+      DataFlowType getSourceType(SourceBase source, SummaryComponentStack sc);
 
       DataFlowType getSinkType(SinkBase sink, SummaryComponent sc);
     }
@@ -1435,9 +1546,9 @@ module Make<
         )
         or
         exists(SourceElement source |
-          exists(SummaryComponent sc |
-            n.(SourceOutputNode).isExit(source, sc, _) and
-            result = getSourceType(source, sc)
+          exists(SummaryComponentStack s |
+            n.(SourceOutputNode).isExit(source, s, _) and
+            result = getSourceType(source, s)
           )
           or
           exists(SummaryComponentStack s, ContentSet cont |
@@ -1466,13 +1577,16 @@ module Make<
       /** Gets a call that targets summarized callable `sc`. */
       DataFlowCall getACall(SummarizedCallable sc);
 
+      /** Gets the enclosing callable of `source`. */
+      DataFlowCallable getSourceNodeEnclosingCallable(SourceBase source);
+
       /**
-       * Gets a data flow node corresponding to the `sc` part of `source`.
+       * Gets a data flow node corresponding to the `s` part of `source`.
        *
-       * `sc` is typically `ReturnValue` and the result is the node that
+       * `s` is typically `ReturnValue` and the result is the node that
        * represents the return value of `source`.
        */
-      Node getSourceNode(SourceBase source, SummaryComponent sc);
+      Node getSourceNode(SourceBase source, SummaryComponentStack s);
 
       /**
        * Gets a data flow node corresponding to the `sc` part of `sink`.
@@ -1514,11 +1628,18 @@ module Make<
         )
       }
 
-      predicate sourceLocalStep(SourceOutputNode nodeFrom, Node nodeTo, string model) {
-        exists(SummaryComponent sc, SourceElement source |
+      predicate sourceStep(SourceOutputNode nodeFrom, Node nodeTo, string model, boolean local) {
+        exists(SummaryComponentStack sc, SourceElement source |
           nodeFrom.isExit(source, sc, model) and
-          nodeTo = StepsInput::getSourceNode(source, sc)
+          nodeTo = StepsInput::getSourceNode(source, sc) and
+          if StepsInput::getSourceNodeEnclosingCallable(source) = getNodeEnclosingCallable(nodeTo)
+          then local = true
+          else local = false
         )
+      }
+
+      predicate sourceLocalStep(SourceOutputNode nodeFrom, Node nodeTo, string model) {
+        sourceStep(nodeFrom, nodeTo, model, true)
       }
 
       predicate sinkLocalStep(Node nodeFrom, SinkInputNode nodeTo, string model) {
@@ -1579,6 +1700,10 @@ module Make<
           pred = summaryNodeOutputState(_, s) and
           succ = summaryNodeInputState(_, s)
         )
+      }
+
+      predicate sourceJumpStep(SourceOutputNode nodeFrom, Node nodeTo) {
+        sourceStep(nodeFrom, nodeTo, _, false)
       }
 
       /**
@@ -2077,9 +2202,15 @@ module Make<
               )
             )
             or
-            c = "ReturnValue" and
-            node.asNode() =
-              getAnOutNodeExt(mid.asCall(), TValueReturn(getStandardReturnValueKind()))
+            c.getName() = "ReturnValue" and
+            exists(ReturnKind rk |
+              not exists(c.getAnArgument()) and
+              rk = getStandardReturnValueKind()
+              or
+              rk = getReturnValueKind(c.getAnArgument())
+            |
+              node.asNode() = getAnOutNodeExt(mid.asCall(), TValueReturn(rk))
+            )
             or
             SourceSinkInterpretationInput::interpretOutput(c, mid, node)
           )
@@ -2111,12 +2242,16 @@ module Make<
               )
             )
             or
-            exists(ReturnNode ret, ValueReturnKind kind |
-              c = "ReturnValue" and
+            exists(ReturnNode ret, ReturnKind kind |
+              c.getName() = "ReturnValue" and
               ret = node.asNode() and
-              kind.getKind() = ret.getKind() and
-              kind.getKind() = getStandardReturnValueKind() and
+              kind = ret.getKind() and
               mid.asCallable() = getNodeEnclosingCallable(ret)
+            |
+              not exists(c.getAnArgument()) and
+              kind = getStandardReturnValueKind()
+              or
+              kind = getReturnValueKind(c.getAnArgument())
             )
             or
             SourceSinkInterpretationInput::interpretInput(c, mid, node)

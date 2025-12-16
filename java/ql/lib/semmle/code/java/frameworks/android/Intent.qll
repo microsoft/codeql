@@ -1,3 +1,6 @@
+overlay[local?]
+module;
+
 import java
 private import semmle.code.java.frameworks.android.Android
 private import semmle.code.java.dataflow.DataFlow
@@ -259,10 +262,10 @@ private predicate reaches(Expr src, Argument arg) {
   any(StartComponentMethodCall ma).getIntentArg() = arg and
   src = arg
   or
-  exists(Expr mid, BaseSsa::BaseSsaVariable ssa, BaseSsa::BaseSsaUpdate upd |
+  exists(Expr mid, BaseSsa::SsaDefinition ssa, BaseSsa::SsaExplicitWrite upd |
     reaches(mid, arg) and
-    mid = ssa.getAUse() and
-    upd = ssa.getAnUltimateLocalDefinition() and
+    mid = ssa.getARead() and
+    upd = ssa.getAnUltimateDefinition() and
     src = upd.getDefiningExpr().(VariableAssign).getSource()
   )
   or

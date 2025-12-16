@@ -4,13 +4,13 @@
  * YAML documents are represented as abstract syntax trees whose nodes
  * are either YAML values or alias nodes referring to another YAML value.
  */
+overlay[local?]
+module;
 
 import javascript
 private import codeql.yaml.Yaml as LibYaml
 
 private module YamlSig implements LibYaml::InputSig {
-  class Location = DbLocation;
-
   class LocatableBase extends @yaml_locatable, Locatable { }
 
   import javascript

@@ -54,3 +54,88 @@ $parameter.Value = $userinput # GOOD
 $reader = $command.ExecuteReader()
 $reader.Close()
 $connection.Close()
+
+$server = $Env:SERVER_INSTANCE
+Invoke-Sqlcmd -ServerInstance $server -Database "MyDatabase" -InputFile "Foo/Bar/query.sql" # GOOD
+
+$QueryConn = @{
+    Database = "MyDB"
+    ServerInstance = $server
+    Username = "MyUserName"
+    Password = "MyPassword"
+    ConnectionTimeout = 0
+    Query = ""
+}
+
+Invoke-Sqlcmd @QueryConn # GOOD
+
+$QueryConn2 = @{
+    Database = "MyDB"
+    ServerInstance = "MyServer"
+    Username = "MyUserName"
+    Password = "MyPassword"
+    ConnectionTimeout = 0
+    Query = "SELECT * FROM Customers WHERE id = $userinput"
+}
+
+Invoke-Sqlcmd @QueryConn2 # BAD
+
+function TakesTypedParameters([int]$i, [long]$l, [float]$f, [double]$d, [decimal]$dec, [char]$c, [bool]$b, [datetime]$dt) {
+    $query1 = "SELECT * FROM MyTable WHERE MyColumn = '$i'"
+    Invoke-Sqlcmd -ServerInstance "MyServer" -Database "MyDatabase" -Query $query1 # GOOD
+
+    $query2 = "SELECT * FROM MyTable WHERE MyColumn = '$l'"
+    Invoke-Sqlcmd -ServerInstance "MyServer" -Database "MyDatabase" -Query $query2 # GOOD
+
+    $query3 = "SELECT * FROM MyTable WHERE MyColumn = '$f'"
+    Invoke-Sqlcmd -ServerInstance "MyServer" -Database "MyDatabase" -Query $query3 # GOOD
+
+    $query4 = "SELECT * FROM MyTable WHERE MyColumn = '$d'"
+    Invoke-Sqlcmd -ServerInstance "MyServer" -Database "MyDatabase" -Query $query4 # GOOD
+
+    $query5 = "SELECT * FROM MyTable WHERE MyColumn = '$dec'"
+    Invoke-Sqlcmd -ServerInstance "MyServer" -Database "MyDatabase" -Query $query5 # GOOD
+
+    $query6 = "SELECT * FROM MyTable WHERE MyColumn = '$c'"
+    Invoke-Sqlcmd -ServerInstance "MyServer" -Database "MyDatabase" -Query $query6 # GOOD
+
+    $query7 = "SELECT * FROM MyTable WHERE MyColumn = '$b'"
+    Invoke-Sqlcmd -ServerInstance "MyServer" -Database "MyDatabase" -Query $query7 # GOOD
+
+    $query8 = "SELECT * FROM MyTable WHERE MyColumn = '$dt'"
+    Invoke-Sqlcmd -ServerInstance "MyServer" -Database "MyDatabase" -Query $query8 # GOOD
+}
+
+TakesTypedParameters $userinput $userinput $userinput $userinput $userinput $userinput $userinput $userinput
+
+$query = "SELECT * FROM MyTable WHERE MyColumn = '$userinput'"
+Invoke-Sqlcmd -unknown $userinput -ServerInstance "MyServer" -Database "MyDatabase" -q "SELECT * FROM MyTable" # GOOD
+
+Invoke-Sqlcmd -ServerInstance "MyServer" -Database "MyDatabase" -InputFile $userinput # GOOD # this is not really what this query is about.
+
+function With-Validation() {
+    param(
+        [ValidateSet("FirstName","LastName")]
+        [parameter(Mandatory=$true)][string]$validated,
+
+        [parameter(Mandatory=$true)][string]$unvalidated
+    )
+
+    Invoke-Sqlcmd -unknown $userinput -ServerInstance "MyServer" -Database "MyDatabase" -q $validated # GOOD
+    Invoke-Sqlcmd -unknown $userinput -ServerInstance "MyServer" -Database "MyDatabase" -q "SELECT * FROM Customers where id = $($unvalidated)" # BAD
+}
+
+With-Validation $userinput $userinput
+
+$QueryConn3 = @{
+    Database = "MyDB"
+    ServerInstance = "MyServer"
+    Username = "MyUserName"
+    Password = "MyPassword"
+    ConnectionTimeout = 0
+    inputfile = $userinput
+}
+
+Invoke-Sqlcmd @QueryConn3 # GOOD
+
+&sqlcmd -e -S $userinput -U "Login" -P "MyPassword" -d "MyDBName" -i "input_file.sql" # GOOD

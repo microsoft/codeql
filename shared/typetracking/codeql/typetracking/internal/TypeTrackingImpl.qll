@@ -2,6 +2,8 @@
  * Provides classes and predicates for simple data-flow reachability suitable
  * for tracking types.
  */
+overlay[local?]
+module;
 
 private import codeql.util.Boolean
 private import codeql.util.Option
@@ -67,6 +69,10 @@ module TypeTracking<LocationSig Location, TypeTrackingInput<Location> I> {
   private module ContentOption = Option<Content>;
 
   private class ContentOption = ContentOption::Option;
+
+  private predicate isLocalSourceNode(LocalSourceNode n) {
+    not nonStandardFlowsTo(_, _) and exists(n)
+  }
 
   cached
   private module Cached {
@@ -247,21 +253,9 @@ module TypeTracking<LocationSig Location, TypeTrackingInput<Location> I> {
       returnStep(nodeFrom, nodeTo) and summary = ReturnStep()
     }
 
-    pragma[inline]
-    private predicate isLocalSourceNode(LocalSourceNode n) { any() }
-
     cached
-    predicate standardFlowsTo(Node localSource, Node dst) {
-      not nonStandardFlowsTo(_, _) and
-      // explicit type check in base case to avoid repeated type tests in recursive case
-      isLocalSourceNode(localSource) and
-      dst = localSource
-      or
-      exists(Node mid |
-        standardFlowsTo(localSource, mid) and
-        simpleLocalSmallStep(mid, dst)
-      )
-    }
+    predicate simpleLocalSmallStepPlus(Node localSource, Node dst) =
+      sourceBoundedFastTC(simpleLocalSmallStep/2, isLocalSourceNode/1)(localSource, dst)
 
     cached
     predicate stepNoCall(LocalSourceNode nodeFrom, LocalSourceNode nodeTo, StepSummary summary) {
@@ -272,6 +266,14 @@ module TypeTracking<LocationSig Location, TypeTrackingInput<Location> I> {
     predicate stepCall(LocalSourceNode nodeFrom, LocalSourceNode nodeTo, StepSummary summary) {
       exists(Node mid | flowsTo(nodeFrom, mid) and smallStepCall(mid, nodeTo, summary))
     }
+  }
+
+  pragma[inline]
+  private predicate standardFlowsTo(Node localSource, Node dst) {
+    isLocalSourceNode(localSource) and
+    dst = localSource
+    or
+    simpleLocalSmallStepPlus(localSource, dst)
   }
 
   import Cached
@@ -510,6 +512,7 @@ module TypeTracking<LocationSig Location, TypeTrackingInput<Location> I> {
      * }
      * ```
      */
+    overlay[caller?]
     pragma[inline]
     TypeTracker smallstep(Node nodeFrom, Node nodeTo) {
       result = this.smallstepNoSimpleLocalFlowStep(nodeFrom, nodeTo)
@@ -654,6 +657,7 @@ module TypeTracking<LocationSig Location, TypeTrackingInput<Location> I> {
      * }
      * ```
      */
+    overlay[caller?]
     pragma[inline]
     TypeBackTracker smallstep(Node nodeFrom, Node nodeTo) {
       result = this.smallstepNoSimpleLocalFlowStep(nodeFrom, nodeTo)

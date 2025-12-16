@@ -1,5 +1,5 @@
 /**
- * @name Artifact Poisoning (Path Traversal).
+ * @name Artifact Poisoning (Path Traversal)
  * @description An attacker may be able to poison the workflow's artifacts and influence on consequent steps.
  * @kind problem
  * @problem.severity error
@@ -37,8 +37,6 @@ where
     )
     or
     // upload artifact is not used in the same workflow
-    not exists(UsesStep upload |
-      download.getEnclosingWorkflow().getAJob().(LocalJob).getAStep() = upload
-    )
+    not download.getEnclosingWorkflow().getAJob().(LocalJob).getAStep() instanceof UsesStep
   )
 select download, "Potential artifact poisoning"

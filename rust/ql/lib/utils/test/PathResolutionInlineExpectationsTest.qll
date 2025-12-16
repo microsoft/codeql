@@ -10,24 +10,29 @@ private import utils.test.InlineExpectationsTest
 private module ResolveTest implements TestSig {
   string getARelevantTag() { result = "item" }
 
-  private predicate itemAt(ItemNode i, string filepath, int line, boolean inMacro) {
-    i.getLocation().hasLocationInfo(filepath, _, _, line, _) and
-    if i.(AstNode).isInMacroExpansion() then inMacro = true else inMacro = false
+  private predicate itemAt(ItemNode i, string filepath, int line) {
+    i.getLocation().hasLocationInfo(filepath, _, _, line, _)
   }
 
   private predicate commmentAt(string text, string filepath, int line) {
     exists(Comment c |
       c.getLocation().hasLocationInfo(filepath, line, _, _, _) and
-      c.getCommentText().trim() = text
+      c.getCommentText().trim() = text and
+      c.fromSource() and
+      not text.matches("$%")
     )
   }
 
   private predicate item(ItemNode i, string value) {
-    exists(string filepath, int line, boolean inMacro | itemAt(i, filepath, line, inMacro) |
-      commmentAt(value, filepath, line) and inMacro = false
-      or
-      not (commmentAt(_, filepath, line) and inMacro = false) and
-      value = i.getName()
+    exists(string filepath, int line | itemAt(i, filepath, line) |
+      if i instanceof SourceFile
+      then value = i.getFile().getBaseName()
+      else (
+        commmentAt(value, filepath, line)
+        or
+        not commmentAt(_, filepath, line) and
+        value = i.getName()
+      )
     )
   }
 
@@ -35,6 +40,9 @@ private module ResolveTest implements TestSig {
     exists(AstNode n |
       not n = any(Path parent).getQualifier() and
       location = n.getLocation() and
+      n.fromSource() and
+      not location.getFile().getAbsolutePath().matches("%proc_macro.rs") and
+      not n.isFromMacroExpansion() and
       element = n.toString() and
       tag = "item"
     |

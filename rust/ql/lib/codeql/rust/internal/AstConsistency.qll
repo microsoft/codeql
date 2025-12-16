@@ -24,10 +24,7 @@ query predicate multipleLocations(Locatable e) { strictcount(e.getLocation()) > 
 /**
  * Holds if `e` does not have a `Location`.
  */
-query predicate noLocation(Locatable e) {
-  not exists(e.getLocation()) and
-  not e.(AstNode).getParentNode*() = any(Crate c).getModule()
-}
+query predicate noLocation(Locatable e) { not exists(e.getLocation()) }
 
 private predicate multiplePrimaryQlClasses(Element e) {
   strictcount(string cls | cls = e.getAPrimaryQlClass() and cls != "VariableAccess") > 1
@@ -77,6 +74,14 @@ query predicate multiplePositions(Element parent, int pos1, int pos2, string acc
 }
 
 /**
+ * Holds if `va` is a variable access that refers to multiple variables.
+ */
+query predicate multipleVariableTargets(VariableAccess va, Variable v1) {
+  va = v1.getAnAccess() and
+  strictcount(va.getVariable()) > 1
+}
+
+/**
  * Gets counts of abstract syntax tree inconsistencies of each type.
  */
 int getAstInconsistencyCounts(string type) {
@@ -101,4 +106,7 @@ int getAstInconsistencyCounts(string type) {
   or
   type = "Multiple positions" and
   result = count(Element e | multiplePositions(_, _, _, _, e) | e)
+  or
+  type = "Multiple variable targets" and
+  result = count(VariableAccess va | multipleVariableTargets(va, _) | va)
 }

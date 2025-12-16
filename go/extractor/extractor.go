@@ -11,8 +11,10 @@ import (
 	"go/types"
 	"io"
 	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"runtime"
 	"strconv"
@@ -57,16 +59,11 @@ func init() {
 	}
 }
 
-// Extract extracts the packages specified by the given patterns
-func Extract(patterns []string) error {
-	return ExtractWithFlags(nil, patterns, false)
-}
-
 // ExtractWithFlags extracts the packages specified by the given patterns and build flags
-func ExtractWithFlags(buildFlags []string, patterns []string, extractTests bool) error {
+func ExtractWithFlags(buildFlags []string, patterns []string, extractTests bool, sourceRoot string) error {
 	startTime := time.Now()
 
-	extraction := NewExtraction(buildFlags, patterns)
+	extraction := NewExtraction(buildFlags, patterns, sourceRoot)
 	defer extraction.StatWriter.Close()
 
 	modEnabled := os.Getenv("GO111MODULE") != "off"
@@ -322,16 +319,17 @@ func ExtractWithFlags(buildFlags []string, patterns []string, extractTests bool)
 type Extraction struct {
 	// A lock for preventing concurrent writes to maps and the stat trap writer, as they are not
 	// thread-safe
-	Lock         sync.Mutex
-	LabelKey     string
-	Label        trap.Label
-	StatWriter   *trap.Writer
-	WaitGroup    sync.WaitGroup
-	GoroutineSem *semaphore
-	FdSem        *semaphore
-	NextFileId   int
-	FileInfo     map[string]*FileInfo
-	SeenGoMods   map[string]bool
+	Lock           sync.Mutex
+	LabelKey       string
+	Label          trap.Label
+	StatWriter     *trap.Writer
+	WaitGroup      sync.WaitGroup
+	GoroutineSem   *semaphore
+	FdSem          *semaphore
+	NextFileId     int
+	FileInfo       map[string]*FileInfo
+	SeenGoMods     map[string]bool
+	OverlayChanges map[string]bool
 }
 
 type FileInfo struct {
@@ -366,7 +364,7 @@ func (extraction *Extraction) GetNextErr(path string) int {
 	return res
 }
 
-func NewExtraction(buildFlags []string, patterns []string) *Extraction {
+func NewExtraction(buildFlags []string, patterns []string, sourceRoot string) *Extraction {
 	hash := md5.New()
 	io.WriteString(hash, "go")
 	for _, buildFlag := range buildFlags {
@@ -377,6 +375,22 @@ func NewExtraction(buildFlags []string, patterns []string) *Extraction {
 		io.WriteString(hash, " "+pattern)
 	}
 	sum := hash.Sum(nil)
+
+	overlayChangeList := util.GetOverlayChanges(sourceRoot)
+	var overlayChanges map[string]bool
+	if overlayChangeList == nil {
+		overlayChanges = nil
+	} else {
+		overlayChanges = make(map[string]bool)
+		for _, changedFilePath := range overlayChangeList {
+			absPath, err := filepath.Abs(changedFilePath)
+			if err != nil {
+				log.Fatalf("Error resolving absolute path of overlay change %s: %s", changedFilePath, err.Error())
+			}
+			overlayChanges[absPath] = true
+			slog.Info("Overlay changed file", "path", absPath)
+		}
+	}
 
 	i := 0
 	var path string
@@ -437,10 +451,11 @@ func NewExtraction(buildFlags []string, patterns []string) *Extraction {
 		FdSem: newSemaphore(100),
 		// this semaphore is used to limit the number of goroutines spawned, so we
 		// don't run into memory issues
-		GoroutineSem: newSemaphore(MaxGoRoutines),
-		NextFileId:   0,
-		FileInfo:     make(map[string]*FileInfo),
-		SeenGoMods:   make(map[string]bool),
+		GoroutineSem:   newSemaphore(MaxGoRoutines),
+		NextFileId:     0,
+		FileInfo:       make(map[string]*FileInfo),
+		SeenGoMods:     make(map[string]bool),
+		OverlayChanges: overlayChanges,
 	}
 }
 
@@ -719,6 +734,16 @@ func (extraction *Extraction) extractFile(ast *ast.File, pkg *packages.Package) 
 		return nil
 	}
 	path := normalizedPath(ast, fset)
+	// If we're extracting an overlay, we want to skip extraction of files that haven't changed.
+	// Since some files may be outside the source directory (e.g. files preprocessed by cgo) we
+	// can't easily know if they have changed (or came from source files that changed), so we always
+	// extract a file if it's not in the package directory.
+	if extraction.OverlayChanges != nil &&
+		!extraction.OverlayChanges[path] &&
+		strings.HasPrefix(path+string(filepath.Separator), pkg.Dir) {
+		slog.Info("Skipping unchanged file in overlay extraction", "path", path)
+		return nil
+	}
 
 	extraction.FdSem.acquire(3)
 
@@ -773,18 +798,25 @@ func (extraction *Extraction) extractFileInfo(tw *trap.Writer, file string, isDu
 	var parentLbl trap.Label
 
 	for i, component := range components {
+		// displayPath is the same as rawPath except for root directories: if
+		// rawPath is "" then displayPath is "/"; if rawPath is "C:" then
+		// displayPath is "C:/".
+		var rawPath, displayPath string
 		if i == 0 {
-			if component == "" {
-				path = "/"
+			rawPath = component
+			if component == "" || regexp.MustCompile(`^[A-Za-z]:$`).MatchString(component) {
+				// Handle linux root and Windows drive letters by appending "/"
+				displayPath = rawPath + "/"
 			} else {
-				path = component
+				displayPath = rawPath
 			}
 		} else {
-			path = parentPath + "/" + component
+			rawPath = parentPath + "/" + component
+			displayPath = rawPath
 		}
 		if i == len(components)-1 {
 			lbl := tw.Labeler.FileLabelFor(file)
-			dbscheme.FilesTable.Emit(tw, lbl, path)
+			dbscheme.FilesTable.Emit(tw, lbl, displayPath)
 			dbscheme.ContainerParentTable.Emit(tw, parentLbl, lbl)
 			dbscheme.HasLocationTable.Emit(tw, lbl, emitLocation(tw, lbl, 0, 0, 0, 0))
 			extraction.Lock.Lock()
@@ -795,14 +827,12 @@ func (extraction *Extraction) extractFileInfo(tw *trap.Writer, file string, isDu
 			extraction.Lock.Unlock()
 			break
 		}
-		lbl := tw.Labeler.GlobalID(util.EscapeTrapSpecialChars(path) + ";folder")
-		dbscheme.FoldersTable.Emit(tw, lbl, path)
+		lbl := tw.Labeler.GlobalID(util.EscapeTrapSpecialChars(displayPath) + ";folder")
+		dbscheme.FoldersTable.Emit(tw, lbl, displayPath)
 		if i > 0 {
 			dbscheme.ContainerParentTable.Emit(tw, parentLbl, lbl)
 		}
-		if path != "/" {
-			parentPath = path
-		}
+		parentPath = rawPath
 		parentLbl = lbl
 	}
 }
@@ -936,7 +966,7 @@ func emitScopeNodeInfo(tw *trap.Writer, nd ast.Node, lbl trap.Label) {
 
 // extractExpr extracts AST information for the given expression and all its subexpressions
 func extractExpr(tw *trap.Writer, expr ast.Expr, parent trap.Label, idx int, skipExtractingValue bool) {
-	if expr == nil {
+	if expr == nil || reflect.ValueOf(expr).IsNil() {
 		return
 	}
 
@@ -948,9 +978,6 @@ func extractExpr(tw *trap.Writer, expr ast.Expr, parent trap.Label, idx int, ski
 	case *ast.BadExpr:
 		kind = dbscheme.BadExpr.Index()
 	case *ast.Ident:
-		if expr == nil {
-			return
-		}
 		kind = dbscheme.IdentExpr.Index()
 		dbscheme.LiteralsTable.Emit(tw, lbl, expr.Name, expr.Name)
 		def := tw.Package.TypesInfo.Defs[expr]
@@ -984,15 +1011,9 @@ func extractExpr(tw *trap.Writer, expr ast.Expr, parent trap.Label, idx int, ski
 			}
 		}
 	case *ast.Ellipsis:
-		if expr == nil {
-			return
-		}
 		kind = dbscheme.EllipsisExpr.Index()
 		extractExpr(tw, expr.Elt, lbl, 0, false)
 	case *ast.BasicLit:
-		if expr == nil {
-			return
-		}
 		value := ""
 		switch expr.Kind {
 		case token.INT:
@@ -1016,36 +1037,21 @@ func extractExpr(tw *trap.Writer, expr ast.Expr, parent trap.Label, idx int, ski
 		}
 		dbscheme.LiteralsTable.Emit(tw, lbl, value, expr.Value)
 	case *ast.FuncLit:
-		if expr == nil {
-			return
-		}
 		kind = dbscheme.FuncLitExpr.Index()
 		extractExpr(tw, expr.Type, lbl, 0, false)
 		extractStmt(tw, expr.Body, lbl, 1)
 	case *ast.CompositeLit:
-		if expr == nil {
-			return
-		}
 		kind = dbscheme.CompositeLitExpr.Index()
 		extractExpr(tw, expr.Type, lbl, 0, false)
 		extractExprs(tw, expr.Elts, lbl, 1, 1)
 	case *ast.ParenExpr:
-		if expr == nil {
-			return
-		}
 		kind = dbscheme.ParenExpr.Index()
 		extractExpr(tw, expr.X, lbl, 0, false)
 	case *ast.SelectorExpr:
-		if expr == nil {
-			return
-		}
 		kind = dbscheme.SelectorExpr.Index()
 		extractExpr(tw, expr.X, lbl, 0, false)
 		extractExpr(tw, expr.Sel, lbl, 1, false)
 	case *ast.IndexExpr:
-		if expr == nil {
-			return
-		}
 		typeofx := typeOf(tw, expr.X)
 		if typeofx == nil {
 			// We are missing type information for `expr.X`, so we cannot
@@ -1065,9 +1071,6 @@ func extractExpr(tw *trap.Writer, expr ast.Expr, parent trap.Label, idx int, ski
 		extractExpr(tw, expr.X, lbl, 0, false)
 		extractExpr(tw, expr.Index, lbl, 1, false)
 	case *ast.IndexListExpr:
-		if expr == nil {
-			return
-		}
 		typeofx := typeOf(tw, expr.X)
 		if typeofx == nil {
 			// We are missing type information for `expr.X`, so we cannot
@@ -1084,18 +1087,12 @@ func extractExpr(tw *trap.Writer, expr ast.Expr, parent trap.Label, idx int, ski
 		extractExpr(tw, expr.X, lbl, 0, false)
 		extractExprs(tw, expr.Indices, lbl, 1, 1)
 	case *ast.SliceExpr:
-		if expr == nil {
-			return
-		}
 		kind = dbscheme.SliceExpr.Index()
 		extractExpr(tw, expr.X, lbl, 0, false)
 		extractExpr(tw, expr.Low, lbl, 1, false)
 		extractExpr(tw, expr.High, lbl, 2, false)
 		extractExpr(tw, expr.Max, lbl, 3, false)
 	case *ast.TypeAssertExpr:
-		if expr == nil {
-			return
-		}
 		kind = dbscheme.TypeAssertExpr.Index()
 		extractExpr(tw, expr.X, lbl, 0, false)
 		// expr.Type can be `nil` if this is the `x.(type)` in a type switch.
@@ -1103,9 +1100,6 @@ func extractExpr(tw *trap.Writer, expr ast.Expr, parent trap.Label, idx int, ski
 			extractExpr(tw, expr.Type, lbl, 1, false)
 		}
 	case *ast.CallExpr:
-		if expr == nil {
-			return
-		}
 		kind = dbscheme.CallOrConversionExpr.Index()
 		extractExpr(tw, expr.Fun, lbl, 0, false)
 		extractExprs(tw, expr.Args, lbl, 1, 1)
@@ -1113,22 +1107,13 @@ func extractExpr(tw *trap.Writer, expr ast.Expr, parent trap.Label, idx int, ski
 			dbscheme.HasEllipsisTable.Emit(tw, lbl)
 		}
 	case *ast.StarExpr:
-		if expr == nil {
-			return
-		}
 		kind = dbscheme.StarExpr.Index()
 		extractExpr(tw, expr.X, lbl, 0, false)
 	case *ast.KeyValueExpr:
-		if expr == nil {
-			return
-		}
 		kind = dbscheme.KeyValueExpr.Index()
 		extractExpr(tw, expr.Key, lbl, 0, false)
 		extractExpr(tw, expr.Value, lbl, 1, false)
 	case *ast.UnaryExpr:
-		if expr == nil {
-			return
-		}
 		if expr.Op == token.TILDE {
 			kind = dbscheme.TypeSetLiteralExpr.Index()
 		} else {
@@ -1140,9 +1125,6 @@ func extractExpr(tw *trap.Writer, expr ast.Expr, parent trap.Label, idx int, ski
 		}
 		extractExpr(tw, expr.X, lbl, 0, false)
 	case *ast.BinaryExpr:
-		if expr == nil {
-			return
-		}
 		_, isUnionType := typeOf(tw, expr).(*types.Union)
 		if expr.Op == token.OR && isUnionType {
 			kind = dbscheme.TypeSetLiteralExpr.Index()
@@ -1158,46 +1140,28 @@ func extractExpr(tw *trap.Writer, expr ast.Expr, parent trap.Label, idx int, ski
 			extractExpr(tw, expr.Y, lbl, 1, false)
 		}
 	case *ast.ArrayType:
-		if expr == nil {
-			return
-		}
 		kind = dbscheme.ArrayTypeExpr.Index()
 		extractExpr(tw, expr.Len, lbl, 0, false)
 		extractExpr(tw, expr.Elt, lbl, 1, false)
 	case *ast.StructType:
-		if expr == nil {
-			return
-		}
 		kind = dbscheme.StructTypeExpr.Index()
 		extractFields(tw, expr.Fields, lbl, 0, 1)
 	case *ast.FuncType:
-		if expr == nil {
-			return
-		}
 		kind = dbscheme.FuncTypeExpr.Index()
 		extractFields(tw, expr.Params, lbl, 0, 1)
 		extractFields(tw, expr.Results, lbl, -1, -1)
 		emitScopeNodeInfo(tw, expr, lbl)
 	case *ast.InterfaceType:
-		if expr == nil {
-			return
-		}
 		kind = dbscheme.InterfaceTypeExpr.Index()
 		// expr.Methods contains methods, embedded interfaces and type set
 		// literals.
 		makeTypeSetLiteralsUnionTyped(tw, expr.Methods)
 		extractFields(tw, expr.Methods, lbl, 0, 1)
 	case *ast.MapType:
-		if expr == nil {
-			return
-		}
 		kind = dbscheme.MapTypeExpr.Index()
 		extractExpr(tw, expr.Key, lbl, 0, false)
 		extractExpr(tw, expr.Value, lbl, 1, false)
 	case *ast.ChanType:
-		if expr == nil {
-			return
-		}
 		tp := dbscheme.ChanTypeExprs[expr.Dir]
 		if tp == nil {
 			log.Fatalf("unsupported channel direction %v", expr.Dir)
@@ -1299,7 +1263,7 @@ func extractFields(tw *trap.Writer, fields *ast.FieldList, parent trap.Label, id
 // extractStmt extracts AST information for a given statement and all other statements or expressions
 // nested inside it
 func extractStmt(tw *trap.Writer, stmt ast.Stmt, parent trap.Label, idx int) {
-	if stmt == nil {
+	if stmt == nil || reflect.ValueOf(stmt).IsNil() {
 		return
 	}
 
@@ -1309,37 +1273,22 @@ func extractStmt(tw *trap.Writer, stmt ast.Stmt, parent trap.Label, idx int) {
 	case *ast.BadStmt:
 		kind = dbscheme.BadStmtType.Index()
 	case *ast.DeclStmt:
-		if stmt == nil {
-			return
-		}
 		kind = dbscheme.DeclStmtType.Index()
 		extractDecl(tw, stmt.Decl, lbl, 0)
 	case *ast.EmptyStmt:
 		kind = dbscheme.EmptyStmtType.Index()
 	case *ast.LabeledStmt:
-		if stmt == nil {
-			return
-		}
 		kind = dbscheme.LabeledStmtType.Index()
 		extractExpr(tw, stmt.Label, lbl, 0, false)
 		extractStmt(tw, stmt.Stmt, lbl, 1)
 	case *ast.ExprStmt:
-		if stmt == nil {
-			return
-		}
 		kind = dbscheme.ExprStmtType.Index()
 		extractExpr(tw, stmt.X, lbl, 0, false)
 	case *ast.SendStmt:
-		if stmt == nil {
-			return
-		}
 		kind = dbscheme.SendStmtType.Index()
 		extractExpr(tw, stmt.Chan, lbl, 0, false)
 		extractExpr(tw, stmt.Value, lbl, 1, false)
 	case *ast.IncDecStmt:
-		if stmt == nil {
-			return
-		}
 		if stmt.Tok == token.INC {
 			kind = dbscheme.IncStmtType.Index()
 		} else if stmt.Tok == token.DEC {
@@ -1349,9 +1298,6 @@ func extractStmt(tw *trap.Writer, stmt ast.Stmt, parent trap.Label, idx int) {
 		}
 		extractExpr(tw, stmt.X, lbl, 0, false)
 	case *ast.AssignStmt:
-		if stmt == nil {
-			return
-		}
 		tp := dbscheme.AssignStmtTypes[stmt.Tok]
 		if tp == nil {
 			log.Fatalf("unsupported assignment statement with operator %v", stmt.Tok)
@@ -1360,24 +1306,15 @@ func extractStmt(tw *trap.Writer, stmt ast.Stmt, parent trap.Label, idx int) {
 		extractExprs(tw, stmt.Lhs, lbl, -1, -1)
 		extractExprs(tw, stmt.Rhs, lbl, 1, 1)
 	case *ast.GoStmt:
-		if stmt == nil {
-			return
-		}
 		kind = dbscheme.GoStmtType.Index()
 		extractExpr(tw, stmt.Call, lbl, 0, false)
 	case *ast.DeferStmt:
-		if stmt == nil {
-			return
-		}
 		kind = dbscheme.DeferStmtType.Index()
 		extractExpr(tw, stmt.Call, lbl, 0, false)
 	case *ast.ReturnStmt:
 		kind = dbscheme.ReturnStmtType.Index()
 		extractExprs(tw, stmt.Results, lbl, 0, 1)
 	case *ast.BranchStmt:
-		if stmt == nil {
-			return
-		}
 		switch stmt.Tok {
 		case token.BREAK:
 			kind = dbscheme.BreakStmtType.Index()
@@ -1392,16 +1329,10 @@ func extractStmt(tw *trap.Writer, stmt ast.Stmt, parent trap.Label, idx int) {
 		}
 		extractExpr(tw, stmt.Label, lbl, 0, false)
 	case *ast.BlockStmt:
-		if stmt == nil {
-			return
-		}
 		kind = dbscheme.BlockStmtType.Index()
 		extractStmts(tw, stmt.List, lbl, 0, 1)
 		emitScopeNodeInfo(tw, stmt, lbl)
 	case *ast.IfStmt:
-		if stmt == nil {
-			return
-		}
 		kind = dbscheme.IfStmtType.Index()
 		extractStmt(tw, stmt.Init, lbl, 0)
 		extractExpr(tw, stmt.Cond, lbl, 1, false)
@@ -1409,35 +1340,23 @@ func extractStmt(tw *trap.Writer, stmt ast.Stmt, parent trap.Label, idx int) {
 		extractStmt(tw, stmt.Else, lbl, 3)
 		emitScopeNodeInfo(tw, stmt, lbl)
 	case *ast.CaseClause:
-		if stmt == nil {
-			return
-		}
 		kind = dbscheme.CaseClauseType.Index()
 		extractExprs(tw, stmt.List, lbl, -1, -1)
 		extractStmts(tw, stmt.Body, lbl, 0, 1)
 		emitScopeNodeInfo(tw, stmt, lbl)
 	case *ast.SwitchStmt:
-		if stmt == nil {
-			return
-		}
 		kind = dbscheme.ExprSwitchStmtType.Index()
 		extractStmt(tw, stmt.Init, lbl, 0)
 		extractExpr(tw, stmt.Tag, lbl, 1, false)
 		extractStmt(tw, stmt.Body, lbl, 2)
 		emitScopeNodeInfo(tw, stmt, lbl)
 	case *ast.TypeSwitchStmt:
-		if stmt == nil {
-			return
-		}
 		kind = dbscheme.TypeSwitchStmtType.Index()
 		extractStmt(tw, stmt.Init, lbl, 0)
 		extractStmt(tw, stmt.Assign, lbl, 1)
 		extractStmt(tw, stmt.Body, lbl, 2)
 		emitScopeNodeInfo(tw, stmt, lbl)
 	case *ast.CommClause:
-		if stmt == nil {
-			return
-		}
 		kind = dbscheme.CommClauseType.Index()
 		extractStmt(tw, stmt.Comm, lbl, 0)
 		extractStmts(tw, stmt.Body, lbl, 1, 1)
@@ -1446,9 +1365,6 @@ func extractStmt(tw *trap.Writer, stmt ast.Stmt, parent trap.Label, idx int) {
 		kind = dbscheme.SelectStmtType.Index()
 		extractStmt(tw, stmt.Body, lbl, 0)
 	case *ast.ForStmt:
-		if stmt == nil {
-			return
-		}
 		kind = dbscheme.ForStmtType.Index()
 		extractStmt(tw, stmt.Init, lbl, 0)
 		extractExpr(tw, stmt.Cond, lbl, 1, false)
@@ -1456,9 +1372,6 @@ func extractStmt(tw *trap.Writer, stmt ast.Stmt, parent trap.Label, idx int) {
 		extractStmt(tw, stmt.Body, lbl, 3)
 		emitScopeNodeInfo(tw, stmt, lbl)
 	case *ast.RangeStmt:
-		if stmt == nil {
-			return
-		}
 		kind = dbscheme.RangeStmtType.Index()
 		extractExpr(tw, stmt.Key, lbl, 0, false)
 		extractExpr(tw, stmt.Value, lbl, 1, false)
@@ -1486,15 +1399,15 @@ func extractStmts(tw *trap.Writer, stmts []ast.Stmt, parent trap.Label, idx int,
 
 // extractDecl extracts AST information for the given declaration
 func extractDecl(tw *trap.Writer, decl ast.Decl, parent trap.Label, idx int) {
+	if reflect.ValueOf(decl).IsNil() {
+		return
+	}
 	lbl := tw.Labeler.LocalID(decl)
 	var kind int
 	switch decl := decl.(type) {
 	case *ast.BadDecl:
 		kind = dbscheme.BadDeclType.Index()
 	case *ast.GenDecl:
-		if decl == nil {
-			return
-		}
 		switch decl.Tok {
 		case token.IMPORT:
 			kind = dbscheme.ImportDeclType.Index()
@@ -1512,9 +1425,6 @@ func extractDecl(tw *trap.Writer, decl ast.Decl, parent trap.Label, idx int) {
 		}
 		extractDoc(tw, decl.Doc, lbl)
 	case *ast.FuncDecl:
-		if decl == nil {
-			return
-		}
 		kind = dbscheme.FuncDeclType.Index()
 		extractFields(tw, decl.Recv, lbl, -1, -1)
 		extractExpr(tw, decl.Name, lbl, 0, false)
@@ -1582,18 +1492,10 @@ func isAlias(tp types.Type) bool {
 	return ok
 }
 
-// If the given type is a type alias, this function resolves it to its underlying type.
-func resolveTypeAlias(tp types.Type) types.Type {
-	if isAlias(tp) {
-		return types.Unalias(tp) // tp.Underlying()
-	}
-	return tp
-}
-
 // extractType extracts type information for `tp` and returns its associated label;
 // types are only extracted once, so the second time `extractType` is invoked it simply returns the label
 func extractType(tw *trap.Writer, tp types.Type) trap.Label {
-	tp = resolveTypeAlias(tp)
+	tp = types.Unalias(tp)
 	lbl, exists := getTypeLabel(tw, tp)
 	if !exists {
 		var kind int
@@ -1771,7 +1673,7 @@ func extractType(tw *trap.Writer, tp types.Type) trap.Label {
 // is constructed from their globally unique ID. This prevents cyclic type keys
 // since type recursion in Go always goes through defined types.
 func getTypeLabel(tw *trap.Writer, tp types.Type) (trap.Label, bool) {
-	tp = resolveTypeAlias(tp)
+	tp = types.Unalias(tp)
 	lbl, exists := tw.Labeler.TypeLabels[tp]
 	if !exists {
 		switch tp := tp.(type) {

@@ -842,6 +842,41 @@ private Stmt getEnclosingBreakable(Stmt s) {
 }
 
 /**
+ * A Microsoft C/C++ `__leave` statement.
+ *
+ * For example, the `__leave` statement in the following code:
+ * ```
+ * __try {
+ *   if (err) __leave;
+ *   ...
+ * }
+ * __finally {
+ *
+ * }
+ * ```
+ */
+class LeaveStmt extends JumpStmt, @stmt_leave {
+  override string getAPrimaryQlClass() { result = "LeaveStmt" }
+
+  override string toString() { result = "__leave;" }
+
+  override predicate mayBeImpure() { none() }
+
+  override predicate mayBeGloballyImpure() { none() }
+
+  /**
+   * Gets the `__try` statement that this `__leave` exits.
+   */
+  MicrosoftTryStmt getEnclosingTry() { result = getEnclosingTry(this) }
+}
+
+private MicrosoftTryStmt getEnclosingTry(Stmt s) {
+  if s.getParent().getEnclosingStmt() instanceof MicrosoftTryStmt
+  then result = s.getParent().getEnclosingStmt()
+  else result = getEnclosingTry(s.getParent().getEnclosingStmt())
+}
+
+/**
  * A C/C++ 'label' statement.
  *
  * For example, the `somelabel:` statement in the following code:
@@ -2321,6 +2356,20 @@ class VlaDeclStmt extends Stmt, @stmt_vla_decl {
   }
 
   /**
+   * Gets the number of VLA dimension statements in this VLA declaration
+   * statement and transitively of the VLA declaration used to define its
+   * base type. if any.
+   */
+  int getTransitiveNumberOfVlaDimensionStmts() {
+    not exists(this.getParentVlaDecl()) and
+    result = this.getNumberOfVlaDimensionStmts()
+    or
+    result =
+      this.getNumberOfVlaDimensionStmts() +
+        this.getParentVlaDecl().getTransitiveNumberOfVlaDimensionStmts()
+  }
+
+  /**
    * Gets the `i`th VLA dimension statement in this VLA
    * declaration statement.
    */
@@ -2330,6 +2379,19 @@ class VlaDeclStmt extends Stmt, @stmt_vla_decl {
       this = b.getStmt(j) and
       result = b.getStmt(j - this.getNumberOfVlaDimensionStmts() + i)
     )
+  }
+
+  /**
+   * Gets the `i`th VLA dimension statement in this VLA declaration
+   * statement or transitively of the VLA declaration used to define
+   * its base type.
+   */
+  VlaDimensionStmt getTransitiveVlaDimensionStmt(int i) {
+    i < this.getNumberOfVlaDimensionStmts() and
+    result = this.getVlaDimensionStmt(i)
+    or
+    result =
+      this.getParentVlaDecl().getTransitiveVlaDimensionStmt(i - this.getNumberOfVlaDimensionStmts())
   }
 
   /**
@@ -2343,4 +2405,31 @@ class VlaDeclStmt extends Stmt, @stmt_vla_decl {
    * if any.
    */
   Variable getVariable() { variable_vla(unresolveElement(result), underlyingElement(this)) }
+
+  /**
+   * Get the VLA declaration used to define the base type of
+   * this VLA declaration, if any.
+   */
+  VlaDeclStmt getParentVlaDecl() {
+    exists(Variable v, Type baseType |
+      v = this.getVariable() and
+      baseType = this.getBaseType(v.getType(), this.getNumberOfVlaDimensionStmts())
+    |
+      result.getType() = baseType
+    )
+    or
+    exists(Type t, Type baseType |
+      t = this.getType().(TypedefType).getBaseType() and
+      baseType = this.getBaseType(t, this.getNumberOfVlaDimensionStmts())
+    |
+      result.getType() = baseType
+    )
+  }
+
+  private Type getBaseType(Type type, int n) {
+    n = 0 and
+    result = type
+    or
+    result = this.getBaseType(type.(DerivedType).getBaseType(), n - 1)
+  }
 }

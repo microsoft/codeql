@@ -32,7 +32,6 @@ import codeql.rust.elements.internal.BoxPatConstructor
 import codeql.rust.elements.internal.BreakExprConstructor
 import codeql.rust.elements.internal.CallExprConstructor
 import codeql.rust.elements.internal.CastExprConstructor
-import codeql.rust.elements.internal.ClosureBinderConstructor
 import codeql.rust.elements.internal.ClosureExprConstructor
 import codeql.rust.elements.internal.CommentConstructor
 import codeql.rust.elements.internal.ConstConstructor
@@ -50,6 +49,7 @@ import codeql.rust.elements.internal.ExternItemListConstructor
 import codeql.rust.elements.internal.ExtractorStepConstructor
 import codeql.rust.elements.internal.FieldExprConstructor
 import codeql.rust.elements.internal.FnPtrTypeReprConstructor
+import codeql.rust.elements.internal.ForBinderConstructor
 import codeql.rust.elements.internal.ForExprConstructor
 import codeql.rust.elements.internal.ForTypeReprConstructor
 import codeql.rust.elements.internal.FormatConstructor
@@ -77,13 +77,13 @@ import codeql.rust.elements.internal.LifetimeParamConstructor
 import codeql.rust.elements.internal.LiteralExprConstructor
 import codeql.rust.elements.internal.LiteralPatConstructor
 import codeql.rust.elements.internal.LoopExprConstructor
+import codeql.rust.elements.internal.MacroBlockExprConstructor
 import codeql.rust.elements.internal.MacroCallConstructor
 import codeql.rust.elements.internal.MacroDefConstructor
 import codeql.rust.elements.internal.MacroExprConstructor
 import codeql.rust.elements.internal.MacroItemsConstructor
 import codeql.rust.elements.internal.MacroPatConstructor
 import codeql.rust.elements.internal.MacroRulesConstructor
-import codeql.rust.elements.internal.MacroStmtsConstructor
 import codeql.rust.elements.internal.MacroTypeReprConstructor
 import codeql.rust.elements.internal.MatchArmConstructor
 import codeql.rust.elements.internal.MatchArmListConstructor

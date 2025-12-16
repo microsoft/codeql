@@ -2,7 +2,8 @@
  * @name Unused import
  * @description Import is not required as it is not used
  * @kind problem
- * @tags maintainability
+ * @tags quality
+ *       maintainability
  *       useless-code
  * @problem.severity recommendation
  * @sub-severity high
@@ -11,6 +12,7 @@
  */
 
 import python
+private import LegacyPointsTo
 import Variables.Definition
 import semmle.python.ApiGraphs
 
@@ -93,7 +95,7 @@ private string typehint_annotation_in_module(Module module_scope) {
     or
     annotation = any(FunctionExpr f).getReturns().getASubExpression*()
   |
-    annotation.pointsTo(Value::forString(result)) and
+    annotation.(ExprWithPointsTo).pointsTo(Value::forString(result)) and
     annotation.getEnclosingModule() = module_scope
   )
 }
@@ -143,7 +145,7 @@ predicate unused_import(Import imp, Variable name) {
   not is_pytest_fixture(imp, name) and
   // Only consider import statements that actually point-to something (possibly an unknown module).
   // If this is not the case, it's likely that the import statement never gets executed.
-  imp.getAName().getValue().pointsTo(_)
+  imp.getAName().getValue().(ExprWithPointsTo).pointsTo(_)
 }
 
 from Stmt s, Variable name

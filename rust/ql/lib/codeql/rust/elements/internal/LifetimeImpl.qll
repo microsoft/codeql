@@ -13,13 +13,18 @@ private import codeql.rust.elements.internal.generated.Lifetime
 module Impl {
   // the following QLdoc is generated: if you need to edit it, do it in the schema file
   /**
-   * A Lifetime. For example:
+   * A lifetime annotation.
+   *
+   * For example:
    * ```rust
-   * todo!()
+   * fn foo<'a>(x: &'a str) {}
+   * //     ^^      ^^
    * ```
    */
   class Lifetime extends Generated::Lifetime {
-    override string toStringImpl() {
+    override string toStringImpl() { result = this.toAbbreviatedString() }
+
+    override string toAbbreviatedString() {
       result = this.getText()
       or
       not this.hasText() and result = "'_"

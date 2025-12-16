@@ -15,18 +15,19 @@ private import Type
 private import Scopes
 private import BoolLiteral
 private import Member
-private import EnvVariable
 private import Raw.Raw as Raw
 private import codeql.util.Boolean
 private import AutomaticVariable
 
 newtype VarKind =
   ThisVarKind() or
+  EnvVarKind(string var) { Raw::isEnvVariableAccess(_, var) } or
   ParamVarRealKind() or
   PipelineIteratorKind() or
   PipelineByPropertyNameIteratorKind(string name) {
     exists(Raw::ProcessBlock pb |
-      name = pb.getScriptBlock().getParamBlock().getAPipelineByPropertyNameParameter().getLowerCaseName()
+      name =
+        pb.getScriptBlock().getParamBlock().getAPipelineByPropertyNameParameter().getLowerCaseName()
     )
   }
 
@@ -38,7 +39,6 @@ newtype SynthKind =
   TypeSynthKind() or
   BoolLiteralKind(Boolean b) or
   NullLiteralKind() or
-  EnvVariableKind(string var) { Raw::isEnvVariableAccess(_, var) } or
   AutomaticVariableKind(string var) { Raw::isAutomaticVariableAccess(_, var) } or
   VarSynthKind(VarKind k)
 
@@ -95,8 +95,6 @@ class Synthesis extends TSynthesis {
 
   predicate booleanValue(BoolLiteral b, boolean value) { none() }
 
-  predicate envVariableName(EnvVariable var, string name) { none() }
-
   predicate automaticVariableName(AutomaticVariable var, string name) { none() }
 
   final string toString() { none() }
@@ -145,6 +143,79 @@ private module ThisSynthesis {
     override Location getLocation(Ast n) {
       exists(Raw::Ast scope |
         n = TVariableSynth(scope, ThisVar()) and
+        result = scope.getLocation()
+      )
+    }
+  }
+}
+
+private module EnvironmentVariables {
+  bindingset[var]
+  private Raw::TopLevelScriptBlock getScope(string var) {
+    result =
+      min(Raw::TopLevelScriptBlock scriptBlock, Raw::VarAccess va, Location loc |
+        Raw::isEnvVariableAccess(va, var) and
+        va.getParent+() = scriptBlock and
+        loc = scriptBlock.getLocation()
+      |
+        scriptBlock order by loc.getFile().getAbsolutePath()
+      )
+  }
+
+  private class EnvironmentVariables extends Synthesis {
+    final override predicate child(Raw::Ast parent, ChildIndex i, Child child) {
+      exists(Raw::VarAccess va, string s0 |
+        parent = getScope(s0) and
+        va.getUserPath().toLowerCase() = "env:" + s0 and
+        Raw::isEnvVariableAccess(va, s0) and
+        child = SynthChild(VarSynthKind(EnvVarKind(s0))) and
+        i = EnvVar(s0)
+      )
+    }
+
+    override predicate variableSynthName(VariableSynth v, string name) {
+      exists(string name0 |
+        v = TVariableSynth(_, EnvVar(name0)) and
+        name = "env:" + name0
+      )
+    }
+  }
+}
+
+private module EnvironmentVariableAccessSynth {
+  private class EnvVarAccessSynthesis extends Synthesis {
+    final override predicate isRelevant(Raw::Ast a) { Raw::isEnvVariableAccess(a, _) }
+
+    final override VarAccess getResultAstImpl(Raw::Ast r) {
+      exists(Raw::Ast parent, ChildIndex i |
+        this.envVarAccess(parent, i, _, r, _) and
+        result = TVarAccessSynth(parent, i)
+      )
+    }
+
+    private predicate envVarAccess(
+      Raw::Ast parent, ChildIndex i, Child child, Raw::VarAccess va, string var
+    ) {
+      va = parent.getChild(toRawChildIndex(i)) and
+      Raw::isEnvVariableAccess(va, var) and
+      child = SynthChild(VarAccessSynthKind(TVariableSynth(_, EnvVar(var))))
+    }
+
+    override predicate child(Raw::Ast parent, ChildIndex i, Child child) {
+      this.envVarAccess(parent, i, child, _, _)
+    }
+
+    final override predicate getAnAccess(VarAccessSynth va, Variable v) {
+      exists(Raw::Ast parent, ChildIndex i, string var |
+        this.envVarAccess(parent, i, _, _, var) and
+        v = TVariableSynth(_, EnvVar(var)) and
+        va = TVarAccessSynth(parent, i)
+      )
+    }
+
+    override Location getLocation(Ast n) {
+      exists(Raw::Ast scope |
+        n = TVariableSynth(scope, EnvVar(_)) and
         result = scope.getLocation()
       )
     }
@@ -276,7 +347,7 @@ private module ParameterSynth {
         // has a static type.
         this.parameter(parent, i, p, _) and
         n = TVariableSynth(parent, i) and
-        type = p.getStaticType()
+        type = p.getStaticType().toLowerCase()
       )
     }
   }
@@ -461,7 +532,7 @@ private module TypeSynth {
     override predicate typeName(Type t, string name) {
       exists(Raw::TypeStmt typeStmt |
         t = TTypeSynth(typeStmt, _) and
-        typeStmt.getName() = name
+        typeStmt.getName().toLowerCase() = name
       )
     }
 
@@ -672,7 +743,6 @@ private module LiteralSynth {
       exists(Raw::Ast parent, ChildIndex i | this.child(parent, i, _, r) |
         result = TBoolLiteral(parent, i) or
         result = TNullLiteral(parent, i) or
-        result = TEnvVariable(parent, i) or
         result = TAutomaticVariable(parent, i)
       )
     }
@@ -691,12 +761,6 @@ private module LiteralSynth {
         s = "null" and
         child = SynthChild(NullLiteralKind())
         or
-        exists(string s0 |
-          s = "env:" + s0 and
-          Raw::isEnvVariableAccess(va, s0) and
-          child = SynthChild(EnvVariableKind(s0))
-        )
-        or
         isAutomaticVariableAccess(va, s) and
         child = SynthChild(AutomaticVariableKind(s))
       )
@@ -710,13 +774,6 @@ private module LiteralSynth {
       exists(Raw::Ast parent, ChildIndex i |
         b = TBoolLiteral(parent, i) and
         this.child(parent, i, SynthChild(BoolLiteralKind(value)))
-      )
-    }
-
-    final override predicate envVariableName(EnvVariable var, string name) {
-      exists(Raw::Ast parent, ChildIndex i |
-        var = TEnvVariable(parent, i) and
-        this.child(parent, i, SynthChild(EnvVariableKind(name)))
       )
     }
 
@@ -771,28 +828,35 @@ private module IteratorAccessSynth {
     // TODO: We could join on something other than the string if we wanted (i.e., the raw parameter).
     v.getPropertyName().toLowerCase() = result and
     result =
-      pb.getScriptBlock()
-          .getParamBlock()
-          .getAPipelineByPropertyNameParameter()
-          .getLowerCaseName()
+      pb.getScriptBlock().getParamBlock().getAPipelineByPropertyNameParameter().getLowerCaseName()
   }
+
+  private Raw::Ast getParent(Raw::Ast a) { a.getParent() = result }
+
+  private predicate isVarAccess(Raw::VarAccess va) { any() }
+
+  private predicate isProcessBlock(Raw::ProcessBlock pb) { any() }
+
+  private Raw::ProcessBlock getProcessBlock(Raw::VarAccess va) =
+    doublyBoundedFastTC(getParent/1, isVarAccess/1, isProcessBlock/1)(va, result)
 
   private class IteratorAccessSynth extends Synthesis {
     final override predicate isRelevant(Raw::Ast a) {
-      exists(Raw::ProcessBlock pb, Raw::VarAccess va |
-        va = a and
-        pb = va.getParent+()
-      |
+      exists(Raw::VarAccess va | va = a |
         va.getUserPath() = "_"
         or
-        va.getUserPath().toLowerCase() =
-          pb.getScriptBlock().getParamBlock().getPipelineParameter().getLowerCaseName()
-        or
-        va.getUserPath().toLowerCase() =
-          pb.getScriptBlock()
-              .getParamBlock()
-              .getAPipelineByPropertyNameParameter()
-              .getLowerCaseName()
+        exists(Raw::ProcessBlock pb |
+          pragma[only_bind_into](pb) = getProcessBlock(pragma[only_bind_into](va))
+        |
+          va.getUserPath().toLowerCase() =
+            pb.getScriptBlock().getParamBlock().getPipelineParameter().getLowerCaseName()
+          or
+          va.getUserPath().toLowerCase() =
+            pb.getScriptBlock()
+                .getParamBlock()
+                .getAPipelineByPropertyNameParameter()
+                .getLowerCaseName()
+        )
       )
     }
 
@@ -810,7 +874,7 @@ private module IteratorAccessSynth {
 
     private PipelineOrPipelineByPropertyNameIteratorVariable varAccess(Raw::VarAccess va) {
       exists(Raw::ProcessBlock pb |
-        pb = va.getParent+() and
+        pb = getProcessBlock(va) and
         result = TVariableSynth(pb, _) and
         va.getUserPath().toLowerCase() = getAPipelineIteratorName(pb, result)
       )
@@ -896,6 +960,7 @@ private module PipelineAccess {
         exists(PipelineByPropertyNameParameter pipelineVar, Raw::PipelineByPropertyNameParameter p |
           i = processBlockPipelineByPropertyNameVarReadAccess(p.getLowerCaseName()) and
           getResultAst(p) = pipelineVar and
+          pipelineVar = TVariableSynth(pb.getScriptBlock(), _) and
           child = SynthChild(VarAccessSynthKind(pipelineVar))
         )
       )

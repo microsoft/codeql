@@ -1,3 +1,93 @@
+## 5.0.3
+
+No user-facing changes.
+
+## 5.0.2
+
+No user-facing changes.
+
+## 5.0.1
+
+### Bug Fixes
+
+- Fixed a bug in the Python extractor's import handling where failing to find an import in `find_module` would cause a `KeyError` to be raised. (Contributed by @akoeplinger.)
+
+## 5.0.0
+
+### Breaking Changes
+
+- The classes `ControlFlowNode`, `Expr`, and `Module` no longer expose predicates that invoke the points-to analysis. To access these predicates, import the module `LegacyPointsTo` and follow the instructions given therein.
+
+## 4.1.0
+
+### New Features
+
+* Initial support for incremental Python databases via `codeql database create --overlay-base`/`--overlay-changes`.
+
+## 4.0.17
+
+### Bug Fixes
+
+* The Python extractor no longer crashes with an `ImportError` when run using Python 3.14.
+
+## 4.0.16
+
+### Minor Analysis Improvements
+
+* Data flow tracking through global variables now supports nested field access patterns such as `global_var.obj.field`. This improves the precision of taint tracking analysis when data flows through complex global variable structures.
+
+## 4.0.15
+
+No user-facing changes.
+
+## 4.0.14
+
+### Minor Analysis Improvements
+
+- The modelling of Psycopg2 now supports the use of `psycopg2.pool` connection pools for handling database connections.
+* Removed `lxml` as an XML bomb sink. The underlying libxml2 library now includes [entity reference loop detection](https://github.com/lxml/lxml/blob/f33ac2c2f5f9c4c4c1fc47f363be96db308f2fa6/doc/FAQ.txt#L1077) that prevents XML bomb attacks. 
+
+## 4.0.13
+
+No user-facing changes.
+
+## 4.0.12
+
+### Minor Analysis Improvements
+
+* The regular expressions in `SensitiveDataHeuristics.qll` have been extended to find more instances of sensitive data such as secrets used in authentication, finance and health information, and device data. The heuristics have also been refined to find fewer false positive matches. This will improve results for queries related to sensitive information.
+
+## 4.0.11
+
+### Minor Analysis Improvements
+
+* Type annotations such as `foo : Bar` are now treated by the call graph as an indication that `foo` may be an instance of `Bar`.
+
+### Bug Fixes
+
+- The Python parser is now able to correctly parse expressions such as `match[1]` and `match()` where `match` is not used as a keyword.
+
+## 4.0.10
+
+No user-facing changes.
+
+## 4.0.9
+
+No user-facing changes.
+
+## 4.0.8
+
+### Minor Analysis Improvements
+
+- The Python extractor now extracts files in hidden directories by default. If you would like to skip files in hidden directories, add `paths-ignore: ["**/.*/**"]` to your [Code Scanning config](https://docs.github.com/en/code-security/code-scanning/creating-an-advanced-setup-for-code-scanning/customizing-your-advanced-setup-for-code-scanning#specifying-directories-to-scan). If you would like to skip all hidden files, you can use `paths-ignore: ["**/.*"]`. When using the CodeQL CLI for extraction, specify the configuration (creating the configuration file if necessary) using the `--codescanning-config` option.
+
+## 4.0.7
+
+### Minor Analysis Improvements
+
+* Added modeling for the `hdbcli` PyPI package as a database library implementing PEP 249.
+* Added header write model for `send_header` in `http.server`.
+
 ## 4.0.6
 
 No user-facing changes.

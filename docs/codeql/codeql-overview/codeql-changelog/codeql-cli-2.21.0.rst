@@ -9,7 +9,7 @@ CodeQL 2.21.0 (2025-04-03)
    :local:
    :backlinks: none
 
-This is an overview of changes in the CodeQL CLI and relevant CodeQL query and library packs. For additional updates on changes to the CodeQL code scanning experience, check out the `code scanning section on the GitHub blog <https://github.blog/tag/code-scanning/>`__, `relevant GitHub Changelog updates <https://github.blog/changelog/label/code-scanning/>`__, `changes in the CodeQL extension for Visual Studio Code <https://marketplace.visualstudio.com/items/GitHub.vscode-codeql/changelog>`__, and the `CodeQL Action changelog <https://github.com/github/codeql-action/blob/main/CHANGELOG.md>`__.
+This is an overview of changes in the CodeQL CLI and relevant CodeQL query and library packs. For additional updates on changes to the CodeQL code scanning experience, check out the `code scanning section on the GitHub blog <https://github.blog/tag/code-scanning/>`__, `relevant GitHub Changelog updates <https://github.blog/changelog/label/application-security/>`__, `changes in the CodeQL extension for Visual Studio Code <https://marketplace.visualstudio.com/items/GitHub.vscode-codeql/changelog>`__, and the `CodeQL Action changelog <https://github.com/github/codeql-action/blob/main/CHANGELOG.md>`__.
 
 Security Coverage
 -----------------
@@ -165,7 +165,7 @@ Java/Kotlin
 """""""""""
 
 *   Java extraction is now able to download Maven 3.9.x if a Maven Enforcer Plugin configuration indicates it is necessary. Maven 3.8.x is still preferred if the enforcer-plugin configuration (if any) permits it.
-*   Added a path injection sanitizer for calls to :code:`java.lang.String.matches`, :code:`java.lang.String.replace`, and :code:`java.lang.String.replaceAll` that make sure '/', '\', '..' are not in the path.
+*   Added a path injection sanitizer for calls to :code:`java.lang.String.matches`, :code:`java.lang.String.replace`, and :code:`java.lang.String.replaceAll` that make sure :code:`/`, :code:`\\`, :code:`..` are not in the path.
 
 JavaScript/TypeScript
 """""""""""""""""""""

@@ -4,7 +4,7 @@
  *              arbitrary amounts of memory being allocated, leading to a crash or a
  *              denial-of-service (DoS) attack.
  * @kind path-problem
- * @problem.severity recommendation
+ * @problem.severity warning
  * @security-severity 7.5
  * @precision high
  * @id rust/uncontrolled-allocation-size
@@ -32,6 +32,8 @@ module UncontrolledAllocationConfig implements DataFlow::ConfigSig {
   predicate isSink(DataFlow::Node sink) { sink instanceof Sink }
 
   predicate isBarrier(DataFlow::Node barrier) { barrier instanceof Barrier }
+
+  predicate observeDiffInformedIncrementalMode() { any() }
 }
 
 module UncontrolledAllocationFlow = TaintTracking::Global<UncontrolledAllocationConfig>;

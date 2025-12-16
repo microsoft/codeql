@@ -1,3 +1,77 @@
+## 1.5.3
+
+No user-facing changes.
+
+## 1.5.2
+
+No user-facing changes.
+
+## 1.5.1
+
+No user-facing changes.
+
+## 1.5.0
+
+### Query Metadata Changes
+
+* Reduced the `security-severity` score of the `rb/overly-large-range` query from 5.0 to 4.0 to better reflect its impact. 
+
+## 1.4.8
+
+No user-facing changes.
+
+## 1.4.7
+
+No user-facing changes.
+
+## 1.4.6
+
+No user-facing changes.
+
+## 1.4.5
+
+No user-facing changes.
+
+## 1.4.4
+
+No user-facing changes.
+
+## 1.4.3
+
+No user-facing changes.
+
+## 1.4.2
+
+No user-facing changes.
+
+## 1.4.1
+
+No user-facing changes.
+
+## 1.4.0
+
+### Query Metadata Changes
+
+* Update query metadata tags for `rb/database-query-in-loop` and `rb/useless-assignment-to-local` to align with the established
+[Query file metadata and alert message style guide](https://github.com/github/codeql/blob/main/docs/query-metadata-style-guide.md#quality-query-sub-category-tags).
+
+## 1.3.2
+
+No user-facing changes.
+
+## 1.3.1
+
+### Minor Analysis Improvements
+
+* The query `rb/hardcoded-credentials` has been removed from all query suites.
+
+## 1.3.0
+
+### Query Metadata Changes
+
+* The precision of `rb/useless-assignment-to-local` has been adjusted from `medium` to `high`.
+* The tag `external/cwe/cwe-94` has been removed from `rb/server-side-template-injection` and the tag `external/cwe/cwe-094` has been added.
+
 ## 1.2.1
 
 No user-facing changes.

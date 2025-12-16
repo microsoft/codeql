@@ -649,11 +649,13 @@ module API {
     /** Gets a node corresponding to an import of module `m` without taking into account types from models. */
     Node getAModuleImportRaw(string m) {
       result = Impl::MkModuleImport(m) or
-      result = Impl::MkModuleImport(m).(Node).getMember("default")
+      result = Impl::MkModuleImport(m).(Node).getMember("default") or
+      result = Impl::MkTypeUse(m, "")
     }
 
     /** Gets a node whose type has the given qualified name, not including types from models. */
     Node getANodeOfTypeRaw(string moduleName, string exportedName) {
+      exportedName != "" and
       result = Impl::MkTypeUse(moduleName, exportedName).(Node).getInstance()
       or
       exportedName = "" and
@@ -749,18 +751,14 @@ module API {
       MkModuleImport(string m) {
         imports(_, m)
         or
-        any(TypeAnnotation n).hasQualifiedName(m, _)
-        or
-        any(Type t).hasUnderlyingType(m, _)
+        any(TypeAnnotation n).hasUnderlyingType(m, _)
       } or
       MkClassInstance(DataFlow::ClassNode cls) { needsDefNode(cls) } or
       MkDef(DataFlow::Node nd) { rhs(_, _, nd) } or
       MkUse(DataFlow::Node nd) { use(_, _, nd) } or
       /** A use of a TypeScript type. */
       MkTypeUse(string moduleName, string exportName) {
-        any(TypeAnnotation n).hasQualifiedName(moduleName, exportName)
-        or
-        any(Type t).hasUnderlyingType(moduleName, exportName)
+        any(TypeAnnotation n).hasUnderlyingType(moduleName, exportName)
       } or
       MkSyntheticCallbackArg(DataFlow::Node src, int bound, DataFlow::InvokeNode nd) {
         trackUseNode(src, true, bound, "").flowsTo(nd.getCalleeNode())
@@ -824,7 +822,7 @@ module API {
           or
           // special case: from `require('m')` to an export of `prop` in `m`
           exists(Import imp, Module m, string prop |
-            pred = imp.getImportedModuleNode() and
+            pred = imp.getImportedModuleNodeStrict() and
             m = imp.getImportedModule() and
             lbl = Label::member(prop) and
             rhs = m.getAnExportedValue(prop)
@@ -850,10 +848,10 @@ module API {
           )
           or
           lbl = Label::promised() and
-          PromiseFlow::storeStep(rhs, pred, Promises::valueProp())
+          SharedTypeTrackingStep::storeStep(rhs, pred, Promises::valueProp())
           or
           lbl = Label::promisedError() and
-          PromiseFlow::storeStep(rhs, pred, Promises::errorProp())
+          SharedTypeTrackingStep::storeStep(rhs, pred, Promises::errorProp())
           or
           // The return-value of a getter G counts as a definition of property G
           // (Ordinary methods and properties are handled as PropWrite nodes)
@@ -1008,11 +1006,11 @@ module API {
         propDesc = ""
       )
       or
-      PromiseFlow::loadStep(pred.getALocalUse(), ref, Promises::valueProp()) and
+      SharedTypeTrackingStep::loadStep(pred.getALocalUse(), ref, Promises::valueProp()) and
       lbl = Label::promised() and
       (propDesc = Promises::valueProp() or propDesc = "")
       or
-      PromiseFlow::loadStep(pred.getALocalUse(), ref, Promises::errorProp()) and
+      SharedTypeTrackingStep::loadStep(pred.getALocalUse(), ref, Promises::errorProp()) and
       lbl = Label::promisedError() and
       (propDesc = Promises::errorProp() or propDesc = "")
     }
@@ -1115,6 +1113,17 @@ module API {
           base = MkSyntheticCallbackArg(_, _, call) and
           lbl = Label::parameter(1) and
           ref = awaited(call)
+        )
+        or
+        // Handle promisified object member access: promisify(obj).member should be treated as obj.member (promisified)
+        exists(
+          Promisify::PromisifyAllCall promisifiedObj, DataFlow::SourceNode originalObj,
+          string member
+        |
+          originalObj.flowsTo(promisifiedObj.getArgument(0)) and
+          use(base, originalObj) and
+          lbl = Label::member(member) and
+          ref = promisifiedObj.getAPropertyRead(member)
         )
         or
         decoratorDualEdge(base, lbl, ref)
@@ -1236,7 +1245,7 @@ module API {
       exists(DataFlow::ClassNode cls | nd = MkClassInstance(cls) |
         ref = cls.getAReceiverNode()
         or
-        ref = cls.(DataFlow::ClassNode::FunctionStyleClass).getAPrototypeReference()
+        ref = cls.(DataFlow::ClassNode).getAPrototypeReference()
       )
       or
       nd = MkUse(ref)
@@ -1315,7 +1324,9 @@ module API {
       exists(DataFlow::TypeTracker t, StepSummary summary, DataFlow::SourceNode prev |
         prev = trackUseNode(nd, promisified, boundArgs, prop, t) and
         StepSummary::step(prev, res, summary) and
-        result = t.append(summary)
+        result = t.append(summary) and
+        // Block argument-passing into 'this' when it determines the call target
+        not summary = CallReceiverStep()
       )
     }
 
@@ -1339,7 +1350,7 @@ module API {
       result = nd.getALocalSource()
       or
       // additional backwards step from `require('m')` to `exports` or `module.exports` in m
-      exists(Import imp | imp.getImportedModuleNode() = trackDefNode(nd, t.continue()) |
+      exists(Import imp | imp.getImportedModuleNodeStrict() = trackDefNode(nd, t.continue()) |
         result = DataFlow::exportsVarNode(imp.getImportedModule())
         or
         result = DataFlow::moduleVarNode(imp.getImportedModule()).getAPropertyRead("exports")
@@ -1372,7 +1383,9 @@ module API {
       exists(DataFlow::TypeBackTracker t, StepSummary summary, DataFlow::Node next |
         next = trackDefNode(nd, t) and
         StepSummary::step(prev, next, summary) and
-        result = t.prepend(summary)
+        result = t.prepend(summary) and
+        // Block argument-passing steps from 'this' back to a receiver when it determines the call target
+        not summary = CallReceiverStep()
       )
     }
 

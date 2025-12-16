@@ -3,7 +3,9 @@ package trap
 import (
 	"fmt"
 	"go/types"
+	"path/filepath"
 
+	"github.com/github/codeql-go/extractor/srcarchive"
 	"github.com/github/codeql-go/extractor/util"
 )
 
@@ -74,7 +76,7 @@ func (l *Labeler) FileLabel() Label {
 
 // FileLabelFor returns the label for the file for which the trap writer `tw` is associated
 func (l *Labeler) FileLabelFor(path string) Label {
-	return l.GlobalID(util.EscapeTrapSpecialChars(path) + ";sourcefile")
+	return l.GlobalID(util.EscapeTrapSpecialChars(filepath.ToSlash(srcarchive.TransformPath(path))) + ";sourcefile")
 }
 
 // LocalID associates a label with the given AST node `nd` and returns it
@@ -169,11 +171,12 @@ func (l *Labeler) ScopedObjectID(object types.Object, getTypeLabel func() Label)
 
 // findMethodWithGivenReceiver finds a method with `object` as its receiver, if one exists
 func findMethodWithGivenReceiver(object types.Object) *types.Func {
-	meth := findMethodOnTypeWithGivenReceiver(object.Type(), object)
+	unaliasedType := types.Unalias(object.Type())
+	meth := findMethodOnTypeWithGivenReceiver(unaliasedType, object)
 	if meth != nil {
 		return meth
 	}
-	if pointerType, ok := object.Type().(*types.Pointer); ok {
+	if pointerType, ok := unaliasedType.(*types.Pointer); ok {
 		meth = findMethodOnTypeWithGivenReceiver(pointerType.Elem(), object)
 	}
 	return meth

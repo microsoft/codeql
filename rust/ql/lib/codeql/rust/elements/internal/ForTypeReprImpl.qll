@@ -13,9 +13,12 @@ private import codeql.rust.elements.internal.generated.ForTypeRepr
  */
 module Impl {
   /**
-   * A ForTypeRepr. For example:
+   * A function pointer type with a `for` modifier.
+   *
+   * For example:
    * ```rust
-   * todo!()
+   * type RefOp<X> = for<'a> fn(&'a X) -> &'a X;
+   * //              ^^^^^^^^^^^^^^^^^^^^^^^^^^
    * ```
    */
   class ForTypeRepr extends Generated::ForTypeRepr { }

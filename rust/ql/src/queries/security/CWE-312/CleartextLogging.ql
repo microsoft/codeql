@@ -3,7 +3,7 @@
  * @description Logging sensitive information in plaintext can
  *              expose it to an attacker.
  * @kind path-problem
- * @problem.severity error
+ * @problem.severity warning
  * @security-severity 7.5
  * @precision high
  * @id rust/cleartext-logging
@@ -37,7 +37,7 @@ module CleartextLoggingConfig implements DataFlow::ConfigSig {
 
   predicate isAdditionalFlowStep(DataFlow::Node node1, DataFlow::Node node2) {
     // flow from `a` to `&a`
-    node2.asExpr().getExpr().(RefExpr).getExpr() = node1.asExpr().getExpr()
+    node2.asExpr().(RefExpr).getExpr() = node1.asExpr()
   }
 
   predicate allowImplicitRead(DataFlow::Node node, DataFlow::ContentSet c) {
@@ -45,6 +45,8 @@ module CleartextLoggingConfig implements DataFlow::ConfigSig {
     isSink(node) and
     c.getAReadContent() instanceof DataFlow::TuplePositionContent
   }
+
+  predicate observeDiffInformedIncrementalMode() { any() }
 }
 
 module CleartextLoggingFlow = TaintTracking::Global<CleartextLoggingConfig>;

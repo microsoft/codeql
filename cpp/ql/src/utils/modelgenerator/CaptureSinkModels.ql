@@ -1,5 +1,5 @@
 /**
- * @name Capture sink models.
+ * @name Capture sink models
  * @description Finds public methods that act as sinks as they flow into a known sink.
  * @kind diagnostic
  * @id cpp/utils/modelgenerator/sink-models
@@ -7,8 +7,8 @@
  */
 
 import internal.CaptureModels
-import Heuristic
+import SinkModels
 
 from DataFlowSinkTargetApi api, string sink
-where sink = captureSink(api)
+where sink = Heuristic::captureSink(api)
 select sink order by sink

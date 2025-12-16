@@ -13,6 +13,16 @@ module ArithmeticOverflowConfig implements DataFlow::ConfigSig {
   predicate isBarrier(DataFlow::Node n) { overflowBarrier(n) }
 
   predicate isBarrierIn(DataFlow::Node node) { isSource(node) }
+
+  predicate observeDiffInformedIncrementalMode() {
+    any() // merged with ArithmeticUnderflow in ArithmeticTainted.ql
+  }
+
+  Location getASelectedSinkLocation(DataFlow::Node sink) {
+    exists(ArithExpr exp | result = [exp.getLocation(), sink.getLocation()] |
+      overflowSink(exp, sink.asExpr())
+    )
+  }
 }
 
 /**
@@ -29,6 +39,16 @@ module ArithmeticUnderflowConfig implements DataFlow::ConfigSig {
   predicate isBarrier(DataFlow::Node n) { underflowBarrier(n) }
 
   predicate isBarrierIn(DataFlow::Node node) { isSource(node) }
+
+  predicate observeDiffInformedIncrementalMode() {
+    any() // merged with ArithmeticOverflow in ArithmeticTainted.ql
+  }
+
+  Location getASelectedSinkLocation(DataFlow::Node sink) {
+    exists(ArithExpr exp | result = [exp.getLocation(), sink.getLocation()] |
+      underflowSink(exp, sink.asExpr())
+    )
+  }
 }
 
 /**

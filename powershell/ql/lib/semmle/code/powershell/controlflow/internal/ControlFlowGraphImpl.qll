@@ -36,22 +36,9 @@ private module CfgInput implements CfgShared::InputSig<Location> {
     scope.(Impl::CfgScope).exit(last, c)
   }
 
-  class SuccessorType = Cfg::SuccessorType;
+  private class SuccessorType = Cfg::SuccessorType;
 
   SuccessorType getAMatchingSuccessorType(Completion c) { result = c.getAMatchingSuccessorType() }
-
-  predicate successorTypeIsSimple(SuccessorType t) {
-    t instanceof Cfg::SuccessorTypes::NormalSuccessor
-  }
-
-  predicate successorTypeIsCondition(SuccessorType t) {
-    t instanceof Cfg::SuccessorTypes::ConditionalSuccessor
-  }
-
-  predicate isAbnormalExitType(SuccessorType t) {
-    t instanceof Cfg::SuccessorTypes::ThrowSuccessor or
-    t instanceof Cfg::SuccessorTypes::ExitSuccessor
-  }
 
   private predicate id(Raw::Ast node1, Raw::Ast node2) { node1 = node2 }
 
@@ -427,7 +414,9 @@ module Trees {
     override predicate last(AstNode last, Completion c) {
       // Exit the loop body when the condition is false
       last(this.getCondition(), last, c) and
-      this.entersLoopWhenConditionIs(c.(BooleanCompletion).getValue().booleanNot())
+      this.entersLoopWhenConditionIs(pragma[only_bind_into](c.(BooleanCompletion)
+            .getValue()
+            .booleanNot()))
       or
       super.last(last, c)
     }
@@ -435,7 +424,7 @@ module Trees {
     override predicate succ(AstNode pred, AstNode succ, Completion c) {
       // Condition -> body
       last(this.getCondition(), pred, c) and
-      this.entersLoopWhenConditionIs(c.(BooleanCompletion).getValue()) and
+      this.entersLoopWhenConditionIs(pragma[only_bind_into](c.(BooleanCompletion).getValue())) and
       first(this.getBody(), succ)
       or
       // Body -> condition
@@ -734,8 +723,6 @@ module Trees {
 
   class VarTree extends LeafTree instanceof Variable { }
 
-  class EnvVariableTree extends LeafTree instanceof EnvVariable { }
-
   class AutomaticVariableTree extends LeafTree instanceof AutomaticVariable { }
 
   class BinaryExprTree extends StandardPostOrderTree instanceof BinaryExpr {
@@ -927,20 +914,3 @@ CfgScope getCfgScope(Ast n) {
     pragma[only_bind_into](result) = getCfgScopeImpl(n0)
   )
 }
-
-cached
-private module Cached {
-  cached
-  newtype TSuccessorType =
-    TSuccessorSuccessor() or
-    TBooleanSuccessor(Boolean b) or
-    TReturnSuccessor() or
-    TBreakSuccessor() or
-    TContinueSuccessor() or
-    TThrowSuccessor() or
-    TExitSuccessor() or
-    TMatchingSuccessor(Boolean b) or
-    TEmptinessSuccessor(Boolean b)
-}
-
-import Cached

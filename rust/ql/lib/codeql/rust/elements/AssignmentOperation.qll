@@ -1,16 +1,23 @@
-/** Provides classes for assignment operations. */
+/**
+ * Provides classes for assignment operations.
+ */
 
 private import rust
 private import codeql.rust.elements.internal.BinaryExprImpl
 
-/** An assignment operation. */
+/**
+ * An assignment operation, for example:
+ * ```rust
+ * x = y;
+ * x += y;
+ * ```
+ */
 abstract private class AssignmentOperationImpl extends Impl::BinaryExpr { }
 
 final class AssignmentOperation = AssignmentOperationImpl;
 
 /**
- * An assignment expression, for example
- *
+ * An assignment expression, for example:
  * ```rust
  * x = y;
  * ```
@@ -18,12 +25,16 @@ final class AssignmentOperation = AssignmentOperationImpl;
 final class AssignmentExpr extends AssignmentOperationImpl {
   AssignmentExpr() { this.getOperatorName() = "=" }
 
+  /**
+   * Gets a write access that occurs in the left-hand side of this assignment expression.
+   */
+  VariableWriteAccess getAWriteAccess() { this = result.getAssignmentExpr() }
+
   override string getAPrimaryQlClass() { result = "AssignmentExpr" }
 }
 
 /**
- * A compound assignment expression, for example
- *
+ * A compound assignment expression, for example:
  * ```rust
  * x += y;
  * ```

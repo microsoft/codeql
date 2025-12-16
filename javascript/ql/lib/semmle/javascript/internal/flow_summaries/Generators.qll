@@ -1,13 +1,15 @@
 /**
  * Contains flow steps to model flow through generator functions.
  */
+overlay[local?]
+module;
 
 private import javascript
 private import semmle.javascript.dataflow.internal.DataFlowNode
 private import semmle.javascript.dataflow.internal.AdditionalFlowInternal
 
 /**
- * Steps modelling flow out of a generator function:
+ * Steps modeling flow out of a generator function:
  * ```js
  * function* foo() {
  *   yield x;  // store 'x' in the return value's IteratorElement

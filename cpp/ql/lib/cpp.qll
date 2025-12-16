@@ -13,7 +13,9 @@
  *     https://github.com/cplusplus/draft/raw/master/papers/n4140.pdf
  */
 
+import Customizations
 import semmle.code.cpp.File
+import semmle.code.cpp.PchFile
 import semmle.code.cpp.Linkage
 import semmle.code.cpp.Location
 import semmle.code.cpp.Compilation
@@ -72,3 +74,4 @@ import semmle.code.cpp.Preprocessor
 import semmle.code.cpp.Iteration
 import semmle.code.cpp.NameQualifiers
 import DefaultOptions
+private import semmle.code.cpp.internal.Overlay

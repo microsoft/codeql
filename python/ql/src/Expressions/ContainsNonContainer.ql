@@ -2,7 +2,8 @@
  * @name Membership test with a non-container
  * @description A membership test, such as 'item in sequence', with a non-container on the right hand side will raise a 'TypeError'.
  * @kind problem
- * @tags reliability
+ * @tags quality
+ *       reliability
  *       correctness
  * @problem.severity error
  * @sub-severity high
@@ -11,6 +12,7 @@
  */
 
 import python
+private import LegacyPointsTo
 import semmle.python.pointsto.PointsTo
 
 predicate rhs_in_expr(ControlFlowNode rhs, Compare cmp) {
@@ -19,7 +21,8 @@ predicate rhs_in_expr(ControlFlowNode rhs, Compare cmp) {
   )
 }
 
-from ControlFlowNode non_seq, Compare cmp, Value v, ClassValue cls, ControlFlowNode origin
+from
+  ControlFlowNodeWithPointsTo non_seq, Compare cmp, Value v, ClassValue cls, ControlFlowNode origin
 where
   rhs_in_expr(non_seq, cmp) and
   non_seq.pointsTo(_, v, origin) and

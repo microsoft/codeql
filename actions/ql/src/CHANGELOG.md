@@ -1,3 +1,71 @@
+## 0.6.16
+
+No user-facing changes.
+
+## 0.6.15
+
+No user-facing changes.
+
+## 0.6.14
+
+No user-facing changes.
+
+## 0.6.13
+
+No user-facing changes.
+
+## 0.6.12
+
+No user-facing changes.
+
+## 0.6.11
+
+No user-facing changes.
+
+## 0.6.10
+
+No user-facing changes.
+
+## 0.6.9
+
+### Minor Analysis Improvements
+
+* Actions analysis now reports file coverage information on the CodeQL status page.
+
+## 0.6.8
+
+No user-facing changes.
+
+## 0.6.7
+
+No user-facing changes.
+
+## 0.6.6
+
+No user-facing changes.
+
+## 0.6.5
+
+No user-facing changes.
+
+## 0.6.4
+
+No user-facing changes.
+
+## 0.6.3
+
+No user-facing changes.
+
+## 0.6.2
+
+### Minor Analysis Improvements
+
+* The query `actions/missing-workflow-permissions` is now aware of the minimal permissions needed for the actions `deploy-pages`, `delete-package-versions`, `ai-inference`. This should lead to better alert messages and better fix suggestions.
+
+## 0.6.1
+
+No user-facing changes.
+
 ## 0.6.0
 
 ### Breaking Changes

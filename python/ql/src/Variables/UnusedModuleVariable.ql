@@ -2,7 +2,8 @@
  * @name Unused global variable
  * @description Global variable is defined but not used
  * @kind problem
- * @tags efficiency
+ * @tags quality
+ *       maintainability
  *       useless-code
  *       external/cwe/cwe-563
  * @problem.severity recommendation
@@ -12,6 +13,7 @@
  */
 
 import python
+private import LegacyPointsTo
 import Definition
 
 /**
@@ -57,7 +59,7 @@ predicate unused_global(Name unused, GlobalVariable v) {
       // indirectly
       defn.getBasicBlock().reachesExit() and u.getScope() != unused.getScope()
     ) and
-    not unused.getEnclosingModule().getAnExport() = v.getId() and
+    not unused.getEnclosingModule().(ModuleWithPointsTo).getAnExport() = v.getId() and
     not exists(unused.getParentNode().(ClassDef).getDefinedClass().getADecorator()) and
     not exists(unused.getParentNode().(FunctionDef).getDefinedFunction().getADecorator()) and
     unused.defines(v) and

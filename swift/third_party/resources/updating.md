@@ -3,9 +3,9 @@ These files can only be updated having access for the internal repository at the
 In order to perform a Swift update:
 
 1. Dispatch the [internal `swift-prebuild` workflow](https://github.com/github/semmle-code/actions/workflows/__swift-prebuild.yml) with the appropriate swift
-   tag.
+   tag, e.g., `swift-6.1.1-RELEASE`.
 2. Dispatch [internal `swift-prepare-resource-dir` workflow](https://github.com/github/semmle-code/actions/workflows/__swift-prepare-resource-dir.yml) with the
-   appropriate swift tag.
+   appropriate swift tag, e.g., `swift-6.1.1-RELEASE`.
 3. Once the jobs finish, staged artifacts are available
    at https://github.com/dsp-testing/codeql-swift-artifacts/releases. Copy and paste the sha256 within the `_override`
    definition in [`load.bzl`](../load.bzl).
@@ -22,4 +22,6 @@ In order to perform a Swift update:
    ```
    (or whatever you have overridden). This will pull the staged archives in the repository for git LFS.
 8. Clear `_override` in [`load.bzl`](../load.bzl).
-9. Push and your PR will be ready for `main`.
+9. Add a change note to the [library change note directory](../../ql/lib/change-notes/) that mentions that we now support the Swift version we updated to.
+10. If this is not a patch update, then update the [supported versions](../../../docs/codeql/reusables/supported-versions-compilers.rst) with the Swift version we updated to.
+11. Push and your PR will be ready for `main`.

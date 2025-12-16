@@ -6,19 +6,55 @@ private import TypeMention
 private import codeql.rust.internal.CachedStages
 private import codeql.rust.elements.internal.generated.Raw
 private import codeql.rust.elements.internal.generated.Synth
+private import codeql.rust.frameworks.stdlib.Stdlib
+private import codeql.rust.frameworks.stdlib.Builtins as Builtins
+
+/**
+ * Holds if a dyn trait type should have a type parameter associated with `n`. A
+ * dyn trait type inherits the type parameters of the trait it implements. That
+ * includes the type parameters corresponding to associated types.
+ *
+ * For instance in
+ * ```rust
+ * trait SomeTrait<A> {
+ *   type AssociatedType;
+ * }
+ * ```
+ * this predicate holds for the nodes `A` and `type AssociatedType`.
+ */
+private predicate dynTraitTypeParameter(Trait trait, AstNode n) {
+  trait = any(DynTraitTypeRepr dt).getTrait() and
+  (
+    n = trait.getGenericParamList().getATypeParam() or
+    n = trait.(TraitItemNode).getAnAssocItem().(TypeAlias)
+  )
+}
 
 cached
 newtype TType =
   TStruct(Struct s) { Stages::TypeInferenceStage::ref() } or
   TEnum(Enum e) or
   TTrait(Trait t) or
-  TImpl(Impl i) or
-  TArrayType() or // todo: add size?
-  TRefType() or // todo: add mut?
+  TUnion(Union u) or
+  TImplTraitType(ImplTraitTypeRepr impl) or
+  TDynTraitType(Trait t) { t = any(DynTraitTypeRepr dt).getTrait() } or
+  TNeverType() or
+  TUnknownType() or
   TTypeParamTypeParameter(TypeParam t) or
   TAssociatedTypeTypeParameter(TypeAlias t) { any(TraitItemNode trait).getAnAssocItem() = t } or
-  TRefTypeParameter() or
+  TDynTraitTypeParameter(AstNode n) { dynTraitTypeParameter(_, n) } or
+  TImplTraitTypeParameter(ImplTraitTypeRepr implTrait, TypeParam tp) {
+    implTraitTypeParam(implTrait, _, tp)
+  } or
   TSelfTypeParameter(Trait t)
+
+private predicate implTraitTypeParam(ImplTraitTypeRepr implTrait, int i, TypeParam tp) {
+  implTrait.isInReturnPos() and
+  tp = implTrait.getFunction().getGenericParamList().getTypeParam(i) and
+  // Only include type parameters of the function that occur inside the impl
+  // trait type.
+  exists(Path path | path.getParentNode*() = implTrait and resolvePath(path) = tp)
+}
 
 /**
  * A type without type arguments.
@@ -27,42 +63,23 @@ newtype TType =
  * types, such as traits and implementation blocks.
  */
 abstract class Type extends TType {
-  /** Gets the method `name` belonging to this type, if any. */
-  pragma[nomagic]
-  abstract Function getMethod(string name);
+  /**
+   * Gets the `i`th positional type parameter of this type, if any.
+   *
+   * This excludes synthetic type parameters, such as associated types in traits.
+   */
+  abstract TypeParameter getPositionalTypeParameter(int i);
 
-  /** Gets the struct field `name` belonging to this type, if any. */
-  pragma[nomagic]
-  abstract StructField getStructField(string name);
-
-  /** Gets the `i`th tuple field belonging to this type, if any. */
-  pragma[nomagic]
-  abstract TupleField getTupleField(int i);
-
-  /** Gets the `i`th type parameter of this type, if any. */
-  abstract TypeParameter getTypeParameter(int i);
-
-  /** Gets a type parameter of this type. */
-  final TypeParameter getATypeParameter() { result = this.getTypeParameter(_) }
+  /** Gets the default type for the `i`th type parameter, if any. */
+  TypeMention getTypeParameterDefault(int i) { none() }
 
   /**
-   * Gets an AST node that mentions a base type of this type, if any.
+   * Gets a type parameter of this type.
    *
-   * Although Rust doesn't have traditional OOP-style inheritance, we model trait
-   * bounds and `impl` blocks as base types. Example:
-   *
-   * ```rust
-   * trait T1 {}
-   *
-   * trait T2 {}
-   *
-   * trait T3 : T1, T2 {}
-   * //    ^^ `this`
-   * //         ^^ `result`
-   * //             ^^ `result`
-   * ```
+   * This includes both positional type parameters and synthetic type parameters,
+   * such as associated types in traits.
    */
-  abstract TypeMention getABaseTypeMention();
+  TypeParameter getATypeParameter() { result = this.getPositionalTypeParameter(_) }
 
   /** Gets a textual representation of this type. */
   abstract string toString();
@@ -71,39 +88,45 @@ abstract class Type extends TType {
   abstract Location getLocation();
 }
 
-abstract private class StructOrEnumType extends Type {
-  abstract ItemNode asItemNode();
+/** A tuple type `(T, ...)`. */
+class TupleType extends StructType {
+  private int arity;
 
-  final override Function getMethod(string name) {
-    result = this.asItemNode().getASuccessor(name) and
-    exists(ImplOrTraitItemNode impl | result = impl.getAnAssocItem() |
-      impl instanceof Trait
-      or
-      impl.(ImplItemNode).isFullyParametric()
-    )
-  }
+  TupleType() { arity = this.getStruct().(Builtins::TupleType).getArity() }
 
-  /** Gets all of the fully parametric `impl` blocks that target this type. */
-  final override ImplMention getABaseTypeMention() {
-    this.asItemNode() = result.resolveSelfTy() and
-    result.isFullyParametric()
-  }
+  /** Gets the arity of this tuple type. */
+  int getArity() { result = arity }
+
+  override string toString() { result = "(T_" + arity + ")" }
+}
+
+pragma[nomagic]
+TypeParamTypeParameter getTupleTypeParameter(int arity, int i) {
+  result = any(TupleType t | t.getArity() = arity).getPositionalTypeParameter(i)
+}
+
+/** The unit type `()`. */
+class UnitType extends TupleType {
+  UnitType() { this.getArity() = 0 }
+
+  override string toString() { result = "()" }
 }
 
 /** A struct type. */
-class StructType extends StructOrEnumType, TStruct {
+class StructType extends Type, TStruct {
   private Struct struct;
 
   StructType() { this = TStruct(struct) }
 
-  override ItemNode asItemNode() { result = struct }
+  /** Gets the struct that this struct type represents. */
+  Struct getStruct() { result = struct }
 
-  override StructField getStructField(string name) { result = struct.getStructField(name) }
-
-  override TupleField getTupleField(int i) { result = struct.getTupleField(i) }
-
-  override TypeParameter getTypeParameter(int i) {
+  override TypeParameter getPositionalTypeParameter(int i) {
     result = TTypeParamTypeParameter(struct.getGenericParamList().getTypeParam(i))
+  }
+
+  override TypeMention getTypeParameterDefault(int i) {
+    result = struct.getGenericParamList().getTypeParam(i).getDefaultType()
   }
 
   override string toString() { result = struct.getName().getText() }
@@ -112,19 +135,20 @@ class StructType extends StructOrEnumType, TStruct {
 }
 
 /** An enum type. */
-class EnumType extends StructOrEnumType, TEnum {
+class EnumType extends Type, TEnum {
   private Enum enum;
 
   EnumType() { this = TEnum(enum) }
 
-  override ItemNode asItemNode() { result = enum }
+  /** Gets the enum that this enum type represents. */
+  Enum getEnum() { result = enum }
 
-  override StructField getStructField(string name) { none() }
-
-  override TupleField getTupleField(int i) { none() }
-
-  override TypeParameter getTypeParameter(int i) {
+  override TypeParameter getPositionalTypeParameter(int i) {
     result = TTypeParamTypeParameter(enum.getGenericParamList().getTypeParam(i))
+  }
+
+  override TypeMention getTypeParameterDefault(int i) {
+    result = enum.getGenericParamList().getTypeParam(i).getDefaultType()
   }
 
   override string toString() { result = enum.getName().getText() }
@@ -138,130 +162,66 @@ class TraitType extends Type, TTrait {
 
   TraitType() { this = TTrait(trait) }
 
-  override Function getMethod(string name) { result = trait.(ItemNode).getASuccessor(name) }
+  /** Gets the underlying trait. */
+  Trait getTrait() { result = trait }
 
-  override StructField getStructField(string name) { none() }
-
-  override TupleField getTupleField(int i) { none() }
-
-  override TypeParameter getTypeParameter(int i) {
+  override TypeParameter getPositionalTypeParameter(int i) {
     result = TTypeParamTypeParameter(trait.getGenericParamList().getTypeParam(i))
+  }
+
+  override TypeParameter getATypeParameter() {
+    result = super.getATypeParameter()
     or
-    result =
-      any(AssociatedTypeTypeParameter param | param.getTrait() = trait and param.getIndex() = i)
+    result.(AssociatedTypeTypeParameter).getTrait() = trait
+    or
+    result.(SelfTypeParameter).getTrait() = trait
   }
 
-  pragma[nomagic]
-  private TypeReprMention getABoundMention() {
-    result = trait.getTypeBoundList().getABound().getTypeRepr()
+  override TypeMention getTypeParameterDefault(int i) {
+    result = trait.getGenericParamList().getTypeParam(i).getDefaultType()
   }
-
-  /** Gets any of the trait bounds of this trait. */
-  override TypeMention getABaseTypeMention() { result = this.getABoundMention() }
 
   override string toString() { result = trait.toString() }
 
   override Location getLocation() { result = trait.getLocation() }
 }
 
-/**
- * An `impl` block type.
- *
- * Although `impl` blocks are not really types, we treat them as such in order
- * to be able to match type parameters from structs (or enums) with type
- * parameters from `impl` blocks. For example, in
- *
- * ```rust
- * struct S<T1>(T1);
- *
- * impl<T2> S<T2> {
- *   fn id(self) -> S<T2> { self }
- * }
- *
- * let x : S(i64) = S(42);
- * x.id();
- * ```
- *
- * we pretend that the `impl` block is a base type mention of the struct `S`,
- * with type argument `T1`. This means that from knowing that `x` has type
- * `S(i64)`, we can first match `i64` with `T1`, and then by matching `T1` with
- * `T2`, we can match `i64` with `T2`.
- *
- * `impl` blocks can also have base type mentions, namely the trait that they
- * implement (if any). Example:
- *
- * ```rust
- * struct S<T1>(T1);
- *
- * trait Trait<T2> {
- *   fn f(self) -> T2;
- *
- *   fn g(self) -> T2 { self.f() }
- * }
- *
- * impl<T3> Trait<T3> for S<T3> { // `Trait<T3>` is a base type mention of this `impl` block
- *   fn f(self) -> T3 {
- *     match self {
- *       S(x) => x
- *     }
- *   }
- * }
- *
- * let x : S(i64) = S(42);
- * x.g();
- * ```
- *
- * In this case we can match `i64` with `T1`, `T1` with `T3`, and `T3` with `T2`,
- * allowing us match `i64` with `T2`, and hence infer that the return type of `g`
- * is `i64`.
- */
-class ImplType extends Type, TImpl {
-  private Impl impl;
+/** A union type. */
+class UnionType extends Type, TUnion {
+  private Union union;
 
-  ImplType() { this = TImpl(impl) }
+  UnionType() { this = TUnion(union) }
 
-  override Function getMethod(string name) { result = impl.(ItemNode).getASuccessor(name) }
+  /** Gets the union that this union type represents. */
+  Union getUnion() { result = union }
 
-  override StructField getStructField(string name) { none() }
-
-  override TupleField getTupleField(int i) { none() }
-
-  override TypeParameter getTypeParameter(int i) {
-    result = TTypeParamTypeParameter(impl.getGenericParamList().getTypeParam(i))
+  override TypeParameter getPositionalTypeParameter(int i) {
+    result = TTypeParamTypeParameter(union.getGenericParamList().getTypeParam(i))
   }
 
-  /** Get the trait implemented by this `impl` block, if any. */
-  override TypeMention getABaseTypeMention() { result = impl.getTrait() }
+  override TypeMention getTypeParameterDefault(int i) {
+    result = union.getGenericParamList().getTypeParam(i).getDefaultType()
+  }
 
-  override string toString() { result = impl.toString() }
+  override string toString() { result = union.getName().getText() }
 
-  override Location getLocation() { result = impl.getLocation() }
+  override Location getLocation() { result = union.getLocation() }
 }
 
 /**
  * An array type.
  *
- * Array types like `[i64; 5]` are modeled as normal generic types
- * with a single type argument.
+ * Array types like `[i64; 5]` are modeled as normal generic types.
  */
-class ArrayType extends Type, TArrayType {
-  ArrayType() { this = TArrayType() }
+class ArrayType extends StructType {
+  ArrayType() { this.getStruct() instanceof Builtins::ArrayType }
 
-  override Function getMethod(string name) { none() }
+  override string toString() { result = "[;]" }
+}
 
-  override StructField getStructField(string name) { none() }
-
-  override TupleField getTupleField(int i) { none() }
-
-  override TypeParameter getTypeParameter(int i) {
-    none() // todo
-  }
-
-  override TypeMention getABaseTypeMention() { none() }
-
-  override string toString() { result = "[]" }
-
-  override Location getLocation() { result instanceof EmptyLocation }
+pragma[nomagic]
+TypeParamTypeParameter getArrayTypeParameter() {
+  result = any(ArrayType t).getPositionalTypeParameter(0)
 }
 
 /**
@@ -270,39 +230,164 @@ class ArrayType extends Type, TArrayType {
  * Reference types like `& i64` are modeled as normal generic types
  * with a single type argument.
  */
-class RefType extends Type, TRefType {
-  RefType() { this = TRefType() }
-
-  override Function getMethod(string name) { none() }
-
-  override StructField getStructField(string name) { none() }
-
-  override TupleField getTupleField(int i) { none() }
-
-  override TypeParameter getTypeParameter(int i) {
-    result = TRefTypeParameter() and
-    i = 0
-  }
-
-  override TypeMention getABaseTypeMention() { none() }
+class RefType extends StructType {
+  RefType() { this.getStruct() instanceof Builtins::RefType }
 
   override string toString() { result = "&" }
+}
+
+pragma[nomagic]
+TypeParamTypeParameter getRefTypeParameter() {
+  result = any(RefType t).getPositionalTypeParameter(0)
+}
+
+/**
+ * An [impl Trait][1] type.
+ *
+ * Each syntactic `impl Trait` type gives rise to its own type, even if
+ * two `impl Trait` types have the same bounds.
+ *
+ * [1]: https://doc.rust-lang.org/reference/types/impl-trait.html
+ */
+class ImplTraitType extends Type, TImplTraitType {
+  ImplTraitTypeRepr impl;
+
+  ImplTraitType() { this = TImplTraitType(impl) }
+
+  /** Gets the underlying AST node. */
+  ImplTraitTypeRepr getImplTraitTypeRepr() { result = impl }
+
+  /** Gets the function that this `impl Trait` belongs to. */
+  abstract Function getFunction();
+
+  override TypeParameter getPositionalTypeParameter(int i) {
+    exists(TypeParam tp |
+      implTraitTypeParam(impl, i, tp) and
+      result = TImplTraitTypeParameter(impl, tp)
+    )
+  }
+
+  override string toString() { result = impl.toString() }
+
+  override Location getLocation() { result = impl.getLocation() }
+}
+
+class DynTraitType extends Type, TDynTraitType {
+  Trait trait;
+
+  DynTraitType() { this = TDynTraitType(trait) }
+
+  override DynTraitTypeParameter getPositionalTypeParameter(int i) {
+    result = TDynTraitTypeParameter(trait.getGenericParamList().getTypeParam(i))
+  }
+
+  override TypeParameter getATypeParameter() {
+    result = super.getATypeParameter()
+    or
+    exists(AstNode n |
+      dynTraitTypeParameter(trait, n) and
+      result = TDynTraitTypeParameter(n)
+    )
+  }
+
+  Trait getTrait() { result = trait }
+
+  override string toString() { result = "dyn " + trait.getName().toString() }
+
+  override Location getLocation() { result = trait.getLocation() }
+}
+
+/**
+ * An [impl Trait in return position][1] type, for example:
+ *
+ * ```rust
+ * fn foo() -> impl Trait
+ * ```
+ *
+ * [1]: https://doc.rust-lang.org/reference/types/impl-trait.html#r-type.impl-trait.return
+ */
+class ImplTraitReturnType extends ImplTraitType {
+  private Function function;
+
+  ImplTraitReturnType() { impl.isInReturnPos() and function = impl.getFunction() }
+
+  override Function getFunction() { result = function }
+}
+
+/**
+ * A slice type.
+ *
+ * Slice types like `[i64]` are modeled as normal generic types
+ * with a single type argument.
+ */
+class SliceType extends StructType {
+  SliceType() { this.getStruct() instanceof Builtins::SliceType }
+
+  override string toString() { result = "[]" }
+}
+
+pragma[nomagic]
+TypeParamTypeParameter getSliceTypeParameter() {
+  result = any(SliceType t).getPositionalTypeParameter(0)
+}
+
+class NeverType extends Type, TNeverType {
+  override TypeParameter getPositionalTypeParameter(int i) { none() }
+
+  override string toString() { result = "!" }
 
   override Location getLocation() { result instanceof EmptyLocation }
 }
 
-/** A type parameter. */
-abstract class TypeParameter extends Type {
-  override TypeMention getABaseTypeMention() { none() }
+class PtrType extends StructType {
+  PtrType() { this.getStruct() instanceof Builtins::PtrType }
 
-  override StructField getStructField(string name) { none() }
+  override string toString() { result = "*" }
 
-  override TupleField getTupleField(int i) { none() }
-
-  override TypeParameter getTypeParameter(int i) { none() }
+  override Location getLocation() { result instanceof EmptyLocation }
 }
 
-private class RawTypeParameter = @type_param or @trait or @type_alias;
+/**
+ * A special pseudo type used to indicate that the actual type may have to be
+ * inferred by propagating type information back into call arguments.
+ *
+ * For example, in
+ *
+ * ```rust
+ * let x = Default::default();
+ * foo(x);
+ * ```
+ *
+ * `Default::default()` is assigned this type, which allows us to infer the actual
+ * type from the type of `foo`'s first parameter.
+ *
+ * Unknown types are not restricted to root types, for example in a call like
+ * `Vec::new()` we assign this type at the type path corresponding to the type
+ * parameter of `Vec`.
+ *
+ * Unknown types are used to restrict when type information is allowed to flow
+ * into call arguments (including method call receivers), in order to avoid
+ * combinatorial explosions.
+ */
+class UnknownType extends Type, TUnknownType {
+  override TypeParameter getPositionalTypeParameter(int i) { none() }
+
+  override string toString() { result = "(context typed)" }
+
+  override Location getLocation() { result instanceof EmptyLocation }
+}
+
+pragma[nomagic]
+TypeParamTypeParameter getPtrTypeParameter() {
+  result = any(PtrType t).getPositionalTypeParameter(0)
+}
+
+/** A type parameter. */
+abstract class TypeParameter extends Type {
+  override TypeParameter getPositionalTypeParameter(int i) { none() }
+}
+
+private class RawTypeParameter = @type_param or @trait or @type_alias or @impl_trait_type_repr;
 
 private predicate id(RawTypeParameter x, RawTypeParameter y) { x = y }
 
@@ -318,33 +403,9 @@ class TypeParamTypeParameter extends TypeParameter, TTypeParamTypeParameter {
 
   TypeParam getTypeParam() { result = typeParam }
 
-  override Function getMethod(string name) {
-    // NOTE: If the type parameter has trait bounds, then this finds methods
-    // on the bounding traits.
-    result = typeParam.(ItemNode).getASuccessor(name)
-  }
-
   override string toString() { result = typeParam.toString() }
 
   override Location getLocation() { result = typeParam.getLocation() }
-
-  final override TypeMention getABaseTypeMention() {
-    result = typeParam.getTypeBoundList().getABound().getTypeRepr()
-  }
-}
-
-/**
- * Gets the type alias that is the `i`th type parameter of `trait`. Type aliases
- * are numbered consecutively but in arbitrary order, starting from the index
- * following the last ordinary type parameter.
- */
-predicate traitAliasIndex(Trait trait, int i, TypeAlias typeAlias) {
-  typeAlias =
-    rank[i + 1 - trait.getNumberOfGenericParams()](TypeAlias alias |
-      trait.(TraitItemNode).getADescendant() = alias
-    |
-      alias order by idOfTypeParameterAstNode(alias)
-    )
 }
 
 /**
@@ -375,24 +436,56 @@ class AssociatedTypeTypeParameter extends TypeParameter, TAssociatedTypeTypePara
   /** Gets the trait that contains this associated type declaration. */
   TraitItemNode getTrait() { result.getAnAssocItem() = typeAlias }
 
-  int getIndex() { traitAliasIndex(_, result, typeAlias) }
-
-  override Function getMethod(string name) { none() }
-
   override string toString() { result = typeAlias.getName().getText() }
 
   override Location getLocation() { result = typeAlias.getLocation() }
-
-  override TypeMention getABaseTypeMention() { none() }
 }
 
-/** An implicit reference type parameter. */
-class RefTypeParameter extends TypeParameter, TRefTypeParameter {
-  override Function getMethod(string name) { none() }
+class DynTraitTypeParameter extends TypeParameter, TDynTraitTypeParameter {
+  private AstNode n;
 
-  override string toString() { result = "&T" }
+  DynTraitTypeParameter() { this = TDynTraitTypeParameter(n) }
 
-  override Location getLocation() { result instanceof EmptyLocation }
+  Trait getTrait() { dynTraitTypeParameter(result, n) }
+
+  /** Gets the dyn trait type that this type parameter belongs to. */
+  DynTraitType getDynTraitType() { result.getTrait() = this.getTrait() }
+
+  /** Gets the `TypeParam` of this dyn trait type parameter, if any. */
+  TypeParam getTypeParam() { result = n }
+
+  /** Gets the `TypeAlias` of this dyn trait type parameter, if any. */
+  TypeAlias getTypeAlias() { result = n }
+
+  /** Gets the trait type parameter that this dyn trait type parameter corresponds to. */
+  TypeParameter getTraitTypeParameter() {
+    result.(TypeParamTypeParameter).getTypeParam() = n
+    or
+    result.(AssociatedTypeTypeParameter).getTypeAlias() = n
+  }
+
+  private string toStringInner() {
+    result = [this.getTypeParam().toString(), this.getTypeAlias().getName().toString()]
+  }
+
+  override string toString() { result = "dyn(" + this.toStringInner() + ")" }
+
+  override Location getLocation() { result = n.getLocation() }
+}
+
+class ImplTraitTypeParameter extends TypeParameter, TImplTraitTypeParameter {
+  private TypeParam typeParam;
+  private ImplTraitTypeRepr implTrait;
+
+  ImplTraitTypeParameter() { this = TImplTraitTypeParameter(implTrait, typeParam) }
+
+  TypeParam getTypeParam() { result = typeParam }
+
+  ImplTraitTypeRepr getImplTraitTypeRepr() { result = implTrait }
+
+  override string toString() { result = "impl(" + typeParam.toString() + ")" }
+
+  override Location getLocation() { result = typeParam.getLocation() }
 }
 
 /**
@@ -409,15 +502,115 @@ class SelfTypeParameter extends TypeParameter, TSelfTypeParameter {
 
   Trait getTrait() { result = trait }
 
-  override TypeMention getABaseTypeMention() { result = trait }
-
-  override Function getMethod(string name) {
-    // The `Self` type parameter is an implementation of the trait, so it has
-    // all the trait's methods.
-    result = trait.(ItemNode).getASuccessor(name)
-  }
-
   override string toString() { result = "Self [" + trait.toString() + "]" }
 
   override Location getLocation() { result = trait.getLocation() }
+}
+
+/**
+ * An [impl Trait in argument position][1] type, for example:
+ *
+ * ```rust
+ * fn foo(arg: impl Trait)
+ * ```
+ *
+ * Such types are syntactic sugar for type parameters, that is
+ *
+ * ```rust
+ * fn foo<T: Trait>(arg: T)
+ * ```
+ *
+ * so we model them as type parameters.
+ *
+ * [1]: https://doc.rust-lang.org/reference/types/impl-trait.html#r-type.impl-trait.param
+ */
+class ImplTraitTypeTypeParameter extends ImplTraitType, TypeParameter {
+  private Function function;
+
+  ImplTraitTypeTypeParameter() { impl = function.getAParam().getTypeRepr() }
+
+  override Function getFunction() { result = function }
+
+  override TypeParameter getPositionalTypeParameter(int i) { none() }
+}
+
+/**
+ * A type abstraction. I.e., a place in the program where type variables are
+ * introduced.
+ *
+ * Example:
+ * ```rust
+ * impl<A, B> Foo<A, B> { }
+ * //  ^^^^^^ a type abstraction
+ * ```
+ */
+abstract class TypeAbstraction extends AstNode {
+  abstract TypeParameter getATypeParameter();
+}
+
+final class ImplTypeAbstraction extends TypeAbstraction, Impl {
+  override TypeParamTypeParameter getATypeParameter() {
+    result.getTypeParam() = this.getGenericParamList().getATypeParam()
+  }
+}
+
+final class DynTypeAbstraction extends TypeAbstraction, DynTraitTypeRepr {
+  override TypeParameter getATypeParameter() {
+    result = any(DynTraitTypeParameter tp | tp.getTrait() = this.getTrait()).getTraitTypeParameter()
+  }
+}
+
+final class TraitTypeAbstraction extends TypeAbstraction, Trait {
+  override TypeParameter getATypeParameter() {
+    result.(TypeParamTypeParameter).getTypeParam() = this.getGenericParamList().getATypeParam()
+    or
+    result.(AssociatedTypeTypeParameter).getTrait() = this
+    or
+    result.(SelfTypeParameter).getTrait() = this
+  }
+}
+
+final class TypeBoundTypeAbstraction extends TypeAbstraction, TypeBound {
+  override TypeParameter getATypeParameter() { none() }
+}
+
+final class SelfTypeBoundTypeAbstraction extends TypeAbstraction, Name {
+  SelfTypeBoundTypeAbstraction() { any(TraitTypeAbstraction trait).getName() = this }
+
+  override TypeParameter getATypeParameter() { none() }
+}
+
+final class ImplTraitTypeReprAbstraction extends TypeAbstraction, ImplTraitTypeRepr {
+  override TypeParameter getATypeParameter() {
+    implTraitTypeParam(this, _, result.(TypeParamTypeParameter).getTypeParam())
+  }
+}
+
+/**
+ * Holds if `t` is a valid complex [`self` root type][1].
+ *
+ * [1]: https://doc.rust-lang.org/stable/reference/items/associated-items.html#r-items.associated.fn.method.self-ty
+ */
+pragma[nomagic]
+predicate validSelfType(Type t) {
+  t instanceof RefType
+  or
+  exists(Struct s | t = TStruct(s) |
+    s instanceof BoxStruct or
+    s instanceof RcStruct or
+    s instanceof ArcStruct or
+    s instanceof PinStruct
+  )
+}
+
+/**
+ * Holds if `root` is a valid complex [`self` root type][1], with type
+ * parameter `tp`.
+ *
+ * [1]: https://doc.rust-lang.org/stable/reference/items/associated-items.html#r-items.associated.fn.method.self-ty
+ */
+pragma[nomagic]
+predicate complexSelfRoot(Type root, TypeParameter tp) {
+  validSelfType(root) and
+  tp = root.getPositionalTypeParameter(0)
 }

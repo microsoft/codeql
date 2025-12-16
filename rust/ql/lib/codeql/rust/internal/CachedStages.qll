@@ -65,7 +65,6 @@ module Stages {
   cached
   module CfgStage {
     private import codeql.rust.controlflow.internal.Splitting
-    private import codeql.rust.controlflow.internal.SuccessorType
     private import codeql.rust.controlflow.internal.ControlFlowGraphImpl
     private import codeql.rust.controlflow.CfgNodes
 
@@ -86,8 +85,6 @@ module Stages {
       1 = 1
       or
       exists(TConditionalCompletionSplitKind())
-      or
-      exists(TNormalSuccessor())
       or
       exists(AstCfgNode n)
       or
@@ -118,15 +115,11 @@ module Stages {
     predicate backref() {
       1 = 1
       or
-      exists(resolvePath(_))
+      exists(resolvePathIgnoreVariableShadowing(_))
       or
-      exists(any(ItemNode i).getASuccessor(_))
-      or
-      exists(any(ItemNode i).getASuccessorRec(_))
+      exists(any(ItemNode i).getASuccessor(_, _, _))
       or
       exists(any(ImplOrTraitItemNode i).getASelfPath())
-      or
-      any(TypeParamItemNode i).hasTraitBound()
     }
   }
 
@@ -186,7 +179,9 @@ module Stages {
     predicate backref() {
       1 = 1
       or
-      exists(Node n)
+      exists(any(Node n).toString())
+      or
+      exists(any(Node n).getLocation())
       or
       RustTaintTracking::defaultAdditionalTaintStep(_, _, _)
       or

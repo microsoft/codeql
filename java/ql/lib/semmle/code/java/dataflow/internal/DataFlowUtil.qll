@@ -1,6 +1,8 @@
 /**
  * Basic definitions for use in the data flow library.
  */
+overlay[local?]
+module;
 
 private import java
 private import DataFlowPrivate
@@ -40,14 +42,14 @@ private module ThisFlow {
 
   private int lastRank(BasicBlock b) { result = max(int rankix | thisRank(_, b, rankix)) }
 
-  private predicate blockPrecedesThisAccess(BasicBlock b) { thisAccess(_, b.getABBSuccessor*(), _) }
+  private predicate blockPrecedesThisAccess(BasicBlock b) { thisAccess(_, b.getASuccessor*(), _) }
 
   private predicate thisAccessBlockReaches(BasicBlock b1, BasicBlock b2) {
-    thisAccess(_, b1, _) and b2 = b1.getABBSuccessor()
+    thisAccess(_, b1, _) and b2 = b1.getASuccessor()
     or
     exists(BasicBlock mid |
       thisAccessBlockReaches(b1, mid) and
-      b2 = mid.getABBSuccessor() and
+      b2 = mid.getASuccessor() and
       not thisAccess(_, mid, _) and
       blockPrecedesThisAccess(b2)
     )
@@ -77,15 +79,18 @@ private module ThisFlow {
  * Holds if data can flow from `node1` to `node2` in zero or more
  * local (intra-procedural) steps.
  */
+overlay[caller?]
 pragma[inline]
 predicate localFlow(Node node1, Node node2) { node1 = node2 or localFlowStepPlus(node1, node2) }
 
+overlay[caller?]
 private predicate localFlowStepPlus(Node node1, Node node2) = fastTC(localFlowStep/2)(node1, node2)
 
 /**
  * Holds if data can flow from `e1` to `e2` in zero or more
  * local (intra-procedural) steps.
  */
+overlay[caller?]
 pragma[inline]
 predicate localExprFlow(Expr e1, Expr e2) { localFlow(exprNode(e1), exprNode(e2)) }
 
@@ -94,11 +99,12 @@ predicate localExprFlow(Expr e1, Expr e2) { localFlow(exprNode(e1), exprNode(e2)
  * updates.
  */
 predicate hasNonlocalValue(FieldRead fr) {
-  not exists(SsaVariable v | v.getAUse() = fr)
+  not exists(SsaDefinition v | v.getARead() = fr)
   or
-  exists(SsaVariable v, SsaVariable def | v.getAUse() = fr and def = v.getAnUltimateDefinition() |
-    def instanceof SsaImplicitInit or
-    def instanceof SsaImplicitUpdate
+  exists(SsaDefinition v, SsaDefinition def |
+    v.getARead() = fr and
+    def = v.getAnUltimateDefinition() and
+    def instanceof SsaImplicitWrite
   )
 }
 
@@ -259,8 +265,8 @@ class Content extends TContent {
 
   /**
    * Holds if this element is at the specified location.
-   * The location spans column `startcolumn` of line `startline` to
-   * column `endcolumn` of line `endline` in file `filepath`.
+   * The location spans column `sc` of line `sl` to
+   * column `ec` of line `el` in file `path`.
    * For more information, see
    * [Locations](https://codeql.github.com/docs/writing-codeql-queries/providing-locations-in-codeql-queries/).
    */
@@ -358,8 +364,8 @@ class ContentSet instanceof Content {
 
   /**
    * Holds if this element is at the specified location.
-   * The location spans column `startcolumn` of line `startline` to
-   * column `endcolumn` of line `endline` in file `filepath`.
+   * The location spans column `sc` of line `sl` to
+   * column `ec` of line `el` in file `path`.
    * For more information, see
    * [Locations](https://codeql.github.com/docs/writing-codeql-queries/providing-locations-in-codeql-queries/).
    */

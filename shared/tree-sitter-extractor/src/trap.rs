@@ -96,18 +96,25 @@ impl Writer {
                 self.write_trap_entries(&mut trap_file)
             }
             Compression::Gzip => {
-                let trap_file = GzEncoder::new(trap_file, flate2::Compression::fast());
+                let trap_file = GzEncoder::new(trap_file, Compression::GZIP_LEVEL);
                 let mut trap_file = BufWriter::new(trap_file);
                 self.write_trap_entries(&mut trap_file)
+            }
+            Compression::Zstd => {
+                let trap_file = zstd::stream::Encoder::new(trap_file, Compression::ZSTD_LEVEL)?;
+                let mut trap_file = BufWriter::new(trap_file);
+                self.write_trap_entries(&mut trap_file)?;
+                trap_file.into_inner()?.finish()?;
+                Ok(())
             }
         }
     }
 
     fn write_trap_entries<W: Write>(&self, file: &mut W) -> std::io::Result<()> {
         for trap_entry in &self.trap_output {
-            writeln!(file, "{}", trap_entry)?;
+            writeln!(file, "{trap_entry}")?;
         }
-        std::io::Result::Ok(())
+        Ok(())
     }
 }
 
@@ -124,21 +131,21 @@ pub enum Entry {
 impl fmt::Display for Entry {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Entry::FreshId(label) => write!(f, "{}=*", label),
+            Entry::FreshId(label) => write!(f, "{label}=*"),
             Entry::MapLabelToKey(label, key) => {
                 write!(f, "{}=@\"{}\"", label, key.replace('"', "\"\""))
             }
             Entry::GenericTuple(name, args) => {
-                write!(f, "{}(", name)?;
+                write!(f, "{name}(")?;
                 for (index, arg) in args.iter().enumerate() {
                     if index > 0 {
                         write!(f, ",")?;
                     }
-                    write!(f, "{}", arg)?;
+                    write!(f, "{arg}")?;
                 }
                 write!(f, ")")
             }
-            Entry::Comment(line) => write!(f, "// {}", line),
+            Entry::Comment(line) => write!(f, "// {line}"),
         }
     }
 }
@@ -172,8 +179,8 @@ const MAX_STRLEN: usize = 1048576;
 impl fmt::Display for Arg {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Arg::Label(x) => write!(f, "{}", x),
-            Arg::Int(x) => write!(f, "{}", x),
+            Arg::Label(x) => write!(f, "{x}"),
+            Arg::Int(x) => write!(f, "{x}"),
             Arg::String(x) => write!(
                 f,
                 "\"{}\"",
@@ -213,9 +220,9 @@ impl fmt::Display for Program {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut text = String::new();
         for trap_entry in &self.0 {
-            text.push_str(&format!("{}\n", trap_entry));
+            text.push_str(&format!("{trap_entry}\n"));
         }
-        write!(f, "{}", text)
+        write!(f, "{text}")
     }
 }
 
@@ -280,9 +287,13 @@ fn limit_string(string: &str, max_size: usize) -> &str {
 pub enum Compression {
     None,
     Gzip,
+    Zstd,
 }
 
 impl Compression {
+    pub const ZSTD_LEVEL: i32 = 2;
+    pub const GZIP_LEVEL: flate2::Compression = flate2::Compression::fast();
+
     pub fn from_env(var_name: &str) -> Result<Compression, String> {
         match std::env::var(var_name) {
             Ok(method) => match Compression::from_string(&method) {
@@ -298,6 +309,7 @@ impl Compression {
         match s.to_lowercase().as_ref() {
             "none" => Some(Compression::None),
             "gzip" => Some(Compression::Gzip),
+            "zstd" => Some(Compression::Zstd),
             _ => None,
         }
     }
@@ -306,6 +318,7 @@ impl Compression {
         match self {
             Compression::None => "trap",
             Compression::Gzip => "trap.gz",
+            Compression::Zstd => "trap.zst",
         }
     }
 }

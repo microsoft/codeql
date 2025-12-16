@@ -52,7 +52,7 @@ module NetHttp {
 
     MapWrite() {
       this.getType().hasQualifiedName("net/http", "Header") and
-      any(Write write).writesElement(this, index, rhs)
+      any(Write write).writesElementPreUpdate(this, index, rhs)
     }
 
     override DataFlow::Node getName() { result = index }
@@ -179,12 +179,11 @@ module NetHttp {
   private class RequestCall extends Http::ClientRequest::Range, DataFlow::CallNode {
     RequestCall() {
       exists(string functionName |
-        (
-          this.getTarget().hasQualifiedName("net/http", functionName)
-          or
-          this.getTarget().(Method).hasQualifiedName("net/http", "Client", functionName)
-        ) and
-        (functionName = "Get" or functionName = "Post" or functionName = "PostForm")
+        this.getTarget().hasQualifiedName("net/http", functionName)
+        or
+        this.getTarget().(Method).hasQualifiedName("net/http", "Client", functionName)
+      |
+        functionName = ["Get", "Head", "Post", "PostForm"]
       )
     }
 
@@ -293,5 +292,39 @@ module NetHttp {
     }
 
     override DataFlow::Node getAPathArgument() { result = this.getArgument(2) }
+  }
+
+  private class CookieWrite extends Http::CookieWrite::Range, DataFlow::CallNode {
+    CookieWrite() { this.getTarget().hasQualifiedName(package("net/http", ""), "SetCookie") }
+
+    override DataFlow::Node getName() { result = this.getArgument(1) }
+
+    override DataFlow::Node getValue() { result = this.getArgument(1) }
+
+    override DataFlow::Node getSecure() { result = this.getArgument(1) }
+
+    override DataFlow::Node getHttpOnly() { result = this.getArgument(1) }
+  }
+
+  private class CookieFieldWrite extends Http::CookieOptionWrite::Range {
+    DataFlow::Node written;
+    string fieldName;
+
+    CookieFieldWrite() {
+      exists(Write w, Field f |
+        f.hasQualifiedName(package("net/http", ""), "Cookie", fieldName) and
+        w.writesField(this, f, written)
+      )
+    }
+
+    override DataFlow::Node getCookieOutput() { result = this }
+
+    override DataFlow::Node getName() { fieldName = "Name" and result = written }
+
+    override DataFlow::Node getValue() { fieldName = "Value" and result = written }
+
+    override DataFlow::Node getSecure() { fieldName = "Secure" and result = written }
+
+    override DataFlow::Node getHttpOnly() { fieldName = "HttpOnly" and result = written }
   }
 }

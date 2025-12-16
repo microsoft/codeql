@@ -1,3 +1,154 @@
+## 6.1.3
+
+No user-facing changes.
+
+## 6.1.2
+
+No user-facing changes.
+
+## 6.1.1
+
+### Minor Analysis Improvements
+
+* The class `DataFlow::FieldContent` now covers both `union` and `struct`/`class` types. A new predicate `FieldContent.getAField` has been added to access the union members associated with the `FieldContent`. The old `FieldContent` has been renamed to `NonUnionFieldContent`.
+
+## 6.1.0
+
+### New Features
+
+* New predicates `getAnExpandedArgument` and `getExpandedArgument` were added to the `Compilation` class, yielding compilation arguments after expansion of response files.
+
+### Bug Fixes
+
+* Improve performance of the range analysis in cases where it would otherwise take an exorbitant amount of time.
+
+## 6.0.1
+
+No user-facing changes.
+
+## 6.0.0
+
+### Breaking Changes
+
+* The "Guards" libraries (`semmle.code.cpp.controlflow.Guards` and `semmle.code.cpp.controlflow.IRGuards`) have been totally rewritten to recognize many more guards. The API remains unchanged, but the `GuardCondition` class now extends `Element` instead of `Expr`.
+
+### New Features
+
+* C/C++ `build-mode: none` support is now generally available.
+
+## 5.6.1
+
+No user-facing changes.
+
+## 5.6.0
+
+### Deprecated APIs
+
+* The predicate `getAContructorCall` in the class `SslContextClass` has been deprecated. Use `getAConstructorCall` instead.
+
+### New Features
+
+* Added predicates `getTransitiveNumberOfVlaDimensionStmts`, `getTransitiveVlaDimensionStmt`, and `getParentVlaDecl` to `VlaDeclStmt` for handling `VlaDeclStmt`s whose base type is defined in terms of another `VlaDeclStmt` via a `typedef`.
+
+## 5.5.0
+
+### New Features
+
+* Added a new class `PchFile` representing precompiled header (PCH) files used during project compilation.
+
+### Minor Analysis Improvements
+
+* Added flow summaries for the `Microsoft::WRL::ComPtr` member functions.
+* The new dataflow/taint-tracking library (`semmle.code.cpp.dataflow.new.DataFlow` and `semmle.code.cpp.dataflow.new.TaintTracking`) now resolves virtual function calls more precisely. This results in fewer false positives when running dataflow/taint-tracking queries on C++ projects.
+
+## 5.4.1
+
+### Minor Analysis Improvements
+
+* The guards libraries (`semmle.code.cpp.controlflow.Guards` and `semmle.code.cpp.controlflow.IRGuards`) have been improved to recognize more guards.
+* Improved dataflow through global variables in the new dataflow library (`semmle.code.cpp.dataflow.new.DataFlow` and `semmle.code.cpp.dataflow.new.TaintTracking`). Queries based on these libraries will produce more results on codebases with many global variables.
+* The global value numbering library (`semmle.code.cpp.valuenumbering.GlobalValueNumbering` and `semmle.code.cpp.ir.ValueNumbering`) has been improved so more expressions are assigned the same value number.
+
+## 5.4.0
+
+### New Features
+
+* Exposed various SSA-related classes (`Definition`, `PhiNode`, `ExplicitDefinition`, `DirectExplicitDefinition`, and `IndirectExplicitDefinition`) which were previously only usable inside the internal dataflow directory.
+
+### Minor Analysis Improvements
+
+* The `cpp/overrun-write` query now recognizes more bound checks and thus produces fewer false positives.
+
+## 5.3.0
+
+### Deprecated APIs
+
+* The `UnknownDefaultLocation`, `UnknownExprLocation`, and `UnknownStmtLocation` classes have been deprecated. Use `UnknownLocation` instead.
+
+### New Features
+
+* Added a `isFinalValueOfParameter` predicate to `DataFlow::Node` which holds when a dataflow node represents the final value of an output parameter of a function.
+
+### Minor Analysis Improvements
+
+* The `FunctionWithWrappers` library (`semmle.code.cpp.security.FunctionWithWrappers`) no longer considers calls through function pointers as wrapper functions.
+* The analysis of C/C++ code targeting 64-bit Arm platforms has been improved. This includes support for the Arm-specific builtin functions, support for the `arm_neon.h` header and Neon vector types, and support for the `fp8` scalar type. The `arm_sve.h` header and scalable vectors are only partially supported at this point.
+* Added support for `__fp16 _Complex` and `__bf16 _Complex` types
+* Added `sql-injection` sink models for the Oracle Call Interface (OCI) database library functions `OCIStmtPrepare` and `OCIStmtPrepare2`.
+
+## 5.2.0
+
+### Deprecated APIs
+
+* The `ThrowingFunction` class (`semmle.code.cpp.models.interfaces.Throwing`) has been deprecated. Please use the `AlwaysSehThrowingFunction` class instead.
+
+### New Features
+
+* Added a predicate `getAnAttribute` to `Namespace` to retrieve a namespace attribute.
+* The Microsoft-specific `__leave` statement is now supported.
+* A new class `LeaveStmt` extending `JumpStmt` was added to represent `__leave` statements.
+* Added a predicate `hasParameterList` to `LambdaExpression` to capture whether a lambda has an explicitly specified parameter list.
+
+### Bug Fixes
+
+* `resolveTypedefs` now properly resolves typedefs for `ArrayType`s.
+
+## 5.1.0
+
+### New Features
+
+* Added a predicate `getReferencedMember` to `UsingDeclarationEntry`, which yields a member depending on a type template parameter.
+
+## 5.0.0
+
+### Breaking Changes
+
+* Deleted the deprecated `userInputArgument` predicate and its convenience accessor from the `Security.qll`.
+* Deleted the deprecated `userInputReturned` predicate and its convenience accessor from the `Security.qll`.
+* Deleted the deprecated `userInputReturn` predicate from the `Security.qll`.
+* Deleted the deprecated `isUserInput` predicate and its convenience accessor from the `Security.qll`.
+* Deleted the deprecated `userInputArgument` predicate from the `SecurityOptions.qll`.
+* Deleted the deprecated `userInputReturned` predicate from the `SecurityOptions.qll`.
+
+### New Features
+
+* Added local flow source models for `ReadFile`, `ReadFileEx`, `MapViewOfFile`, `MapViewOfFile2`, `MapViewOfFile3`, `MapViewOfFile3FromApp`, `MapViewOfFileEx`, `MapViewOfFileFromApp`, `MapViewOfFileNuma2`, and `NtReadFile`.
+* Added the `pCmdLine` arguments of `WinMain` and `wWinMain` as local flow sources.
+* Added source models for `GetCommandLineA`, `GetCommandLineW`, `GetEnvironmentStringsA`, `GetEnvironmentStringsW`, `GetEnvironmentVariableA`, and `GetEnvironmentVariableW`.
+* Added summary models for `CommandLineToArgvA` and `CommandLineToArgvW`.
+* Added support for `wmain` as part of the ArgvSource model.
+
+### Bug Fixes
+
+* Fixed a problem where `asExpr()` on `DataFlow::Node` would never return `ArrayAggregateLiteral`s.
+* Fixed a problem where `asExpr()` on `DataFlow::Node` would never return `ClassAggregateLiteral`s.
+
+## 4.3.1
+
+### Bug Fixes
+
+* Fixed an infinite loop in `semmle.code.cpp.rangeanalysis.new.RangeAnalysis` when computing ranges in very large and complex function bodies.
+
 ## 4.3.0
 
 ### New Features

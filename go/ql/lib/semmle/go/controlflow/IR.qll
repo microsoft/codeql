@@ -430,17 +430,24 @@ module IR {
    */
   class WriteInstruction extends Instruction {
     WriteTarget lhs;
+    Boolean initialization;
 
     WriteInstruction() {
-      lhs = MkLhs(this, _)
+      (
+        lhs = MkLhs(this, _)
+        or
+        lhs = MkResultWriteTarget(this)
+      ) and
+      initialization = false
       or
-      lhs = MkLiteralElementTarget(this)
-      or
-      lhs = MkResultWriteTarget(this)
+      lhs = MkLiteralElementTarget(this) and initialization = true
     }
 
     /** Gets the target to which this instruction writes. */
     WriteTarget getLhs() { result = lhs }
+
+    /** Holds if this instruction initializes a literal. */
+    predicate isInitialization() { initialization = true }
 
     /** Gets the instruction computing the value this instruction writes. */
     Instruction getRhs() { none() }
@@ -718,10 +725,6 @@ module IR {
     predicate extractsElement(Instruction base, int idx) { base = this.getBase() and idx = i }
 
     override Type getResultType() {
-      exists(CallExpr c | this.getBase() = evalExprInstruction(c) |
-        result = c.getTarget().getResultType(i)
-      )
-      or
       exists(Expr e | this.getBase() = evalExprInstruction(e) |
         result = e.getType().(TupleType).getComponentType(pragma[only_bind_into](i))
       )

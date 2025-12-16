@@ -171,7 +171,7 @@ module CleartextLogging {
 
   /** An access to the sensitive object `process.env`. */
   class ProcessEnvSource extends Source {
-    ProcessEnvSource() { this = NodeJSLib::process().getAPropertyRead("env") }
+    ProcessEnvSource() { this.(ThreatModelSource).getThreatModel() = "environment" }
 
     override string describe() { result = "process environment" }
   }
@@ -247,10 +247,24 @@ module CleartextLogging {
       reduceCall.getABoundCallbackParameter(0, 1) = name
     |
       reduceCall.getReceiver+().(DataFlow::MethodCallNode).getMethodName() = "filter"
+      or
+      isArrayOfConstants(reduceCall.getReceiver+())
     )
     or
     exists(StringOps::RegExpTest test | test.getStringOperand().getALocalSource() = name)
     or
     exists(MembershipCandidate test | test.getAMemberNode().getALocalSource() = name)
+  }
+
+  private predicate isArrayOfConstants(DataFlow::ArrayCreationNode array) {
+    forex(DataFlow::Node node |
+      node =
+        [
+          array.getAnElement(), array.getAPropertyWrite().getRhs(),
+          array.getAMethodCall("push").getArgument(0)
+        ]
+    |
+      exists(node.getStringValue())
+    )
   }
 }

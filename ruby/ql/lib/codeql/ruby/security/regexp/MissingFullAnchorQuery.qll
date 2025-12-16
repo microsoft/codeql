@@ -18,14 +18,8 @@ private module MissingFullAnchorConfig implements DataFlow::ConfigSig {
 
   predicate isBarrier(DataFlow::Node node) { node instanceof Sanitizer }
 
-  predicate observeDiffInformedIncrementalMode() { any() }
-
-  Location getASelectedSinkLocation(DataFlow::Node sink) {
-    result = sink.(Sink).getLocation()
-    or
-    result = sink.(Sink).getCallNode().getLocation()
-    or
-    result = sink.(Sink).getRegex().getLocation()
+  predicate observeDiffInformedIncrementalMode() {
+    none() // can't be made diff-informed because the locations of Ruby RegExpTerms aren't correct when the regexp is parsed from a string arising from constant folding
   }
 }
 

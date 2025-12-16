@@ -9,7 +9,7 @@ CodeQL 2.20.4 (2025-02-06)
    :local:
    :backlinks: none
 
-This is an overview of changes in the CodeQL CLI and relevant CodeQL query and library packs. For additional updates on changes to the CodeQL code scanning experience, check out the `code scanning section on the GitHub blog <https://github.blog/tag/code-scanning/>`__, `relevant GitHub Changelog updates <https://github.blog/changelog/label/code-scanning/>`__, `changes in the CodeQL extension for Visual Studio Code <https://marketplace.visualstudio.com/items/GitHub.vscode-codeql/changelog>`__, and the `CodeQL Action changelog <https://github.com/github/codeql-action/blob/main/CHANGELOG.md>`__.
+This is an overview of changes in the CodeQL CLI and relevant CodeQL query and library packs. For additional updates on changes to the CodeQL code scanning experience, check out the `code scanning section on the GitHub blog <https://github.blog/tag/code-scanning/>`__, `relevant GitHub Changelog updates <https://github.blog/changelog/label/application-security/>`__, `changes in the CodeQL extension for Visual Studio Code <https://marketplace.visualstudio.com/items/GitHub.vscode-codeql/changelog>`__, and the `CodeQL Action changelog <https://github.com/github/codeql-action/blob/main/CHANGELOG.md>`__.
 
 Security Coverage
 -----------------
@@ -117,8 +117,8 @@ Java/Kotlin
 *   Deleted the deprecated :code:`isLValue` and :code:`isRValue` predicates from the :code:`VarAccess` class, use :code:`isVarWrite` and :code:`isVarRead` respectively instead.
 *   Deleted the deprecated :code:`getRhs` predicate from the :code:`VarWrite` class, use :code:`getASource` instead.
 *   Deleted the deprecated :code:`LValue` and :code:`RValue` classes, use :code:`VarWrite` and :code:`VarRead` respectively instead.
-*   Deleted a lot of deprecated classes ending in ``*Access``, use the corresponding ``*Call`` classes instead.
-*   Deleted a lot of deprecated predicates ending in ``*Access``, use the corresponding ``*Call`` predicates instead.
+*   Deleted a lot of deprecated classes ending in :code:`*Access`, use the corresponding :code:`*Call` classes instead.
+*   Deleted a lot of deprecated predicates ending in :code:`*Access`, use the corresponding :code:`*Call` predicates instead.
 *   Deleted the deprecated :code:`EnvInput` and :code:`DatabaseInput` classes from :code:`FlowSources.qll`, use the threat models feature instead.
 *   Deleted some deprecated API predicates from :code:`SensitiveApi.qll`, use the Sink classes from that file instead.
 
@@ -144,7 +144,7 @@ Ruby
 *   Deleted the deprecated :code:`ModelClass` and :code:`ModelInstance` classes from :code:`ActiveResource.qll`, use :code:`ModelClassNode` and :code:`ModelClassNode.getAnInstanceReference()` instead.
 *   Deleted the deprecated :code:`Collection` class from :code:`ActiveResource.qll`, use :code:`CollectionSource` instead.
 *   Deleted the deprecated :code:`ServiceInstantiation` and :code:`ClientInstantiation` classes from :code:`Twirp.qll`.
-*   Deleted a lot of deprecated dataflow modules from ``*Query.qll`` files.
+*   Deleted a lot of deprecated dataflow modules from :code:`*Query.qll` files.
 *   Deleted the old deprecated TypeTracking library.
 
 Swift

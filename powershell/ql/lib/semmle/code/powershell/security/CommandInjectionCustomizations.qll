@@ -31,8 +31,20 @@ module CommandInjection {
   abstract class Sanitizer extends DataFlow::Node { }
 
   /** A source of user input, considered as a flow source for command injection. */
-  class FlowSourceAsSource extends Source instanceof SourceNode {
+  class FlowSourceAsSource extends Source {
+    FlowSourceAsSource() {
+      this instanceof SourceNode and
+      not this instanceof EnvironmentVariableSource and 
+      not this instanceof InvokeWebRequest
+    }
+
     override string getSourceType() { result = "user-provided value" }
+  }
+
+  class InvokeWebRequest extends DataFlow::CallNode {
+    InvokeWebRequest(){
+      this.matchesName("Invoke-WebRequest")
+    }
   }
 
   /**
@@ -46,11 +58,23 @@ module CommandInjection {
         call.getAnArgument() = this
       )
       or
-      // Or the call command itself in case it's a use of operator &.
+      // Or the call command itself in case it's a use of "operator &" or "operator .".
       any(DataFlow::CallOperatorNode call).getCommand() = this
+      or
+      any(DataFlow::DotSourcingOperatorNode call).getCommand() = this
     }
 
     override string getSinkType() { result = "call to Invoke-Expression" }
+  }
+
+  class StartProcessSink extends Sink {
+    StartProcessSink(){
+      exists(DataFlow::CallNode call | 
+        call.matchesName("Start-Process") and 
+        call.getAnArgument() = this
+      )
+    }
+    override string getSinkType(){ result = "call to Start-Process"}
   }
 
   class AddTypeSink extends Sink {
@@ -96,7 +120,7 @@ module CommandInjection {
         addscript.matchesName("AddScript") and
         create.matchesName("Create") and
         addscript.getQualifier().(InvokeMemberExpr) = create and
-        create.getQualifier().(TypeNameExpr).getName() = "PowerShell"
+        create.getQualifier().(TypeNameExpr).getAName() = "PowerShell"
       )
     }
 
@@ -142,8 +166,10 @@ module CommandInjection {
   class InvokeSink extends Sink {
     InvokeSink() {
       exists(InvokeMemberExpr ie |
-        this.asExpr().getExpr() = ie.getCallee() or
-        this.asExpr().getExpr() = ie.getQualifier().getAChild*()
+        this.asExpr().getExpr() = ie.getCallee()
+        or
+        ie.getAName() = "Invoke" and
+        ie.getQualifier().(MemberExprReadAccess).getMemberExpr() = this.asExpr().getExpr()
       )
     }
 
@@ -155,7 +181,7 @@ module CommandInjection {
       exists(InvokeMemberExpr ie |
         this.asExpr().getExpr() = ie.getAnArgument() and
         ie.matchesName("Create") and
-        ie.getQualifier().(TypeNameExpr).getName() = "ScriptBlock"
+        ie.getQualifier().(TypeNameExpr).getAName() = "ScriptBlock"
       )
     }
 
@@ -203,7 +229,18 @@ module CommandInjection {
     TypedParameterSanitizer() {
       exists(Function f, Parameter p |
         p = f.getAParameter() and
-        p.getStaticType() != "Object" and
+        p.getStaticType() != "object" and
+        this.asParameter() = p
+      )
+    }
+  }
+
+    class ValidateAttributeSanitizer extends Sanitizer {
+    ValidateAttributeSanitizer() {
+      exists(Function f, Attribute a, Parameter p |
+        p = f.getAParameter() and
+        p.getAnAttribute() = a and 
+        a.getAName() = ["ValidateScript", "ValidateSet", "ValidatePattern"] and
         this.asParameter() = p
       )
     }

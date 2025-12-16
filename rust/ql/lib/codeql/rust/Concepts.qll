@@ -4,12 +4,16 @@
  * provide concrete subclasses.
  */
 
+private import rust
 private import codeql.rust.dataflow.DataFlow
+private import codeql.rust.dataflow.internal.DataFlowImpl
+private import codeql.Locations
 private import codeql.threatmodels.ThreatModels
 private import codeql.rust.Frameworks
 private import codeql.rust.dataflow.FlowSource
-private import codeql.rust.controlflow.ControlFlowGraph as Cfg
-private import codeql.rust.controlflow.CfgNodes as CfgNodes
+private import codeql.concepts.ConceptsShared
+
+private module ConceptsShared = ConceptsMake<Location, RustDataFlow>;
 
 /**
  * A data flow source for a specific threat-model.
@@ -302,7 +306,7 @@ module SqlSanitization {
  * Provides models for cryptographic things.
  */
 module Cryptography {
-  private import codeql.rust.internal.ConceptsShared::Cryptography as SC
+  import ConceptsShared::Cryptography as SC
 
   final class CryptographicOperation = SC::CryptographicOperation;
 
@@ -340,16 +344,16 @@ module Path {
     SafeAccessCheck() { this = DataFlow::BarrierGuard<safeAccessCheck/3>::getABarrierNode() }
   }
 
-  private predicate safeAccessCheck(CfgNodes::AstCfgNode g, Cfg::CfgNode node, boolean branch) {
-    g.(SafeAccessCheck::Range).checks(node, branch)
+  private predicate safeAccessCheck(AstNode g, Expr e, boolean branch) {
+    g.(SafeAccessCheck::Range).checks(e, branch)
   }
 
   /** Provides a class for modeling new path safety checks. */
   module SafeAccessCheck {
     /** A data-flow node that checks that a path is safe to access in some way, for example by having a controlled prefix. */
-    abstract class Range extends CfgNodes::AstCfgNode {
-      /** Holds if this guard validates `node` upon evaluating to `branch`. */
-      abstract predicate checks(Cfg::CfgNode node, boolean branch);
+    abstract class Range extends AstNode {
+      /** Holds if this guard validates `e` upon evaluating to `branch`. */
+      abstract predicate checks(Expr e, boolean branch);
     }
   }
 }

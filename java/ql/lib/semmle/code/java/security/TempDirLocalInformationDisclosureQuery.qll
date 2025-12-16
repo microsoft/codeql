@@ -145,6 +145,8 @@ module TempDirSystemGetPropertyToCreateConfig implements DataFlow::ConfigSig {
     or
     sanitizer instanceof WindowsOsSanitizer
   }
+
+  predicate observeDiffInformedIncrementalMode() { any() }
 }
 
 /**
@@ -203,6 +205,7 @@ module TempDirSystemGetPropertyDirectlyToMkdir =
 /**
  * A `MethodCall` against a method that creates a temporary file or directory in a shared temporary directory.
  */
+overlay[local?]
 abstract class MethodCallInsecureFileCreation extends MethodCall {
   /**
    * Gets the type of entity created (e.g. `file`, `directory`, ...).
@@ -221,6 +224,7 @@ abstract class MethodCallInsecureFileCreation extends MethodCall {
 /**
  * An insecure call to `java.io.File.createTempFile`.
  */
+overlay[local?]
 class MethodCallInsecureFileCreateTempFile extends MethodCallInsecureFileCreation {
   MethodCallInsecureFileCreateTempFile() {
     this.getMethod() instanceof MethodFileCreateTempFile and
@@ -249,6 +253,7 @@ class MethodGuavaFilesCreateTempFile extends Method {
 /**
  * A call to the `com.google.common.io.Files.createTempDir` method.
  */
+overlay[local?]
 class MethodCallInsecureGuavaFilesCreateTempFile extends MethodCallInsecureFileCreation {
   MethodCallInsecureGuavaFilesCreateTempFile() {
     this.getMethod() instanceof MethodGuavaFilesCreateTempFile

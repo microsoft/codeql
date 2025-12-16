@@ -65,7 +65,7 @@ module SsaFlow {
   Impl::Node asNode(Node n) {
     n = TSsaNode(result)
     or
-    result.(Impl::ExprNode).getExpr() = n.asExpr()
+    result.(Impl::ExprNode).getExpr().asExprCfgNode() = n.asExpr()
     or
     exists(CfgNodes::ProcessBlockCfgNode pb, BasicBlock bb, int i |
       n.(ProcessNode).getProcessBlock() = pb and
@@ -86,7 +86,8 @@ module SsaFlow {
       result.(Impl::SsaDefinitionNode).getDefinition().definesAt(p.getIteratorVariable(), bb, i)
     )
     or
-    result.(Impl::ExprPostUpdateNode).getExpr() = n.(PostUpdateNode).getPreUpdateNode().asExpr()
+    result.(Impl::ExprPostUpdateNode).getExpr().asExprCfgNode() =
+      n.(PostUpdateNode).getPreUpdateNode().asExpr()
     or
     exists(SsaImpl::ParameterExt p |
       n = toParameterNode(p) and
@@ -94,6 +95,11 @@ module SsaFlow {
     )
     or
     result.(Impl::WriteDefSourceNode).getDefinition().(Ssa::WriteDefinition).assigns(n.asExpr())
+    or
+    exists(Scope scope, EnvVariable v |
+      result.(Impl::ExprNode).getExpr().isFinalEnvVarRead(scope, v) and
+      n = TFinalEnvVarRead(scope, v)
+    )
   }
 
   predicate localFlowStep(
@@ -241,7 +247,15 @@ private module Cached {
       // We want to prune irrelevant models before materialising data flow nodes, so types contributed
       // directly from CodeQL must expose their pruning info without depending on data flow nodes.
       (any(ModelInput::TypeModel tm).isTypeUsed("") implies any())
-    }
+    } or
+    TFinalEnvVarRead(Scope scope, EnvVariable envVar) {
+      exists(ExitBasicBlock exit |
+        envVar.getAnAccess().getEnclosingScope() = scope and
+        exit.getScope() = scope and
+        SsaImpl::envVarRead(exit, _, envVar)
+      )
+    } or
+    TEnvVarNode(EnvVariable envVar)
 
   cached
   Location getLocation(NodeImpl n) { result = n.getLocationImpl() }
@@ -266,6 +280,8 @@ private module Cached {
       )
     ) and
     model = ""
+    or
+    LocalFlow::flowSummaryLocalStep(nodeFrom, nodeTo, _, model)
   }
 
   /** This is the local flow predicate that is exposed. */
@@ -288,6 +304,9 @@ private module Cached {
     LocalFlow::localFlowStepCommon(nodeFrom, nodeTo)
     or
     SsaFlow::localFlowStep(_, nodeFrom, nodeTo, _)
+    or
+    LocalFlow::flowSummaryLocalStep(nodeFrom, nodeTo, any(LibraryCallableToIncludeInTypeTracking c),
+      _)
   }
 
   /** Holds if `n` wraps an SSA definition without ingoing flow. */
@@ -414,7 +433,15 @@ predicate nodeIsHidden(Node n) { n.(NodeImpl).nodeIsHidden() }
  * Holds if `n` should never be skipped over in the `PathGraph` and in path
  * explanations.
  */
-predicate neverSkipInPathGraph(Node n) { isReturned(n.(AstNode).getCfgNode()) }
+predicate neverSkipInPathGraph(Node n) {
+  isReturned(n.(AstNode).getCfgNode())
+  or
+  n = any(SsaDefinitionNodeImpl def | not def.nodeIsHidden())
+  or
+  n.asExpr() instanceof CfgNodes::ExprNodes::ExpandableStringExprCfgNode
+  or
+  n.asExpr() instanceof CfgNodes::ExprNodes::ExpandableSubExprCfgNode
+}
 
 /** An SSA node. */
 class SsaNode extends NodeImpl, TSsaNode {
@@ -424,9 +451,6 @@ class SsaNode extends NodeImpl, TSsaNode {
 
   /** Gets the underlying variable. */
   Variable getVariable() { result = node.getSourceVariable() }
-
-  /** Holds if this node should be hidden from path explanations. */
-  predicate isHidden() { any() }
 
   override CfgScope getCfgScope() { result = node.getBasicBlock().getScope() }
 
@@ -440,7 +464,7 @@ class SsaDefinitionNodeImpl extends SsaNode {
 
   Ssa::Definition getDefinition() { result = node.getDefinition() }
 
-  override predicate isHidden() {
+  override predicate nodeIsHidden() {
     exists(SsaImpl::Definition def | def = this.getDefinition() |
       not def instanceof Ssa::WriteDefinition
       or
@@ -465,18 +489,38 @@ class NamedSet extends NamedSet0 {
   /** Gets the non-empty set of names, if any. */
   NamedSetModule::Set asNonEmpty() { this = TNonEmptyNamedSet(result) }
 
+  /** Gets the `i`'th name in this set according to some ordering. */
+  private string getRankedName(int i) {
+    result = rank[i + 1](string s | s = this.getALowerCaseName() | s)
+  }
+
   /** Holds if this is the empty set. */
   predicate isEmpty() { this = TEmptyNamedSet() }
 
-  /** Gets a name in this set. */
-  string getAName() { this.asNonEmpty().contains(result) }
+  int getSize() {
+    result = strictcount(this.getALowerCaseName())
+    or
+    this.isEmpty() and
+    result = 0
+  }
+
+  /** Gets a lower-case name in this set. */
+  string getALowerCaseName() { this.asNonEmpty().contains(result) }
 
   /** Gets the textual representation of this set. */
   string toString() {
-    result = "{" + strictconcat(this.getAName(), ", ") + "}"
+    result = "{" + strictconcat(this.getALowerCaseName(), ", ") + "}"
     or
     this.isEmpty() and
     result = "{}"
+  }
+
+  private CfgNodes::ExprNodes::CallExprCfgNode getABindingCallRec(int i) {
+    exists(string name | name = this.getRankedName(i) and exists(result.getNamedArgument(name)) |
+      i = 0
+      or
+      result = this.getABindingCallRec(i - 1)
+    )
   }
 
   /**
@@ -485,7 +529,7 @@ class NamedSet extends NamedSet0 {
    * NOTE: The `CfgNodes::CallCfgNode` may also provide more names.
    */
   CfgNodes::ExprNodes::CallExprCfgNode getABindingCall() {
-    forex(string name | name = this.getAName() | exists(result.getNamedArgument(name)))
+    result = this.getABindingCallRec(this.getSize() - 1)
     or
     this.isEmpty() and
     exists(result)
@@ -496,16 +540,28 @@ class NamedSet extends NamedSet0 {
    * this set.
    */
   CfgNodes::ExprNodes::CallExprCfgNode getAnExactBindingCall() {
-    forex(string name | name = this.getAName() | exists(result.getNamedArgument(name))) and
-    forex(string name | exists(result.getNamedArgument(name)) | name = this.getAName())
+    result = this.getABindingCallRec(this.getSize() - 1) and
+    strictcount(string name | result.hasNamedArgument(name)) = this.getSize()
     or
     this.isEmpty() and
     not exists(result.getNamedArgument(_))
   }
 
+  pragma[nomagic]
+  private Function getAFunctionRec(int i) {
+    i = 0 and
+    result.getAParameter().getLowerCaseName() = this.getRankedName(0)
+    or
+    exists(string name |
+      pragma[only_bind_into](name) = this.getRankedName(i) and
+      result.getAParameter().getLowerCaseName() = pragma[only_bind_into](name) and
+      result = this.getAFunctionRec(i - 1)
+    )
+  }
+
   /** Gets a function that has a parameter for each name in this set. */
   Function getAFunction() {
-    forex(string name | name = this.getAName() | result.getAParameter().matchesName(name))
+    result = this.getAFunctionRec(this.getSize() - 1)
     or
     this.isEmpty() and
     exists(result)
@@ -531,6 +587,12 @@ private module ParameterNodes {
         c = callable.asCfgScope()
       )
     }
+  }
+
+  bindingset[p]
+  pragma[inline_late]
+  private predicate namedSetHasParameter(NamedSet ns, Parameter p) {
+    ns.getALowerCaseName() = p.getLowerCaseName()
   }
 
   /**
@@ -566,13 +628,13 @@ private module ParameterNodes {
           f = parameter.getFunction() and
           f = ns.getAFunction() and
           name = parameter.getLowerCaseName() and
-          not name = ns.getAName() and
+          not name = ns.getALowerCaseName() and
           j =
             i -
               count(int k, Parameter p |
                 k < i and
                 p = getNormalParameter(f, k) and
-                p.getLowerCaseName() = ns.getAName()
+                namedSetHasParameter(ns, p)
               )
         )
       )
@@ -862,6 +924,15 @@ private module OutNodes {
 import OutNodes
 
 predicate jumpStep(Node pred, Node succ) {
+  // final env read -> env variable node
+  pred.(FinalEnvVarRead).getVariable() = succ.(EnvVarNode).getVariable()
+  or
+  // env variable node -> initial env def
+  exists(SsaImpl::Definition def |
+    succ.(SsaDefinitionNodeImpl).getDefinition() = def and
+    def.definesAt(pred.(EnvVarNode).getVariable(), any(EntryBasicBlock entry), -1)
+  )
+  or
   FlowSummaryImpl::Private::Steps::summaryJumpStep(pred.(FlowSummaryNode).getSummaryNode(),
     succ.(FlowSummaryNode).getSummaryNode())
 }
@@ -958,6 +1029,7 @@ predicate storeStep(Node node1, ContentSet c, Node node2) {
  * Holds if there is a read step of content `c` from `node1` to `node2`.
  */
 predicate readStep(Node node1, ContentSet c, Node node2) {
+  // Qualifier -> Member read
   exists(CfgNodes::ExprNodes::MemberExprReadAccessCfgNode var, Content::FieldContent fc |
     node2.asExpr() = var and
     node1.asExpr() = var.getQualifier() and
@@ -965,6 +1037,7 @@ predicate readStep(Node node1, ContentSet c, Node node2) {
     c.isSingleton(fc)
   )
   or
+  // Qualifier -> Index read
   exists(CfgNodes::ExprNodes::IndexExprReadAccessCfgNode var, CfgNodes::ExprCfgNode e |
     node2.asExpr() = var and
     node1.asExpr() = var.getBase() and
@@ -979,18 +1052,21 @@ predicate readStep(Node node1, ContentSet c, Node node2) {
     c.isAnyElement()
   )
   or
+  // Implicit read before a return
   exists(CfgNode cfgNode |
     node1 = TPreReturnNodeImpl(cfgNode, true) and
     node2 = TImplicitWrapNode(cfgNode, true) and
     c.isSingleton(any(Content::KnownElementContent ec | exists(ec.getIndex().asInt())))
   )
   or
+  // Implicit read before a process block
   c.isAnyPositional() and
   exists(CfgNodes::ProcessBlockCfgNode processBlock |
     processBlock.getPipelineParameterAccess() = node1.asExpr() and
     node2 = TProcessNode(processBlock)
   )
   or
+  // Implicit read of a positional before a property-by-name process iteration
   c.isAnyPositional() and
   exists(CfgNodes::ProcessBlockCfgNode pb, CfgNodes::ExprNodes::VarReadAccessCfgNode va |
     va = pb.getAPipelineByPropertyNameParameterAccess() and
@@ -998,6 +1074,7 @@ predicate readStep(Node node1, ContentSet c, Node node2) {
     node2 = TProcessPropertyByNameNode(va.getVariable(), false)
   )
   or
+  // Implicit read of a property before a property-by-name process iteration
   exists(PipelineByPropertyNameParameter p, Content::KnownElementContent ec |
     c.isKnownOrUnknownElement(ec) and
     ec.getIndex().asString() = p.getLowerCaseName() and
@@ -1005,6 +1082,18 @@ predicate readStep(Node node1, ContentSet c, Node node2) {
     node2 = TProcessPropertyByNameNode(p, true)
   )
   or
+  // Read from a collection into a `foreach` loop
+  exists(
+    CfgNodes::StmtNodes::ForEachStmtCfgNode forEach, Content::KnownElementContent ec, BasicBlock bb,
+    int i
+  |
+    c.isKnownOrUnknownElement(ec) and
+    node1.asExpr() = forEach.getIterableExpr() and
+    bb.getNode(i) = forEach.getVarAccess() and
+    node2.asDefinition().definesAt(_, bb, i)
+  )
+  or
+  // Summary read steps
   FlowSummaryImpl::Private::Steps::summaryReadStep(node1.(FlowSummaryNode).getSummaryNode(), c,
     node2.(FlowSummaryNode).getSummaryNode())
 }
@@ -1270,6 +1359,39 @@ class ScriptBlockNode extends TScriptBlockNode, NodeImpl {
   override predicate nodeIsHidden() { any() }
 }
 
+class EnvVarNode extends TEnvVarNode, NodeImpl {
+  private EnvVariable v;
+
+  EnvVarNode() { this = TEnvVarNode(v) }
+
+  EnvVariable getVariable() { result = v }
+
+  override CfgScope getCfgScope() { result = v.getEnclosingScope() }
+
+  override Location getLocationImpl() { result = v.getLocation() }
+
+  override string toStringImpl() { result = v.toString() }
+
+  override predicate nodeIsHidden() { any() }
+}
+
+class FinalEnvVarRead extends TFinalEnvVarRead, NodeImpl {
+  Scope scope;
+  private EnvVariable v;
+
+  FinalEnvVarRead() { this = TFinalEnvVarRead(scope, v) }
+
+  EnvVariable getVariable() { result = v }
+
+  override CfgScope getCfgScope() { result = scope }
+
+  override Location getLocationImpl() { result = scope.getLocation() }
+
+  override string toStringImpl() { result = v.toString() + " after " + scope }
+
+  override predicate nodeIsHidden() { any() }
+}
+
 /** A node that performs a type cast. */
 class CastNode extends Node {
   CastNode() { none() }
@@ -1376,31 +1498,4 @@ ContentApprox getContentApprox(Content c) {
   or
   c instanceof Content::UnknownKeyOrPositionContent and
   result = TUnknownContentApprox()
-}
-
-// TFieldContent(string name) {
-//   name = any(PropertyMember member).getName()
-//   or
-//   name = any(MemberExpr me).getMemberName()
-// } or
-// // A known map key
-// TKnownKeyContent(ConstantValue cv) { exists(cv.asString()) } or
-// // A known array index
-// TKnownPositionalContent(ConstantValue cv) { cv.asInt() = [0 .. 10] } or
-// // An unknown key
-// TUnknownKeyContent() or
-// // An unknown positional element
-// TUnknownPositionalContent() or
-// // A unknown position or key - and we dont even know what kind it is
-// TUnknownKeyOrPositionContent()
-/**
- * A unit class for adding additional jump steps.
- *
- * Extend this class to add additional jump steps.
- */
-class AdditionalJumpStep extends Unit {
-  /**
-   * Holds if data can flow from `pred` to `succ` in a way that discards call contexts.
-   */
-  abstract predicate step(Node pred, Node succ);
 }

@@ -37,7 +37,6 @@ import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.java.sources.JavaSourceElement
 import org.jetbrains.kotlin.load.java.structure.*
 import org.jetbrains.kotlin.load.java.typeEnhancement.hasEnhancedNullability
-import org.jetbrains.kotlin.load.kotlin.getJvmModuleNameForDeserializedDescriptor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.NameUtils
 import org.jetbrains.kotlin.name.SpecialNames
@@ -50,6 +49,7 @@ open class KotlinUsesExtractor(
     open val tw: TrapWriter,
     val dependencyCollector: OdasaOutput.TrapFileManager?,
     val externalClassExtractor: ExternalDeclExtractor,
+    val classInstanceStack: ClassInstanceStack,
     val primitiveTypeMapping: PrimitiveTypeMapping,
     val pluginContext: IrPluginContext,
     val globalExtensionState: KotlinExtractorGlobalState
@@ -183,6 +183,7 @@ open class KotlinUsesExtractor(
                 filePath,
                 dependencyCollector,
                 externalClassExtractor,
+                classInstanceStack,
                 primitiveTypeMapping,
                 pluginContext,
                 newDeclarationStack,
@@ -200,6 +201,7 @@ open class KotlinUsesExtractor(
             clsFile.path,
             dependencyCollector,
             externalClassExtractor,
+            classInstanceStack,
             primitiveTypeMapping,
             pluginContext,
             newDeclarationStack,
@@ -538,6 +540,19 @@ open class KotlinUsesExtractor(
         return Pair(p?.first ?: c, p?.second ?: argsIncludingOuterClassesBeforeReplacement)
     }
 
+    private fun avoidInfiniteRecursion(
+        pair: Pair<IrClass, List<IrTypeArgument>?>
+    ): Pair<IrClass, List<IrTypeArgument>?> {
+        val c = pair.first
+        val args = pair.second
+        if (args != null && args.isNotEmpty() && classInstanceStack.possiblyCyclicExtraction(c, args)) {
+            logger.warn("Making use of ${c.name} a raw type to avoid infinite recursion")
+            return Pair(c, null)
+        } else {
+            return pair
+        }
+    }
+
     // `typeArgs` can be null to describe a raw generic type.
     // For non-generic types it will be zero-length list.
     private fun addClassLabel(
@@ -546,7 +561,7 @@ open class KotlinUsesExtractor(
         inReceiverContext: Boolean = false
     ): TypeResult<DbClassorinterface> {
         val replaced =
-            tryReplaceType(cBeforeReplacement, argsIncludingOuterClassesBeforeReplacement)
+            avoidInfiniteRecursion(tryReplaceType(cBeforeReplacement, argsIncludingOuterClassesBeforeReplacement))
         val replacedClass = replaced.first
         val replacedArgsIncludingOuterClasses = replaced.second
 
@@ -2136,7 +2151,7 @@ open class KotlinUsesExtractor(
             }
         val parentId = parent ?: overriddenParentAttributes?.id ?: useDeclarationParentOf(vp, false)
 
-        val idxBase = overriddenParentAttributes?.valueParameters?.indexOf(vp) ?: vp.index
+        val idxBase = overriddenParentAttributes?.valueParameters?.indexOf(vp) ?: parameterIndexExcludingReceivers(vp)
         val idxOffset =
             if (
                 declarationParent is IrFunction &&

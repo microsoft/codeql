@@ -9,19 +9,23 @@ private import PathResolution
 query predicate multiplePathResolutions(Path p, ItemNode i) {
   p.fromSource() and
   i = resolvePath(p) and
-  // known limitation for `$crate`
-  not p.getQualifier*().(RelevantPath).isUnqualified("$crate") and
+  // `panic` is defined in both `std` and `core`; both are included in the prelude
+  not p.getText() = "panic" and
   // `use foo::bar` may use both a type `bar` and a value `bar`
   not p =
     any(UseTree use |
       not use.isGlob() and
       not use.hasUseTreeList()
     ).getPath() and
-  strictcount(resolvePath(p)) > 1
+  // avoid overlap with `multipleCallTargets` below
+  not p = any(CallExpr ce).getFunction().(PathExpr).getPath() and
+  // exclude crates when counting: crates can exist in many versions and configurations,
+  // we deliberately want to exhibit them all
+  strictcount(ItemNode i0 | i0 = resolvePath(p) and not i0 instanceof Crate) > 1
 }
 
 /** Holds if `call` has multiple static call targets including `target`. */
-query predicate multipleMethodCallTargets(MethodCallExpr call, Callable target) {
+query predicate multipleCallTargets(CallExprBase call, Callable target) {
   target = call.getStaticTarget() and
   strictcount(call.getStaticTarget()) > 1
 }
@@ -38,6 +42,12 @@ query predicate multipleTupleFields(FieldExpr fe, TupleField field) {
   strictcount(fe.getTupleField()) > 1
 }
 
+/** Holds if `p` may resolve to multiple items including `i`. */
+query predicate multipleCanonicalPaths(ItemNode i, Crate c, string path) {
+  path = i.getCanonicalPath(c) and
+  strictcount(i.getCanonicalPath(c)) > 1
+}
+
 /**
  * Gets counts of path resolution inconsistencies of each type.
  */
@@ -45,12 +55,15 @@ int getPathResolutionInconsistencyCounts(string type) {
   type = "Multiple path resolutions" and
   result = count(Path p | multiplePathResolutions(p, _) | p)
   or
-  type = "Multiple static method call targets" and
-  result = count(CallExprBase call | multipleMethodCallTargets(call, _) | call)
+  type = "Multiple static call targets" and
+  result = count(CallExprBase call | multipleCallTargets(call, _) | call)
   or
   type = "Multiple record fields" and
   result = count(FieldExpr fe | multipleStructFields(fe, _) | fe)
   or
   type = "Multiple tuple fields" and
   result = count(FieldExpr fe | multipleTupleFields(fe, _) | fe)
+  or
+  type = "Multiple canonical paths" and
+  result = count(ItemNode i | multipleCanonicalPaths(i, _, _) | i)
 }

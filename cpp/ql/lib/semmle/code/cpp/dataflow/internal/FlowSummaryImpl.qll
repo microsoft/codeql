@@ -22,7 +22,11 @@ module Input implements InputSig<Location, DataFlowImplSpecific::CppDataFlow> {
 
   ArgumentPosition callbackSelfParameterPosition() { result = TDirectPosition(-1) }
 
-  ReturnKind getStandardReturnValueKind() { result.(NormalReturnKind).getIndirectionIndex() = 0 }
+  ReturnKind getStandardReturnValueKind() { result = getReturnValueKind("") }
+
+  ReturnKind getReturnValueKind(string arg) {
+    arg = repeatStars(result.(NormalReturnKind).getIndirectionIndex())
+  }
 
   string encodeParameterPosition(ParameterPosition pos) { result = pos.toString() }
 
@@ -100,7 +104,9 @@ private module StepsInput implements Impl::Private::StepsInputSig {
     result.getStaticCallTarget().getUnderlyingCallable() = sc
   }
 
-  Node getSourceNode(Input::SourceBase source, Impl::Private::SummaryComponent sc) { none() }
+  DataFlowCallable getSourceNodeEnclosingCallable(Input::SourceBase source) { none() }
+
+  Node getSourceNode(Input::SourceBase source, Impl::Private::SummaryComponentStack s) { none() }
 
   Node getSinkNode(Input::SinkBase sink, Impl::Private::SummaryComponent sc) { none() }
 }

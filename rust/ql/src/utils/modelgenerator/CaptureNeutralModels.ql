@@ -1,5 +1,5 @@
 /**
- * @name Capture neutral models.
+ * @name Capture neutral models
  * @description Finds neutral models to be used by other queries.
  * @kind diagnostic
  * @id rust/utils/modelgenerator/neutral-models
@@ -7,6 +7,7 @@
  */
 
 import internal.CaptureModels
+import SummaryModels
 
 from DataFlowSummaryTargetApi api, string noflow
 where noflow = Heuristic::captureNoFlow(api)

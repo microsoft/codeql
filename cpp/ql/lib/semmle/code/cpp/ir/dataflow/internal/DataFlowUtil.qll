@@ -13,7 +13,7 @@ private import semmle.code.cpp.models.interfaces.DataFlow
 private import semmle.code.cpp.dataflow.internal.FlowSummaryImpl as FlowSummaryImpl
 private import DataFlowPrivate
 private import ModelUtil
-private import SsaInternals as Ssa
+private import SsaImpl as SsaImpl
 private import DataFlowImplCommon as DataFlowImplCommon
 private import codeql.util.Unit
 private import Node0ToString
@@ -39,38 +39,35 @@ private newtype TIRDataFlowNode =
   TNode0(Node0Impl node) { DataFlowImplCommon::forceCachingInSameStage() } or
   TGlobalLikeVariableNode(GlobalLikeVariable var, int indirectionIndex) {
     indirectionIndex =
-      [getMinIndirectionsForType(var.getUnspecifiedType()) .. Ssa::getMaxIndirectionsForType(var.getUnspecifiedType())]
+      [getMinIndirectionsForType(var.getUnspecifiedType()) .. SsaImpl::getMaxIndirectionsForType(var.getUnspecifiedType())]
   } or
   TPostUpdateNodeImpl(Operand operand, int indirectionIndex) {
-    operand = any(FieldAddress fa).getObjectAddressOperand() and
-    indirectionIndex = [0 .. Ssa::countIndirectionsForCppType(Ssa::getLanguageType(operand))]
-    or
-    Ssa::isModifiableByCall(operand, indirectionIndex)
+    isPostUpdateNodeImpl(operand, indirectionIndex)
   } or
-  TSsaSynthNode(Ssa::SynthNode n) or
+  TSsaSynthNode(SsaImpl::SynthNode n) or
   TSsaIteratorNode(IteratorFlow::IteratorFlowNode n) or
   TRawIndirectOperand0(Node0Impl node, int indirectionIndex) {
-    Ssa::hasRawIndirectOperand(node.asOperand(), indirectionIndex)
+    SsaImpl::hasRawIndirectOperand(node.asOperand(), indirectionIndex)
   } or
   TRawIndirectInstruction0(Node0Impl node, int indirectionIndex) {
     not exists(node.asOperand()) and
-    Ssa::hasRawIndirectInstruction(node.asInstruction(), indirectionIndex)
+    SsaImpl::hasRawIndirectInstruction(node.asInstruction(), indirectionIndex)
   } or
   TFinalParameterNode(Parameter p, int indirectionIndex) {
-    exists(Ssa::FinalParameterUse use |
+    exists(SsaImpl::FinalParameterUse use |
       use.getParameter() = p and
       use.getIndirectionIndex() = indirectionIndex
     )
   } or
-  TFinalGlobalValue(Ssa::GlobalUse globalUse) or
-  TInitialGlobalValue(Ssa::GlobalDef globalUse) or
+  TFinalGlobalValue(SsaImpl::GlobalUse globalUse) or
+  TInitialGlobalValue(SsaImpl::GlobalDef globalUse) or
   TBodyLessParameterNodeImpl(Parameter p, int indirectionIndex) {
     // Rule out parameters of catch blocks.
     not exists(p.getCatchBlock()) and
     // We subtract one because `getMaxIndirectionsForType` returns the maximum
     // indirection for a glvalue of a given type, and this doesn't apply to
     // parameters.
-    indirectionIndex = [0 .. Ssa::getMaxIndirectionsForType(p.getUnspecifiedType()) - 1] and
+    indirectionIndex = [0 .. SsaImpl::getMaxIndirectionsForType(p.getUnspecifiedType()) - 1] and
     not any(InitializeParameterInstruction init).getParameter() = p
   } or
   TFlowSummaryNode(FlowSummaryImpl::Private::SummaryNode sn)
@@ -81,7 +78,7 @@ private newtype TIRDataFlowNode =
 class FieldAddress extends Operand {
   FieldAddressInstruction fai;
 
-  FieldAddress() { fai = this.getDef() and not Ssa::ignoreOperand(this) }
+  FieldAddress() { fai = this.getDef() and not SsaImpl::ignoreOperand(this) }
 
   /** Gets the field associated with this instruction. */
   Field getField() { result = fai.getField() }
@@ -126,7 +123,7 @@ predicate conversionFlow(
     )
     or
     additional = true and
-    Ssa::isAdditionalConversionFlow(opFrom, instrTo)
+    SsaImpl::isAdditionalConversionFlow(opFrom, instrTo)
   )
   or
   isPointerArith = true and
@@ -183,7 +180,7 @@ class Node extends TIRDataFlowNode {
     or
     this.asOperand().getUse() = block.getInstruction(i)
     or
-    exists(Ssa::SynthNode ssaNode |
+    exists(SsaImpl::SynthNode ssaNode |
       this.(SsaSynthNode).getSynthNode() = ssaNode and
       ssaNode.getBasicBlock() = block and
       ssaNode.getIndex() = i
@@ -364,10 +361,10 @@ class Node extends TIRDataFlowNode {
    * pointed to by `p`.
    */
   Expr asDefinition(boolean uncertain) {
-    exists(StoreInstruction store, Ssa::Definition def |
+    exists(StoreInstruction store, SsaImpl::Definition def |
       store = this.asInstruction() and
       result = asDefinitionImpl(store) and
-      Ssa::defToNode(this, def, _) and
+      SsaImpl::defToNode(this, def, _) and
       if def.isCertain() then uncertain = false else uncertain = true
     )
   }
@@ -489,6 +486,23 @@ class Node extends TIRDataFlowNode {
   }
 
   /**
+   * Holds if this node represents the `indirectionIndex`'th indirection of
+   * the value of an output parameter `p` just before reaching the end of a function.
+   */
+  predicate isFinalValueOfParameter(Parameter p, int indirectionIndex) {
+    exists(FinalParameterNode n | n = this |
+      p = n.getParameter() and
+      indirectionIndex = n.getIndirectionIndex()
+    )
+  }
+
+  /**
+   * Holds if this node represents the value of an output parameter `p`
+   * just before reaching the end of a function.
+   */
+  predicate isFinalValueOfParameter(Parameter p) { this.isFinalValueOfParameter(p, _) }
+
+  /**
    * Gets the variable corresponding to this node, if any. This can be used for
    * modeling flow in and out of global variables.
    */
@@ -536,19 +550,6 @@ class Node extends TIRDataFlowNode {
   /** INTERNAL: Do not use. */
   Location getLocationImpl() {
     none() // overridden by subclasses
-  }
-
-  /**
-   * Holds if this element is at the specified location.
-   * The location spans column `startcolumn` of line `startline` to
-   * column `endcolumn` of line `endline` in file `filepath`.
-   * For more information, see
-   * [Locations](https://codeql.github.com/docs/writing-codeql-queries/providing-locations-in-codeql-queries/).
-   */
-  deprecated predicate hasLocationInfo(
-    string filepath, int startline, int startcolumn, int endline, int endcolumn
-  ) {
-    this.getLocation().hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
   }
 
   /** Gets a textual representation of this element. */
@@ -623,7 +624,7 @@ class OperandNode extends Node, Node0 {
  * For example, `stripPointers(int*&)` is `int*` and `stripPointers(int*)` is `int`.
  */
 Type stripPointer(Type t) {
-  result = any(Ssa::Indirection ind | ind.getType() = t).getBaseType()
+  result = any(SsaImpl::Indirection ind | ind.getType() = t).getBaseType()
   or
   result = t.(PointerToMemberType).getBaseType()
   or
@@ -690,12 +691,12 @@ class PostFieldUpdateNode extends PostUpdateNodeImpl {
  * in a data flow graph.
  */
 class SsaSynthNode extends Node, TSsaSynthNode {
-  Ssa::SynthNode node;
+  SsaImpl::SynthNode node;
 
   SsaSynthNode() { this = TSsaSynthNode(node) }
 
   /** Gets the synthesized SSA node associated with this node. */
-  Ssa::SynthNode getSynthNode() { result = node }
+  SsaImpl::SynthNode getSynthNode() { result = node }
 
   override DataFlowCallable getEnclosingCallable() {
     result.asSourceCallable() = this.getFunction()
@@ -778,12 +779,12 @@ class SideEffectOperandNode extends Node instanceof IndirectOperand {
  * from a function body.
  */
 class FinalGlobalValue extends Node, TFinalGlobalValue {
-  Ssa::GlobalUse globalUse;
+  SsaImpl::GlobalUse globalUse;
 
   FinalGlobalValue() { this = TFinalGlobalValue(globalUse) }
 
   /** Gets the underlying SSA use. */
-  Ssa::GlobalUse getGlobalUse() { result = globalUse }
+  SsaImpl::GlobalUse getGlobalUse() { result = globalUse }
 
   override DataFlowCallable getEnclosingCallable() {
     result.asSourceCallable() = this.getFunction()
@@ -794,7 +795,7 @@ class FinalGlobalValue extends Node, TFinalGlobalValue {
   override DataFlowType getType() {
     exists(int indirectionIndex |
       indirectionIndex = globalUse.getIndirectionIndex() and
-      result = getTypeImpl(globalUse.getUnderlyingType(), indirectionIndex - 1)
+      result = getTypeImpl(globalUse.getUnderlyingType(), indirectionIndex)
     )
   }
 
@@ -810,12 +811,12 @@ class FinalGlobalValue extends Node, TFinalGlobalValue {
  * a function body.
  */
 class InitialGlobalValue extends Node, TInitialGlobalValue {
-  Ssa::GlobalDef globalDef;
+  SsaImpl::GlobalDef globalDef;
 
   InitialGlobalValue() { this = TInitialGlobalValue(globalDef) }
 
   /** Gets the underlying SSA definition. */
-  Ssa::GlobalDef getGlobalDef() { result = globalDef }
+  SsaImpl::GlobalDef getGlobalDef() { result = globalDef }
 
   override DataFlowCallable getEnclosingCallable() {
     result.asSourceCallable() = this.getFunction()
@@ -860,7 +861,7 @@ class BodyLessParameterNodeImpl extends Node, TBodyLessParameterNodeImpl {
     result = unique( | | p.getLocation())
     or
     count(p.getLocation()) != 1 and
-    result instanceof UnknownDefaultLocation
+    result instanceof UnknownLocation
   }
 
   final override string toStringImpl() {
@@ -1128,7 +1129,7 @@ private module RawIndirectNodes {
     final override Location getLocationImpl() {
       if exists(this.getOperand().getLocation())
       then result = this.getOperand().getLocation()
-      else result instanceof UnknownDefaultLocation
+      else result instanceof UnknownLocation
     }
 
     override string toStringImpl() {
@@ -1174,7 +1175,7 @@ private module RawIndirectNodes {
     final override Location getLocationImpl() {
       if exists(this.getInstruction().getLocation())
       then result = this.getInstruction().getLocation()
-      else result instanceof UnknownDefaultLocation
+      else result instanceof UnknownLocation
     }
 
     override string toStringImpl() {
@@ -1238,7 +1239,7 @@ import RawIndirectNodes
 /**
  * INTERNAL: do not use.
  *
- * A node representing the value of an update parameter
+ * A node representing the value of an output parameter
  * just before reaching the end of a function.
  */
 class FinalParameterNode extends Node, TFinalParameterNode {
@@ -1270,7 +1271,7 @@ class FinalParameterNode extends Node, TFinalParameterNode {
     result = unique( | | p.getLocation())
     or
     not exists(unique( | | p.getLocation())) and
-    result instanceof UnknownDefaultLocation
+    result instanceof UnknownLocation
   }
 
   override string toStringImpl() { result = stars(this) + p.toString() }
@@ -1284,11 +1285,11 @@ class UninitializedNode extends Node {
   LocalVariable v;
 
   UninitializedNode() {
-    exists(Ssa::Definition def, Ssa::SourceVariable sv |
+    exists(SsaImpl::Definition def, SsaImpl::SourceVariable sv |
       def.getIndirectionIndex() = 0 and
       def.getValue().asInstruction() instanceof UninitializedInstruction and
-      Ssa::defToNode(this, def, sv) and
-      v = sv.getBaseVariable().(Ssa::BaseIRVariable).getIRVariable().getAst()
+      SsaImpl::defToNode(this, def, sv) and
+      v = sv.getBaseVariable().(SsaImpl::BaseIRVariable).getIRVariable().getAst()
     )
   }
 
@@ -1642,7 +1643,7 @@ class VariableNode extends Node, TGlobalLikeVariableNode {
     result = unique( | | v.getLocation())
     or
     not exists(unique( | | v.getLocation())) and
-    result instanceof UnknownDefaultLocation
+    result instanceof UnknownLocation
   }
 
   override string toStringImpl() { result = stars(this) + v.toString() }
@@ -1718,7 +1719,7 @@ private module Cached {
   cached
   predicate flowsToBackEdge(Node n) {
     exists(Node succ, IRBlock bb1, IRBlock bb2 |
-      Ssa::ssaFlow(n, succ) and
+      SsaImpl::ssaFlow(n, succ) and
       bb1 = n.getBasicBlock() and
       bb2 = succ.getBasicBlock() and
       bb1 != bb2 and
@@ -1816,7 +1817,7 @@ private module Cached {
   predicate simpleLocalFlowStep(Node nodeFrom, Node nodeTo, string model) {
     (
       // Def-use/Use-use flow
-      Ssa::ssaFlow(nodeFrom, nodeTo)
+      SsaImpl::ssaFlow(nodeFrom, nodeTo)
       or
       IteratorFlow::localFlowStep(nodeFrom, nodeTo)
       or
@@ -1829,7 +1830,7 @@ private module Cached {
       |
         simpleOperandLocalFlowStep(iFrom, opTo) and
         // Omit when the instruction node also represents the operand.
-        not iFrom = Ssa::getIRRepresentationOfOperand(opTo)
+        not iFrom = SsaImpl::getIRRepresentationOfOperand(opTo)
       )
       or
       // Indirect operand -> (indirect) instruction flow
@@ -1902,7 +1903,7 @@ private module Cached {
       // We also want a write coming out of an `OutNode` to flow `nodeTo`.
       // This is different from `reverseFlowInstruction` since `nodeFrom` can never
       // be an `OutNode` when it's defined by an instruction.
-      Ssa::outNodeHasAddressAndIndex(nodeFrom, address, indirectionIndex)
+      SsaImpl::outNodeHasAddressAndIndex(nodeFrom, address, indirectionIndex)
     )
   }
 
@@ -2077,37 +2078,152 @@ predicate localExprFlow(Expr e1, Expr e2) {
   localExprFlowPlus(e1, e2)
 }
 
+/**
+ * A canonical representation of a field.
+ *
+ * For performance reasons we want a unique `Content` that represents
+ * a given field across any template instantiation of a class.
+ *
+ * This is possible in _almost_ all cases, but there are cases where it is
+ * not possible to map between a field in the uninstantiated template to a
+ * field in the instantiated template. This happens in the case of local class
+ * definitions (because the local class is not the template that constructs
+ * the instantiation - it is the enclosing function). So this abstract class
+ * has two implementations: a non-local case (where we can represent a
+ * canonical field as the field declaration from an uninstantiated class
+ * template or a non-templated class), and a local case (where we simply use
+ * the field from the instantiated class).
+ */
+abstract private class CanonicalField extends Field {
+  /** Gets a field represented by this canonical field. */
+  abstract Field getAField();
+
+  /**
+   * Gets a class that declares a field represented by this canonical field.
+   */
+  abstract Class getADeclaringType();
+
+  /**
+   * Gets a type that this canonical field may have. Note that this may
+   * not be a unique type. For example, consider this case:
+   * ```
+   * template<typename T>
+   * struct S { T x; };
+   *
+   * S<int> s1;
+   * S<char> s2;
+   * ```
+   * In this case the canonical field corresponding to `S::x` has two types:
+   * `int` and `char`.
+   */
+  Type getAType() { result = this.getAField().getType() }
+
+  Type getAnUnspecifiedType() { result = this.getAType().getUnspecifiedType() }
+}
+
+private class NonLocalCanonicalField extends CanonicalField {
+  Class declaringType;
+
+  NonLocalCanonicalField() {
+    declaringType = this.getDeclaringType() and
+    not declaringType.isFromTemplateInstantiation(_) and
+    not declaringType.isLocal() // handled in LocalCanonicalField
+  }
+
+  override Field getAField() {
+    exists(Class c | result.getDeclaringType() = c |
+      // Either the declaring class of the field is a template instantiation
+      // that has been constructed from this canonical declaration
+      c.isConstructedFrom(declaringType) and
+      pragma[only_bind_out](result.getName()) = pragma[only_bind_out](this.getName())
+      or
+      // or this canonical declaration is not a template.
+      not c.isConstructedFrom(_) and
+      result = this
+    )
+  }
+
+  override Class getADeclaringType() {
+    result = this.getDeclaringType()
+    or
+    result.isConstructedFrom(this.getDeclaringType())
+  }
+}
+
+private class LocalCanonicalField extends CanonicalField {
+  Class declaringType;
+
+  LocalCanonicalField() {
+    declaringType = this.getDeclaringType() and
+    declaringType.isLocal()
+  }
+
+  override Field getAField() { result = this }
+
+  override Class getADeclaringType() { result = declaringType }
+}
+
+/**
+ * A canonical representation of a `Union`. See `CanonicalField` for the explanation for
+ * why we need a canonical representation.
+ */
+abstract private class CanonicalUnion extends Union {
+  /** Gets a union represented by this canonical union. */
+  abstract Union getAUnion();
+
+  /** Gets a canonical field of this canonical union. */
+  CanonicalField getACanonicalField() { result.getDeclaringType() = this }
+}
+
+private class NonLocalCanonicalUnion extends CanonicalUnion {
+  NonLocalCanonicalUnion() { not this.isFromTemplateInstantiation(_) and not this.isLocal() }
+
+  override Union getAUnion() {
+    result = this
+    or
+    result.isConstructedFrom(this)
+  }
+}
+
+private class LocalCanonicalUnion extends CanonicalUnion {
+  LocalCanonicalUnion() { this.isLocal() }
+
+  override Union getAUnion() { result = this }
+}
+
 bindingset[f]
 pragma[inline_late]
-private int getFieldSize(Field f) { result = f.getType().getSize() }
+private int getFieldSize(CanonicalField f) { result = max(f.getAType().getSize()) }
 
 /**
  * Gets a field in the union `u` whose size
  * is `bytes` number of bytes.
  */
-private Field getAFieldWithSize(Union u, int bytes) {
-  result = u.getAField() and
+private CanonicalField getAFieldWithSize(CanonicalUnion u, int bytes) {
+  result = u.getACanonicalField() and
   bytes = getFieldSize(result)
 }
 
 cached
 private newtype TContent =
-  TFieldContent(Field f, int indirectionIndex) {
-    // the indirection index for field content starts at 1 (because `TFieldContent` is thought of as
+  TNonUnionContent(CanonicalField f, int indirectionIndex) {
+    // the indirection index for field content starts at 1 (because `TNonUnionContent` is thought of as
     // the address of the field, `FieldAddress` in the IR).
-    indirectionIndex = [1 .. Ssa::getMaxIndirectionsForType(f.getUnspecifiedType())] and
+    indirectionIndex = [1 .. max(SsaImpl::getMaxIndirectionsForType(f.getAnUnspecifiedType()))] and
     // Reads and writes of union fields are tracked using `UnionContent`.
     not f.getDeclaringType() instanceof Union
   } or
-  TUnionContent(Union u, int bytes, int indirectionIndex) {
-    exists(Field f |
-      f = u.getAField() and
+  TUnionContent(CanonicalUnion u, int bytes, int indirectionIndex) {
+    exists(CanonicalField f |
+      f = u.getACanonicalField() and
       bytes = getFieldSize(f) and
       // We key `UnionContent` by the union instead of its fields since a write to one
       // field can be read by any read of the union's fields. Again, the indirection index
       // is 1-based (because 0 is considered the address).
       indirectionIndex =
-        [1 .. max(Ssa::getMaxIndirectionsForType(getAFieldWithSize(u, bytes).getUnspecifiedType()))]
+        [1 .. max(SsaImpl::getMaxIndirectionsForType(getAFieldWithSize(u, bytes)
+                    .getAnUnspecifiedType())
+          )]
     )
   } or
   TElementContent(int indirectionIndex) {
@@ -2121,14 +2237,14 @@ private newtype TContent =
  */
 class Content extends TContent {
   /** Gets a textual representation of this element. */
-  abstract string toString();
+  string toString() { none() } // overridden in subclasses
 
   predicate hasLocationInfo(string path, int sl, int sc, int el, int ec) {
     path = "" and sl = 0 and sc = 0 and el = 0 and ec = 0
   }
 
   /** Gets the indirection index of this `Content`. */
-  abstract int getIndirectionIndex();
+  int getIndirectionIndex() { none() } // overridden in subclasses
 
   /**
    * INTERNAL: Do not use.
@@ -2139,7 +2255,7 @@ class Content extends TContent {
    * For example, a write to a field `f` implies that any content of
    * the form `*f` is also cleared.
    */
-  abstract predicate impliesClearOf(Content c);
+  predicate impliesClearOf(Content c) { none() } // overridden in subclasses
 }
 
 /**
@@ -2159,37 +2275,62 @@ private module ContentStars {
 
 private import ContentStars
 
-/** A reference through a non-union instance field. */
+private class TFieldContent = TNonUnionContent or TUnionContent;
+
+/**
+ * A `Content` that references a `Field`. This may be a field of a `struct`,
+ * `class`, or `union`. In the case of a `union` there may be multiple fields
+ * associated with the same `Content`.
+ */
 class FieldContent extends Content, TFieldContent {
-  private Field f;
+  /** Gets a `Field` of this `Content`. */
+  Field getAField() { none() }
+
+  /**
+   * Gets the field associated with this `Content`, if a unique one exists.
+   *
+   * For fields from template instantiations this predicate may still return
+   * more than one field, but all the fields will be constructed from the same
+   * template.
+   */
+  Field getField() { none() } // overridden in subclasses
+
+  override int getIndirectionIndex() { none() } // overridden in subclasses
+
+  override string toString() { none() } // overridden in subclasses
+
+  override predicate impliesClearOf(Content c) { none() } // overridden in subclasses
+}
+
+/** A reference through a non-union instance field. */
+class NonUnionFieldContent extends FieldContent, TNonUnionContent {
+  private CanonicalField f;
   private int indirectionIndex;
 
-  FieldContent() { this = TFieldContent(f, indirectionIndex) }
+  NonUnionFieldContent() { this = TNonUnionContent(f, indirectionIndex) }
 
   override string toString() { result = contentStars(this) + f.toString() }
 
-  Field getField() { result = f }
+  final override Field getField() { result = f.getAField() }
+
+  override Field getAField() { result = this.getField() }
 
   /** Gets the indirection index of this `FieldContent`. */
-  pragma[inline]
-  override int getIndirectionIndex() {
-    pragma[only_bind_into](result) = pragma[only_bind_out](indirectionIndex)
-  }
+  override int getIndirectionIndex() { result = indirectionIndex }
 
   override predicate impliesClearOf(Content c) {
-    exists(FieldContent fc |
-      fc = c and
-      fc.getField() = f and
+    exists(int i |
+      c = TNonUnionContent(f, i) and
       // If `this` is `f` then `c` is cleared if it's of the
       // form `*f`, `**f`, etc.
-      fc.getIndirectionIndex() >= indirectionIndex
+      i >= indirectionIndex
     )
   }
 }
 
 /** A reference through an instance field of a union. */
-class UnionContent extends Content, TUnionContent {
-  private Union u;
+class UnionContent extends FieldContent, TUnionContent {
+  private CanonicalUnion u;
   private int indirectionIndex;
   private int bytes;
 
@@ -2197,27 +2338,31 @@ class UnionContent extends Content, TUnionContent {
 
   override string toString() { result = contentStars(this) + u.toString() }
 
+  final override Field getField() { result = unique( | | u.getACanonicalField()).getAField() }
+
   /** Gets a field of the underlying union of this `UnionContent`, if any. */
-  Field getAField() { result = u.getAField() and getFieldSize(result) = bytes }
-
-  /** Gets the underlying union of this `UnionContent`. */
-  Union getUnion() { result = u }
-
-  /** Gets the indirection index of this `UnionContent`. */
-  pragma[inline]
-  override int getIndirectionIndex() {
-    pragma[only_bind_into](result) = pragma[only_bind_out](indirectionIndex)
+  override Field getAField() {
+    exists(CanonicalField cf |
+      cf = u.getACanonicalField() and
+      result = cf.getAField() and
+      getFieldSize(cf) = bytes
+    )
   }
 
+  /** Gets the underlying union of this `UnionContent`. */
+  Union getUnion() { result = u.getAUnion() }
+
+  /** Gets the indirection index of this `UnionContent`. */
+  override int getIndirectionIndex() { result = indirectionIndex }
+
   override predicate impliesClearOf(Content c) {
-    exists(UnionContent uc |
-      uc = c and
-      uc.getUnion() = u and
+    exists(int i |
+      c = TUnionContent(u, _, i) and
       // If `this` is `u` then `c` is cleared if it's of the
       // form `*u`, `**u`, etc. (and we ignore `bytes` because
       // we know the entire union is overwritten because it's a
       // union).
-      uc.getIndirectionIndex() >= indirectionIndex
+      i >= indirectionIndex
     )
   }
 }
@@ -2231,10 +2376,7 @@ class ElementContent extends Content, TElementContent {
 
   ElementContent() { this = TElementContent(indirectionIndex) }
 
-  pragma[inline]
-  override int getIndirectionIndex() {
-    pragma[only_bind_into](result) = pragma[only_bind_out](indirectionIndex)
-  }
+  override int getIndirectionIndex() { result = indirectionIndex }
 
   override predicate impliesClearOf(Content c) { none() }
 
@@ -2270,8 +2412,10 @@ class ContentSet instanceof Content {
    * For more information, see
    * [Locations](https://codeql.github.com/docs/writing-codeql-queries/providing-locations-in-codeql-queries/).
    */
-  predicate hasLocationInfo(string path, int sl, int sc, int el, int ec) {
-    super.hasLocationInfo(path, sl, sc, el, ec)
+  predicate hasLocationInfo(
+    string filepath, int startline, int startcolumn, int endline, int endcolumn
+  ) {
+    super.hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
   }
 }
 
@@ -2350,7 +2494,7 @@ module BarrierGuard<guardChecksSig/3 guardChecks> {
       controls(g, result, edge)
     )
     or
-    result = Ssa::BarrierGuard<guardChecksNode/3>::getABarrierNode()
+    result = SsaImpl::BarrierGuard<guardChecksNode/3>::getABarrierNode()
   }
 
   /**
@@ -2449,7 +2593,7 @@ module BarrierGuard<guardChecksSig/3 guardChecks> {
     )
     or
     result =
-      Ssa::BarrierGuardWithIntParam<guardChecksIndirectNode/4>::getABarrierNode(indirectionIndex)
+      SsaImpl::BarrierGuardWithIntParam<guardChecksIndirectNode/4>::getABarrierNode(indirectionIndex)
   }
 }
 
@@ -2486,7 +2630,7 @@ module InstructionBarrierGuard<instructionGuardChecksSig/3 instructionGuardCheck
       controls(g, result, edge)
     )
     or
-    result = Ssa::BarrierGuard<guardChecksNode/3>::getABarrierNode()
+    result = SsaImpl::BarrierGuard<guardChecksNode/3>::getABarrierNode()
   }
 
   bindingset[value, n]
@@ -2516,7 +2660,7 @@ module InstructionBarrierGuard<instructionGuardChecksSig/3 instructionGuardCheck
     )
     or
     result =
-      Ssa::BarrierGuardWithIntParam<guardChecksIndirectNode/4>::getABarrierNode(indirectionIndex)
+      SsaImpl::BarrierGuardWithIntParam<guardChecksIndirectNode/4>::getABarrierNode(indirectionIndex)
   }
 }
 
@@ -2571,4 +2715,17 @@ Function getARuntimeTarget(Call call) {
     or
     result = DataFlowImplCommon::viableCallableLambda(dfCall, _).asSourceCallable()
   )
+}
+
+/** A module that provides static single assignment (SSA) information. */
+module Ssa {
+  class Definition = SsaImpl::Definition;
+
+  class ExplicitDefinition = SsaImpl::ExplicitDefinition;
+
+  class DirectExplicitDefinition = SsaImpl::DirectExplicitDefinition;
+
+  class IndirectExplicitDefinition = SsaImpl::IndirectExplicitDefinition;
+
+  class PhiNode = SsaImpl::PhiNode;
 }

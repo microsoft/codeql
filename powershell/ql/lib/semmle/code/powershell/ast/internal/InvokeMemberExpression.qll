@@ -1,5 +1,13 @@
 private import AstImport
 
+/**
+ * A method invocation expression. For example:
+ * ```
+ * $process.Start()
+ * $string.ToUpper()
+ * $list.Add($item)
+ * ```
+ */
 class InvokeMemberExpr extends CallExpr, TInvokeMemberExpr {
   final override string getLowerCaseName() {
     result = getRawAst(this).(Raw::InvokeMemberExpr).getLowerCaseName()
@@ -71,8 +79,13 @@ class ConstructorCall extends InvokeMemberExpr {
     this.isStatic() and typename = this.getQualifier() and this.getLowerCaseName() = "new"
   }
 
+  /** Gets a name of the type being constructed by this constructor call. */
+  bindingset[result]
+  pragma[inline_late]
+  string getAConstructedTypeName() { result = typename.getAName() }
+
   /** Gets the name of the type being constructed by this constructor call. */
-  string getConstructedTypeName() { result = typename.getName() }
+  string getLowerCaseConstructedTypeName() { result = typename.getLowerCaseName() }
 }
 
 /**

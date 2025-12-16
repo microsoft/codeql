@@ -1,3 +1,105 @@
+## 5.0.5
+
+No user-facing changes.
+
+## 5.0.4
+
+No user-facing changes.
+
+## 5.0.3
+
+No user-facing changes.
+
+## 5.0.2
+
+### Bug Fixes
+
+* Some fixes relating to use of path transformers when extracting a database:
+  * Fixed a problem where the path transformer would be ignored when extracting older codebases that predate the use of Go modules.
+  * The environment variable `CODEQL_PATH_TRANSFORMER` is now recognized, in addition to `SEMMLE_PATH_TRANSFORMER`.
+  * Fixed some cases where the extractor emitted paths without applying the path transformer.
+
+## 5.0.1
+
+No user-facing changes.
+
+## 5.0.0
+
+### Breaking Changes
+
+* The member predicate `writesField` on `DataFlow::Write` now uses the post-update node for `base` when that is the node being updated, which is in all cases except initializing a struct literal. A new member predicate `writesFieldPreUpdate` has been added for cases where this behaviour is not desired.
+* The member predicate `writesElement` on `DataFlow::Write` now uses the post-update node for `base` when that is the node being updated, which is in all cases except initializing an array/slice/map literal. A new member predicate `writesElementPreUpdate` has been added for cases where this behaviour is not desired.
+
+### Deprecated APIs
+
+* The class `SqlInjection::NumericOrBooleanSanitizer` has been deprecated. Use `SimpleTypeSanitizer` from `semmle.go.security.Sanitizers` instead.
+* The member predicate `writesComponent` on `DataFlow::Write` has been deprecated. Instead, use `writesFieldPreUpdate` and `writesElementPreUpdate`, or their new versions `writesField` and `writesElement`.
+
+### Major Analysis Improvements
+
+* The shape of the Go data-flow graph has changed. Previously for code like `x := def(); use1(x); use2(x)`, there would be edges from the definition of `x` to each use. Now there is an edge from the definition to the first use, then another from the first use to the second, and so on. This means that data-flow barriers work differently - flow will not reach any uses after the barrier node. Where this is not desired it may be necessary to add an additional flow step to propagate the flow forward. Additionally, when a variable may be subject to a side-effect, such as updating an array, passing a pointer to a function that might write through it or writing to a field of a struct, there is now a dedicated post-update node representing the variable after this side-effect has taken place. Previously post-update nodes were aliases for either a variable's definition, or were equal to the pre-update node. This led to backwards steps in the data-flow graph, which could cause false positives. For example, in the previous code there would be an edge from `x` in `use2(x)` back to the definition of `x`. If we define our sources as any argument of `use2` and our sinks as any argument of `use1` then this would lead to a false positive path. Now there are distinct post-update nodes and no backwards edge to the definition, so we will not find this false positive path.
+
+### Minor Analysis Improvements
+
+* The query `go/request-forgery` will no longer report alerts when the user input is of a simple type, like a number or a boolean.
+* For the query `go/unvalidated-url-redirection`, when untrusted data is assigned to the `Host` field of a `url.URL` struct, we consider the whole struct untrusted. We now also include the case when this happens during struct initialization, for example `&url.URL{Host: untrustedData}`.
+* `go/unvalidated-url-redirection` and `go/request-forgery` have a shared notion of a safe URL, which is known to not be malicious. Some URLs which were incorrectly considered safe are now correctly considered unsafe. This may lead to more alerts for those two queries.
+
+## 4.3.5
+
+No user-facing changes.
+
+## 4.3.4
+
+### Minor Analysis Improvements
+
+* The second argument of the `CreateTemp` function, from the `os` package, is no longer a path-injection sink due to proper sanitization by Go.
+* The query "Uncontrolled data used in path expression" (`go/path-injection`) now detects sanitizing a path by adding `os.PathSeparator` or `\` to the beginning.
+
+## 4.3.3
+
+No user-facing changes.
+
+## 4.3.2
+
+### Minor Analysis Improvements
+
+* Go 1.25 is now supported.
+
+## 4.3.1
+
+No user-facing changes.
+
+## 4.3.0
+
+### Deprecated APIs
+
+* The class `BuiltinType` is now deprecated. Use the new replacement `BuiltinTypeEntity` instead.
+* The class `DeclaredType` is now deprecated. Use the new replacement `DeclaredTypeEntity` instead.
+
+### Minor Analysis Improvements
+
+* Added models for the `Head` function and the `Client.Head` method, from the `net/http` package, to the `Http::ClientRequest` class. This means that they will be recognized as sinks for the query `go/request-forgery` and the experimental query `go/ssrf`.
+* Previously, `DefinedType.getBaseType` gave the underlying type. It now gives the right hand side of the type declaration, as the documentation indicated that it should.
+
+## 4.2.8
+
+No user-facing changes.
+
+## 4.2.7
+
+### Minor Analysis Improvements
+
+* The first argument of `Client.Query` in `cloud.google.com/go/bigquery` is now recognized as a SQL injection sink.
+
+## 4.2.6
+
+No user-facing changes.
+
+## 4.2.5
+
+No user-facing changes.
+
 ## 4.2.4
 
 No user-facing changes.
@@ -26,10 +128,6 @@ No user-facing changes.
 
 * The member predicate `hasLocationInfo` has been deprecated on the following classes: `BasicBlock`, `Callable`, `Content`, `ContentSet`, `ControlFlow::Node`, `DataFlowCallable`, `DataFlow::Node`, `Entity`, `GVN`, `HtmlTemplate::TemplateStmt`, `IR:WriteTarget`, `SourceSinkInterpretationInput::SourceOrSinkElement`, `SourceSinkInterpretationInput::InterpretNode`, `SsaVariable`, `SsaDefinition`, `SsaWithFields`, `StringOps::ConcatenationElement`, `Type`, and `VariableWithFields`. Use `getLocation()` instead.
 
-### Major Analysis Improvements
-
-* Go 1.24 is now supported. This includes the new language feature of generic type aliases.
-
 ### Minor Analysis Improvements
 
 * The location info for the following classes has been changed slightly to match a location that is in the database: `BasicBlock`, `ControlFlow::EntryNode`, `ControlFlow::ExitNode`, `ControlFlow::ConditionGuardNode`, `IR::ImplicitLiteralElementIndexInstruction`, `IR::EvalImplicitTrueInstruction`, `SsaImplicitDefinition`, `SsaPhiNode`.
@@ -43,6 +141,10 @@ No user-facing changes.
 * The class `NamedType` has been deprecated. Use the new class `DefinedType` instead. This better matches the terminology used in the Go language specification, which was changed in Go 1.9.
 * The member predicate `getNamedType` on `GoMicro::ServiceInterfaceType` has been deprecated. Use the new member predicate `getDefinedType` instead.
 * The member predicate `getNamedType` on `Twirp::ServiceInterfaceType` has been deprecated. Use the new member predicate `getDefinedType` instead.
+
+### Major Analysis Improvements
+
+* Go 1.24 is now supported. This includes the new language feature of generic type aliases.
 
 ### Minor Analysis Improvements
 

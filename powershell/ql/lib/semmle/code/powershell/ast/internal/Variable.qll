@@ -59,8 +59,9 @@ module Private {
 
     PipelineParameterImpl() {
       exists(int index |
-        i = FunParam(index) and
-        any(Synthesis s).pipelineParameterHasIndex(super.getDeclaringScopeImpl(), index)
+        i = FunParam(pragma[only_bind_into](index)) and
+        any(Synthesis s)
+            .pipelineParameterHasIndex(super.getDeclaringScopeImpl(), pragma[only_bind_into](index))
       )
     }
 
@@ -105,6 +106,10 @@ module Private {
     }
   }
 
+  class EnvVariableImpl extends VariableSynth {
+    override EnvVar i;
+  }
+
   abstract class VarAccessImpl extends Expr, TVarAccess {
     abstract VariableImpl getVariableImpl();
   }
@@ -135,15 +140,35 @@ module Private {
   predicate explicitAssignment(Raw::Ast dest, Raw::Ast assignment) {
     assignment.(Raw::AssignStmt).getLeftHandSide() = dest
     or
+    exists(Raw::ConvertExpr convert |
+      convert.getExpr() = dest and
+      explicitAssignment(convert, assignment)
+    )
+    or
     any(Synthesis s).explicitAssignment(dest, _, assignment)
   }
 
-  predicate implicitAssignment(Raw::Ast n) { any(Synthesis s).implicitAssignment(n, _) }
+  predicate implicitAssignment(Raw::Ast n) {
+    any(Synthesis s).implicitAssignment(n, _)
+    or
+    exists(Raw::ConvertExpr convert |
+      convert.getExpr() = n and
+      implicitAssignment(convert)
+    )
+  }
 }
 
 private import Private
 
 module Public {
+  /**
+   * A variable. For example:
+   * ```
+   * $name = "John"
+   * $global:config = @{}
+   * $script:counter = 0
+   * ```
+   */
   class Variable extends Ast instanceof VariableImpl {
     final string getLowerCaseName() { result = super.getLowerCaseNameImpl() }
 
@@ -164,6 +189,15 @@ module Public {
     VarAccess getAnAccess() { result.getVariable() = this }
   }
 
+  /**
+   * A variable access. For example:
+   * ```
+   * $name
+   * $global:config
+   * $script:counter
+   * $_
+   * ```
+   */
   class VarAccess extends Expr instanceof VarAccessImpl {
     Variable getVariable() { result = super.getVariableImpl() }
 
@@ -174,10 +208,22 @@ module Public {
     predicate isImplicitWrite() { implicitAssignment(getRawAst(this)) }
   }
 
+  /**
+   * A variable access that is written to. For example:
+   * ```
+   * $name = "John"
+   * ```
+   */
   class VarWriteAccess extends VarAccess {
     VarWriteAccess() { this.isExplicitWrite(_) or this.isImplicitWrite() }
   }
 
+  /**
+   * A variable access that is read from. For example:
+   * ```
+   * Write-Host $name
+   * ```
+   */
   class VarReadAccess extends VarAccess {
     VarReadAccess() { not this instanceof VarWriteAccess }
   }

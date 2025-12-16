@@ -1,3 +1,6 @@
+overlay[local?]
+module;
+
 private import java
 private import semmle.code.java.dataflow.InstanceAccess
 private import semmle.code.java.dataflow.ExternalFlow
@@ -26,7 +29,7 @@ private predicate deadcode(Expr e) {
 module SsaFlow {
   module Impl = SsaImpl::DataFlowIntegration;
 
-  private predicate ssaDefAssigns(SsaExplicitUpdate def, Expr value) {
+  private predicate ssaDefAssigns(SsaExplicitWrite def, Expr value) {
     exists(VariableUpdate upd | upd = def.getDefiningExpr() |
       value = upd.(VariableAssign).getSource() or
       value = upd.(AssignOp) or
@@ -43,7 +46,7 @@ module SsaFlow {
     or
     exists(Parameter p |
       n = TExplicitParameterNode(p) and
-      result.(Impl::WriteDefSourceNode).getDefinition().(SsaImplicitInit).isParameterDefinition(p)
+      result.(Impl::WriteDefSourceNode).getDefinition().(SsaParameterInit).getParameter() = p
     )
     or
     ssaDefAssigns(result.(Impl::WriteDefSourceNode).getDefinition(), n.asExpr())
@@ -60,8 +63,6 @@ module SsaFlow {
 
 cached
 private module Cached {
-  private import semmle.code.java.controlflow.internal.GuardsLogic as GuardsLogic
-
   cached
   newtype TNode =
     TExprNode(Expr e) {

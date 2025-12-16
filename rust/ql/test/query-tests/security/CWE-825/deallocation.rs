@@ -17,7 +17,7 @@ pub fn test_alloc(mode: i32) {
 		println!("	v3 = {v3}");
 		println!("	v4 = {v4}");
 
-		std::alloc::dealloc(m1, layout); // $ Source=dealloc
+		std::alloc::dealloc(m1, layout); // $ Source[rust/access-invalid-pointer]=dealloc
 		// (m1, m2 are now dangling)
 
 		match mode {
@@ -29,8 +29,8 @@ pub fn test_alloc(mode: i32) {
 				println!("	v6 = {v6} (!)"); // corrupt in practice
 
 				// test repeat reads (we don't want lots of very similar results for the same dealloc)
-				let v5b = *m1;
-				let v5c = *m1;
+				let _v5b = *m1;
+				let _v5c = *m1;
 			},
 			100 => {
 				// more reads
@@ -67,7 +67,7 @@ pub fn test_alloc_array(mode: i32) {
 		println!("	v1 = {v1}");
 		println!("	v2 = {v2}");
 
-		std::alloc::dealloc(m2 as *mut u8, layout); // $ Source=dealloc_array
+		std::alloc::dealloc(m2 as *mut u8, layout); // $ Source[rust/access-invalid-pointer]=dealloc_array
 		// m1, m2 are now dangling
 
 		match mode {
@@ -109,7 +109,7 @@ pub fn test_libc() {
 		let v1 = *my_ptr; // GOOD
 		println!("	v1 = {v1}");
 
-		libc::free(my_ptr as *mut libc::c_void); // $ Source=free
+		libc::free(my_ptr as *mut libc::c_void); // $ Source[rust/access-invalid-pointer]=free
 		// (my_ptr is now dangling)
 
 		let v2 = *my_ptr; // $ Alert[rust/access-invalid-pointer]=free
@@ -120,9 +120,9 @@ pub fn test_libc() {
 // --- std::ptr ---
 
 pub fn test_ptr_invalid(mode: i32) {
-	let p1: *const i64 = std::ptr::dangling(); // $ Source=dangling
-	let p2: *mut i64 = std::ptr::dangling_mut(); // $ Source=dangling_mut
-	let p3: *const i64 = std::ptr::null(); // $ Source=null
+	let p1: *const i64 = std::ptr::dangling(); // $ Source[rust/access-invalid-pointer]=dangling
+	let p2: *mut i64 = std::ptr::dangling_mut(); // $ Source[rust/access-invalid-pointer]=dangling_mut
+	let p3: *const i64 = std::ptr::null(); // $ Source[rust/access-invalid-pointer]=null
 
 	if mode == 120 {
 		unsafe {
@@ -134,6 +134,100 @@ pub fn test_ptr_invalid(mode: i32) {
 			println!("	v2 = {v2} (!)");
 			println!("	v3 = {v3} (!)");
 		}
+	}
+}
+
+struct MyObject {
+	value: i64
+}
+
+impl MyObject {
+	fn is_zero(&self) -> bool {
+		self.value == 0
+	}
+}
+
+pub unsafe fn test_ptr_invalid_conditions(mode: i32) {
+	let layout = std::alloc::Layout::new::<MyObject>();
+
+	// --- mutable pointer ---
+
+	let mut ptr = std::alloc::alloc(layout) as *mut MyObject;
+	(*ptr).value = 0; // good
+
+	if mode == 121 { // (causes a panic below)
+		ptr = std::ptr::null_mut(); // $ Source[rust/access-invalid-pointer]
+	}
+
+	if ptr.is_null() {
+		let v = (*ptr).value; // $ Alert[rust/access-invalid-pointer]
+		println!("	cond1 v = {v}");
+	} else {
+		let v = (*ptr).value; // $ SPURIOUS: Alert[rust/access-invalid-pointer] good - unreachable with null pointer
+		println!("	cond2 v = {v}");
+	}
+
+	if mode == 122 { // (causes a panic below)
+		ptr = std::ptr::null_mut(); // $ Source[rust/access-invalid-pointer]
+	}
+
+	if !(ptr.is_null()) {
+		let v = (*ptr).value; // $ SPURIOUS: Alert[rust/access-invalid-pointer] good - unreachable with null pointer
+		println!("	cond3 v = {v}");
+	} else {
+		let v = (*ptr).value; // $ Alert[rust/access-invalid-pointer]
+		println!("	cond4 v = {v}");
+	}
+
+	if mode == 123 { // (causes a panic below)
+		ptr = std::ptr::null_mut(); // $ Source[rust/access-invalid-pointer]
+	}
+
+	if ptr.is_null() || (*ptr).value == 0 { // $ SPURIOUS: Alert[rust/access-invalid-pointer] good - deref is protected by short-circuiting
+		println!("	cond5");
+	}
+
+	if ptr.is_null() || (*ptr).is_zero() { // $ SPURIOUS: Alert[rust/access-invalid-pointer] good - deref is protected by short-circuiting
+		println!("	cond6");
+	}
+
+	if !ptr.is_null() || (*ptr).value == 0 { // $ Alert[rust/access-invalid-pointer]
+		println!("	cond7");
+	}
+
+	if mode == 124 { // (causes a panic below)
+		ptr = std::ptr::null_mut(); // $ Source[rust/access-invalid-pointer]
+	}
+
+	if ptr.is_null() && (*ptr).is_zero() { // $ Alert[rust/access-invalid-pointer]
+		println!("	cond8");
+	}
+
+	if mode == 125 { // (causes a panic below)
+		ptr = std::ptr::null_mut(); // $ Source[rust/access-invalid-pointer]
+	}
+
+	if (*ptr).is_zero() || ptr.is_null() { // $ Alert[rust/access-invalid-pointer]
+		println!("	cond9");
+	}
+
+	// --- immutable pointer ---
+
+	let const_ptr;
+
+	if mode == 126 { // (causes a panic below)
+		const_ptr = std::ptr::null_mut(); // $ Source[rust/access-invalid-pointer]
+	} else {
+		const_ptr = std::alloc::alloc(layout) as *mut MyObject;
+		(*const_ptr).value = 0; // good
+	}
+
+	if const_ptr.is_null() {
+		let v = (*const_ptr).value; // $ Alert[rust/access-invalid-pointer]
+		println!("	cond10 v = {v}");
+	} else {
+		let v = (*const_ptr).value; // $ good - unreachable with null pointer
+		println!("	cond11 v = {v}");
 	}
 }
 
@@ -173,7 +267,7 @@ pub fn test_ptr_drop(mode: i32) {
 		println!("	v1 = {v1}");
 		println!("	v2 = {v2}");
 
-		std::ptr::drop_in_place(p1); // $ Source=drop_in_place
+		std::ptr::drop_in_place(p1); // $ Source[rust/access-invalid-pointer]=drop_in_place
 		// explicitly destructs the pointed-to `m2`
 
 		if mode == 1 {
@@ -212,7 +306,7 @@ impl Drop for MyDropBuffer {
 
 		unsafe {
 			_ = *self.ptr;
-			drop(*self.ptr); // $ MISSING: Source=drop
+			drop(*self.ptr); // $ MISSING: Source[rust/access-invalid-pointer]=drop
 			_ = *self.ptr; // $ MISSING: Alert[rust/access-invalid-pointer]=drop
 			std::alloc::dealloc(self.ptr, layout);
 		}
@@ -239,7 +333,7 @@ fn test_qhelp_example_good(ptr: *mut String) {
 
 fn test_qhelp_example_bad(ptr: *mut String) {
 	unsafe {
-		std::ptr::drop_in_place(ptr); // $ Source=drop_in_place
+		std::ptr::drop_in_place(ptr); // $ Source[rust/access-invalid-pointer]=drop_in_place
 	}
 
 	// ...
@@ -280,7 +374,7 @@ pub fn test_vec_reserve() {
 		println!("	v1 = {}", v1);
 	}
 
-	vec1.reserve(1000); // $ MISSING: Source=reserve
+	vec1.reserve(1000); // $ MISSING: Source[rust/access-invalid-pointer]=reserve
 	// (may invalidate the pointer)
 
 	unsafe {
@@ -300,7 +394,7 @@ pub fn test_vec_reserve() {
 	}
 
 	for _i in 0..1000 {
-		vec2.push(0); // $ MISSING: Source=push
+		vec2.push(0); // $ MISSING: Source[rust/access-invalid-pointer]=push
 		// (may invalidate the pointer)
 	}
 

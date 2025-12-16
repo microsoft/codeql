@@ -1,7 +1,7 @@
 private import codeql.util.Boolean
 private import codeql.rust.controlflow.ControlFlowGraph
+private import codeql.rust.elements.internal.VariableImpl::Impl as VariableImpl
 private import rust
-private import SuccessorType
 
 newtype TCompletion =
   TSimpleCompletion() or
@@ -32,7 +32,7 @@ abstract class NormalCompletion extends Completion { }
 
 /** A simple (normal) completion. */
 class SimpleCompletion extends NormalCompletion, TSimpleCompletion {
-  override NormalSuccessor getAMatchingSuccessorType() { any() }
+  override DirectSuccessor getAMatchingSuccessorType() { any() }
 
   // `SimpleCompletion` is the "default" completion type, thus it is valid for
   // any node where there isn't another more specific completion type.
@@ -124,13 +124,7 @@ class BooleanCompletion extends ConditionalCompletion, TBooleanCompletion {
  */
 private predicate cannotCauseMatchFailure(Pat pat) {
   pat instanceof RangePat or
-  // Identifier patterns that are in fact path patterns can cause failures. For
-  // instance `None`. Only if an `@ ...` part is present can we be sure that
-  // it's an actual identifier pattern. As a heuristic, if the identifier starts
-  // with a lower case letter, then we assume that it's an identifier.  This
-  // works for code that follows the Rust naming convention for enums and
-  // constants.
-  pat = any(IdentPat p | p.hasPat() or p.getName().getText().charAt(0).isLowercase()) or
+  pat = any(IdentPat p | p.hasPat() or VariableImpl::variableDecl(_, p.getName(), _)) or
   pat instanceof WildcardPat or
   pat instanceof RestPat or
   pat instanceof RefPat or
@@ -160,7 +154,7 @@ private predicate guaranteedMatchPosition(Pat pat) {
     parent.(OrPat).getLastPat() = pat
     or
     // for macro patterns we propagate to the expanded pattern
-    parent.(MacroPat).getMacroCall().getExpanded() = pat
+    parent.(MacroPat).getMacroCall().getMacroCallExpansion() = pat
   )
 }
 
@@ -184,7 +178,7 @@ class MatchCompletion extends TMatchCompletion, ConditionalCompletion {
     e instanceof TryExpr and value = true
   }
 
-  override MatchSuccessor getAMatchingSuccessorType() { result.getValue() = value }
+  override MatchingSuccessor getAMatchingSuccessorType() { result.getValue() = value }
 
   /** Gets the dual match completion. */
   override MatchCompletion getDual() { result = TMatchCompletion(value.booleanNot()) }

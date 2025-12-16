@@ -1,8 +1,9 @@
 private import rust
 private import codeql.rust.controlflow.ControlFlowGraph
-private import codeql.rust.elements.internal.generated.ParentChild
+private import codeql.rust.internal.PathResolution as PathResolution
+private import codeql.rust.elements.internal.generated.ParentChild as ParentChild
+private import codeql.rust.elements.internal.AstNodeImpl::Impl as AstNodeImpl
 private import codeql.rust.elements.internal.PathImpl::Impl as PathImpl
-private import codeql.rust.elements.internal.PathExprBaseImpl::Impl as PathExprBaseImpl
 private import codeql.rust.elements.internal.FormatTemplateVariableAccessImpl::Impl as FormatTemplateVariableAccessImpl
 private import codeql.util.DenseRank
 
@@ -15,25 +16,54 @@ module Impl {
 
   class BlockExprScope extends VariableScope, BlockExpr { }
 
-  abstract class MatchArmScope extends VariableScope {
-    MatchArm arm;
-
-    bindingset[arm]
-    MatchArmScope() { exists(arm) }
-
-    Pat getPat() { result = arm.getPat() }
+  class MatchArmExprScope extends VariableScope {
+    MatchArmExprScope() { this = any(MatchArm arm).getExpr() }
   }
 
-  class MatchArmExprScope extends MatchArmScope {
-    MatchArmExprScope() { this = arm.getExpr() }
-  }
-
-  class MatchArmGuardScope extends MatchArmScope {
-    MatchArmGuardScope() { this = arm.getGuard() }
+  class MatchArmGuardScope extends VariableScope {
+    MatchArmGuardScope() { this = any(MatchArm arm).getGuard() }
   }
 
   class ClosureBodyScope extends VariableScope {
     ClosureBodyScope() { this = any(ClosureExpr ce).getBody() }
+  }
+
+  /**
+   * A scope for conditions, which may introduce variables using `let` expressions.
+   *
+   * Such variables are only available in the body guarded by the condition.
+   */
+  class ConditionScope extends VariableScope {
+    private AstNode parent;
+    private AstNode body;
+
+    ConditionScope() {
+      parent =
+        any(IfExpr ie |
+          this = ie.getCondition() and
+          body = ie.getThen()
+        )
+      or
+      parent =
+        any(WhileExpr we |
+          this = we.getCondition() and
+          body = we.getLoopBody()
+        )
+      or
+      parent =
+        any(MatchArm ma |
+          this = ma.getGuard() and
+          body = ma.getExpr()
+        )
+    }
+
+    /** Gets the parent of this condition. */
+    AstNode getParent() { result = parent }
+
+    /**
+     * Gets the body in which variables introduced in this scope are available.
+     */
+    AstNode getBody() { result = body }
   }
 
   private Pat getAPatAncestor(Pat p) {
@@ -69,7 +99,7 @@ module Impl {
    * pattern.
    */
   cached
-  private predicate variableDecl(AstNode definingNode, Name name, string text) {
+  predicate variableDecl(AstNode definingNode, Name name, string text) {
     Cached::ref() and
     exists(SelfParam sp |
       name = sp.getName() and
@@ -77,7 +107,7 @@ module Impl {
       text = name.getText() and
       // exclude self parameters from functions without a body as these are
       // trait method declarations without implementations
-      not exists(Function f | not f.hasBody() and f.getParamList().getSelfParam() = sp)
+      not exists(Function f | not f.hasBody() and f.getSelfParam() = sp)
     )
     or
     exists(IdentPat pat |
@@ -88,16 +118,12 @@ module Impl {
         not exists(getOutermostEnclosingOrPat(pat)) and definingNode = name
       ) and
       text = name.getText() and
-      // exclude for now anything starting with an uppercase character, which may be a reference to
-      // an enum constant (e.g. `None`). This excludes static and constant variables (UPPERCASE),
-      // which we don't appear to recognize yet anyway. This also assumes programmers follow the
-      // naming guidelines, which they generally do, but they're not enforced.
-      not text.charAt(0).isUppercase() and
+      not PathResolution::identPatIsResolvable(pat) and
       // exclude parameters from functions without a body as these are trait method declarations
       // without implementations
-      not exists(Function f | not f.hasBody() and f.getParamList().getAParam().getPat() = pat) and
+      not exists(Function f | not f.hasBody() and f.getAParam().getPat() = pat) and
       // exclude parameters from function pointer types (e.g. `x` in `fn(x: i32) -> i32`)
-      not exists(FnPtrTypeRepr fp | fp.getParamList().getParam(_).getPat() = pat)
+      not exists(FnPtrTypeRepr fp | fp.getParamList().getAParam().getPat() = pat)
     )
   }
 
@@ -127,6 +153,9 @@ module Impl {
      */
     Name getName() { variableDecl(definingNode, result, text) }
 
+    /** Gets the block that encloses this variable, if any. */
+    BlockExpr getEnclosingBlock() { result = definingNode.getEnclosingBlock() }
+
     /** Gets the `self` parameter that declares this variable, if any. */
     SelfParam getSelfParam() { result.getName() = this.getName() }
 
@@ -149,8 +178,14 @@ module Impl {
     /** Gets the `let` statement that introduces this variable, if any. */
     LetStmt getLetStmt() { this.getPat() = result.getPat() }
 
+    /** Gets the `let` expression that introduces this variable, if any. */
+    LetExpr getLetExpr() { this.getPat() = result.getPat() }
+
     /** Gets the initial value of this variable, if any. */
-    Expr getInitializer() { result = this.getLetStmt().getInitializer() }
+    Expr getInitializer() {
+      result = this.getLetStmt().getInitializer() or
+      result = this.getLetExpr().getScrutinee()
+    }
 
     /** Holds if this variable is captured. */
     predicate isCaptured() { this.getAnAccess().isCapture() }
@@ -190,15 +225,53 @@ module Impl {
     string getName() { result = name_ }
   }
 
+  pragma[nomagic]
+  private Element getImmediateChildAdj(Element e, int preOrd, int index) {
+    result = ParentChild::getImmediateChild(e, index) and
+    preOrd = 0 and
+    not exists(ConditionScope cs |
+      e = cs.getParent() and
+      result = cs.getBody()
+    )
+    or
+    result = e.(ConditionScope).getBody() and
+    preOrd = 1 and
+    index = 0
+  }
+
+  /**
+   * An adjusted version of `ParentChild::getImmediateChild`, which makes the following
+   * two adjustments:
+   *
+   * 1. For conditions like `if cond body`, instead of letting `body` be the second child
+   *    of `if`, we make it the last child of `cond`. This ensures that variables
+   *    introduced in the `cond` scope are available in `body`.
+   *
+   * 2. A similar adjustment is made for `while` loops: the body of the loop is made a
+   *    child of the loop condition instead of the loop itself.
+   */
+  pragma[nomagic]
+  private Element getImmediateChildAdj(Element e, int index) {
+    result =
+      rank[index + 1](Element res, int preOrd, int i |
+        res = getImmediateChildAdj(e, preOrd, i)
+      |
+        res order by preOrd, i
+      )
+  }
+
+  private Element getImmediateParentAdj(Element e) { e = getImmediateChildAdj(result, _) }
+
   private AstNode getAnAncestorInVariableScope(AstNode n) {
     (
       n instanceof Pat or
       n instanceof VariableAccessCand or
       n instanceof LetStmt or
+      n = any(LetExpr le).getScrutinee() or
       n instanceof VariableScope
     ) and
     exists(AstNode n0 |
-      result = getImmediateParent(n0) or
+      result = getImmediateParentAdj(n0) or
       result = n0.(FormatTemplateVariableAccess).getArgument().getParent().getParent()
     |
       n0 = n
@@ -230,7 +303,7 @@ module Impl {
   private predicate parameterDeclInScope(Variable v, VariableScope scope) {
     exists(Callable f |
       v.getParameter() = f.getParamList().getAParamBase() and
-      scope = [f.(Function).getBody(), f.(ClosureExpr).getBody()]
+      scope = f.getBody()
     )
   }
 
@@ -240,14 +313,15 @@ module Impl {
       this instanceof VariableScope or
       this instanceof VariableAccessCand or
       this instanceof LetStmt or
-      getImmediateChild(this, _) instanceof RelevantElement
+      this = any(LetExpr le).getScrutinee() or
+      getImmediateChildAdj(this, _) instanceof RelevantElement
     }
 
     pragma[nomagic]
-    private RelevantElement getChild(int index) { result = getImmediateChild(this, index) }
+    private RelevantElement getChild(int index) { result = getImmediateChildAdj(this, index) }
 
     pragma[nomagic]
-    private RelevantElement getImmediateChildMin(int index) {
+    private RelevantElement getImmediateChildAdjMin(int index) {
       // A child may have multiple positions for different accessors,
       // so always use the first
       result = this.getChild(index) and
@@ -255,16 +329,16 @@ module Impl {
     }
 
     pragma[nomagic]
-    RelevantElement getImmediateChild(int index) {
+    RelevantElement getImmediateChildAdj(int index) {
       result =
-        rank[index + 1](Element res, int i | res = this.getImmediateChildMin(i) | res order by i)
+        rank[index + 1](Element res, int i | res = this.getImmediateChildAdjMin(i) | res order by i)
     }
 
     pragma[nomagic]
     RelevantElement getImmediateLastChild() {
       exists(int last |
-        result = this.getImmediateChild(last) and
-        not exists(this.getImmediateChild(last + 1))
+        result = this.getImmediateChildAdj(last) and
+        not exists(this.getImmediateChildAdj(last + 1))
       )
     }
   }
@@ -285,13 +359,13 @@ module Impl {
     |
       // first child of a previously numbered node
       result = getPreOrderNumbering(scope, parent) + 1 and
-      n = parent.getImmediateChild(0)
+      n = parent.getImmediateChildAdj(0)
       or
       // non-first child of a previously numbered node
       exists(RelevantElement child, int i |
         result = getLastPreOrderNumbering(scope, child) + 1 and
-        child = parent.getImmediateChild(i) and
-        n = parent.getImmediateChild(i + 1)
+        child = parent.getImmediateChildAdj(i) and
+        n = parent.getImmediateChildAdj(i + 1)
       )
     )
   }
@@ -306,7 +380,7 @@ module Impl {
       result = getPreOrderNumbering(scope, leaf) and
       leaf != scope and
       (
-        not exists(leaf.getImmediateChild(_))
+        not exists(leaf.getImmediateChildAdj(_))
         or
         leaf instanceof VariableScope
       )
@@ -328,7 +402,7 @@ module Impl {
   /**
    * Holds if `v` is named `name` and is declared inside variable scope
    * `scope`. The pre-order numbering of the binding site of `v`, amongst
-   * all nodes nester under `scope`, is `ord`.
+   * all nodes nested under `scope`, is `ord`.
    */
   private predicate variableDeclInScope(Variable v, VariableScope scope, string name, int ord) {
     name = v.getText() and
@@ -337,11 +411,14 @@ module Impl {
       ord = getPreOrderNumbering(scope, scope)
       or
       exists(Pat pat | pat = getAVariablePatAncestor(v) |
-        scope =
-          any(MatchArmScope arm |
-            arm.getPat() = pat and
-            ord = getPreOrderNumbering(scope, arm)
-          )
+        exists(MatchArm arm |
+          pat = arm.getPat() and
+          ord = getPreOrderNumbering(scope, scope)
+        |
+          scope = arm.getGuard()
+          or
+          not arm.hasGuard() and scope = arm.getExpr()
+        )
         or
         exists(LetStmt let |
           let.getPat() = pat and
@@ -351,23 +428,18 @@ module Impl {
           ord = getLastPreOrderNumbering(scope, let) + 1
         )
         or
-        exists(IfExpr ie, LetExpr let |
+        exists(LetExpr let, Expr scrutinee |
           let.getPat() = pat and
-          ie.getCondition() = let and
-          scope = ie.getThen() and
-          ord = getPreOrderNumbering(scope, scope)
+          scrutinee = let.getScrutinee() and
+          scope = getEnclosingScope(scrutinee) and
+          // for `let` expressions, variables are bound _after_ the expression, i.e.
+          // not in the RHS
+          ord = getLastPreOrderNumbering(scope, scrutinee) + 1
         )
         or
         exists(ForExpr fe |
           fe.getPat() = pat and
           scope = fe.getLoopBody() and
-          ord = getPreOrderNumbering(scope, scope)
-        )
-        or
-        exists(WhileExpr we, LetExpr let |
-          let.getPat() = pat and
-          we.getCondition() = let and
-          scope = we.getLoopBody() and
           ord = getPreOrderNumbering(scope, scope)
         )
       )
@@ -385,7 +457,12 @@ module Impl {
     VariableAccessCand cand, VariableScope scope, string name, int nestLevel, int ord
   ) {
     name = cand.getName() and
-    scope = [cand.(VariableScope), getEnclosingScope(cand)] and
+    (
+      scope = cand
+      or
+      not cand instanceof VariableScope and
+      scope = getEnclosingScope(cand)
+    ) and
     ord = getPreOrderNumbering(scope, cand) and
     nestLevel = 0
     or
@@ -586,7 +663,7 @@ module Impl {
   }
 
   /** A variable access. */
-  class VariableAccess extends PathExprBaseImpl::PathExprBase {
+  class VariableAccess extends PathExprBase {
     private string name;
     private Variable v;
 
@@ -597,20 +674,16 @@ module Impl {
 
     /** Holds if this access is a capture. */
     predicate isCapture() { this.getEnclosingCfgScope() != v.getEnclosingCfgScope() }
-
-    override string toStringImpl() { result = name }
-
-    override string getAPrimaryQlClass() { result = "VariableAccess" }
   }
 
   /** Holds if `e` occurs in the LHS of an assignment or compound assignment. */
-  private predicate assignmentExprDescendant(Expr e) {
-    e = any(AssignmentExpr ae).getLhs()
+  private predicate assignmentExprDescendant(AssignmentExpr ae, Expr e) {
+    e = ae.getLhs()
     or
     exists(Expr mid |
-      assignmentExprDescendant(mid) and
-      getImmediateParent(e) = mid and
-      not mid.(PrefixExpr).getOperatorName() = "*" and
+      assignmentExprDescendant(ae, mid) and
+      getImmediateParentAdj(e) = mid and
+      not mid instanceof DerefExpr and
       not mid instanceof FieldExpr and
       not mid instanceof IndexExpr
     )
@@ -618,11 +691,16 @@ module Impl {
 
   /** A variable write. */
   class VariableWriteAccess extends VariableAccess {
+    private AssignmentExpr ae;
+
     cached
     VariableWriteAccess() {
       Cached::ref() and
-      assignmentExprDescendant(this)
+      assignmentExprDescendant(ae, this)
     }
+
+    /** Gets the assignment expression that has this write access in the left-hand side. */
+    AssignmentExpr getAssignmentExpr() { result = ae }
   }
 
   /** A variable read. */
@@ -637,7 +715,7 @@ module Impl {
   }
 
   /** A nested function access. */
-  class NestedFunctionAccess extends PathExprBaseImpl::PathExprBase {
+  class NestedFunctionAccess extends PathExprBase {
     private Function f;
 
     NestedFunctionAccess() { nestedFunctionAccess(_, f, this) }

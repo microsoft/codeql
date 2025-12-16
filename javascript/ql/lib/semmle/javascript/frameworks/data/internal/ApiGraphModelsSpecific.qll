@@ -35,12 +35,13 @@ class Location = JS::Location;
  * Type names have form `package.type` or just `package` if referring to the package export
  * object. If `package` contains a `.` character it must be enclosed in single quotes, such as `'package'.type`.
  *
- * A type name of form `(package)` may also be used when refering to the package export object.
+ * A type name of form `(package)` may also be used when referring to the package export object.
  * We allow this syntax as an alternative to the above, so models generated based on `EndpointNaming` look more consistent.
  * However, access paths are deliberately not parsed here, as we can not handle aliasing at this stage.
  * The model generator must explicitly generate the step between `(package)` and `(package).foo`, for example.
  */
 bindingset[rawType]
+overlay[caller?]
 predicate parseTypeString(string rawType, string package, string qualifiedName) {
   exists(string regexp |
     regexp = "('[^']+'|[^.]+)(.*)" and
@@ -55,19 +56,21 @@ predicate parseTypeString(string rawType, string package, string qualifiedName) 
 /**
  * Holds if models describing `package` may be relevant for the analysis of this database.
  */
+overlay[local?]
 predicate isPackageUsed(string package) {
   package = "global"
   or
-  package = any(JS::Import imp).getImportedPath().getValue()
+  // To simplify which dependencies are needed to construct DataFlow::Node, we don't want to rely on `Import` here.
+  // Just check all string literals.
+  package = any(JS::Expr imp).getStringValue()
   or
-  any(JS::TypeName t).hasQualifiedName(package, _)
-  or
-  any(JS::TypeAnnotation t).hasQualifiedName(package, _)
+  package = any(JS::StringLiteralTypeExpr t).getValue() // Can be used in `import("foo")`
   or
   exists(JS::PackageJson json | json.getPackageName() = package)
 }
 
 bindingset[type]
+overlay[local?]
 predicate isTypeUsed(string type) {
   exists(string package |
     parseTypeString(type, package, _) and
@@ -79,8 +82,10 @@ predicate isTypeUsed(string type) {
  * Holds if `type` can be obtained from an instance of `otherType` due to
  * language semantics modeled by `getExtraNodeFromType`.
  */
+overlay[local?]
 predicate hasImplicitTypeModel(string type, string otherType) { none() }
 
+overlay[local?]
 pragma[nomagic]
 private predicate parseRelevantTypeString(string rawType, string package, string qualifiedName) {
   isRelevantFullPath(rawType, _) and
@@ -138,7 +143,7 @@ API::Node getExtraNodeFromType(string type) {
     parseRelevantTypeString(type, package, qualifiedName)
   |
     qualifiedName = "" and
-    result = [API::moduleImport(package), API::moduleExport(package)]
+    result = [API::Internal::getAModuleImportRaw(package), API::moduleExport(package)]
     or
     // Access instance of a type based on type annotations
     result = API::Internal::getANodeOfTypeRaw(package, qualifiedName)
@@ -190,6 +195,7 @@ API::Node getExtraSuccessorFromNode(API::Node node, AccessPathTokenBase token) {
 }
 
 bindingset[node]
+overlay[caller?]
 pragma[inline_late]
 private API::Node getAGuardedRouteHandlerApprox(API::Node node) {
   // For now just get any routing node with the same root (i.e. the same web app), as
@@ -230,6 +236,7 @@ private predicate blockFuzzyCall(DataFlow::CallNode call) {
   isCommonBuiltinMethodName(call.getCalleeName())
 }
 
+overlay[caller?]
 pragma[inline]
 API::Node getAFuzzySuccessor(API::Node node) {
   result = node.getAMember() and
@@ -269,51 +276,6 @@ predicate invocationMatchesExtraCallSiteFilter(API::InvokeNode invoke, AccessPat
     stringValue = operand.splitAt("=", 1) and
     invoke.getArgument(parseIntWithArity(argIndex, invoke.getNumArgument())).getStringValue() =
       stringValue
-  )
-}
-
-/**
- * Holds if `path` is an input or output spec for a summary with the given `base` node.
- */
-pragma[nomagic]
-private predicate relevantInputOutputPath(API::InvokeNode base, AccessPath inputOrOutput) {
-  exists(string type, string input, string output, string path |
-    ModelOutput::relevantSummaryModel(type, path, input, output, _, _) and
-    ModelOutput::resolvedSummaryBase(type, path, base) and
-    inputOrOutput = [input, output]
-  )
-}
-
-/**
- * Gets the API node for the first `n` tokens of the given input/output path, evaluated relative to `baseNode`.
- */
-private API::Node getNodeFromInputOutputPath(API::InvokeNode baseNode, AccessPath path, int n) {
-  relevantInputOutputPath(baseNode, path) and
-  (
-    n = 1 and
-    result = getSuccessorFromInvoke(baseNode, path.getToken(0))
-    or
-    result =
-      getSuccessorFromNode(getNodeFromInputOutputPath(baseNode, path, n - 1), path.getToken(n - 1))
-  )
-}
-
-/**
- * Gets the API node for the given input/output path, evaluated relative to `baseNode`.
- */
-private API::Node getNodeFromInputOutputPath(API::InvokeNode baseNode, AccessPath path) {
-  result = getNodeFromInputOutputPath(baseNode, path, path.getNumToken())
-}
-
-/**
- * Holds if a CSV summary contributed the step `pred -> succ` of the given `kind`.
- */
-predicate summaryStep(API::Node pred, API::Node succ, string kind) {
-  exists(string type, string path, API::InvokeNode base, AccessPath input, AccessPath output |
-    ModelOutput::relevantSummaryModel(type, path, input, output, kind, _) and
-    ModelOutput::resolvedSummaryBase(type, path, base) and
-    pred = getNodeFromInputOutputPath(base, input) and
-    succ = getNodeFromInputOutputPath(base, output)
   )
 }
 

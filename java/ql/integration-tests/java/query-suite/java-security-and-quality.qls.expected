@@ -127,6 +127,7 @@ ql/java/ql/src/Security/CWE/CWE-094/JexlInjection.ql
 ql/java/ql/src/Security/CWE/CWE-094/MvelInjection.ql
 ql/java/ql/src/Security/CWE/CWE-094/SpelInjection.ql
 ql/java/ql/src/Security/CWE/CWE-094/TemplateInjection.ql
+ql/java/ql/src/Security/CWE/CWE-1004/SensitiveCookieNotHttpOnly.ql
 ql/java/ql/src/Security/CWE/CWE-1104/MavenPomDependsOnBintray.ql
 ql/java/ql/src/Security/CWE/CWE-113/NettyResponseSplitting.ql
 ql/java/ql/src/Security/CWE/CWE-113/ResponseSplitting.ql
@@ -143,6 +144,7 @@ ql/java/ql/src/Security/CWE/CWE-200/AndroidSensitiveTextField.ql
 ql/java/ql/src/Security/CWE/CWE-200/AndroidWebViewSettingsAllowsContentAccess.ql
 ql/java/ql/src/Security/CWE/CWE-200/AndroidWebViewSettingsFileAccess.ql
 ql/java/ql/src/Security/CWE/CWE-200/SpringBootActuators.ql
+ql/java/ql/src/Security/CWE/CWE-200/SpringBootActuatorsConfig/SpringBootActuatorsConfig.ql
 ql/java/ql/src/Security/CWE/CWE-200/TempDirLocalInformationDisclosure.ql
 ql/java/ql/src/Security/CWE/CWE-209/SensitiveDataExposureThroughErrorMessage.ql
 ql/java/ql/src/Security/CWE/CWE-209/StackTraceExposure.ql
@@ -196,7 +198,6 @@ ql/java/ql/src/Security/CWE/CWE-730/RegexInjection.ql
 ql/java/ql/src/Security/CWE/CWE-732/ReadingFromWorldWritableFile.ql
 ql/java/ql/src/Security/CWE/CWE-749/UnsafeAndroidAccess.ql
 ql/java/ql/src/Security/CWE/CWE-780/RsaWithoutOaep.ql
-ql/java/ql/src/Security/CWE/CWE-798/HardcodedCredentialsApiCall.ql
 ql/java/ql/src/Security/CWE/CWE-807/ConditionalBypass.ql
 ql/java/ql/src/Security/CWE/CWE-807/TaintedPermissionsCheck.ql
 ql/java/ql/src/Security/CWE/CWE-829/InsecureDependencyResolution.ql

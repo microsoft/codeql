@@ -30,10 +30,10 @@ void test2()
 	char *smallbuffer = (char *)malloc(sizeof(char) * 10);
 	char *bigbuffer = (char *)malloc(sizeof(char) * 20);
 
-	memcpy(bigbuffer, smallbuffer, sizeof(smallbuffer)); // GOOD
-	memcpy(bigbuffer, smallbuffer, sizeof(bigbuffer)); // BAD: over-read [NOT DETECTED]
-	memcpy(smallbuffer, bigbuffer, sizeof(smallbuffer)); // GOOD
-	memcpy(smallbuffer, bigbuffer, sizeof(bigbuffer)); // BAD: over-write [NOT DETECTED]
+	memcpy(bigbuffer, smallbuffer, sizeof(char) * 10); // GOOD
+	memcpy(bigbuffer, smallbuffer, sizeof(char) * 20); // BAD: over-read
+	memcpy(smallbuffer, bigbuffer, sizeof(char) * 10); // GOOD
+	memcpy(smallbuffer, bigbuffer, sizeof(char) * 20); // BAD: over-write
 
 	free(bigbuffer);
 	free(smallbuffer);
@@ -46,10 +46,10 @@ void test3()
 	smallbuffer = new char[10];
 	bigbuffer = new char[20];
 
-	memcpy(bigbuffer, smallbuffer, sizeof(smallbuffer)); // GOOD
-	memcpy(bigbuffer, smallbuffer, sizeof(bigbuffer)); // BAD: over-read [NOT DETECTED]
-	memcpy(smallbuffer, bigbuffer, sizeof(smallbuffer)); // GOOD
-	memcpy(smallbuffer, bigbuffer, sizeof(bigbuffer)); // BAD: over-write [NOT DETECTED]
+	memcpy(bigbuffer, smallbuffer, sizeof(char[10])); // GOOD
+	memcpy(bigbuffer, smallbuffer, sizeof(char[20])); // BAD: over-read
+	memcpy(smallbuffer, bigbuffer, sizeof(char[10])); // GOOD
+	memcpy(smallbuffer, bigbuffer, sizeof(char[20])); // BAD: over-write
 
 	delete [] bigbuffer;
 	delete [] smallbuffer;
@@ -1055,6 +1055,20 @@ void test30() {
 	strncpy(us.buffer1, "", sizeof(us) - 1); // BAD
 	strncpy(us.buffer2, "", sizeof(us.buffer2) - 1); // GOOD
 	strncpy(us.buffer2, "", sizeof(us) - 1); // BAD
+}
+
+struct S_Size16 {
+	unsigned short uint16;
+	unsigned char uint8;
+	unsigned char raw[13];
+};
+
+void test31() {
+	S_Size16 e;
+
+	[&e](void* data){
+		memcpy(&e, data, sizeof(e)); // GOOD
+	};
 }
 
 int tests_main(int argc, char *argv[])

@@ -2,6 +2,8 @@
  * Provides consistency queries for checking invariants in the language-specific
  * data-flow classes and predicates.
  */
+overlay[local?]
+module;
 
 private import codeql.dataflow.DataFlow as DF
 private import codeql.dataflow.TaintTracking as TT
@@ -252,7 +254,10 @@ module MakeConsistency<
 
   query predicate postWithInFlow(PostUpdateNode n, string msg) {
     not clearsContent(n, _) and
-    simpleLocalFlowStep(_, n, _) and
+    exists(Node pred |
+      simpleLocalFlowStep(pred, n, _) and
+      not pred instanceof PostUpdateNode
+    ) and
     not Input::postWithInFlowExclude(n) and
     msg = "PostUpdateNode should not be the target of local flow."
   }

@@ -1,10 +1,13 @@
 /**
  * Provides classes for working with Java expressions.
  */
+overlay[local?]
+module;
 
 import java
 private import semmle.code.java.frameworks.android.Compose
 private import semmle.code.java.Constants
+private import semmle.code.java.Overlay
 
 /** A common super-class that represents all kinds of expressions. */
 class Expr extends ExprParent, @expr {
@@ -1805,6 +1808,52 @@ class VariableAssign extends VariableUpdate {
   }
 }
 
+private newtype TVariableWrite =
+  TParamInit(Parameter p) or
+  TVarWriteExpr(VariableUpdate u)
+
+/**
+ * A write to a variable. This is either a local variable declaration,
+ * including parameter declarations, or an update to a variable.
+ */
+class VariableWrite extends TVariableWrite {
+  /** Gets the expression representing this write, if any. */
+  Expr asExpr() { this = TVarWriteExpr(result) }
+
+  /**
+   * Gets the expression with the value being written, if any.
+   *
+   * This can be the same expression as returned by `asExpr()`, which is the
+   * case for, for example, `++x` and `x += e`. For simple assignments like
+   * `x = e`, `asExpr()` gets the whole assignment expression while
+   * `getValue()` gets the right-hand side `e`. Post-crement operations like
+   * `x++` do not have an expression with the value being written.
+   */
+  Expr getValue() {
+    this.asExpr().(VariableAssign).getSource() = result or
+    this.asExpr().(AssignOp) = result or
+    this.asExpr().(PreIncExpr) = result or
+    this.asExpr().(PreDecExpr) = result
+  }
+
+  /** Holds if this write is an initialization of parameter `p`. */
+  predicate isParameterInit(Parameter p) { this = TParamInit(p) }
+
+  /** Gets a textual representation of this write. */
+  string toString() {
+    exists(Parameter p | this = TParamInit(p) and result = p.toString())
+    or
+    result = this.asExpr().toString()
+  }
+
+  /** Gets the location of this write. */
+  Location getLocation() {
+    exists(Parameter p | this = TParamInit(p) and result = p.getLocation())
+    or
+    result = this.asExpr().getLocation()
+  }
+}
+
 /** A type literal. For example, `String.class`. */
 class TypeLiteral extends Expr, @typeliteral {
   /** Gets the access to the type whose class is accessed. */
@@ -2699,3 +2748,6 @@ class RecordPatternExpr extends Expr, @recordpatternexpr {
     )
   }
 }
+
+overlay[local]
+private class DiscardableExpr extends DiscardableLocatable, @expr { }

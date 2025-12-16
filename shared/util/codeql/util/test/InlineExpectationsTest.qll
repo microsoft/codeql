@@ -1,7 +1,8 @@
 /**
  * Provides a library for writing QL tests whose success or failure is based on expected results
  * embedded in the test source code as comments, rather than the contents of an `.expected` file
- * (in that the `.expected` file should always be empty).
+ * (in that the `.expected` file should always be empty, except when used via the post-processing
+ * query).
  *
  * To add this framework to a new language, add a new file
  * (usually called `InlineExpectationsTest.qll`) with:
@@ -627,11 +628,11 @@ private string mainResultSet() { result = ["#select", "problems"] }
  * to be matched.
  */
 module TestPostProcessing {
-  external predicate queryResults(string relation, int row, int column, string data);
+  external private predicate queryResults(string relation, int row, int column, string data);
 
-  external predicate queryRelations(string relation);
+  external private predicate queryRelations(string relation);
 
-  external predicate queryMetadata(string key, string value);
+  external private predicate queryMetadata(string key, string value);
 
   private string getQueryId() { queryMetadata("id", result) }
 

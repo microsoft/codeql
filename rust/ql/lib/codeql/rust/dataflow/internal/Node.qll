@@ -17,53 +17,48 @@ private import codeql.rust.dataflow.FlowSummary
 private import Node as Node
 private import DataFlowImpl
 private import FlowSummaryImpl as FlowSummaryImpl
+private import codeql.rust.internal.CachedStages
 
 /** An element, viewed as a node in a data flow graph. */
-abstract class NodePublic extends TNode {
+// It is important to not make this class `abstract`, as it otherwise results in
+// a needless charpred, which will result in recomputation of internal non-cached
+// predicates
+class NodePublic extends TNode {
   /** Gets the location of this node. */
+  cached
   abstract Location getLocation();
 
   /** Gets a textual representation of this node. */
+  cached
   abstract string toString();
 
   /**
    * Gets the expression that corresponds to this node, if any.
    */
-  final ExprCfgNode asExpr() { this = TExprNode(result) }
+  final Expr asExpr() { this = TExprNode(result) }
 
   /**
    * Gets the parameter that corresponds to this node, if any.
    */
-  ParamBase asParameter() { result = this.(SourceParameterNode).getParameter().getParamBase() }
+  ParamBase asParameter() { result = this.(SourceParameterNode).getParameter() }
 
   /**
    * Gets the pattern that corresponds to this node, if any.
    */
-  final PatCfgNode asPat() { this = TPatNode(result) }
+  final Pat asPat() { this = TPatNode(result) }
 }
 
 abstract class Node extends NodePublic {
   /** Gets the enclosing callable. */
-  DataFlowCallable getEnclosingCallable() { result = TCfgScope(this.getCfgScope()) }
+  DataFlowCallable getEnclosingCallable() { result.asCfgScope() = this.getCfgScope() }
 
   /** Do not call: use `getEnclosingCallable()` instead. */
   abstract CfgScope getCfgScope();
 
   /**
-   * Gets the control flow node that corresponds to this data flow node.
+   * Gets the AST node that corresponds to this data flow node, if any.
    */
-  CfgNode getCfgNode() { none() }
-}
-
-/** A node type that is not implemented. */
-final class NaNode extends Node {
-  NaNode() { none() }
-
-  override CfgScope getCfgScope() { none() }
-
-  override string toString() { result = "N/A" }
-
-  override Location getLocation() { none() }
+  AstNode getAstNode() { none() }
 }
 
 /** A data flow node used to model flow summaries. */
@@ -102,12 +97,13 @@ class FlowSummaryNode extends Node, TFlowSummaryNode {
   }
 
   override DataFlowCallable getEnclosingCallable() {
-    result.asLibraryCallable() = this.getSummarizedCallable()
-    or
     result.asCfgScope() = this.getCfgScope()
+    or
+    result.asSummarizedCallable() = this.getSummarizedCallable()
   }
 
   override Location getLocation() {
+    Stages::DataFlowStage::ref() and
     exists(this.getSummarizedCallable()) and
     result instanceof EmptyLocation
     or
@@ -116,20 +112,23 @@ class FlowSummaryNode extends Node, TFlowSummaryNode {
     result = this.getSinkElement().getLocation()
   }
 
-  override string toString() { result = this.getSummaryNode().toString() }
+  override string toString() {
+    Stages::DataFlowStage::ref() and
+    result = this.getSummaryNode().toString()
+  }
 }
 
-/** A data flow node that corresponds directly to a CFG node for an AST node. */
-abstract class AstCfgFlowNode extends Node {
-  AstCfgNode n;
+/** A data flow node that corresponds directly to an AST node. */
+abstract class AstNodeNode extends Node {
+  AstNode n;
 
-  final override CfgNode getCfgNode() { result = n }
+  final override AstNode getAstNode() { result = n }
 
-  final override CfgScope getCfgScope() { result = n.getAstNode().getEnclosingCfgScope() }
+  final override CfgScope getCfgScope() { result = n.getEnclosingCfgScope() }
 
-  final override Location getLocation() { result = n.getAstNode().getLocation() }
+  final override Location getLocation() { result = n.getLocation() }
 
-  final override string toString() { result = n.getAstNode().toString() }
+  final override string toString() { result = n.toString() }
 }
 
 /**
@@ -140,25 +139,25 @@ abstract class AstCfgFlowNode extends Node {
  * to multiple `ExprNode`s, just like it may correspond to multiple
  * `ControlFlow::Node`s.
  */
-class ExprNode extends AstCfgFlowNode, TExprNode {
-  override ExprCfgNode n;
+class ExprNode extends AstNodeNode, TExprNode {
+  override Expr n;
 
   ExprNode() { this = TExprNode(n) }
 }
 
-final class PatNode extends AstCfgFlowNode, TPatNode {
-  override PatCfgNode n;
+final class PatNode extends AstNodeNode, TPatNode {
+  override Pat n;
 
   PatNode() { this = TPatNode(n) }
 }
 
 /** A data flow node that corresponds to a name node in the CFG. */
-final class NameNode extends AstCfgFlowNode, TNameNode {
-  override NameCfgNode n;
+final class NameNode extends AstNodeNode, TNameNode {
+  override Name n;
 
   NameNode() { this = TNameNode(n) }
 
-  NameCfgNode asName() { result = n }
+  Name getName() { result = n }
 }
 
 /**
@@ -170,20 +169,20 @@ abstract class ParameterNode extends Node {
   abstract predicate isParameterOf(DataFlowCallable c, ParameterPosition pos);
 }
 
-final class SourceParameterNode extends AstCfgFlowNode, ParameterNode, TSourceParameterNode {
-  override ParamBaseCfgNode n;
+final class SourceParameterNode extends AstNodeNode, ParameterNode, TSourceParameterNode {
+  override ParamBase n;
 
   SourceParameterNode() { this = TSourceParameterNode(n) }
 
   override predicate isParameterOf(DataFlowCallable c, ParameterPosition pos) {
-    n.getAstNode() = pos.getParameterIn(c.asCfgScope().(Callable).getParamList())
+    n = pos.getParameterIn(c.asCfgScope().(Callable).getParamList())
   }
 
   /** Get the parameter position of this parameter. */
   ParameterPosition getPosition() { this.isParameterOf(_, result) }
 
   /** Gets the parameter in the CFG that this node corresponds to. */
-  ParamBaseCfgNode getParameter() { result = n }
+  ParamBase getParameter() { result = n }
 }
 
 /** A parameter for a library callable with a flow summary. */
@@ -195,7 +194,7 @@ final class SummaryParameterNode extends ParameterNode, FlowSummaryNode {
   }
 
   override predicate isParameterOf(DataFlowCallable c, ParameterPosition pos) {
-    this.getSummarizedCallable() = c.asLibraryCallable() and pos = pos_
+    this.getSummarizedCallable() = c.asSummarizedCallable() and pos = pos_
   }
 }
 
@@ -224,13 +223,13 @@ abstract class ArgumentNode extends Node {
 }
 
 final class ExprArgumentNode extends ArgumentNode, ExprNode {
-  private CallExprBaseCfgNode call_;
+  private Call call_;
   private RustDataFlow::ArgumentPosition pos_;
 
   ExprArgumentNode() { isArgumentForCall(n, call_, pos_) }
 
   override predicate isArgumentOf(DataFlowCall call, RustDataFlow::ArgumentPosition pos) {
-    call.asCallBaseExprCfgNode() = call_ and pos = pos_
+    call.asCall() = call_ and pos = pos_
   }
 }
 
@@ -239,19 +238,19 @@ final class ExprArgumentNode extends ArgumentNode, ExprNode {
  * has taken place.
  */
 final class ReceiverNode extends ArgumentNode, TReceiverNode {
-  private MethodCallExprCfgNode n;
+  private Call n;
 
   ReceiverNode() { this = TReceiverNode(n, false) }
 
-  ExprCfgNode getReceiver() { result = n.getReceiver() }
+  Expr getReceiver() { result = n.getReceiver() }
 
-  MethodCallExprCfgNode getMethodCall() { result = n }
+  MethodCallExpr getMethodCall() { result = n }
 
   override predicate isArgumentOf(DataFlowCall call, RustDataFlow::ArgumentPosition pos) {
-    call.asMethodCallExprCfgNode() = n and pos = TSelfParameterPosition()
+    call.asCall() = n and pos = TSelfParameterPosition()
   }
 
-  override CfgScope getCfgScope() { result = n.getAstNode().getEnclosingCfgScope() }
+  override CfgScope getCfgScope() { result = n.getEnclosingCfgScope() }
 
   override Location getLocation() { result = this.getReceiver().getLocation() }
 
@@ -276,12 +275,12 @@ final class SummaryArgumentNode extends FlowSummaryNode, ArgumentNode {
  * passed into the closure body at an invocation.
  */
 final class ClosureArgumentNode extends ArgumentNode, ExprNode {
-  private CallExprCfgNode call_;
+  private CallExpr call_;
 
   ClosureArgumentNode() { lambdaCallExpr(call_, _, this.asExpr()) }
 
   override predicate isArgumentOf(DataFlowCall call, RustDataFlow::ArgumentPosition pos) {
-    call.asCallExprCfgNode() = call_ and
+    call.asCall() = call_ and
     pos.isClosureSelf()
   }
 }
@@ -310,7 +309,7 @@ abstract class ReturnNode extends Node {
 }
 
 final class ExprReturnNode extends ExprNode, ReturnNode {
-  ExprReturnNode() { this.getCfgNode().getASuccessor() instanceof AnnotatedExitCfgNode }
+  ExprReturnNode() { n.getACfgNode().getASuccessor() instanceof AnnotatedExitCfgNode }
 
   override ReturnKind getKind() { result = TNormalReturnKind() }
 }
@@ -330,11 +329,11 @@ abstract class OutNode extends Node {
 }
 
 final private class ExprOutNode extends ExprNode, OutNode {
-  ExprOutNode() { this.asExpr() instanceof CallExprBaseCfgNode }
+  ExprOutNode() { this.asExpr() instanceof Call }
 
   /** Gets the underlying call CFG node that includes this out node. */
   override DataFlowCall getCall(ReturnKind kind) {
-    result.asCallBaseExprCfgNode() = this.getCfgNode() and
+    result.asCall() = n and
     kind = TNormalReturnKind()
   }
 }
@@ -392,27 +391,27 @@ abstract class PostUpdateNode extends PostUpdateNodePublic, Node {
 }
 
 final class ExprPostUpdateNode extends PostUpdateNode, TExprPostUpdateNode {
-  private ExprCfgNode n;
+  private Expr e;
 
-  ExprPostUpdateNode() { this = TExprPostUpdateNode(n) }
+  ExprPostUpdateNode() { this = TExprPostUpdateNode(e) }
 
-  override Node getPreUpdateNode() { result = TExprNode(n) }
+  override Node getPreUpdateNode() { result = TExprNode(e) }
 
-  override CfgScope getCfgScope() { result = n.getScope() }
+  override CfgScope getCfgScope() { result = e.getEnclosingCfgScope() }
 
-  override Location getLocation() { result = n.getLocation() }
+  override Location getLocation() { result = e.getLocation() }
 }
 
 final class ReceiverPostUpdateNode extends PostUpdateNode, TReceiverNode {
-  private MethodCallExprCfgNode n;
+  private Call call;
 
-  ReceiverPostUpdateNode() { this = TReceiverNode(n, true) }
+  ReceiverPostUpdateNode() { this = TReceiverNode(call, true) }
 
-  override Node getPreUpdateNode() { result = TReceiverNode(n, false) }
+  override Node getPreUpdateNode() { result = TReceiverNode(call, false) }
 
-  override CfgScope getCfgScope() { result = n.getAstNode().getEnclosingCfgScope() }
+  override CfgScope getCfgScope() { result = call.getEnclosingCfgScope() }
 
-  override Location getLocation() { result = n.getReceiver().getLocation() }
+  override Location getLocation() { result = call.getReceiver().getLocation() }
 }
 
 final class SummaryPostUpdateNode extends FlowSummaryNode, PostUpdateNode {
@@ -440,39 +439,52 @@ private class CapturePostUpdateNode extends PostUpdateNode, CaptureNode {
   final override string toString() { result = PostUpdateNode.super.toString() }
 }
 
-final class CastNode = NaNode;
-
-private import codeql.rust.internal.CachedStages
+final class CastNode extends ExprNode {
+  CastNode() { none() }
+}
 
 cached
 newtype TNode =
-  TExprNode(ExprCfgNode n) { Stages::DataFlowStage::ref() } or
-  TSourceParameterNode(ParamBaseCfgNode p) or
-  TPatNode(PatCfgNode p) or
-  TNameNode(NameCfgNode n) { n.getName() = any(Variable v).getName() } or
-  TExprPostUpdateNode(ExprCfgNode e) {
-    isArgumentForCall(e, _, _)
-    or
-    lambdaCallExpr(_, _, e)
-    or
-    lambdaCreationExpr(e.getExpr(), _)
-    or
-    // Whenever `&mut e` has a post-update node we also create one for `e`.
-    // E.g., for `e` in `f(..., &mut e, ...)` or `*(&mut e) = ...`.
-    e = any(RefExprCfgNode ref | ref.isMut() and exists(TExprPostUpdateNode(ref))).getExpr()
-    or
-    e =
-      [
-        any(IndexExprCfgNode i).getBase(), //
-        any(FieldExprCfgNode access).getContainer(), //
-        any(TryExprCfgNode try).getExpr(), //
-        any(PrefixExprCfgNode pe | pe.getOperatorName() = "*").getExpr(), //
-        any(AwaitExprCfgNode a).getExpr(), any(MethodCallExprCfgNode mc).getReceiver(), //
-        getPostUpdateReverseStep(any(PostUpdateNode n).getPreUpdateNode().asExpr(), _)
-      ]
+  TExprNode(Expr e) { e.hasEnclosingCfgScope() and Stages::DataFlowStage::ref() } or
+  TSourceParameterNode(ParamBase p) { p.hasEnclosingCfgScope() } or
+  TPatNode(Pat p) { p.hasEnclosingCfgScope() } or
+  TNameNode(Name n) { n = any(Variable v).getName() and n.hasEnclosingCfgScope() } or
+  TExprPostUpdateNode(Expr e) {
+    e.hasEnclosingCfgScope() and
+    (
+      isArgumentForCall(e, _, _)
+      or
+      lambdaCallExpr(_, _, e)
+      or
+      lambdaCreationExpr(e)
+      or
+      // Whenever `&mut e` has a post-update node we also create one for `e`.
+      // E.g., for `e` in `f(..., &mut e, ...)` or `*(&mut e) = ...`.
+      e = any(RefExpr ref | ref.isMut() and exists(TExprPostUpdateNode(ref))).getExpr()
+      or
+      e =
+        [
+          any(IndexExpr i).getBase(), //
+          any(FieldExpr access).getContainer(), //
+          any(TryExpr try).getExpr(), //
+          any(PrefixExpr pe | pe.getOperatorName() = "*").getExpr(), //
+          any(AwaitExpr a).getExpr(), //
+          any(MethodCallExpr mc).getReceiver(), //
+          getPostUpdateReverseStep(any(PostUpdateNode n).getPreUpdateNode().asExpr(), _)
+        ]
+    )
   } or
-  TReceiverNode(MethodCallExprCfgNode mc, Boolean isPost) or
+  TReceiverNode(Call call, Boolean isPost) {
+    call.hasEnclosingCfgScope() and
+    call.receiverImplicitlyBorrowed() and
+    // TODO: Handle index expressions as calls in data flow.
+    not call instanceof IndexExpr
+  } or
   TSsaNode(SsaImpl::DataFlowIntegration::SsaNode node) or
-  TFlowSummaryNode(FlowSummaryImpl::Private::SummaryNode sn) or
-  TClosureSelfReferenceNode(CfgScope c) { lambdaCreationExpr(c, _) } or
+  TFlowSummaryNode(FlowSummaryImpl::Private::SummaryNode sn) {
+    forall(AstNode n | n = sn.getSinkElement() or n = sn.getSourceElement() |
+      n.hasEnclosingCfgScope()
+    )
+  } or
+  TClosureSelfReferenceNode(CfgScope c) { lambdaCreationExpr(c) } or
   TCaptureNode(VariableCapture::Flow::SynthesizedCaptureNode cn)

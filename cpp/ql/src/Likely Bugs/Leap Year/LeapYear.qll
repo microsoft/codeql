@@ -352,9 +352,16 @@ abstract class LeapYearFieldAccess extends YearFieldAccess {
   /**
    * Holds if the top-level binary operation includes an addition or subtraction operator with an operand specified by `valueToCheck`.
    */
-  predicate additionalAdditionOrSubstractionCheckForLeapYear(int valueToCheck) {
+  predicate additionalAdditionOrSubtractionCheckForLeapYear(int valueToCheck) {
     additionalLogicalCheck(this, "+", valueToCheck) or
     additionalLogicalCheck(this, "-", valueToCheck)
+  }
+
+  /**
+   * DEPRECATED: Use `additionalAdditionOrSubtractionCheckForLeapYear` instead.
+   */
+  deprecated predicate additionalAdditionOrSubstractionCheckForLeapYear(int valueToCheck) {
+    this.additionalAdditionOrSubtractionCheckForLeapYear(valueToCheck)
   }
 
   /**
@@ -427,6 +434,10 @@ private module LeapYearCheckFlowConfig implements DataFlow::ConfigSig {
   predicate isSink(DataFlow::Node sink) {
     exists(ChecksForLeapYearFunctionCall fc | sink.asExpr() = fc.getAnArgument())
   }
+
+  predicate observeDiffInformedIncrementalMode() {
+    none() // only used negatively in UncheckedLeapYearAfterYearModification.ql
+  }
 }
 
 module LeapYearCheckFlow = DataFlow::Global<LeapYearCheckFlowConfig>;
@@ -477,6 +488,14 @@ private module PossibleYearArithmeticOperationCheckConfig implements DataFlow::C
       sink.asExpr() = aexpr.getRValue()
     )
   }
+
+  predicate observeDiffInformedIncrementalMode() { any() }
+
+  Location getASelectedSourceLocation(DataFlow::Node source) {
+    result = source.asExpr().getLocation()
+  }
+
+  Location getASelectedSinkLocation(DataFlow::Node sink) { result = sink.asExpr().getLocation() }
 }
 
 module PossibleYearArithmeticOperationCheckFlow =

@@ -1,3 +1,6 @@
+overlay[local?]
+module;
+
 private import java
 private import DataFlowUtil
 private import DataFlowImplCommon
@@ -59,35 +62,17 @@ private predicate fieldStep(Node node1, Node node2) {
 private predicate closureFlowStep(Expr e1, Expr e2) {
   simpleAstFlowStep(e1, e2)
   or
-  exists(SsaVariable v |
-    v.getAUse() = e2 and
-    v.getAnUltimateDefinition().(SsaExplicitUpdate).getDefiningExpr().(VariableAssign).getSource() =
-      e1
+  exists(SsaDefinition v, SsaExplicitWrite def | v.getARead() = e2 and def.getValue() = e1 |
+    v.getAnUltimateDefinition() = def
+    or
+    v.(SsaCapturedDefinition).getAnUltimateCapturedDefinition() = def
   )
 }
 
-private module CaptureInput implements VariableCapture::InputSig<Location> {
+private module CaptureInput implements VariableCapture::InputSig<Location, BasicBlock> {
   private import java as J
 
-  class BasicBlock instanceof J::BasicBlock {
-    string toString() { result = super.toString() }
-
-    ControlFlowNode getNode(int i) { result = super.getNode(i) }
-
-    int length() { result = super.length() }
-
-    Callable getEnclosingCallable() { result = super.getEnclosingCallable() }
-
-    Location getLocation() { result = super.getLocation() }
-  }
-
-  class ControlFlowNode = J::ControlFlowNode;
-
-  BasicBlock getImmediateBasicBlockDominator(BasicBlock bb) { bbIDominates(result, bb) }
-
-  BasicBlock getABasicBlockSuccessor(BasicBlock bb) {
-    result = bb.(J::BasicBlock).getABBSuccessor()
-  }
+  Callable basicBlockGetEnclosingCallable(BasicBlock bb) { result = bb.getEnclosingCallable() }
 
   //TODO: support capture of `this` in lambdas
   class CapturedVariable instanceof LocalScopeVariable {
@@ -162,7 +147,7 @@ class CapturedVariable = CaptureInput::CapturedVariable;
 
 class CapturedParameter = CaptureInput::CapturedParameter;
 
-module CaptureFlow = VariableCapture::Flow<Location, CaptureInput>;
+module CaptureFlow = VariableCapture::Flow<Location, Cfg, CaptureInput>;
 
 private CaptureFlow::ClosureNode asClosureNode(Node n) {
   result = n.(CaptureNode).getSynthesizedCaptureNode()
@@ -345,6 +330,16 @@ predicate expectsContent(Node n, ContentSet c) {
   FlowSummaryImpl::Private::Steps::summaryExpectsContent(n.(FlowSummaryNode).getSummaryNode(), c)
 }
 
+pragma[nomagic]
+private predicate numericRepresentative(RefType t) {
+  t.(BoxedType).getPrimitiveType().getName() = "double"
+}
+
+pragma[nomagic]
+private predicate booleanRepresentative(RefType t) {
+  t.(BoxedType).getPrimitiveType().getName() = "boolean"
+}
+
 /**
  * Gets a representative (boxed) type for `t` for the purpose of pruning
  * possible flow. A single type is used for all numeric types to account for
@@ -353,10 +348,10 @@ predicate expectsContent(Node n, ContentSet c) {
 RefType getErasedRepr(Type t) {
   exists(Type e | e = t.getErasure() |
     if e instanceof NumericOrCharType
-    then result.(BoxedType).getPrimitiveType().getName() = "double"
+    then numericRepresentative(result)
     else
       if e instanceof BooleanType
-      then result.(BoxedType).getPrimitiveType().getName() = "boolean"
+      then booleanRepresentative(result)
       else result = e
   )
   or
@@ -400,13 +395,13 @@ class CastNode extends ExprNode {
   CastNode() {
     this.getExpr() instanceof CastingExpr
     or
-    exists(SsaExplicitUpdate upd |
+    exists(SsaExplicitWrite upd |
       upd.getDefiningExpr().(VariableAssign).getSource() =
         [
           any(SwitchStmt ss).getExpr(), any(SwitchExpr se).getExpr(),
           any(InstanceOfExpr ioe).getExpr()
         ] and
-      this.asExpr() = upd.getAFirstUse()
+      this.asExpr() = ssaGetAFirstUse(upd)
     )
   }
 }
@@ -536,9 +531,9 @@ class NodeRegion instanceof BasicBlock {
 private predicate constantBooleanExpr(Expr e, boolean val) {
   e.(CompileTimeConstantExpr).getBooleanValue() = val
   or
-  exists(SsaExplicitUpdate v, Expr src |
-    e = v.getAUse() and
-    src = v.getDefiningExpr().(VariableAssign).getSource() and
+  exists(SsaExplicitWrite v, Expr src |
+    e = v.getARead() and
+    src = v.getValue() and
     constantBooleanExpr(src, val)
   )
 }
@@ -556,15 +551,15 @@ private class ConstantBooleanArgumentNode extends ArgumentNode, ExprNode {
  */
 predicate isUnreachableInCall(NodeRegion nr, DataFlowCall call) {
   exists(
-    ExplicitParameterNode paramNode, ConstantBooleanArgumentNode arg, SsaImplicitInit param,
+    ExplicitParameterNode paramNode, ConstantBooleanArgumentNode arg, SsaParameterInit param,
     Guard guard
   |
     // get constant bool argument and parameter for this call
     viableParamArg(call, pragma[only_bind_into](paramNode), arg) and
     // get the ssa variable definition for this parameter
-    param.isParameterDefinition(paramNode.getParameter()) and
+    param.getParameter() = paramNode.getParameter() and
     // which is used in a guard
-    param.getAUse() = guard and
+    param.getARead() = guard and
     // which controls `n` with the opposite value of `arg`
     guard
         .controls(nr,

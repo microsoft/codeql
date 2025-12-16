@@ -2,12 +2,14 @@
  * Provides a default taint sanitizer identifying comparisons against lists of
  * compile-time constants.
  */
+overlay[local?]
+module;
 
 import java
 private import codeql.typeflow.UniversalFlow as UniversalFlow
 private import semmle.code.java.Collections
 private import semmle.code.java.controlflow.Guards
-private import semmle.code.java.dataflow.internal.BaseSSA
+private import semmle.code.java.dataflow.internal.BaseSSA as Base
 private import semmle.code.java.dataflow.TaintTracking
 private import semmle.code.java.dataflow.TypeFlow
 private import semmle.code.java.dispatch.VirtualDispatch
@@ -113,7 +115,7 @@ private predicate nodeWithAddition(FlowNode n, Variable v) {
     n.asField() = v
     or
     n.asSsa().getSourceVariable().getVariable() = v and
-    (n.asSsa() instanceof BaseSsaUpdate or n.asSsa().(BaseSsaImplicitInit).isParameterDefinition(_))
+    n.asSsa() instanceof Base::SsaExplicitWrite
   )
 }
 

@@ -6,6 +6,7 @@
 import codeql.files.FileSystem
 import codeql.rust.elements.Abi
 import codeql.rust.elements.Addressable
+import codeql.rust.elements.Adt
 import codeql.rust.elements.ArgList
 import codeql.rust.elements.ArrayExpr
 import codeql.rust.elements.ArrayListExpr
@@ -40,7 +41,6 @@ import codeql.rust.elements.CallExpr
 import codeql.rust.elements.CallExprBase
 import codeql.rust.elements.Callable
 import codeql.rust.elements.CastExpr
-import codeql.rust.elements.ClosureBinder
 import codeql.rust.elements.ClosureExpr
 import codeql.rust.elements.Comment
 import codeql.rust.elements.Const
@@ -61,6 +61,7 @@ import codeql.rust.elements.ExternItemList
 import codeql.rust.elements.FieldExpr
 import codeql.rust.elements.FieldList
 import codeql.rust.elements.FnPtrTypeRepr
+import codeql.rust.elements.ForBinder
 import codeql.rust.elements.ForExpr
 import codeql.rust.elements.ForTypeRepr
 import codeql.rust.elements.Format
@@ -94,13 +95,13 @@ import codeql.rust.elements.LiteralPat
 import codeql.rust.elements.Locatable
 import codeql.rust.elements.LoopExpr
 import codeql.rust.elements.LoopingExpr
+import codeql.rust.elements.MacroBlockExpr
 import codeql.rust.elements.MacroCall
 import codeql.rust.elements.MacroDef
 import codeql.rust.elements.MacroExpr
 import codeql.rust.elements.MacroItems
 import codeql.rust.elements.MacroPat
 import codeql.rust.elements.MacroRules
-import codeql.rust.elements.MacroStmts
 import codeql.rust.elements.MacroTypeRepr
 import codeql.rust.elements.MatchArm
 import codeql.rust.elements.MatchArmList
@@ -138,7 +139,6 @@ import codeql.rust.elements.RefExpr
 import codeql.rust.elements.RefPat
 import codeql.rust.elements.RefTypeRepr
 import codeql.rust.elements.Rename
-import codeql.rust.elements.Resolvable
 import codeql.rust.elements.RestPat
 import codeql.rust.elements.RetTypeRepr
 import codeql.rust.elements.ReturnExpr
@@ -186,7 +186,6 @@ import codeql.rust.elements.UseBoundGenericArgs
 import codeql.rust.elements.UseTree
 import codeql.rust.elements.UseTreeList
 import codeql.rust.elements.Variant
-import codeql.rust.elements.VariantDef
 import codeql.rust.elements.VariantList
 import codeql.rust.elements.Visibility
 import codeql.rust.elements.WhereClause

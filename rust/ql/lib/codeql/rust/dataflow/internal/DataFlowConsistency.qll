@@ -1,5 +1,8 @@
 import codeql.rust.dataflow.DataFlow::DataFlow as DataFlow
 private import rust
+private import codeql.rust.controlflow.ControlFlowGraph
+private import codeql.rust.controlflow.internal.Splitting
+private import codeql.rust.controlflow.CfgNodes as CfgNodes
 private import codeql.rust.dataflow.internal.DataFlowImpl
 private import codeql.rust.dataflow.internal.FlowSummaryImpl as FlowSummaryImpl
 private import codeql.rust.dataflow.internal.Node as Node
@@ -29,3 +32,4 @@ private module Input implements InputSig<Location, RustDataFlow> {
 }
 
 import MakeConsistency<Location, RustDataFlow, RustTaintTracking, Input>
+private import codeql.rust.dataflow.internal.ModelsAsData

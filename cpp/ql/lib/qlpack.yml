@@ -1,5 +1,5 @@
 name: codeql/cpp-all
-version: 4.3.0
+version: 6.1.3
 groups: cpp
 dbscheme: semmlecode.cpp.dbscheme
 extractor: cpp
@@ -8,15 +8,18 @@ upgrades: upgrades
 dependencies:
   codeql/dataflow: ${workspace}
   codeql/mad: ${workspace}
+  codeql/quantum: ${workspace}
   codeql/rangeanalysis: ${workspace}
   codeql/ssa: ${workspace}
   codeql/typeflow: ${workspace}
   codeql/tutorial: ${workspace}
   codeql/util: ${workspace}
   codeql/xml: ${workspace}
+  codeql/global-controlflow: ${workspace}
 dataExtensions:
   - ext/*.model.yml
-  - ext/generated/*.model.yml
+  - ext/generated/**/*.model.yml
   - ext/deallocation/*.model.yml
   - ext/allocation/*.model.yml
 warnOnImplicitThis: true
+compileForOverlayEval: true

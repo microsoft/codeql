@@ -9,7 +9,7 @@ CodeQL 2.21.1 (2025-04-22)
    :local:
    :backlinks: none
 
-This is an overview of changes in the CodeQL CLI and relevant CodeQL query and library packs. For additional updates on changes to the CodeQL code scanning experience, check out the `code scanning section on the GitHub blog <https://github.blog/tag/code-scanning/>`__, `relevant GitHub Changelog updates <https://github.blog/changelog/label/code-scanning/>`__, `changes in the CodeQL extension for Visual Studio Code <https://marketplace.visualstudio.com/items/GitHub.vscode-codeql/changelog>`__, and the `CodeQL Action changelog <https://github.com/github/codeql-action/blob/main/CHANGELOG.md>`__.
+This is an overview of changes in the CodeQL CLI and relevant CodeQL query and library packs. For additional updates on changes to the CodeQL code scanning experience, check out the `code scanning section on the GitHub blog <https://github.blog/tag/code-scanning/>`__, `relevant GitHub Changelog updates <https://github.blog/changelog/label/application-security/>`__, `changes in the CodeQL extension for Visual Studio Code <https://marketplace.visualstudio.com/items/GitHub.vscode-codeql/changelog>`__, and the `CodeQL Action changelog <https://github.com/github/codeql-action/blob/main/CHANGELOG.md>`__.
 
 Security Coverage
 -----------------
@@ -36,14 +36,6 @@ Bug Fixes
 
 Query Packs
 -----------
-
-New Features
-~~~~~~~~~~~~
-
-GitHub Actions
-""""""""""""""
-
-*   CodeQL and Copilot Autofix support for GitHub Actions is now Generally Available.
 
 Bug Fixes
 ~~~~~~~~~
@@ -86,6 +78,14 @@ Python
 """"""
 
 *   The :code:`py/mixed-tuple-returns` query no longer flags instances where the tuple is passed into the function as an argument, as this led to too many false positives.
+
+New Features
+~~~~~~~~~~~~
+
+GitHub Actions
+""""""""""""""
+
+*   CodeQL and Copilot Autofix support for GitHub Actions is now Generally Available.
 
 Language Libraries
 ------------------
@@ -131,16 +131,16 @@ Ruby
 New Features
 ~~~~~~~~~~~~
 
-GitHub Actions
-""""""""""""""
-
-*   CodeQL and Copilot Autofix support for GitHub Actions is now Generally Available.
-
 C/C++
 """""
 
 *   Calling conventions explicitly specified on function declarations (:code:`__cdecl`, :code:`__stdcall`, :code:`__fastcall`, etc.)  are now represented as specifiers of those declarations.
 *   A new class :code:`CallingConventionSpecifier` extending the :code:`Specifier` class was introduced, which represents explicitly specified calling conventions.
+
+GitHub Actions
+""""""""""""""
+
+*   CodeQL and Copilot Autofix support for GitHub Actions is now Generally Available.
 
 Shared Libraries
 ----------------

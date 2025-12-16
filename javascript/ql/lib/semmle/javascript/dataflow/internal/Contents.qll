@@ -1,3 +1,6 @@
+overlay[local?]
+module;
+
 private import javascript
 private import semmle.javascript.frameworks.data.internal.ApiGraphModels as ApiGraphModels
 private import semmle.javascript.dataflow.internal.FlowSummaryPrivate as FlowSummaryPrivate
@@ -179,6 +182,9 @@ module Public {
     /** Holds if this represents values stored at an unknown array index. */
     predicate isUnknownArrayElement() { this = MkArrayElementUnknown() }
 
+    /** Holds if this represents the value of a resolved promise. */
+    predicate isPromiseValue() { this = MkPromiseValue() }
+
     /** Holds if this represents values stored in a `Map` at an unknown key. */
     predicate isMapValueWithUnknownKey() { this = MkMapValueWithUnknownKey() }
 
@@ -191,6 +197,7 @@ module Public {
    */
   class ContentSet extends TContentSet {
     /** Gets a content that may be stored into when storing into this set. */
+    overlay[caller?]
     pragma[inline]
     Content getAStoreContent() {
       result = this.asSingleton()
@@ -266,6 +273,11 @@ module Public {
       or
       this = ContentSet::anyCapturedContent() and
       result instanceof Private::MkCapturedContent
+      or
+      // Although data flow will never use the special `Awaited` ContentSet in a read or store step,
+      // it may appear in type-tracking and type resolution, and here it helps to treat is as `Awaited[value]`.
+      this = MkAwaited() and
+      result = MkPromiseValue()
     }
 
     /** Gets the singleton content to be accessed. */
@@ -325,12 +337,14 @@ module Public {
     /**
      * A content set containing only the given content.
      */
+    overlay[caller?]
     pragma[inline]
     ContentSet singleton(Content content) { result.asSingleton() = content }
 
     /**
      * A content set corresponding to the given property name.
      */
+    overlay[caller?]
     pragma[inline]
     ContentSet property(PropertyName name) { result.asSingleton().asPropertyName() = name }
 
@@ -391,6 +405,7 @@ module Public {
      * If `bound` is too large, it is truncated to the greatest lower bound we can represent.
      */
     bindingset[bound]
+    overlay[caller?]
     ContentSet arrayElementLowerBoundFromInt(int bound) {
       result = arrayElementLowerBound(bound.minimum(getMaxPreciseArrayIndex() + 1))
     }
@@ -401,6 +416,7 @@ module Public {
      * If `n` is too large, it is truncated to the greatest lower bound we can represent.
      */
     bindingset[n]
+    overlay[caller?]
     ContentSet arrayElementFromInt(int n) {
       result = arrayElementKnown(n)
       or
@@ -440,6 +456,7 @@ module Public {
      * If `key` is not one of the keys we track precisely, this is mapped to the unknown key instead.
      */
     bindingset[key]
+    overlay[caller?]
     ContentSet mapValueFromKey(string key) {
       result = mapValueWithKnownKey(key)
       or
@@ -502,6 +519,7 @@ module Public {
      * are mapped to their corresponding content sets (which are no longer seen as property names).
      */
     bindingset[propertyName]
+    overlay[caller?]
     ContentSet fromLegacyProperty(string propertyName) {
       result = fromLegacyPseudoProperty(propertyName)
       or

@@ -1,3 +1,120 @@
+## 1.5.3
+
+No user-facing changes.
+
+## 1.5.2
+
+No user-facing changes.
+
+## 1.5.1
+
+No user-facing changes.
+
+## 1.5.0
+
+### New Queries
+
+* The `cs/web/cookie-secure-not-set` and `cs/web/cookie-httponly-not-set` queries have been promoted from experimental to the main query pack.
+
+### Minor Analysis Improvements
+
+* An improvement to the Guards library for recognizing disjunctions means improved precision for `cs/constant-condition`, `cs/inefficient-containskey`, and `cs/dereferenced-value-may-be-null`. The two former can have additional findings, and the latter will have fewer false positives.
+
+## 1.4.3
+
+### Minor Analysis Improvements
+
+* The `cs/web/missing-x-frame-options` query now correctly handles configuration nested in root `<location>` elements.
+
+## 1.4.2
+
+No user-facing changes.
+
+## 1.4.1
+
+### Minor Analysis Improvements
+
+* The modeling of null guards based on complex pattern expressions has been improved, which in turn improves the query `cs/dereferenced-value-may-be-null` by removing false positives.
+* The query `cs/xmldoc/missing-summary` has been removed from the `code-quality` suite, to align with other languages.
+
+## 1.4.0
+
+### Deprecated Queries
+
+* The query `cs/captured-foreach-variable` has been deprecated as the semantics of capturing a 'foreach' variable and using it outside the loop has been stable since C# version 5.
+
+### Minor Analysis Improvements
+
+* The query `cs/call-to-object-tostring` has been improved to remove false positives for enum types.
+
+### Bug Fixes
+
+* The message for `csharp/diagnostic/database-quality` has been updated to include detailed database health metrics. Additionally, the threshold for reporting database health issues has been lowered from 95% to 85% (if any metric falls below this percentage). These changes are visible on the tool status page.
+
+## 1.3.4
+
+No user-facing changes.
+
+## 1.3.3
+
+No user-facing changes.
+
+## 1.3.2
+
+No user-facing changes.
+
+## 1.3.1
+
+### Minor Analysis Improvements
+
+* Explicitly added summary models for all overloads of `System.Xml.XmlDictionaryReader.CreateBinaryReader`. Added models for some of the methods and properties in `System.Runtime.Serialization.SerializationInfo` and `System.Runtime.Serialization.SerializationInfoEnumerator`. Updated models for `System.Text.Encoding.GetBytes`, `System.Text.Encoding.GetChars` and the constructor for `System.IO.MemoryStream`. This generally improves the library modelling and thus reduces the number of false negatives.
+* Added explicit SQL injection Models as Data models for `Microsoft.Data.SqlClient.SqlCommand` and `Microsoft.Data.SqlClient.SqlDataAdapter`. This reduces false negatives for the query `cs/sql-injection`.
+
+### Bug Fixes
+
+* `web.config` and `web.release.config` files are now recognized regardless of case. This means queries `cs/web/debug-binary` and `cs/web/missing-x-frame-options` may produce more results than before.
+
+## 1.3.0
+
+### Query Metadata Changes
+
+* Query metadata tags have been systematically updated for many C# queries. Primary categorization as either `reliability` or `maintainability`, and relevant sub-category tags such as `readability`, `useless-code`, `complexity`, `performance`, `correctness`, `error-handling`, and `concurrency`. Aligns with the established [Query file metadata and alert message style guide](https://github.com/github/codeql/blob/main/docs/query-metadata-style-guide.md#quality-query-sub-category-tags).
+* Adjusts the `@security-severity` from 9.3 to 7.3 for `cs/uncontrolled-format-string` to align `CWE-134` severity for memory safe languages to better reflect their impact.
+
+### Minor Analysis Improvements
+
+* The queries `cs/dereferenced-value-is-always-null` and `cs/dereferenced-value-may-be-null` have been improved to reduce false positives. The queries no longer assume that expressions are dereferenced when passed as the receiver (`this` parameter) to extension methods where that parameter is a nullable type.
+
+## 1.2.2
+
+No user-facing changes.
+
+## 1.2.1
+
+### Minor Analysis Improvements
+
+* The precision of the query `cs/missed-readonly-modifier` has been improved. Some false positives related to static fields and struct type fields have been removed.
+* The queries `cs/password-in-configuration`, `cs/hardcoded-credentials` and `cs/hardcoded-connection-string-credentials` have been removed from all query suites.
+* The precision of the query `cs/gethashcode-is-not-defined` has been improved (false negative reduction). Calls to more methods (and indexers) that rely on the invariant `e1.Equals(e2)` implies `e1.GetHashCode() == e2.GetHashCode()` are taken into account.
+* The precision of the query `cs/uncontrolled-format-string` has been improved (false negative reduction). Calls to `System.Text.CompositeFormat.Parse` are now considered a format like method call.
+
+## 1.2.0
+
+### Query Metadata Changes
+
+* The tag `external/cwe/cwe-13` has been removed from `cs/password-in-configuration` and the tag `external/cwe/cwe-013` has been added.
+* The tag `external/cwe/cwe-11` has been removed from `cs/web/debug-binary` and the tag `external/cwe/cwe-011` has been added.
+* The tag `external/cwe/cwe-16` has been removed from `cs/web/large-max-request-length` and the tag `external/cwe/cwe-016` has been added.
+* The tag `external/cwe/cwe-16` has been removed from `cs/web/request-validation-disabled` and the tag `external/cwe/cwe-016` has been added.
+* The tag `external/cwe/cwe-20` has been removed from `cs/count-untrusted-data-external-api` and the tag `external/cwe/cwe-020` has been added.
+* The tag `external/cwe/cwe-20` has been removed from `cs/serialization-check-bypass` and the tag `external/cwe/cwe-020` has been added.
+* The tag `external/cwe/cwe-20` has been removed from `cs/untrusted-data-to-external-api` and the tag `external/cwe/cwe-020` has been added.
+* The tag `external/cwe/cwe-12` has been removed from `cs/web/missing-global-error-handler` and the tag `external/cwe/cwe-012` has been added.
+
+### Minor Analysis Improvements
+
+* Changed the precision of the `cs/equality-on-floats` query from medium to high.
+
 ## 1.1.2
 
 ### Minor Analysis Improvements
@@ -75,7 +192,7 @@ No user-facing changes.
 
 ### Minor Analysis Improvements
 
-* C#: The method `string.ReplaceLineEndings(string)` is now considered a sanitizer for the `cs/log-forging` query. 
+* C#: The method `string.ReplaceLineEndings(string)` is now considered a sanitizer for the `cs/log-forging` query.
 
 ## 1.0.10
 

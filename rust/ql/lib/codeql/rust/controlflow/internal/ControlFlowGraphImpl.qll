@@ -29,18 +29,10 @@ private module CfgInput implements InputSig<Location> {
     Stages::CfgStage::ref()
   }
 
-  class SuccessorType = Cfg::SuccessorType;
+  private class SuccessorType = Cfg::SuccessorType;
 
   /** Gets a successor type that matches completion `c`. */
   SuccessorType getAMatchingSuccessorType(Completion c) { result = c.getAMatchingSuccessorType() }
-
-  /**
-   * Hold if `c` represents simple (normal) evaluation of a statement or an expression.
-   */
-  predicate successorTypeIsSimple(SuccessorType t) { t instanceof Cfg::NormalSuccessor }
-
-  /** Holds if `t` is an abnormal exit type out of a CFG scope. */
-  predicate isAbnormalExitType(SuccessorType t) { none() }
 
   /** Hold if `t` represents a conditional successor type. */
   predicate successorTypeIsCondition(SuccessorType t) { t instanceof Cfg::BooleanSuccessor }
@@ -85,9 +77,9 @@ class CallableScopeTree extends StandardTree, PreOrderTree, PostOrderTree, Scope
 
   override AstNode getChildNode(int i) {
     i = 0 and
-    result = this.getParamList().getSelfParam()
+    result = this.getSelfParam()
     or
-    result = this.getParamList().getParam(i - 1)
+    result = this.getParam(i - 1)
     or
     i = this.getParamList().getNumberOfParams() + 1 and
     result = this.getBody()
@@ -107,7 +99,7 @@ class FormatTemplateVariableAccessTree extends LeafTree, FormatTemplateVariableA
 class ItemTree extends LeafTree, Item {
   ItemTree() {
     not this instanceof MacroCall and
-    this = [any(StmtList s).getAStatement(), any(MacroStmts s).getAStatement()]
+    this = [any(StmtList s).getAStatement(), any(MacroBlockExpr s).getAStatement()]
   }
 }
 
@@ -143,15 +135,17 @@ class LetStmtTree extends PreOrderTree, LetStmt {
 }
 
 class MacroCallTree extends StandardPostOrderTree, MacroCall {
-  override AstNode getChildNode(int i) { i = 0 and result = this.getExpanded() }
+  MacroCallTree() { not this.getParentNode() instanceof MacroPat }
+
+  override AstNode getChildNode(int i) { i = 0 and result = this.getMacroCallExpansion() }
 }
 
-class MacroStmtsTree extends StandardPreOrderTree, MacroStmts {
+class MacroBlockExprTree extends StandardPostOrderTree, MacroBlockExpr {
   override AstNode getChildNode(int i) {
     result = this.getStatement(i)
     or
     i = this.getNumberOfStatements() and
-    result = this.getExpr()
+    result = this.getTailExpr()
   }
 }
 
@@ -198,8 +192,7 @@ class TypeReprTree extends LeafTree instanceof TypeRepr { }
 /**
  * Provides `ControlFlowTree`s for expressions.
  *
- * Since expressions construct values, they are modeled in post-order, except for
- * `LetExpr`s.
+ * Since expressions construct values, they are modeled in post-order.
  */
 module ExprTrees {
   class ArrayExprTree extends StandardPostOrderTree, ArrayExpr {
@@ -273,15 +266,8 @@ module ExprTrees {
     }
   }
 
-  private AstNode getBlockChildNode(BlockExpr b, int i) {
-    result = b.getStmtList().getStatement(i)
-    or
-    i = b.getStmtList().getNumberOfStatements() and
-    result = b.getStmtList().getTailExpr()
-  }
-
   class AsyncBlockExprTree extends StandardTree, PreOrderTree, PostOrderTree, AsyncBlockExpr {
-    override AstNode getChildNode(int i) { result = getBlockChildNode(this, i) }
+    override AstNode getChildNode(int i) { result = this.getStmtList().getStmtOrExpr(i) }
 
     override predicate propagatesAbnormal(AstNode child) { none() }
   }
@@ -289,7 +275,7 @@ module ExprTrees {
   class BlockExprTree extends StandardPostOrderTree, BlockExpr {
     BlockExprTree() { not this.isAsync() }
 
-    override AstNode getChildNode(int i) { result = getBlockChildNode(this, i) }
+    override AstNode getChildNode(int i) { result = this.getStmtList().getStmtOrExpr(i) }
 
     override predicate propagatesAbnormal(AstNode child) { child = this.getChildNode(_) }
   }
@@ -339,21 +325,15 @@ module ExprTrees {
       child = [super.getCondition(), super.getABranch()]
     }
 
-    private ConditionalCompletion conditionCompletion(Completion c) {
-      if super.getCondition() instanceof LetExpr
-      then result = c.(MatchCompletion)
-      else result = c.(BooleanCompletion)
-    }
-
     override predicate succ(AstNode pred, AstNode succ, Completion c) {
       // Edges from the condition to the branches
       last(super.getCondition(), pred, c) and
       (
-        first(super.getThen(), succ) and this.conditionCompletion(c).succeeded()
+        first(super.getThen(), succ) and c.(ConditionalCompletion).succeeded()
         or
-        first(super.getElse(), succ) and this.conditionCompletion(c).failed()
+        first(super.getElse(), succ) and c.(ConditionalCompletion).failed()
         or
-        not super.hasElse() and succ = this and this.conditionCompletion(c).failed()
+        not super.hasElse() and succ = this and c.(ConditionalCompletion).failed()
       )
       or
       // An edge from the then branch to the last node
@@ -399,10 +379,7 @@ module ExprTrees {
     }
   }
 
-  // `LetExpr` is a pre-order tree such that the pattern itself ends up
-  // dominating successors in the graph in the same way that patterns do in
-  // `match` expressions.
-  class LetExprTree extends StandardPreOrderTree, LetExpr {
+  class LetExprTree extends StandardPostOrderTree, LetExpr {
     override AstNode getChildNode(int i) {
       i = 0 and
       result = this.getScrutinee()
@@ -454,21 +431,15 @@ module ExprTrees {
 
     override predicate first(AstNode node) { first(super.getCondition(), node) }
 
-    private ConditionalCompletion conditionCompletion(Completion c) {
-      if super.getCondition() instanceof LetExpr
-      then result = c.(MatchCompletion)
-      else result = c.(BooleanCompletion)
-    }
-
     override predicate succ(AstNode pred, AstNode succ, Completion c) {
       super.succ(pred, succ, c)
       or
       last(super.getCondition(), pred, c) and
-      this.conditionCompletion(c).succeeded() and
+      c.(ConditionalCompletion).succeeded() and
       first(this.getLoopBody(), succ)
       or
       last(super.getCondition(), pred, c) and
-      this.conditionCompletion(c).failed() and
+      c.(ConditionalCompletion).failed() and
       succ = this
     }
   }
@@ -541,7 +512,7 @@ module ExprTrees {
 
   class MethodCallExprTree extends StandardPostOrderTree, MethodCallExpr {
     override AstNode getChildNode(int i) {
-      if i = 0 then result = this.getReceiver() else result = this.getArgList().getArg(i - 1)
+      if i = 0 then result = this.getReceiver() else result = this.getArg(i - 1)
     }
   }
 
@@ -633,7 +604,7 @@ module PatternTrees {
       (
         StandardPatTree.super.succ(pred, succ, c)
         or
-        pred = this and first(this.getFirstChildNode(), succ) and completionIsValidFor(c, this)
+        pred = this and first(this.getFirstChildTree(), succ) and completionIsValidFor(c, this)
       )
     }
 
@@ -685,7 +656,7 @@ module PatternTrees {
   }
 
   class MacroPatTree extends PreOrderPatTree, MacroPat {
-    override Pat getPat(int i) { i = 0 and result = this.getMacroCall().getExpanded() }
+    override Pat getPat(int i) { i = 0 and result = this.getMacroCall().getMacroCallExpansion() }
   }
 
   class OrPatTree extends PostOrderPatTree instanceof OrPat {

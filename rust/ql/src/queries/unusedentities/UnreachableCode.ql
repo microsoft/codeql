@@ -6,6 +6,7 @@
  * @precision medium
  * @id rust/dead-code
  * @tags maintainability
+ *       quality
  */
 
 import rust
@@ -32,7 +33,7 @@ predicate hiddenNode(AstNode n) {
   n instanceof ControlFlowGraphImpl::PostOrderTree and // location is counter-intuitive
   not n instanceof MacroExpr
   or
-  n.isInMacroExpansion()
+  n.isFromMacroExpansion()
 }
 
 /**

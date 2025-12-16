@@ -1,11 +1,12 @@
 name: codeql/javascript-all
-version: 2.6.2
+version: 2.6.18
 groups: javascript
 dbscheme: semmlecode.javascript.dbscheme
 extractor: javascript
 library: true
 upgrades: upgrades
 dependencies:
+  codeql/concepts: ${workspace}
   codeql/dataflow: ${workspace}
   codeql/mad: ${workspace}
   codeql/regex: ${workspace}
@@ -22,3 +23,4 @@ dataExtensions:
   - semmle/javascript/security/domains/**/*.model.yml
   - ext/*.model.yml
 warnOnImplicitThis: true
+compileForOverlayEval: true

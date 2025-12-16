@@ -1,3 +1,73 @@
+## 0.4.24
+
+No user-facing changes.
+
+## 0.4.23
+
+No user-facing changes.
+
+## 0.4.22
+
+No user-facing changes.
+
+## 0.4.21
+
+No user-facing changes.
+
+## 0.4.20
+
+No user-facing changes.
+
+## 0.4.19
+
+No user-facing changes.
+
+## 0.4.18
+
+No user-facing changes.
+
+## 0.4.17
+
+No user-facing changes.
+
+## 0.4.16
+
+No user-facing changes.
+
+## 0.4.15
+
+No user-facing changes.
+
+## 0.4.14
+
+No user-facing changes.
+
+## 0.4.13
+
+### Bug Fixes
+
+* The `actions/artifact-poisoning/critical` and `actions/artifact-poisoning/medium` queries now exclude artifacts downloaded to `$[{ runner.temp }}` in addition to `/tmp`.
+
+## 0.4.12
+
+### Minor Analysis Improvements
+
+* Fixed performance issues in the parsing of Bash scripts in workflow files,
+  which led to out-of-disk errors when analysing certain workflow files with
+  complex interpolations of shell commands or quoted strings.
+
+## 0.4.11
+
+No user-facing changes.
+
+## 0.4.10
+
+No user-facing changes.
+
+## 0.4.9
+
+No user-facing changes.
+
 ## 0.4.8
 
 No user-facing changes.

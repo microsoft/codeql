@@ -40,6 +40,8 @@ module ConstantStateFlowConfig implements DataFlow::ConfigSig {
   }
 
   predicate isSink(DataFlow::Node sink) { isSinkCall(sink, _) }
+
+  predicate observeDiffInformedIncrementalMode() { any() }
 }
 
 /**
@@ -59,7 +61,7 @@ predicate isUrlTaintingConfigStep(DataFlow::Node pred, DataFlow::Node succ) {
   exists(Write w, Field f |
     f.hasQualifiedName(package("golang.org/x/oauth2", ""), "Config", "RedirectURL")
   |
-    w.writesField(succ.(DataFlow::PostUpdateNode).getPreUpdateNode(), f, pred)
+    w.writesField(succ, f, pred)
   )
 }
 

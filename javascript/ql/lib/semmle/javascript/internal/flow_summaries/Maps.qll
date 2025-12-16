@@ -1,6 +1,8 @@
 /**
- * Contains flow summaries and steps modelling flow through `Map` objects.
+ * Contains flow summaries and steps modeling flow through `Map` objects.
  */
+overlay[local?]
+module;
 
 private import javascript
 private import semmle.javascript.dataflow.FlowSummary

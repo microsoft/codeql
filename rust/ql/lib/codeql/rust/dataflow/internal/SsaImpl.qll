@@ -2,7 +2,6 @@ private import rust
 private import codeql.rust.controlflow.BasicBlocks as BasicBlocks
 private import BasicBlocks
 private import codeql.rust.controlflow.ControlFlowGraph as Cfg
-private import codeql.rust.controlflow.CfgNodes as CfgNodes
 private import Cfg
 private import codeql.rust.controlflow.internal.ControlFlowGraphImpl as ControlFlowGraphImpl
 private import codeql.ssa.Ssa as SsaImplCommon
@@ -18,35 +17,42 @@ private predicate isInUninitializedLet(Name name) {
   )
 }
 
-/** Holds if `write` writes to variable `v`. */
-predicate variableWrite(AstNode write, Variable v) {
+/** Holds if `write` writes to variable `v` via `access`. */
+predicate variableWrite(AstNode write, AstNode access, Variable v) {
   exists(Name name |
     name = write and
+    access = write and
     name = v.getName() and
     not isInUninitializedLet(name)
   )
   or
-  exists(VariableAccess access |
-    access = write and
-    access.getVariable() = v
-  |
-    access instanceof VariableWriteAccess
+  v = access.(VariableAccess).getVariable() and
+  (
+    write = access.(VariableWriteAccess).getAssignmentExpr()
     or
     // Although compound assignments, like `x += y`, may in fact not update `x`,
     // it makes sense to treat them as such
-    access = any(CompoundAssignmentExpr cae).getLhs()
+    access = write.(CompoundAssignmentExpr).getLhs()
   )
 }
 
-module SsaInput implements SsaImplCommon::InputSig<Location> {
-  class BasicBlock = BasicBlocks::BasicBlock;
+private predicate variableReadCertain(BasicBlock bb, int i, VariableAccess va, Variable v) {
+  bb.getNode(i).getAstNode() = va and
+  va = v.getAnAccess() and
+  (
+    va instanceof VariableReadAccess
+    or
+    // For immutable variables, we model a read when they are borrowed
+    // (although the actual read happens later, if at all).
+    va = any(RefExpr re).getExpr()
+    or
+    // Although compound assignments, like `x += y`, may in fact not read `x`,
+    // it makes sense to treat them as such
+    va = any(CompoundAssignmentExpr cae).getLhs()
+  )
+}
 
-  class ControlFlowNode = CfgNode;
-
-  BasicBlock getImmediateBasicBlockDominator(BasicBlock bb) { result = bb.getImmediateDominator() }
-
-  BasicBlock getABasicBlockSuccessor(BasicBlock bb) { result = bb.getASuccessor() }
-
+module SsaInput implements SsaImplCommon::InputSig<Location, BasicBlock> {
   class SourceVariable = Variable;
 
   predicate variableWrite(BasicBlock bb, int i, SourceVariable v, boolean certain) {
@@ -66,20 +72,7 @@ module SsaInput implements SsaImplCommon::InputSig<Location> {
   }
 
   predicate variableRead(BasicBlock bb, int i, SourceVariable v, boolean certain) {
-    exists(VariableAccess va |
-      bb.getNode(i).getAstNode() = va and
-      va = v.getAnAccess()
-    |
-      va instanceof VariableReadAccess
-      or
-      // For immutable variables, we model a read when they are borrowed
-      // (although the actual read happens later, if at all).
-      va = any(RefExpr re).getExpr()
-      or
-      // Although compound assignments, like `x += y`, may in fact not read `x`,
-      // it makes sense to treat them as such
-      va = any(CompoundAssignmentExpr cae).getLhs()
-    ) and
+    variableReadCertain(bb, i, _, v) and
     certain = true
     or
     capturedCallRead(_, bb, i, v) and certain = false
@@ -88,7 +81,7 @@ module SsaInput implements SsaImplCommon::InputSig<Location> {
   }
 }
 
-import SsaImplCommon::Make<Location, SsaInput> as Impl
+import SsaImplCommon::Make<Location, BasicBlocks::Cfg, SsaInput> as Impl
 
 class Definition = Impl::Definition;
 
@@ -99,16 +92,6 @@ class UncertainWriteDefinition = Impl::UncertainWriteDefinition;
 class PhiDefinition = Impl::PhiNode;
 
 module Consistency = Impl::Consistency;
-
-/** Holds if `v` is read at index `i` in basic block `bb`. */
-private predicate variableReadActual(BasicBlock bb, int i, Variable v) {
-  exists(VariableAccess read |
-    read instanceof VariableReadAccess or read = any(RefExpr re).getExpr()
-  |
-    read.getVariable() = v and
-    read = bb.getNode(i).getAstNode()
-  )
-}
 
 /**
  * Holds if captured variable `v` is written directly inside `scope`,
@@ -125,10 +108,10 @@ private predicate hasCapturedWrite(Variable v, Cfg::CfgScope scope) {
  * immediate outer CFG scope of `scope`.
  */
 pragma[noinline]
-private predicate variableReadActualInOuterScope(
+private predicate variableReadCertainInOuterScope(
   BasicBlock bb, int i, Variable v, Cfg::CfgScope scope
 ) {
-  variableReadActual(bb, i, v) and bb.getScope() = scope.getEnclosingCfgScope()
+  variableReadCertain(bb, i, _, v) and bb.getScope() = scope.getEnclosingCfgScope()
 }
 
 pragma[noinline]
@@ -136,7 +119,7 @@ private predicate hasVariableReadWithCapturedWrite(
   BasicBlock bb, int i, Variable v, Cfg::CfgScope scope
 ) {
   hasCapturedWrite(v, scope) and
-  variableReadActualInOuterScope(bb, i, v, scope)
+  variableReadCertainInOuterScope(bb, i, v, scope)
 }
 
 private VariableAccess getACapturedVariableAccess(BasicBlock bb, Variable v) {
@@ -149,12 +132,6 @@ private VariableAccess getACapturedVariableAccess(BasicBlock bb, Variable v) {
 pragma[noinline]
 private predicate writesCapturedVariable(BasicBlock bb, Variable v) {
   getACapturedVariableAccess(bb, v) instanceof VariableWriteAccess
-}
-
-/** Holds if `bb` contains a captured read to variable `v`. */
-pragma[nomagic]
-private predicate readsCapturedVariable(BasicBlock bb, Variable v) {
-  getACapturedVariableAccess(bb, v) instanceof VariableReadAccess
 }
 
 /**
@@ -236,7 +213,7 @@ private module Cached {
    */
   cached
   predicate capturedEntryWrite(EntryBasicBlock bb, int i, Variable v) {
-    readsCapturedVariable(bb.getASuccessor*(), v) and
+    exists(getACapturedVariableAccess(bb.getASuccessor*(), v)) and
     i = -1
   }
 
@@ -247,15 +224,15 @@ private module Cached {
   cached
   predicate variableWriteActual(BasicBlock bb, int i, Variable v, CfgNode write) {
     bb.getNode(i) = write and
-    variableWrite(write.getAstNode(), v)
+    variableWrite(write.getAstNode(), _, v)
   }
 
   cached
-  CfgNode getARead(Definition def) {
+  Expr getARead(Definition def) {
     exists(Variable v, BasicBlock bb, int i |
       Impl::ssaDefReachesRead(v, def, bb, i) and
-      variableReadActual(bb, i, v) and
-      result = bb.getNode(i)
+      variableReadCertain(bb, i, v.getAnAccess(), v) and
+      result = bb.getNode(i).getAstNode()
     )
   }
 
@@ -269,8 +246,10 @@ private module Cached {
    * without passing through any other non-pseudo read.
    */
   cached
-  predicate firstRead(Definition def, CfgNode read) {
-    exists(BasicBlock bb, int i | Impl::firstUse(def, bb, i, true) and read = bb.getNode(i))
+  predicate firstRead(Definition def, Expr read) {
+    exists(BasicBlock bb, int i |
+      Impl::firstUse(def, bb, i, true) and read = bb.getNode(i).getAstNode()
+    )
   }
 
   /**
@@ -279,12 +258,12 @@ private module Cached {
    * passing through another non-pseudo read.
    */
   cached
-  predicate adjacentReadPair(Definition def, CfgNode read1, CfgNode read2) {
+  predicate adjacentReadPair(Definition def, Expr read1, Expr read2) {
     exists(BasicBlock bb1, int i1, BasicBlock bb2, int i2, Variable v |
       Impl::ssaDefReachesRead(v, def, bb1, i1) and
       Impl::adjacentUseUse(bb1, i1, bb2, i2, v, true) and
-      read1 = bb1.getNode(i1) and
-      read2 = bb2.getNode(i2)
+      read1 = bb1.getNode(i1).getAstNode() and
+      read2 = bb2.getNode(i2).getAstNode()
     )
   }
 
@@ -309,12 +288,13 @@ private module Cached {
       DataFlowIntegrationImpl::localMustFlowStep(v, nodeFrom, nodeTo)
     }
 
-    signature predicate guardChecksSig(CfgNodes::AstCfgNode g, Cfg::CfgNode e, boolean branch);
+    signature predicate guardChecksSig(AstNode g, Expr e, boolean branch);
 
     cached // nothing is actually cached
     module BarrierGuard<guardChecksSig/3 guardChecks> {
       private predicate guardChecksAdjTypes(
-        DataFlowIntegrationInput::Guard g, DataFlowIntegrationInput::Expr e, boolean branch
+        DataFlowIntegrationInput::Guard g, DataFlowIntegrationInput::Expr e,
+        DataFlowIntegrationInput::GuardValue branch
       ) {
         guardChecks(g, e, branch)
       }
@@ -331,55 +311,68 @@ private module Cached {
 import Cached
 private import codeql.rust.dataflow.Ssa
 
+private class ExprAlias = Expr;
+
 private module DataFlowIntegrationInput implements Impl::DataFlowIntegrationInputSig {
   private import codeql.rust.dataflow.internal.DataFlowImpl as DataFlowImpl
+  private import codeql.util.Boolean
 
-  class Expr extends CfgNodes::AstCfgNode {
-    predicate hasCfgNode(SsaInput::BasicBlock bb, int i) { this = bb.getNode(i) }
+  class Expr extends ExprAlias {
+    predicate hasCfgNode(BasicBlock bb, int i) { this.getACfgNode() = bb.getNode(i) }
   }
 
   Expr getARead(Definition def) { result = Cached::getARead(def) }
 
   predicate ssaDefHasSource(WriteDefinition def) { none() } // handled in `DataFlowImpl.qll` instead
 
-  private predicate isArg(CfgNodes::CallExprBaseCfgNode call, CfgNodes::ExprCfgNode e) {
-    call.getArgument(_) = e
+  private predicate isArg(CallExprBase call, Expr e) {
+    call.getAnArg() = e
     or
-    call.(CfgNodes::MethodCallExprCfgNode).getReceiver() = e
+    call.(MethodCallExpr).getReceiver() = e
     or
-    exists(CfgNodes::ExprCfgNode mid |
+    exists(Expr mid |
       isArg(call, mid) and
       e = DataFlowImpl::getPostUpdateReverseStep(mid, _)
     )
   }
 
   predicate allowFlowIntoUncertainDef(UncertainWriteDefinition def) {
-    exists(CfgNodes::CallExprBaseCfgNode call, Variable v, BasicBlock bb, int i |
+    exists(Variable v, BasicBlock bb, int i |
       def.definesAt(v, bb, i) and
       mutablyBorrows(bb.getNode(i).getAstNode(), v) and
-      isArg(call, bb.getNode(i))
+      isArg(_, bb.getNode(i).getAstNode())
     )
   }
 
-  class Guard extends CfgNodes::AstCfgNode {
+  class GuardValue = Boolean;
+
+  class Guard extends AstNode {
     /**
-     * Holds if the control flow branching from `bb1` is dependent on this guard,
-     * and that the edge from `bb1` to `bb2` corresponds to the evaluation of this
-     * guard to `branch`.
+     * Holds if the evaluation of this guard to `branch` corresponds to the edge
+     * from `bb1` to `bb2`.
      */
-    predicate controlsBranchEdge(SsaInput::BasicBlock bb1, SsaInput::BasicBlock bb2, boolean branch) {
+    predicate hasValueBranchEdge(BasicBlock bb1, BasicBlock bb2, GuardValue branch) {
       exists(Cfg::ConditionalSuccessor s |
-        this = bb1.getANode() and
+        this = bb1.getANode().getAstNode() and
         bb2 = bb1.getASuccessor(s) and
         s.getValue() = branch
       )
     }
+
+    /**
+     * Holds if this guard evaluating to `branch` controls the control-flow
+     * branch edge from `bb1` to `bb2`. That is, following the edge from
+     * `bb1` to `bb2` implies that this guard evaluated to `branch`.
+     */
+    predicate valueControlsBranchEdge(BasicBlock bb1, BasicBlock bb2, GuardValue branch) {
+      this.hasValueBranchEdge(bb1, bb2, branch)
+    }
   }
 
   /** Holds if the guard `guard` controls block `bb` upon evaluating to `branch`. */
-  predicate guardDirectlyControlsBlock(Guard guard, SsaInput::BasicBlock bb, boolean branch) {
+  predicate guardDirectlyControlsBlock(Guard guard, BasicBlock bb, GuardValue branch) {
     exists(ConditionBasicBlock conditionBlock, ConditionalSuccessor s |
-      guard = conditionBlock.getLastNode() and
+      guard = conditionBlock.getLastNode().getAstNode() and
       s.getValue() = branch and
       conditionBlock.edgeDominates(bb, s)
     )

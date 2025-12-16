@@ -1,3 +1,104 @@
+## 2.6.18
+
+No user-facing changes.
+
+## 2.6.17
+
+No user-facing changes.
+
+## 2.6.16
+
+### Minor Analysis Improvements
+
+- JavaScript `DataFlow::globalVarRef` now recognizes `document.defaultView` as an alias of `window`, allowing flows such as `document.defaultView.history.pushState(...)` to be modeled and found by queries relying on `globalVarRef("history")`.
+
+## 2.6.15
+
+No user-facing changes.
+
+## 2.6.14
+
+No user-facing changes.
+
+## 2.6.13
+
+No user-facing changes.
+
+## 2.6.12
+
+### Minor Analysis Improvements
+
+* Added modeling of `GraphQLObjectType` resolver function parameters as remote sources.
+* Support for the [graphql](https://www.npmjs.com/package/graphql) library has been improved. Data flow from GraphQL query sources and variables to resolver function parameters is now tracked.
+* Added support for the `aws-sdk` and `@aws-sdk/client-dynamodb`, `@aws-sdk/client-athena`, `@aws-sdk/client-s3`, and `@aws-sdk/client-rds-data` packages.
+
+## 2.6.11
+
+### Minor Analysis Improvements
+
+* Added modeling for promisification libraries `@gar/promisify`, `es6-promisify`, `util.promisify`, `thenify-all`, `call-me-maybe`, `@google-cloud/promisify`, and `util-promisify`.
+* Data flow is now tracked through promisified user-defined functions. 
+
+## 2.6.10
+
+### Minor Analysis Improvements
+
+* Removed `libxmljs` as an XML bomb sink. The underlying libxml2 library now includes [entity reference loop detection](https://github.com/GNOME/libxml2/blob/0c948334a8f5c66d50e9f8992e62998017dc4fc6/NEWS#L905-L908) that prevents XML bomb attacks.
+
+## 2.6.9
+
+### Minor Analysis Improvements
+
+* Improved modeling of command-line argument parsing libraries [arg](https://www.npmjs.com/package/arg), [args](https://www.npmjs.com/package/args), [command-line-args](https://www.npmjs.com/package/command-line-args) and [commander](https://www.npmjs.com/package/commander)
+
+## 2.6.8
+
+### Minor Analysis Improvements
+
+* The regular expressions in `SensitiveDataHeuristics.qll` have been extended to find more instances of sensitive data such as secrets used in authentication, finance and health information, and device data. The heuristics have also been refined to find fewer false positive matches. This will improve results for queries related to sensitive information.
+
+## 2.6.7
+
+### Minor Analysis Improvements
+
+* Enhanced modeling for the `execa` library, adding support for command execution methods `execaCommand`, `execaCommandSync`, `$`, and `$.sync`, as well as file system operations through `inputFile`, `pipeStdout`, `pipeAll`, and `pipeStderr`.
+
+### Bug Fixes
+
+* The JavaScript extractor no longer ignores source files specified in the `tsconfig.json` compiler options `outDir` if doing so would result in excluding all source code.
+
+## 2.6.6
+
+### Minor Analysis Improvements
+
+* Calls to `sinon.match()` are no longer incorrectly identified as regular expression operations.
+* Improved data flow tracking through middleware to handle default value and similar patterns.
+* Added `req._parsedUrl` as a remote input source.
+* Improved taint tracking through calls to `serialize-javascript`.
+* Removed `encodeURI` and `escape` functions from the sanitizer list for request forgery.
+* The JavaScript extractor now skips generated JavaScript files if the original TypeScript files are already present. It also skips any files in the output directory specified in the `compilerOptions` part of the `tsconfig.json` file.
+* Added support for Axios instances in the `axios` module.
+
+## 2.6.5
+
+### Minor Analysis Improvements
+
+* Added taint flow through the `URL` constructor from the `url` package, improving the identification of SSRF vulnerabilities.
+
+## 2.6.4
+
+### Minor Analysis Improvements
+
+* Improved analysis for `ES6 classes` mixed with `function prototypes`, leading to more accurate call graph resolution.
+
+## 2.6.3
+
+### Minor Analysis Improvements
+
+* Enhanced modeling of the [fastify](https://www.npmjs.com/package/fastify) framework to support the `all` route handler method.
+* Improved modeling of the [`shelljs`](https://www.npmjs.com/package/shelljs) and [`async-shelljs`](https://www.npmjs.com/package/async-shelljs) libraries by adding support for the `which`, `cmd`, `asyncExec` and `env`.
+* Added support for the `fastify` `addHook` method.
+
 ## 2.6.2
 
 No user-facing changes.

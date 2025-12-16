@@ -1,3 +1,126 @@
+## 1.10.3
+
+### Minor Analysis Improvements
+
+* Java analysis no longer forces `--source` and `--target` compiler flags for Maven builds. This allows Maven to use the project's own compiler configuration, improving build compatibility.
+
+## 1.10.2
+
+No user-facing changes.
+
+## 1.10.1
+
+### Minor Analysis Improvements
+
+* Operations that extract only a fixed-length prefix or suffix of a string (for example, `substring` in Java or `take` in Kotlin), when limited to a length of at most 7 characters, are now treated as sanitizers for the `java/sensitive-log` query.  
+
+## 1.10.0
+
+### Query Metadata Changes
+
+* Reduced the `security-severity` score of the `java/overly-large-range` query from 5.0 to 4.0 to better reflect its impact.
+* Reduced the `security-severity` score of the `java/insecure-cookie` query from 5.0 to 4.0 to better reflect its impact.
+
+## 1.9.0
+
+### New Queries
+
+* The `java/sensitive-cookie-not-httponly` query has been promoted from experimental to the main query pack.
+* Added a new query, `java/escaping`, to detect values escaping from classes marked as `@ThreadSafe`.
+* Added a new query, `java/not-threadsafe`, to detect data races in classes marked as `@ThreadSafe`.
+* Added a new query, `java/safe-publication`, to detect unsafe publication in classes marked as `@ThreadSafe`.
+
+### Minor Analysis Improvements
+
+* Calls to `String.matches` are now treated as sanitizers for the `java/ssrf` query.
+
+## 1.8.2
+
+No user-facing changes.
+
+## 1.8.1
+
+No user-facing changes.
+
+## 1.8.0
+
+### Major Analysis Improvements
+
+* The implementation of `java/dereferenced-value-may-be-null` has been completely replaced with a new general control-flow reachability library. This improves precision by reducing false positives. However, since the entire calculation has been reworked, there can be small corner cases where precision regressions might occur and new false positives may occur, but these cases should be rare.
+
+### Bug Fixes
+
+* The message for `java/diagnostic/database-quality` has been updated to include detailed database health metrics. Additionally, the threshold for reporting database health issues has been lowered from 95% to 85% (if any metric falls below this percentage). These changes are visible on the tool status page.
+
+## 1.7.0
+
+### New Queries
+
+* The query `java/insecure-spring-actuator-config` has been promoted from experimental to the main query pack as `java/spring-boot-exposed-actuators-config`. Its results will now appear by default. This query detects exposure of Spring Boot actuators through configuration files. It was originally submitted as an experimental query [by @luchua-bc](https://github.com/github/codeql/pull/5384).
+
+### Query Metadata Changes
+
+* The tag `maintainability` has been removed from `java/run-finalizers-on-exit` and the tags `quality`, `correctness`, and `performance` have been added.
+* The tag `maintainability` has been removed from `java/garbage-collection` and the tags `quality` and `correctness` have been added.
+
+### Minor Analysis Improvements
+
+* Fixed a bug that was causing false negatives in rare cases in the query `java/dereferenced-value-may-be-null`.
+* Removed the `java/empty-statement` query that was subsumed by the `java/empty-block` query.
+
+## 1.6.3
+
+No user-facing changes.
+
+## 1.6.2
+
+No user-facing changes.
+
+## 1.6.1
+
+### Minor Analysis Improvements
+
+* Java analysis of guards has been switched to use the new and improved shared guards library. This improves precision of a number of queries, in particular `java/dereferenced-value-may-be-null`, which now has fewer false positives, and `java/useless-null-check` and `java/constant-comparison`, which gain additional true positives.
+
+## 1.6.0
+
+### Query Metadata Changes
+
+* The tag `quality` has been added to multiple Java quality queries for consistency. They have all been given a tag for one of the two top-level categories `reliability` or `maintainability`, and a tag for a sub-category. See [Query file metadata and alert message style guide](https://github.com/github/codeql/blob/main/docs/query-metadata-style-guide.md#quality-query-sub-category-tags) for more information about these categories.
+* The tag `external/cwe/cwe-571` has been added to `java/equals-on-unrelated-types`.
+* The tag `readability` has been added to `java/missing-override-annotation`, `java/deprecated-call`, `java/inconsistent-javadoc-throws`, `java/unknown-javadoc-parameter`, `java/jdk-internal-api-access`, `java/underscore-identifier`, `java/misleading-indentation`, `java/inefficient-empty-string-test`, `java/non-static-nested-class`, `inefficient-string-constructor`, and `java/constants-only-interface`.
+* The tag `useless-code` has been added to `java/useless-type-test`, and `java/useless-tostring-call`.
+* The tag `complexity` has been added to `java/chained-type-tests`, and `java/abstract-to-concrete-cast`.
+* The tag `error-handling` has been added to `java/ignored-error-status-of-call`, and `java/uncaught-number-format-exception`.
+* The tag `correctness` has been added to `java/evaluation-to-constant`, `java/whitespace-contradicts-precedence`, `java/empty-container`, `java/string-buffer-char-init`, `java/call-to-object-tostring`, `java/print-array` and `java/internal-representation-exposure`.
+* The tag `performance` has been added to `java/input-resource-leak`, `java/database-resource-leak`, `java/output-resource-leak`, `java/inefficient-key-set-iterator`, `java/inefficient-output-stream`, and `java/inefficient-boxed-constructor`.
+* The tag `correctness` has been removed from `java/call-to-thread-run`, `java/unsafe-double-checked-locking`, `java/unsafe-double-checked-locking-init-order`, `java/non-sync-override`, `java/sync-on-boxed-types`, `java/unsynchronized-getter`, `java/input-resource-leak`, `java/output-resource-leak`, `java/database-resource-leak`, and `java/ignored-error-status-of-call`.
+* The tags `maintainability` has been removed from `java/string-buffer-char-init`, `java/inefficient-key-set-iterator`, `java/inefficient-boxed-constructor`, and `java/internal-representation-exposure`.
+* The tags `reliability` has been removed from `java/subtle-inherited-call`, `java/print-array`, and `java/call-to-object-tostring`.
+* The tags `maintainability` and `useless-code` have been removed from `java/evaluation-to-constant`.
+* The tags `maintainability` and `readability` have been removed from `java/whitespace-contradicts-precedence`.
+* The tags `maintainability` and `useless-code` have been removed from `java/empty-container`.
+* Adjusts the `@precision` from high to medium for `java/concatenated-command-line` because it is producing false positive alerts when the concatenated strings are hard-coded.
+* Adjusts the `@security-severity` from 9.3 to 7.3 for `java/tainted-format-string` to align `CWE-134` severity for memory safe languages to better reflect their impact.
+
+## 1.5.2
+
+No user-facing changes.
+
+## 1.5.1
+
+### Minor Analysis Improvements
+
+* The query `java/hardcoded-credential-api-call` has been removed from all query suites.
+
+## 1.5.0
+
+### Query Metadata Changes
+
+* The tag `external/cwe/cwe-20` has been removed from `java/count-untrusted-data-external-api` and the tag `external/cwe/cwe-020` has been added.
+* The tag `external/cwe/cwe-20` has been removed from `java/untrusted-data-to-external-api` and the tag `external/cwe/cwe-020` has been added.
+* The tag `external/cwe/cwe-93` has been removed from `java/netty-http-request-or-response-splitting` and the tag `external/cwe/cwe-093` has been added.
+
 ## 1.4.2
 
 ### Minor Analysis Improvements

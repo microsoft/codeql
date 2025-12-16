@@ -1,3 +1,4 @@
+#![feature(let_chains)]
 // Tests for intraprocedural data flow.
 
 fn source(i: i64) -> i64 {
@@ -21,6 +22,19 @@ fn direct() {
 fn variable_usage() {
     let s = source(2);
     sink(s); // $ hasValueFlow=2
+
+    if let x = s {
+        sink(x); // $ hasValueFlow=2
+    };
+
+    if let x = s
+        && {
+            sink(x); // $ hasValueFlow=2
+            true
+        }
+    {
+        sink(x); // $ hasValueFlow=2
+    };
 }
 
 fn if_expression(cond: bool) {
@@ -55,6 +69,18 @@ fn assignment() {
     sink(i);
     i = source(6);
     sink(i); // $ hasValueFlow=6
+    i = 2;
+    sink(i);
+
+    let mut j = 3;
+    let k = source(7);
+    j = k;
+    sink(j); // $ hasValueFlow=7
+    sink(k); // $ hasValueFlow=7
+
+    let mut l = source(8);
+    l = l;
+    sink(l); // $ hasValueFlow=8
 }
 
 fn block_expression1() -> i64 {
@@ -87,7 +113,7 @@ fn block_expression3(b: bool) -> i64 {
 
 fn box_deref() {
     let i = Box::new(source(7));
-    sink(*i); // $ MISSING: hasValueFlow=7
+    sink(*i); // $ hasValueFlow=7
 }
 
 // -----------------------------------------------------------------------------
@@ -236,6 +262,18 @@ fn option_pattern_match_unqualified() {
     }
 }
 
+fn option_chained_let() {
+    let s1 = Some(source(45));
+    if let Some(n) = s1
+        && {
+            sink(n); // $ hasValueFlow=45
+            true
+        }
+    {
+        sink(n); // $ hasValueFlow=45
+    }
+}
+
 fn option_unwrap() {
     let s1 = Some(source(19));
     sink(s1.unwrap()); // $ hasValueFlow=19
@@ -267,15 +305,15 @@ fn option_questionmark() -> Option<i64> {
 }
 
 fn option_ok() {
-    let r1 : Result<i64, i64> = Ok(source(21));
-    let o1a : Option<i64> = r1.ok();
-    let o1b : Option<i64> = r1.err();
+    let r1: Result<i64, i64> = Ok(source(21));
+    let o1a: Option<i64> = r1.ok();
+    let o1b: Option<i64> = r1.err();
     sink(o1a.unwrap()); // $ hasValueFlow=21
     sink(o1b.unwrap());
 
-    let r2 : Result<i64, i64> = Err(source(22));
-    let o2a : Option<i64> = r2.ok();
-    let o2b : Option<i64> = r2.err();
+    let r2: Result<i64, i64> = Err(source(22));
+    let o2a: Option<i64> = r2.ok();
+    let o2b: Option<i64> = r2.err();
     sink(o2a.unwrap());
     sink(o2b.unwrap()); // $ hasValueFlow=22
 }
@@ -467,7 +505,7 @@ fn parse() {
     let a = source(90);
     let b = a.to_string();
     let c = b.parse::<i64>().unwrap();
-    let d : i64 = b.parse().unwrap();
+    let d: i64 = b.parse().unwrap();
 
     sink(a); // $ hasValueFlow=90
     sink_string(b); // $ hasTaintFlow=90
@@ -489,7 +527,7 @@ fn iterators() {
         sink(v); // $ MISSING: hasValueFlow=91
     }
 
-    let vs2 : Vec<&i64> = vs.iter().collect();
+    let vs2: Vec<&i64> = vs.iter().collect();
     for &v in vs2 {
         sink(v); // $ MISSING: hasValueFlow=91
     }
@@ -529,7 +567,7 @@ fn conversions() {
 
     sink(a as i64); // $ hasTaintFlow=50
     sink(a.into()); // $ MISSING: hasValueFlow=50
-    sink(i64::from(a)); // $ hasValueFlow=50
+    sink(i64::from(a)); // $ MISSING: hasTaintFlow=50 -- we cannot resolve the `impl<T> From<T> for T` implementation
 
     let b: i32 = source(51) as i32;
 
@@ -558,6 +596,7 @@ fn main() {
     struct_nested_match();
     option_pattern_match_qualified();
     option_pattern_match_unqualified();
+    option_chained_let();
     option_unwrap();
     option_unwrap_or();
     option_questionmark();

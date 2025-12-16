@@ -1,5 +1,10 @@
 private import AstImport
 
+/**
+ * A type expression. For example, the string `MyNamespace.MyClass` in:
+ * ```
+ * [MyNamespace.MyClass]$obj = [MyNamespace.MyClass]::new()
+ */
 class TypeNameExpr extends Expr, TTypeNameExpr {
   private predicate parseName(string namespace, string typename) {
     exists(string fullName | fullName = this.getPossiblyQualifiedName() |
@@ -14,15 +19,21 @@ class TypeNameExpr extends Expr, TTypeNameExpr {
     )
   }
 
-  string getName() { this.parseName(_, result) }
+  string getLowerCaseName() { this.parseName(_, result) }
+
+  bindingset[result]
+  pragma[inline_late]
+  string getAName() { this.parseName(_, result.toLowerCase()) }
 
   /** If any */
-  string getPossiblyQualifiedName() { result = getRawAst(this).(Raw::TypeNameExpr).getName() }
+  string getPossiblyQualifiedName() {
+    result = getRawAst(this).(Raw::TypeNameExpr).getName().toLowerCase()
+  }
 
   // TODO: What to do when System is omitted?
   string getNamespace() { this.parseName(result, _) }
 
-  override string toString() { result = this.getName() }
+  override string toString() { result = this.getLowerCaseName() }
 
   predicate isQualified() { this.getNamespace() != "" }
 
