@@ -75,7 +75,7 @@ abstract class YearWriteOp extends Operation {
 /**
  * A unary operation (Crement) performed on a Year field.
  */
-class YearWriteOpUnary extends YearWriteOp, UnaryOperation {
+class YearWriteOpUnary extends YearWriteOp, UnaryArithmeticOperation {
   YearWriteOpUnary() { this.getOperand() instanceof YearFieldAccess }
 
   override YearFieldAccess getYearAccess() { result = this.getOperand() }
@@ -86,22 +86,46 @@ class YearWriteOpUnary extends YearWriteOp, UnaryOperation {
 /**
  * An assignment operation or mutation on the Year field of a date object.
  */
-class YearWriteOpAssignment extends YearWriteOp, Assignment {
-  YearWriteOpAssignment() { this.getLValue() instanceof YearFieldAccess }
+class YearWriteOpAssignment extends YearWriteOp, AssignExpr {
+  Expr mutationExpr;
+
+  YearWriteOpAssignment() {
+    this.getLValue() instanceof YearFieldAccess and
+    exists(DataFlow::Node source, DataFlow::Node sink |
+      sink.asExpr() = this.getRValue() and
+      OperationToYearAssignmentFlow::flow(source, sink) and
+      mutationExpr = source.asExpr()
+    ) and
+    not this.getRValue() instanceof LikelyAToIOperation
+  }
 
   override YearFieldAccess getYearAccess() { result = this.getLValue() }
 
-  override Expr getMutationExpr() {
-    // Note: may need to use DF analysis to pull out the original value,
-    // if there is excessive false positives.
-    if this.getOperator() = "="
-    then
-      exists(DataFlow::Node source, DataFlow::Node sink |
-        sink.asExpr() = this.getRValue() and
-        OperationToYearAssignmentFlow::flow(source, sink) and
-        result = source.asExpr()
-      )
-    else result = this
+  override Expr getMutationExpr() { result = mutationExpr }
+}
+
+class YearArithmetiWriteOpArithmeticAssignment extends YearWriteOp, AssignArithmeticOperation {
+  YearArithmetiWriteOpArithmeticAssignment() {
+    this.getLValue() instanceof YearFieldAccess and
+    not this instanceof AssignRemExpr and
+    not this.getRValue() instanceof LikelyAToIOperation
+  }
+
+  override YearFieldAccess getYearAccess() { result = this.getLValue() }
+
+  override Expr getMutationExpr() { result = this }
+}
+
+class LikelyAToIOperation extends Operation {
+  LikelyAToIOperation() {
+    this.(SubExpr).getLeftOperand().getUnspecifiedType() instanceof CharType and
+    this.(SubExpr).getRightOperand().(Literal).getValue().toInt() = 48
+    or
+    this.(SubExpr).getRightOperand().(CharLiteral).getValue().toInt() = 48
+    or
+    this.(MulExpr).getLeftOperand().(Literal).getValue().toInt() % 10 = 0
+    or
+    this instanceof UnaryMinusExpr
   }
 }
 
@@ -111,8 +135,23 @@ class YearWriteOpAssignment extends YearWriteOp, Assignment {
  */
 module OperationToYearAssignmentConfig implements DataFlow::ConfigSig {
   predicate isSource(DataFlow::Node n) {
-    not n.asExpr() instanceof Access and
-    not n.asExpr() instanceof Literal
+    (
+      n.asExpr() instanceof BinaryArithmeticOperation
+      or
+      n.asExpr() instanceof UnaryArithmeticOperation
+    ) and
+    not n.asExpr() instanceof LikelyAToIOperation and
+    not n.asExpr().(MulExpr).getAnOperand() instanceof LikelyAToIOperation and
+    not n.asExpr() instanceof RemExpr and
+    not n.asExpr() instanceof UnaryMinusExpr and
+    // not n.asExpr() instanceof AssignRemExpr and
+    not n.getType().getUnspecifiedType() instanceof PointerType and
+    // TODO: or if this is part of an operation
+    not exists(SubExpr atoi, Literal zero |
+      n.asExpr() = atoi and
+      zero = atoi.getAnOperand() and
+      zero.getValue().toInt() = 0
+    )
   }
 
   predicate isSink(DataFlow::Node n) {
@@ -121,16 +160,24 @@ module OperationToYearAssignmentConfig implements DataFlow::ConfigSig {
       a.getRValue() = n.asExpr()
     )
   }
+
+  predicate isBarrier(DataFlow::Node n) {
+    exists(ArrayExpr arr | arr.getArrayOffset() = n.asExpr())
+    or
+    n.asExpr().getUnspecifiedType() instanceof PointerType
+    or
+    n.asExpr() instanceof LikelyAToIOperation
+  }
 }
 
-module OperationToYearAssignmentFlow = DataFlow::Global<OperationToYearAssignmentConfig>;
+module OperationToYearAssignmentFlow = TaintTracking::Global<OperationToYearAssignmentConfig>;
 
 from Variable var, YearWriteOp ywo, Expr mutationExpr
 where
   mutationExpr = ywo.getMutationExpr() and
   isYearModifedWithoutExplicitLeapYearCheck(var, ywo) and
   not isNormalizationOperation(mutationExpr) and
-  not ywo instanceof AddressOfExpr and
+  // not ywo instanceof AddressOfExpr and
   not exists(Call c, TimeConversionFunction f | f.getACallToThisFunction() = c |
     c.getAnArgument().getAChild*() = var.getAnAccess() and
     ywo.getASuccessor*() = c
