@@ -46,6 +46,8 @@ typedef struct _TIME_DYNAMIC_ZONE_INFORMATION {
 	BOOLEAN DynamicDaylightTimeDisabled;
 } DYNAMIC_TIME_ZONE_INFORMATION, *PDYNAMIC_TIME_ZONE_INFORMATION;
 
+typedef const wchar_t* LPCWSTR;
+
 struct tm
 {
 	int tm_sec;   // seconds after the minute - [0, 60] including leap second
@@ -109,6 +111,10 @@ TzSpecificLocalTimeToSystemTimeEx(
 	const DYNAMIC_TIME_ZONE_INFORMATION* lpTimeZoneInformation,
 	const SYSTEMTIME* lpLocalTime,
 	LPSYSTEMTIME lpUniversalTime
+);
+
+int _wtoi(
+   const wchar_t *str
 );
 
 void GetSystemTime(
@@ -1004,3 +1010,48 @@ bool tp_intermediaryVar(struct timespec now, struct logtime &timestamp_remote)
 		tm.tm_mday = tm.tm_mon == 2 && tm.tm_mday == 29 && !isLeapYear ? 28 : tm.tm_mday;
 		return tm;
 	}
+
+/**
+* Negative Case - Anti-pattern 1: [year ±n, month, day]
+* Modification of SYSTEMTIME struct by copying from another struct, but no arithmetic is performed.
+*/
+bool
+FMAPITimeToSysTimeW(LPCWSTR wszTime, SYSTEMTIME *psystime)
+{
+	// if (!wszTime || SafeIsBadReadPtr(wszTime, 1) || lstrlenW(wszTime) != cchMAPITime)
+	// 	return false;
+	// AssertTag(!SafeIsBadWritePtr(psystime, sizeof(SYSTEMTIME)), 0x0004289a /* tag_abc80 */);
+	// memset(psystime, 0, sizeof(SYSTEMTIME));
+
+	psystime->wYear = (WORD)_wtoi(wszTime);
+	psystime->wMonth = (WORD)_wtoi(wszTime+5);
+	psystime->wDay = (WORD)_wtoi(wszTime+8);
+	psystime->wHour = (WORD)_wtoi(wszTime+11);
+	psystime->wMinute = (WORD)_wtoi(wszTime+14);
+	return true;
+}
+
+/**
+* Negative Case - Anti-pattern 1: [year ±n, month, day]
+* Modification of SYSTEMTIME struct by copying from another struct, but no arithmetic is performed.
+*/
+bool
+ATime::HrGetSysTime(
+	SYSTEMTIME	*pst
+	) const
+{
+	// if (!FValidSysTime())
+	// 	{
+	// 	TrapSzTag("ATime cannot be converted to SYSTEMTIME", 0x1e14f5c3 /* tag_4fpxd */);
+	// 	CORgTag(E_FAIL, 0x6c373230 /* tag_l720 */);
+	// 	}
+	
+	// pst->wYear = static_cast<WORD>(m_lYear);
+	// pst->wMonth = static_cast<WORD>(m_lMonth);
+	// //pst->wDayOfWeek = ???;
+	// pst->wDay = static_cast<WORD>(m_lDay);
+	// pst->wHour = static_cast<WORD>(m_lHour);
+	// pst->wMinute = static_cast<WORD>(m_lMinute);
+	// pst->wSecond = static_cast<WORD>(m_lSecond);
+	// pst->wMilliseconds = 0;
+}
