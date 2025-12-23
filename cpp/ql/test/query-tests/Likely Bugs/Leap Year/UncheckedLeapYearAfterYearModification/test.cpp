@@ -1036,9 +1036,7 @@ FMAPITimeToSysTimeW(LPCWSTR wszTime, SYSTEMTIME *psystime)
 * Modification of SYSTEMTIME struct by copying from another struct, but no arithmetic is performed.
 */
 bool
-ATime::HrGetSysTime(
-	SYSTEMTIME	*pst
-	) const
+ATime_HrGetSysTime(SYSTEMTIME *pst)
 {
 	// if (!FValidSysTime())
 	// 	{
