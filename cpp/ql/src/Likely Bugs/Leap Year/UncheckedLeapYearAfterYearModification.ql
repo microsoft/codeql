@@ -62,8 +62,7 @@ abstract class YearWriteOp extends Operation {
         or
         // If there is a successor or predecessor that sets the month or day to a fixed value
         exists(FieldAccess mfa, AssignExpr ae, int val |
-          mfa instanceof MonthFieldAccess or mfa instanceof DayFieldAccess
-        |
+          (mfa instanceof MonthFieldAccess or mfa instanceof DayFieldAccess) and
           mfa.getQualifier() = var.getAnAccess() and
           mfa.isModified() and
           (

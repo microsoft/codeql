@@ -100,11 +100,46 @@ class YearFieldAssignmentAccess extends YearFieldAssignment{
 }
 
 /**
- * 
+ * A year field assignment, by a unary operator ie `x++`.
  */
 class YearFieldAssignmentUnary extends YearFieldAssignment instanceof UnaryArithmeticOperation{
     YearFieldAssignmentUnary(){
-        this.getOperand() instanceof YearFieldAccess and
+        this.getOperand() instanceof YearFieldAccess
+    }
+}
+
+class MonthOrDayFieldAccess extends FieldAccess{
+    MonthOrDayFieldAccess(){
+        this instanceof MonthFieldAccess
+        or
+        this instanceof DayFieldAccess
+    }
+}
+
+/**
+ * A static assignment to the day or month access
+ * 
+ * ```
+ * a.day = 28;
+ * ```
+ */
+class GoodExpr extends YearFieldAssignment{
+    GoodExpr(){
+        exists(Variable var, VariableAccess va, YearFieldAccess yfa |
+        // yfa = this.getYearAccess() and
+        yfa.getQualifier() = va and
+        var.getAnAccess() = va and
+        exists(MonthOrDayFieldAccess mfa, AssignExpr ae, int val |
+            mfa.getQualifier() = var.getAnAccess() and
+            mfa.isModified() and
+            (
+                mfa.getBasicBlock() = yfa.getBasicBlock().getASuccessor*() or
+                yfa.getBasicBlock() = mfa.getBasicBlock().getASuccessor+()
+            ) and
+            ae = mfa.getEnclosingElement() and
+            ae.getAnOperand().getValue().toInt() = val
+            )
+        )
     }
 }
 
