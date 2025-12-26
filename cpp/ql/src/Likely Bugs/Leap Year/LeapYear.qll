@@ -5,6 +5,7 @@
 import cpp
 import semmle.code.cpp.dataflow.new.TaintTracking
 import semmle.code.cpp.commons.DateTime
+import semmle.code.cpp.valuenumbering.HashCons
 
 /**
  * Get the top-level `BinaryOperation` enclosing the expression e.
@@ -63,42 +64,11 @@ Expr moduloCheckNEQ_0(NEExpr neq, int modVal) {
  * Returns if the two expressions resolve to the same value, albeit it is a fuzzy attempt.
  * SSA is not fit for purpose here as calls break SSA equivalence.
  */
+bindingset[e1,e2]
+pragma[inline_late]
 predicate exprEq_propertyPermissive(Expr e1, Expr e2) {
   not e1 = e2 and
-  (
-    DataFlow::localFlow(DataFlow::exprNode(e1), DataFlow::exprNode(e2))
-    or
-    if e1 instanceof ThisExpr and e2 instanceof ThisExpr
-    then any()
-    else
-      /* If it's a direct Access, check that the target is the same. */
-      if e1 instanceof Access
-      then e1.(Access).getTarget() = e2.(Access).getTarget()
-      else
-        /* If it's a Call, compare qualifiers and only permit no-argument Calls. */
-        if e1 instanceof Call
-        then
-          e1.(Call).getTarget() = e2.(Call).getTarget() and
-          e1.(Call).getNumberOfArguments() = 0 and
-          e2.(Call).getNumberOfArguments() = 0 and
-          if e1.(Call).hasQualifier()
-          then exprEq_propertyPermissive(e1.(Call).getQualifier(), e2.(Call).getQualifier())
-          else any()
-        else
-          /* If it's a binaryOperation, compare op and recruse */
-          if e1 instanceof BinaryOperation
-          then
-            e1.(BinaryOperation).getOperator() = e2.(BinaryOperation).getOperator() and
-            exprEq_propertyPermissive(e1.(BinaryOperation).getLeftOperand(),
-              e2.(BinaryOperation).getLeftOperand()) and
-            exprEq_propertyPermissive(e1.(BinaryOperation).getRightOperand(),
-              e2.(BinaryOperation).getRightOperand())
-          else
-            // Otherwise fail (and permit the raising of a finding)
-            if e1 instanceof Literal
-            then e1.(Literal).getValue() = e2.(Literal).getValue()
-            else none()
-  )
+  hashCons(e1) = hashCons(e2)
 }
 
 /**

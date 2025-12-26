@@ -138,17 +138,20 @@ class YearFieldAssignmentUnary extends YearFieldAssignment instanceof CrementOpe
   override YearFieldAccess getYearFieldAccess() { result = access }
 }
 
-/**
- * An access to either a Month or Day.
- */
-class MonthOrDayFieldAccess extends FieldAccess {
-  MonthOrDayFieldAccess() {
-    this instanceof MonthFieldAccess
-    or
-    this instanceof DayFieldAccess
-  }
-}
+// *
+//  An access to either a Month or Day.
+// /
+// class MonthOrDayFieldAccess extends FieldAccess {
+//   MonthOrDayFieldAccess() {
+//     this instanceof MonthFieldAccess
+//     or
+//     this instanceof DayFieldAccess
+//   }
+// }
 
+/**
+ * An operation of interest to source from
+ */
 class OperationNode extends DataFlow::Node{
     OperationNode(){
       this.asExpr() instanceof Operation
