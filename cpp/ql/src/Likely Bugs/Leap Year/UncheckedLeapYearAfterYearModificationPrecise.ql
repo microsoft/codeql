@@ -149,6 +149,25 @@ class MonthOrDayFieldAccess extends FieldAccess {
   }
 }
 
+class OperationNode extends DataFlow::Node{
+    OperationNode(){
+      this.asExpr() instanceof Operation
+      or
+      this.asExpr() instanceof AssignArithmeticOperation
+    }
+}
+
+/**
+ * An access or assignment to a Year field.
+ */
+class YearFieldAccessNode extends DataFlow::Node{
+    YearFieldAccessNode(){
+        this.asExpr() instanceof YearFieldAssignment
+        or
+        this.asExpr() instanceof YearFieldAccess
+    }
+}
+
 /**
  * Flow for non operation candidate sources to year assignments to detect
  * ignorable functions.
@@ -157,17 +176,12 @@ class MonthOrDayFieldAccess extends FieldAccess {
  */
 module IgnorableOperationToYearConfig implements DataFlow::ConfigSig {
   predicate isSource(DataFlow::Node n) {
-    (
-      n.asExpr() instanceof Operation or
-      n.asExpr() instanceof AssignArithmeticOperation
-    ) and
+    n instanceof OperationNode and
     not isOperationSourceCandidate(n.asExpr())
   }
 
   predicate isSink(DataFlow::Node n) {
-    n.asExpr() instanceof YearFieldAssignment
-    or
-    n.asExpr() instanceof YearFieldAccess
+    n instanceof YearFieldAccessNode
   }
 
   // looking for sources and sinks in the same function
@@ -182,17 +196,12 @@ module IgnorableOperationToYearFlow = TaintTracking::Global<IgnorableOperationTo
 
 module YearToIgnorableOperationConfig implements DataFlow::ConfigSig {
   predicate isSink(DataFlow::Node n) {
-    (
-      n.asExpr() instanceof Operation or
-      n.asExpr() instanceof AssignArithmeticOperation
-    ) and
+    n instanceof OperationNode and
     not isOperationSourceCandidate(n.asExpr())
   }
 
   predicate isSource(DataFlow::Node n) {
-    n.asExpr() instanceof YearFieldAssignment
-    or
-    n.asExpr() instanceof YearFieldAccess
+    n instanceof YearFieldAccessNode
   }
 
   // looking for sources and sinks in the same function
