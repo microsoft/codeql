@@ -1,13 +1,13 @@
 /**
-* @name Year field changed using an arithmetic operation without checking for leap year (AntiPattern 1)
-* @description A field that represents a year is being modified by an arithmetic operation, but no proper check for leap years can be detected afterwards.
-* @kind path-problem
-* @problem.severity warning
-* @id cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification-precise
-* @precision medium
-* @tags leap-year
-*       correctness
-*/
+ * @name Year field changed using an arithmetic operation without checking for leap year (AntiPattern 1)
+ * @description A field that represents a year is being modified by an arithmetic operation, but no proper check for leap years can be detected afterwards.
+ * @kind path-problem
+ * @problem.severity warning
+ * @id cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification-precise
+ * @precision medium
+ * @tags leap-year
+ *       correctness
+ */
 
 import cpp
 import LeapYear
@@ -18,47 +18,30 @@ import LeapYear
  */
 abstract class IgnorableOperation extends Expr { }
 
-class IgnorableExprAssignRem extends IgnorableOperation instanceof AssignRemExpr { }
-
 class IgnorableExprRem extends IgnorableOperation instanceof RemExpr { }
-
-class IgnorableExprUnaryMinus extends IgnorableOperation instanceof UnaryMinusExpr { }
-
-class IgnorableNonPlusMinusOperation extends IgnorableOperation instanceof Operation {
-  IgnorableNonPlusMinusOperation() { not isOperationSourceCandidate(this) }
-}
-
-class IgnorableNonPlusMinusAssignment extends IgnorableOperation instanceof AssignArithmeticOperation
-{
-  IgnorableNonPlusMinusAssignment() { not isOperationSourceCandidate(this) }
-}
 
 /**
  * Anything involving a sub expression with char literal 48, ignore as a likely string conversion
  */
-class IgnorableExpr48Mapping extends IgnorableOperation {
-  IgnorableExpr48Mapping() {
-    exists(SubExpr child | this.(Operation).getAChild*() = child |
-      child.getRightOperand().(Literal).getValue().toInt() = 48
-      or
-      child.getRightOperand().(CharLiteral).getValue().toInt() = 48
+class IgnorableExpr10MulipleComponent extends IgnorableOperation {
+  IgnorableExpr10MulipleComponent() {
+    this.(MulExpr).getAnOperand().(Literal).getValue().toInt() in [10, 100, 100]
+    or
+    exists(AssignMulExpr a | a.getRValue() = this |
+      a.getRValue().(Literal).getValue().toInt() in [10, 100, 100]
     )
   }
 }
 
 /**
- * if doing any kind of operation involving multiplying 10, 100, 1000, etc., likely some kind of conversion
- * and ignorable
+ * Anything involving a sub expression with char literal 48, ignore as a likely string conversion
+ * e.g., X - '0'
  */
-class IgnorableExpr10MulipleComponent extends IgnorableOperation {
-  IgnorableExpr10MulipleComponent() {
-    this.(Operation).getAChild*().(MulExpr).getAnOperand().(Literal).getValue().toInt() in [
-        10, 100, 100
-      ]
+class IgnorableExpr48Mapping extends IgnorableOperation {
+  IgnorableExpr48Mapping() {
+    this.(SubExpr).getRightOperand().(Literal).getValue().toInt() = 48
     or
-    exists(AssignMulExpr a | this = a or a.getRValue() = this |
-      a.getRValue().getAChild*().(Literal).getValue().toInt() in [10, 100, 100]
-    )
+    exists(AssignSubExpr e | e.getRValue() = this | e.getRValue().(Literal).getValue().toInt() = 48)
   }
 }
 
@@ -70,35 +53,78 @@ class IgnorableExpr10MulipleComponent extends IgnorableOperation {
 
 class IgnorableExprExpr1900Mapping extends IgnorableOperation {
   IgnorableExprExpr1900Mapping() {
-    this.(Operation).getAnOperand().getAChild*().(Literal).getValue().toInt() = 1900
+    this.(Operation).getAnOperand().(Literal).getValue().toInt() = 1900
     or
-    exists(AssignArithmeticOperation a | this = a or this = a.getRValue() |
-      a.getRValue().getAChild*().(Literal).getValue().toInt() = 1900
+    exists(AssignArithmeticOperation a | this = a.getRValue() |
+      a.getRValue().(Literal).getValue().toInt() = 1900
     )
-    // or
-    // this.(Literal).getValue().toInt() = 1900
   }
 }
 
-predicate isOperationSourceCandidate(Expr e) {
-  e instanceof SubExpr
-  or
-  e instanceof AddExpr
-  or
-  e instanceof CrementOperation
-  or
-  exists(AssignSubExpr a | a.getRValue() = e)
-  or
-  exists(AssignAddExpr a | a.getRValue() = e)
+class IgnorableBinaryBitwiseOperation extends IgnorableOperation instanceof BinaryBitwiseOperation {
 }
+
+class IgnorableUnaryBitwiseOperation extends IgnorableOperation instanceof UnaryBitwiseOperation { }
+
+class IgnorableAssignmentBitwiseOperation extends IgnorableOperation instanceof AssignBitwiseOperation
+{ }
+
+predicate isOperationSourceCandidate(Expr e) {
+  not e instanceof IgnorableOperation and
+  (
+    e instanceof SubExpr
+    or
+    e instanceof AddExpr
+    or
+    e instanceof CrementOperation
+    or
+    exists(AssignSubExpr a | a.getRValue() = e)
+    or
+    exists(AssignAddExpr a | a.getRValue() = e)
+  )
+}
+
+module OperationSourceCandidateToIgnorableOperationConfig implements DataFlow::ConfigSig {
+  predicate isSource(DataFlow::Node n) { isOperationSourceCandidate(n.asExpr()) }
+
+  predicate isSink(DataFlow::Node n) { n.asExpr() instanceof IgnorableOperation }
+
+  // looking for sources and sinks in the same function
+  DataFlow::FlowFeature getAFeature() {
+    result instanceof DataFlow::FeatureEqualSourceSinkCallContext
+  }
+
+  predicate isBarrierOut(DataFlow::Node n) { isSink(n) }
+}
+
+module OperationSourceCandidateToIgnorableOperationFlow =
+  TaintTracking::Global<OperationSourceCandidateToIgnorableOperationConfig>;
+
+module IgnorableOperationToOperationSourceCandidateConfig implements DataFlow::ConfigSig {
+  predicate isSource(DataFlow::Node n) { n.asExpr() instanceof IgnorableOperation }
+
+  predicate isSink(DataFlow::Node n) { isOperationSourceCandidate(n.asExpr()) }
+
+  // looking for sources and sinks in the same function
+  DataFlow::FlowFeature getAFeature() {
+    result instanceof DataFlow::FeatureEqualSourceSinkCallContext
+  }
+}
+
+module IgnorableOperationToOperationSourceCandidateFlow =
+  TaintTracking::Global<IgnorableOperationToOperationSourceCandidateConfig>;
 
 class OperationSource extends Expr {
   OperationSource() {
-    // operation source candidates that aren't nested inside other operation source candidates
     isOperationSourceCandidate(this) and
-    not exists(Expr parent | isOperationSourceCandidate(parent) | parent.getAChild+() = this) and
-    not this instanceof IgnorableOperation and
-    not this.getEnclosingFunction() instanceof IgnorableFunction
+    not exists(OperationSourceCandidateToIgnorableOperationFlow::PathNode src |
+      src.getNode().asExpr() = this and
+      src.isSource()
+    ) and
+    not exists(IgnorableOperationToOperationSourceCandidateFlow::PathNode sink |
+      sink.getNode().asExpr() = this and
+      sink.isSink()
+    )
   }
 }
 
@@ -138,101 +164,6 @@ class YearFieldAssignmentUnary extends YearFieldAssignment instanceof CrementOpe
   override YearFieldAccess getYearFieldAccess() { result = access }
 }
 
-// *
-//  An access to either a Month or Day.
-// /
-// class MonthOrDayFieldAccess extends FieldAccess {
-//   MonthOrDayFieldAccess() {
-//     this instanceof MonthFieldAccess
-//     or
-//     this instanceof DayFieldAccess
-//   }
-// }
-
-/**
- * An operation of interest to source from
- */
-class OperationNode extends DataFlow::Node{
-    OperationNode(){
-      this.asExpr() instanceof Operation
-      or
-      this.asExpr() instanceof AssignArithmeticOperation
-    }
-}
-
-/**
- * An access or assignment to a Year field.
- */
-class YearFieldAccessNode extends DataFlow::Node{
-    YearFieldAccessNode(){
-        this.asExpr() instanceof YearFieldAssignment
-        or
-        this.asExpr() instanceof YearFieldAccess
-    }
-}
-
-/**
- * Flow for non operation candidate sources to year assignments to detect
- * ignorable functions.
- * If the ignorable operation flows to a year assignment and the source and sink
- * are in the same function, we will consider that function ignorable.
- */
-module IgnorableOperationToYearConfig implements DataFlow::ConfigSig {
-  predicate isSource(DataFlow::Node n) {
-    n instanceof OperationNode and
-    not isOperationSourceCandidate(n.asExpr())
-  }
-
-  predicate isSink(DataFlow::Node n) {
-    n instanceof YearFieldAccessNode
-  }
-
-  // looking for sources and sinks in the same function
-  DataFlow::FlowFeature getAFeature() {
-    result instanceof DataFlow::FeatureEqualSourceSinkCallContext
-  }
-
-  predicate isBarrierOut(DataFlow::Node n) { isSink(n) }
-}
-
-module IgnorableOperationToYearFlow = TaintTracking::Global<IgnorableOperationToYearConfig>;
-
-module YearToIgnorableOperationConfig implements DataFlow::ConfigSig {
-  predicate isSink(DataFlow::Node n) {
-    n instanceof OperationNode and
-    not isOperationSourceCandidate(n.asExpr())
-  }
-
-  predicate isSource(DataFlow::Node n) {
-    n instanceof YearFieldAccessNode
-  }
-
-  // looking for sources and sinks in the same function
-  DataFlow::FlowFeature getAFeature() {
-    result instanceof DataFlow::FeatureEqualSourceSinkCallContext
-  }
-
-  predicate isBarrierOut(DataFlow::Node n) { isSink(n) }
-}
-
-module YearToIgnorableOperationFlow = TaintTracking::Global<YearToIgnorableOperationConfig>;
-
-class IgnorableFunction extends Function {
-  IgnorableFunction() { isIgnorableFunction(this) }
-}
-
-predicate isIgnorableFunction(Function f) {
-  exists(IgnorableOperationToYearFlow::PathNode sink |
-    sink.getNode().asExpr().getEnclosingFunction() = f and
-    sink.isSink()
-  )
-  or
-  exists(YearToIgnorableOperationFlow::PathNode sink |
-    sink.getNode().asExpr().getEnclosingFunction() = f and
-    sink.isSink()
-  )
-}
-
 /**
  * A DataFlow configuration for identifying flows from some non trivial access or literal
  * to the Year field of a date object.
@@ -248,42 +179,77 @@ module OperationToYearAssignmentConfig implements DataFlow::ConfigSig {
     n.asExpr().getUnspecifiedType() instanceof PointerType
     or
     n.asExpr() instanceof IgnorableOperation
-    or
-    exists(ChecksForLeapYearFunctionCall fc | fc.getAnArgument() = n.asExpr())
-    or
-    n.asExpr().getEnclosingFunction() instanceof IgnorableFunction
   }
 }
 
 module OperationToYearAssignmentFlow = TaintTracking::Global<OperationToYearAssignmentConfig>;
 
+module KnownYearOpSourceToKnownYearOpSourceConfig implements DataFlow::ConfigSig {
+  predicate isSource(DataFlow::Node n) {
+    exists(OperationToYearAssignmentFlow::PathNode src |
+      src.getNode().asExpr() = n.asExpr() and
+      src.isSource()
+    )
+  }
+
+  predicate isSink(DataFlow::Node n) {
+    exists(OperationToYearAssignmentFlow::PathNode src |
+      src.getNode().asExpr() = n.asExpr() and
+      src.isSource()
+    )
+  }
+}
+
+module KnownYearOpSourceToKnownYearOpSourceFlow =
+  TaintTracking::Global<KnownYearOpSourceToKnownYearOpSourceConfig>;
+
+predicate isRootOperationSource(OperationSource e) {
+  not exists(DataFlow::Node src, DataFlow::Node sink |
+    src != sink and
+    KnownYearOpSourceToKnownYearOpSourceFlow::flow(src, sink) and
+    sink.asExpr() = e
+  )
+}
+
+module YearFieldAccessToLeapYearCheckConfig implements DataFlow::ConfigSig {
+  predicate isSource(DataFlow::Node source) { source.asExpr() instanceof YearFieldAccess }
+
+  predicate isSink(DataFlow::Node sink) {
+    // Local leap year check
+    sink.asExpr().(LeapYearFieldAccess).isUsedInCorrectLeapYearCheck()
+    or
+    // passed to function that seems to check for leap year
+    exists(ChecksForLeapYearFunctionCall fc |
+      sink.asExpr() = fc.getAnArgument()
+      or
+      sink.asExpr() = fc.getAnArgument().(FieldAccess).getQualifier()
+      or
+      exists(AddressOfExpr aoe |
+        fc.getAnArgument() = aoe and
+        aoe.getOperand() = sink.asExpr()
+      )
+    )
+  }
+
+  predicate isAdditionalFlowStep(DataFlow::Node node1, DataFlow::Node node2) {
+    // flow from a YearFieldAccess to the qualifier
+    node1.asExpr() instanceof YearFieldAccess and
+    node2.asExpr() = node1.asExpr().(YearFieldAccess).getQualifier()
+  }
+  // Use this to make the sink for leap year check intra-proc only
+  // i.e., the sink must be in the same scope (function) as the source.
+  // DataFlow::FlowFeature getAFeature() {
+  //   result instanceof DataFlow::FeatureEqualSourceSinkCallContext
+  // }
+}
+
+module YearFieldAccessToLeapYearCheckFlow =
+  TaintTracking::Global<YearFieldAccessToLeapYearCheckConfig>;
+
 predicate isYearModifiedWithCheck(YearFieldAccess fa) {
-  // If there is a local check for leap year after the modification
-  exists(LeapYearFieldAccess yfacheck, Variable var, YearFieldAccess yfa |
-    // TODO: cleanup
-    yfa = fa and
-    var.getAnAccess() = fa.getQualifier() and
-    yfacheck.getQualifier() = var.getAnAccess() and
-    yfacheck.isUsedInCorrectLeapYearCheck() and
-    yfacheck.getBasicBlock() = yfa.getBasicBlock().getASuccessor*()
-  )
-  or
-  // If there is a data flow from the variable that was modified to a function that seems to check for leap year
-  exists(VariableAccess source, ChecksForLeapYearFunctionCall fc, Variable var |
-    var.getAnAccess() = fa.getQualifier() and
-    source = var.getAnAccess() and
-    LeapYearCheckFlow::flow(DataFlow::exprNode(source), DataFlow::exprNode(fc.getAnArgument()))
-  )
-  or
-  // If there is a data flow from the field that was modified to a function that seems to check for leap year
-  exists(
-    VariableAccess vacheck, YearFieldAccess yfacheck, ChecksForLeapYearFunctionCall fc, Variable var
-  |
-    // TODO: cleanup
-    var.getAnAccess() = fa.getQualifier() and
-    vacheck = var.getAnAccess() and
-    yfacheck.getQualifier() = vacheck and
-    LeapYearCheckFlow::flow(DataFlow::exprNode(yfacheck), DataFlow::exprNode(fc.getAnArgument()))
+  exists(YearFieldAccessToLeapYearCheckFlow::PathNode src |
+    src.isSource() and
+    src.getNode().asExpr() = fa
   )
 }
 
@@ -292,5 +258,6 @@ import OperationToYearAssignmentFlow::PathGraph
 from OperationToYearAssignmentFlow::PathNode src, OperationToYearAssignmentFlow::PathNode sink
 where
   OperationToYearAssignmentFlow::flowPath(src, sink) and
+  isRootOperationSource(src.getNode().asExpr()) and
   not isYearModifiedWithCheck(sink.getNode().asExpr().(YearFieldAssignment).getYearFieldAccess())
 select sink, src, sink, "TEST"

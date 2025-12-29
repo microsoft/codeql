@@ -64,7 +64,7 @@ Expr moduloCheckNEQ_0(NEExpr neq, int modVal) {
  * Returns if the two expressions resolve to the same value, albeit it is a fuzzy attempt.
  * SSA is not fit for purpose here as calls break SSA equivalence.
  */
-bindingset[e1,e2]
+bindingset[e1, e2]
 pragma[inline_late]
 predicate exprEq_propertyPermissive(Expr e1, Expr e2) {
   not e1 = e2 and
@@ -395,7 +395,7 @@ class ChecksForLeapYearFunctionCall extends FunctionCall {
 }
 
 /**
- * A `DataFlow` configuraiton for finding a variable access that would flow into
+ * A `DataFlow` configuration for finding a variable access that would flow into
  * a function call that includes an operation to check for leap year.
  */
 private module LeapYearCheckFlowConfig implements DataFlow::ConfigSig {
