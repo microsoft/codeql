@@ -1069,3 +1069,23 @@ void fp_daymonth_guard(){
 
 	SystemTimeToFileTime(&st, &ft);
 }
+
+void increment_arg(WORD &x){
+	x++;
+}
+
+void increment_arg_by_pointer(WORD *x){
+	(*x)++;
+}
+
+
+void fn_year_set_through_out_arg(){
+	SYSTEMTIME st;
+	GetSystemTime(&st);
+	// BAD, year incremented without check
+	increment_arg(st.wYear);
+
+	// GetSystemTime(&st);
+	// Bad, year incremented without check
+	increment_arg_by_pointer(&st.wYear);
+}

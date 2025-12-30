@@ -45,18 +45,52 @@ class IgnorableExpr48Mapping extends IgnorableOperation {
   }
 }
 
+class IgnorableCharLiteralArithmetic extends IgnorableOperation {
+  IgnorableCharLiteralArithmetic() {
+    exists(this.(BinaryArithmeticOperation).getAnOperand().(TextLiteral).getValue())
+    or
+    exists(AssignArithmeticOperation e | e.getRValue() = this |
+      exists(this.(TextLiteral).getValue())
+    )
+  }
+}
+
 /*
  * linux time conversions expect the year to start from 1900, so subtracting or
  * adding 1900 or anything involving 1900 as a generalization is probably
  * a conversion that is ignorable
  */
 
-class IgnorableExprExpr1900Mapping extends IgnorableOperation {
-  IgnorableExprExpr1900Mapping() {
-    this.(Operation).getAnOperand().(Literal).getValue().toInt() = 1900
-    or
-    exists(AssignArithmeticOperation a | this = a.getRValue() |
-      a.getRValue().(Literal).getValue().toInt() = 1900
+predicate isLikelyConversionConstant(int c) {
+  c = 146097 or // days in 400-year Gregorian cycle
+  c = 36524 or // days in 100-year Gregorian subcycle
+  c = 1461 or // days in 4-year cycle (incl. 1 leap)
+  c = 32044 or // Fliegel–van Flandern JDN epoch shift
+  c = 1721425 or // JDN of 0001‑01‑01 (Gregorian)
+  c = 1721119 or // alt epoch offset
+  c = 2400000 or // MJD → JDN conversion
+  c = 2400001 or
+  c = 2400000 or
+  c = 2141 or // fixed‑point month/day extraction
+  c = 65536 or
+  c = 7834 or
+  c = 256 or
+  c = 1900 // struct tm base‑year offset; harmless
+}
+
+/**
+ * Some constants indicate conversion that are ignorable, e.g.,
+ * julian to gregorian conversion or conversions from linux time structs
+ * that start at 1900, etc.
+ */
+class IgnorableConstantArithmetic extends IgnorableOperation {
+  IgnorableConstantArithmetic() {
+    exists(int i | isLikelyConversionConstant(i) |
+      this.(Operation).getAnOperand().(Literal).getValue().toInt() = i
+      or
+      exists(AssignArithmeticOperation a | this = a.getRValue() |
+        a.getRValue().(Literal).getValue().toInt() = i
+      )
     )
   }
 }
@@ -68,6 +102,26 @@ class IgnorableUnaryBitwiseOperation extends IgnorableOperation instanceof Unary
 
 class IgnorableAssignmentBitwiseOperation extends IgnorableOperation instanceof AssignBitwiseOperation
 { }
+
+/**
+ * Any arithmetic operation where one of the operands is a pointer or char type, ignore it
+ */
+class IgnorablePointerOrCharArithmetic extends IgnorableOperation {
+  IgnorablePointerOrCharArithmetic() {
+    this instanceof BinaryArithmeticOperation and
+    (
+      this.(BinaryArithmeticOperation).getAnOperand().getUnspecifiedType() instanceof PointerType
+      or
+      this.(BinaryArithmeticOperation).getAnOperand().getUnspecifiedType() instanceof CharType
+    )
+    or
+    exists(AssignArithmeticOperation a | a.getRValue() = this |
+      a.getAnOperand().getUnspecifiedType() instanceof PointerType
+      or
+      a.getAnOperand().getUnspecifiedType() instanceof CharType
+    )
+  }
+}
 
 /**
  * An expression that is a candidate source for an dataflow configuration for an Operation that could flow to a Year field.
@@ -147,6 +201,27 @@ class OperationSource extends Expr {
   }
 }
 
+class YearFieldAssignmentNode extends DataFlow::Node {
+  YearFieldAssignmentNode() {
+    this.asExpr() instanceof YearFieldAssignment
+    or
+    this.asDefiningArgument() instanceof YearFieldAccess
+    or
+    // TODO: is there a better way to do this?
+    // i.e., without having to be cognizant of the addressof
+    // occurring, especially if this occurs on a dataflow
+    exists(AddressOfExpr aoe |
+      aoe = this.asDefiningArgument() and
+      aoe.getOperand() instanceof YearFieldAccess
+    )
+  }
+
+  YearFieldAccess getYearFieldAccess() {
+    result = this.asDefiningArgument() or
+    result = this.asExpr().(YearFieldAssignment).getYearFieldAccess()
+  }
+}
+
 /**
  * An assignment to a year field, which will be a sink
  * NOTE: could not make this abstract, it was binding to all expressions
@@ -190,15 +265,20 @@ class YearFieldAssignmentUnary extends YearFieldAssignment instanceof CrementOpe
 module OperationToYearAssignmentConfig implements DataFlow::ConfigSig {
   predicate isSource(DataFlow::Node n) { n.asExpr() instanceof OperationSource }
 
-  predicate isSink(DataFlow::Node n) { n.asExpr() instanceof YearFieldAssignment }
+  predicate isSink(DataFlow::Node n) { n instanceof YearFieldAssignmentNode }
 
   predicate isBarrier(DataFlow::Node n) {
     exists(ArrayExpr arr | arr.getArrayOffset() = n.asExpr())
     or
     n.asExpr().getUnspecifiedType() instanceof PointerType
     or
+    n.asExpr().getUnspecifiedType() instanceof CharType
+    or
     n.asExpr() instanceof IgnorableOperation
   }
+
+  predicate isBarrierOut(DataFlow::Node n) { isSink(n) }
+  // DataFlow::FlowFeature getAFeature() { result instanceof DataFlow::FeatureHasSourceCallContext }
 }
 
 module OperationToYearAssignmentFlow = TaintTracking::Global<OperationToYearAssignmentConfig>;
@@ -240,7 +320,7 @@ predicate isRootOperationSource(OperationSource e) {
  * A flow configuration from a Year field access to some Leap year check or guard
  */
 module YearFieldAccessToLeapYearCheckConfig implements DataFlow::ConfigSig {
-  predicate isSource(DataFlow::Node source) { source.asExpr() instanceof YearFieldAccess }
+  predicate isSource(DataFlow::Node source) { source instanceof YearFieldAssignmentNode }
 
   predicate isSink(DataFlow::Node sink) {
     // Local leap year check
@@ -261,14 +341,19 @@ module YearFieldAccessToLeapYearCheckConfig implements DataFlow::ConfigSig {
 
   predicate isAdditionalFlowStep(DataFlow::Node node1, DataFlow::Node node2) {
     // flow from a YearFieldAccess to the qualifier
-    node1.asExpr() instanceof YearFieldAccess and
     node2.asExpr() = node1.asExpr().(YearFieldAccess).getQualifier()
   }
+
   // Use this to make the sink for leap year check intra-proc only
   // i.e., the sink must be in the same scope (function) as the source.
   // DataFlow::FlowFeature getAFeature() {
   //   result instanceof DataFlow::FeatureEqualSourceSinkCallContext
   // }
+  /**
+   * Enforcing the check must occur in the same call context as the source,
+   * i.e., do not return from the source function and check in a caller.
+   */
+  DataFlow::FlowFeature getAFeature() { result instanceof DataFlow::FeatureHasSourceCallContext }
 }
 
 module YearFieldAccessToLeapYearCheckFlow =
@@ -287,7 +372,7 @@ predicate isYearModifiedWithCheck(YearFieldAccess fa) {
 /**
  * If there is a flow from a date struct year field access/assignment to a Feb 29 check
  */
-predicate isUsedInFeb29Check(YearFieldAccess fa){
+predicate isUsedInFeb29Check(YearFieldAccess fa) {
   exists(DateFebruary29Check check |
     DataFlow::localExprFlow(fa.getQualifier(), check.getDateQualifier())
     or
