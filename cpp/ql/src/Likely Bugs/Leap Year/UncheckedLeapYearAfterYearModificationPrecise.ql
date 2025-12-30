@@ -280,6 +280,19 @@ predicate isYearModifiedWithCheck(YearFieldAccess fa) {
     src.isSource() and
     src.getNode().asExpr() = fa
   )
+  or
+  isUsedInFeb29Check(fa)
+}
+
+/**
+ * If there is a flow from a date struct year field access/assignment to a Feb 29 check
+ */
+predicate isUsedInFeb29Check(YearFieldAccess fa){
+  exists(DateFebruary29Check check |
+    DataFlow::localExprFlow(fa.getQualifier(), check.getDateQualifier())
+    or
+    DataFlow::localExprFlow(check.getDateQualifier(), fa.getQualifier())
+  )
 }
 
 import OperationToYearAssignmentFlow::PathGraph

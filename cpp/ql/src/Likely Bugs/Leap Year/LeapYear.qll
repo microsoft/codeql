@@ -381,6 +381,55 @@ class StructTmLeapYearFieldAccess extends LeapYearFieldAccess {
 }
 
 /**
+ * `stDate.wMonth == 2`
+ */
+class DateCheckMonthFebruary extends Operation {
+  DateCheckMonthFebruary(){
+    this.getOperator() = "==" and
+    this.getAnOperand() instanceof MonthFieldAccess and
+    this.getAnOperand().(Literal).getValue() = "2"
+  }
+
+  Expr getDateQualifier(){
+    result = this.getAnOperand().(MonthFieldAccess).getQualifier()
+  }
+}
+
+/**
+ * `stDate.wDay == 29`
+ */
+class DateCheckDay29 extends Operation {
+  DateCheckDay29(){
+    this.getOperator() = "==" and
+    this.getAnOperand() instanceof DayFieldAccess and
+    this.getAnOperand().(Literal).getValue() = "29"
+  }
+
+  Expr getDateQualifier(){
+    result = this.getAnOperand().(DayFieldAccess).getQualifier()
+  }
+}
+
+/**
+ * The combination of a February and Day 29 verification
+ * `stDate.wMonth == 2 && stDate.wDay == 29`
+ */
+class DateFebruary29Check extends Operation {
+  DateFebruary29Check(){
+    this.getOperator() = "&&" and
+    exists(DateCheckMonthFebruary checkFeb, DateCheckDay29 check29 |
+      checkFeb = this.getAnOperand() and
+      check29 = this.getAnOperand() and
+      hashCons(checkFeb.getDateQualifier()) = hashCons(check29.getDateQualifier())
+    )
+  }
+
+  Expr getDateQualifier(){
+    result = this.getAnOperand().(DateCheckMonthFebruary).getDateQualifier()
+  }
+}
+
+/**
  * `Function` that includes an operation that is checking for leap year.
  */
 class ChecksForLeapYearFunction extends Function {
