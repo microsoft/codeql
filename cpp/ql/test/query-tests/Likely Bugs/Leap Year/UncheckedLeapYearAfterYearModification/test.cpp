@@ -1053,3 +1053,19 @@ ATime_HrGetSysTime(SYSTEMTIME *pst)
 	// pst->wSecond = static_cast<WORD>(m_lSecond);
 	// pst->wMilliseconds = 0;
 }
+
+/**
+* Negative Case - Anti-pattern 1: [year ±n, month, day]
+* Modification of SYSTEMTIME struct by copying from another struct, but no arithmetic is performed.
+*/
+void fp_daymonth_guard(){
+	SYSTEMTIME st;
+	FILETIME ft;
+	GetSystemTime(&st);
+
+	st.wYear++;
+
+	st.wDay = st.wMonth == 2 && st.wDay == 29 ? 28 : st.wDay;
+
+	SystemTimeToFileTime(&st, &ft);
+}
