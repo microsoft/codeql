@@ -61,11 +61,13 @@ class IgnorableExprExpr1900Mapping extends IgnorableOperation {
   }
 }
 
-class IgnorableBinaryBitwiseOperation extends IgnorableOperation instanceof BinaryBitwiseOperation { }
+class IgnorableBinaryBitwiseOperation extends IgnorableOperation instanceof BinaryBitwiseOperation {
+}
 
 class IgnorableUnaryBitwiseOperation extends IgnorableOperation instanceof UnaryBitwiseOperation { }
 
-class IgnorableAssignmentBitwiseOperation extends IgnorableOperation instanceof AssignBitwiseOperation { }
+class IgnorableAssignmentBitwiseOperation extends IgnorableOperation instanceof AssignBitwiseOperation
+{ }
 
 /**
  * An expression that is a candidate source for an dataflow configuration for an Operation that could flow to a Year field.
