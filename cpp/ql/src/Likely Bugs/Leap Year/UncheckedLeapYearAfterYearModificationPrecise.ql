@@ -61,14 +61,15 @@ class IgnorableExprExpr1900Mapping extends IgnorableOperation {
   }
 }
 
-class IgnorableBinaryBitwiseOperation extends IgnorableOperation instanceof BinaryBitwiseOperation {
-}
+class IgnorableBinaryBitwiseOperation extends IgnorableOperation instanceof BinaryBitwiseOperation { }
 
 class IgnorableUnaryBitwiseOperation extends IgnorableOperation instanceof UnaryBitwiseOperation { }
 
-class IgnorableAssignmentBitwiseOperation extends IgnorableOperation instanceof AssignBitwiseOperation
-{ }
+class IgnorableAssignmentBitwiseOperation extends IgnorableOperation instanceof AssignBitwiseOperation { }
 
+/**
+ * An expression that is a candidate source for an dataflow configuration for an Operation that could flow to a Year field.
+ */
 predicate isOperationSourceCandidate(Expr e) {
   not e instanceof IgnorableOperation and
   (
@@ -84,6 +85,9 @@ predicate isOperationSourceCandidate(Expr e) {
   )
 }
 
+/**
+ * A Dataflow that identifies flows from an Operation (addition, subtraction, etc) to some ignorable operation (bitwise operations for example) that disqualify it
+ */
 module OperationSourceCandidateToIgnorableOperationConfig implements DataFlow::ConfigSig {
   predicate isSource(DataFlow::Node n) { isOperationSourceCandidate(n.asExpr()) }
 
@@ -100,6 +104,9 @@ module OperationSourceCandidateToIgnorableOperationConfig implements DataFlow::C
 module OperationSourceCandidateToIgnorableOperationFlow =
   TaintTracking::Global<OperationSourceCandidateToIgnorableOperationConfig>;
 
+/**
+ * A dataflow that tracks an ignorable operation (eg. bitwise op) to a operation source, so we may disqualify it.
+ */
 module IgnorableOperationToOperationSourceCandidateConfig implements DataFlow::ConfigSig {
   predicate isSource(DataFlow::Node n) { n.asExpr() instanceof IgnorableOperation }
 
@@ -114,6 +121,16 @@ module IgnorableOperationToOperationSourceCandidateConfig implements DataFlow::C
 module IgnorableOperationToOperationSourceCandidateFlow =
   TaintTracking::Global<IgnorableOperationToOperationSourceCandidateConfig>;
 
+/**
+ * The set of all expressions which is a candidate expression and also does not flow from to to some ignorable expression (eg. bitwise op)
+ * ```
+ * a = something <<< 2;
+ * myDate.year = a + 1;        // invalid
+ * ...
+ * a = someDate.year + 1;
+ * myDate.year = a;            // valid
+ * ```
+ */
 class OperationSource extends Expr {
   OperationSource() {
     isOperationSourceCandidate(this) and
@@ -184,6 +201,9 @@ module OperationToYearAssignmentConfig implements DataFlow::ConfigSig {
 
 module OperationToYearAssignmentFlow = TaintTracking::Global<OperationToYearAssignmentConfig>;
 
+/**
+ * A Dataflow configuration for tracing from one OperationToYearAssignmentFlow source to another OperationToYearAssignmentFlow source.
+ */
 module KnownYearOpSourceToKnownYearOpSourceConfig implements DataFlow::ConfigSig {
   predicate isSource(DataFlow::Node n) {
     exists(OperationToYearAssignmentFlow::PathNode src |
@@ -203,6 +223,9 @@ module KnownYearOpSourceToKnownYearOpSourceConfig implements DataFlow::ConfigSig
 module KnownYearOpSourceToKnownYearOpSourceFlow =
   TaintTracking::Global<KnownYearOpSourceToKnownYearOpSourceConfig>;
 
+/**
+ * There does not exist an OperationSource that flows through this given OperationSource expression.
+ */
 predicate isRootOperationSource(OperationSource e) {
   not exists(DataFlow::Node src, DataFlow::Node sink |
     src != sink and
@@ -211,6 +234,9 @@ predicate isRootOperationSource(OperationSource e) {
   )
 }
 
+/**
+ * A flow configuration from a Year field access to some Leap year check or guard
+ */
 module YearFieldAccessToLeapYearCheckConfig implements DataFlow::ConfigSig {
   predicate isSource(DataFlow::Node source) { source.asExpr() instanceof YearFieldAccess }
 
@@ -246,6 +272,7 @@ module YearFieldAccessToLeapYearCheckConfig implements DataFlow::ConfigSig {
 module YearFieldAccessToLeapYearCheckFlow =
   TaintTracking::Global<YearFieldAccessToLeapYearCheckConfig>;
 
+/** Does there exist a flow from the given YearFieldAccess to a Leap Year check or guard? */
 predicate isYearModifiedWithCheck(YearFieldAccess fa) {
   exists(YearFieldAccessToLeapYearCheckFlow::PathNode src |
     src.isSource() and
