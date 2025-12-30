@@ -204,16 +204,16 @@ class OperationSource extends Expr {
 class YearFieldAssignmentNode extends DataFlow::Node {
   YearFieldAssignmentNode() {
     this.asExpr() instanceof YearFieldAssignment
-    or
-    this.asDefiningArgument() instanceof YearFieldAccess
-    or
-    // TODO: is there a better way to do this?
-    // i.e., without having to be cognizant of the addressof
-    // occurring, especially if this occurs on a dataflow
-    exists(AddressOfExpr aoe |
-      aoe = this.asDefiningArgument() and
-      aoe.getOperand() instanceof YearFieldAccess
-    )
+    // or
+    // this.asDefiningArgument() instanceof YearFieldAccess
+    // or
+    // // TODO: is there a better way to do this?
+    // // i.e., without having to be cognizant of the addressof
+    // // occurring, especially if this occurs on a dataflow
+    // exists(AddressOfExpr aoe |
+    //   aoe = this.asDefiningArgument() and
+    //   aoe.getOperand() instanceof YearFieldAccess
+    // )
   }
 
   YearFieldAccess getYearFieldAccess() {
