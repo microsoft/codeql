@@ -731,10 +731,10 @@ void Correct_year_addition_struct_tm()
 }
 
 /**
- * Negative Case - Anti-pattern 1: [year ±n, month, day]
+ * Positive Case - Anti-pattern 1: [year ±n, month, day]
  * Years is incremented by some integer and leap year is not handled correctly.
 */
-void Correct_LinuxPattern()
+void Incorrect_LinuxPattern()
 {
 	time_t rawtime;
 	struct tm timeinfo;
@@ -743,7 +743,7 @@ void Correct_LinuxPattern()
 	errno_t err = gmtime_s(&timeinfo, &rawtime);
 
 	/* from 1900 -> from 1980 */
-	timeinfo.tm_year -= 80;
+	timeinfo.tm_year -= 80; // bug - no check for leap year
 	/* 0~11 -> 1~12 */
 	timeinfo.tm_mon++;
 	/* 0~59 -> 0~29(2sec counts) */
