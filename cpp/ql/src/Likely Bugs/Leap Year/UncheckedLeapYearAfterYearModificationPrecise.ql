@@ -25,10 +25,10 @@ class IgnorableExprRem extends IgnorableOperation instanceof RemExpr { }
  */
 class IgnorableExpr10MulipleComponent extends IgnorableOperation {
   IgnorableExpr10MulipleComponent() {
-    this.(MulExpr).getAnOperand().(Literal).getValue().toInt() in [10, 100, 100]
+    this.(MulExpr).getAnOperand().getValue().toInt() in [10, 100, 100]
     or
     exists(AssignMulExpr a | a.getRValue() = this |
-      a.getRValue().(Literal).getValue().toInt() in [10, 100, 100]
+      a.getRValue().getValue().toInt() in [10, 100, 100]
     )
   }
 }
@@ -39,9 +39,9 @@ class IgnorableExpr10MulipleComponent extends IgnorableOperation {
  */
 class IgnorableExpr48Mapping extends IgnorableOperation {
   IgnorableExpr48Mapping() {
-    this.(SubExpr).getRightOperand().(Literal).getValue().toInt() = 48
+    this.(SubExpr).getRightOperand().getValue().toInt() = 48
     or
-    exists(AssignSubExpr e | e.getRValue() = this | e.getRValue().(Literal).getValue().toInt() = 48)
+    exists(AssignSubExpr e | e.getRValue() = this | e.getRValue().getValue().toInt() = 48)
   }
 }
 
@@ -87,10 +87,10 @@ predicate isLikelyConversionConstant(int c) {
 class IgnorableConstantArithmetic extends IgnorableOperation {
   IgnorableConstantArithmetic() {
     exists(int i | isLikelyConversionConstant(i) |
-      this.(Operation).getAnOperand().(Literal).getValue().toInt() = i
+      this.(Operation).getAnOperand().getValue().toInt() = i
       or
       exists(AssignArithmeticOperation a | this = a.getRValue() |
-        a.getRValue().(Literal).getValue().toInt() = i
+        a.getRValue().getValue().toInt() = i
       )
     )
   }
