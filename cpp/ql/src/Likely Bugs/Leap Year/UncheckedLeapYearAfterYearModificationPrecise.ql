@@ -293,6 +293,8 @@ module OperationToYearAssignmentConfig implements DataFlow::ConfigSig {
 module OperationToYearAssignmentFlow = TaintTracking::Global<OperationToYearAssignmentConfig>;
 
 predicate isLeapYearCheckSink(DataFlow::Node sink) {
+  exists(ExprCheckLeapYear e | sink.asExpr() = e.getAChild*())
+  or
   // Local leap year check
   sink.asExpr().(LeapYearFieldAccess).isUsedInCorrectLeapYearCheck()
   or
