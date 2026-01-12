@@ -72,6 +72,7 @@ predicate isLikelyConversionConstant(int c) {
   c = 2400001 or
   c = 2400000 or
   c = 2141 or // fixed‑point month/day extraction
+  c = 2000 or
   c = 65536 or
   c = 7834 or
   c = 256 or
@@ -94,6 +95,9 @@ class IgnorableConstantArithmetic extends IgnorableOperation {
     )
   }
 }
+
+// If a unary minus assume it is some sort of conversion
+class IgnorableUnaryMinus extends IgnorableOperation instanceof UnaryMinusExpr { }
 
 class IgnorableBinaryBitwiseOperation extends IgnorableOperation instanceof BinaryBitwiseOperation {
 }
@@ -275,7 +279,12 @@ module OperationToYearAssignmentConfig implements DataFlow::ConfigSig {
     n.asExpr().getUnspecifiedType() instanceof CharType
     or
     n.asExpr() instanceof IgnorableOperation
+    or
+    isLeapYearCheckSink(n)
   }
+
+  // Block flow out of an operation source to get the "closest" operation to the sink
+  predicate isBarrierIn(DataFlow::Node n) { isSource(n) }
 
   predicate isBarrierOut(DataFlow::Node n) { isSink(n) }
   // DataFlow::FlowFeature getAFeature() { result instanceof DataFlow::FeatureHasSourceCallContext }
@@ -283,36 +292,20 @@ module OperationToYearAssignmentConfig implements DataFlow::ConfigSig {
 
 module OperationToYearAssignmentFlow = TaintTracking::Global<OperationToYearAssignmentConfig>;
 
-/**
- * A Dataflow configuration for tracing from one OperationToYearAssignmentFlow source to another OperationToYearAssignmentFlow source.
- */
-module KnownYearOpSourceToKnownYearOpSourceConfig implements DataFlow::ConfigSig {
-  predicate isSource(DataFlow::Node n) {
-    exists(OperationToYearAssignmentFlow::PathNode src |
-      src.getNode().asExpr() = n.asExpr() and
-      src.isSource()
+predicate isLeapYearCheckSink(DataFlow::Node sink) {
+  // Local leap year check
+  sink.asExpr().(LeapYearFieldAccess).isUsedInCorrectLeapYearCheck()
+  or
+  // passed to function that seems to check for leap year
+  exists(ChecksForLeapYearFunctionCall fc |
+    sink.asExpr() = fc.getAnArgument()
+    or
+    sink.asExpr() = fc.getAnArgument().(FieldAccess).getQualifier()
+    or
+    exists(AddressOfExpr aoe |
+      fc.getAnArgument() = aoe and
+      aoe.getOperand() = sink.asExpr()
     )
-  }
-
-  predicate isSink(DataFlow::Node n) {
-    exists(OperationToYearAssignmentFlow::PathNode src |
-      src.getNode().asExpr() = n.asExpr() and
-      src.isSource()
-    )
-  }
-}
-
-module KnownYearOpSourceToKnownYearOpSourceFlow =
-  TaintTracking::Global<KnownYearOpSourceToKnownYearOpSourceConfig>;
-
-/**
- * There does not exist an OperationSource that flows through this given OperationSource expression.
- */
-predicate isRootOperationSource(OperationSource e) {
-  not exists(DataFlow::Node src, DataFlow::Node sink |
-    src != sink and
-    KnownYearOpSourceToKnownYearOpSourceFlow::flow(src, sink) and
-    sink.asExpr() = e
   )
 }
 
@@ -322,22 +315,7 @@ predicate isRootOperationSource(OperationSource e) {
 module YearFieldAccessToLeapYearCheckConfig implements DataFlow::ConfigSig {
   predicate isSource(DataFlow::Node source) { source instanceof YearFieldAssignmentNode }
 
-  predicate isSink(DataFlow::Node sink) {
-    // Local leap year check
-    sink.asExpr().(LeapYearFieldAccess).isUsedInCorrectLeapYearCheck()
-    or
-    // passed to function that seems to check for leap year
-    exists(ChecksForLeapYearFunctionCall fc |
-      sink.asExpr() = fc.getAnArgument()
-      or
-      sink.asExpr() = fc.getAnArgument().(FieldAccess).getQualifier()
-      or
-      exists(AddressOfExpr aoe |
-        fc.getAnArgument() = aoe and
-        aoe.getOperand() = sink.asExpr()
-      )
-    )
-  }
+  predicate isSink(DataFlow::Node sink) { isLeapYearCheckSink(sink) }
 
   predicate isAdditionalFlowStep(DataFlow::Node node1, DataFlow::Node node2) {
     // flow from a YearFieldAccess to the qualifier
@@ -363,7 +341,7 @@ module YearFieldAccessToLeapYearCheckFlow =
 predicate isYearModifiedWithCheck(YearFieldAccess fa) {
   exists(YearFieldAccessToLeapYearCheckFlow::PathNode src |
     src.isSource() and
-    src.getNode().asExpr() = fa
+    src.getNode().asExpr().(YearFieldAssignment).getYearFieldAccess() = fa
   )
   or
   isUsedInFeb29Check(fa)
@@ -385,6 +363,5 @@ import OperationToYearAssignmentFlow::PathGraph
 from OperationToYearAssignmentFlow::PathNode src, OperationToYearAssignmentFlow::PathNode sink
 where
   OperationToYearAssignmentFlow::flowPath(src, sink) and
-  isRootOperationSource(src.getNode().asExpr()) and
   not isYearModifiedWithCheck(sink.getNode().asExpr().(YearFieldAssignment).getYearFieldAccess())
 select sink, src, sink, "TEST"
