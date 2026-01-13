@@ -21,6 +21,18 @@ class IgnorableFunction extends Function {
   IgnorableFunction() {
     // Helper utility in postgres with string time conversions
     this.getName() = "DecodeISO8601Interval"
+    or
+    // helper utility for date conversions in qtbase
+    this.getName() = "adjacentDay"
+    or
+    // Windows API function that does timezone conversions
+    this.getName().matches("%SystemTimeToTzSpecificLocalTime%")
+    or
+    // Windows APIs that do time conversions
+    this.getName().matches("%localtime%\\_s%")
+    or
+    // Windows APIs that do time conversions
+    this.getName().matches("%SpecificLocalTimeToSystemTime%")
   }
 }
 
@@ -74,6 +86,8 @@ class IgnorableCharLiteralArithmetic extends IgnorableOperation {
 bindingset[c]
 predicate isLikelyConversionConstant(int c) {
   exists(int i | i = c.abs() | i >= 100)
+  or
+  c = 0
   //   c = 146097 or // days in 400-year Gregorian cycle
   //   c = 36524 or // days in 100-year Gregorian subcycle
   //   c = 1461 or // days in 4-year cycle (incl. 1 leap)
