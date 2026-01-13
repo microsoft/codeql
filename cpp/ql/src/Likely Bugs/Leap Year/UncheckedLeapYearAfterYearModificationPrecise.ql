@@ -14,6 +14,17 @@ import LeapYear
 import semmle.code.cpp.controlflow.IRGuards
 
 /**
+ * Functions whose operations should never be considered a
+ * source of a dangerous leap year operation.
+ */
+class IgnorableFunction extends Function {
+  IgnorableFunction() {
+    // Helper utility in postgres with string time conversions
+    this.getName() = "DecodeISO8601Interval"
+  }
+}
+
+/**
  * The set of expressions which are ignorable; either because they seem to not be part of a year mutation,
  * or because they seem to be a conversion pattern of mapping date scalars.
  */
@@ -22,14 +33,15 @@ abstract class IgnorableOperation extends Expr { }
 class IgnorableExprRem extends IgnorableOperation instanceof RemExpr { }
 
 /**
- * Anything involving a sub expression with char literal 48, ignore as a likely string conversion
+ * Anything involving an operation with 10, 100, 1000, 10000 is often a sign of conversion
+ * or atoi.
  */
 class IgnorableExpr10MulipleComponent extends IgnorableOperation {
   IgnorableExpr10MulipleComponent() {
-    this.(MulExpr).getAnOperand().getValue().toInt() in [10, 100, 100]
+    this.(Operation).getAnOperand().getValue().toInt() in [10, 100, 1000, 10000]
     or
-    exists(AssignMulExpr a | a.getRValue() = this |
-      a.getRValue().getValue().toInt() in [10, 100, 100]
+    exists(AssignOperation a | a.getRValue() = this |
+      a.getRValue().getValue().toInt() in [10, 100, 1000, 10000]
     )
   }
 }
@@ -56,28 +68,29 @@ class IgnorableCharLiteralArithmetic extends IgnorableOperation {
   }
 }
 
-/*
- * linux time conversions expect the year to start from 1900, so subtracting or
- * adding 1900 or anything involving 1900 as a generalization is probably
- * a conversion that is ignorable
+/**
+ * Constants often used in date conversions (from one date data type to another)
  */
-
+bindingset[c]
 predicate isLikelyConversionConstant(int c) {
-  c = 146097 or // days in 400-year Gregorian cycle
-  c = 36524 or // days in 100-year Gregorian subcycle
-  c = 1461 or // days in 4-year cycle (incl. 1 leap)
-  c = 32044 or // Fliegel–van Flandern JDN epoch shift
-  c = 1721425 or // JDN of 0001‑01‑01 (Gregorian)
-  c = 1721119 or // alt epoch offset
-  c = 2400000 or // MJD → JDN conversion
-  c = 2400001 or
-  c = 2400000 or
-  c = 2141 or // fixed‑point month/day extraction
-  c = 2000 or
-  c = 65536 or
-  c = 7834 or
-  c = 256 or
-  c = 1900 // struct tm base‑year offset; harmless
+  exists(int i | i = c.abs() | i >= 100)
+  //   c = 146097 or // days in 400-year Gregorian cycle
+  //   c = 36524 or // days in 100-year Gregorian subcycle
+  //   c = 1461 or // days in 4-year cycle (incl. 1 leap)
+  //   c = 32044 or // Fliegel–van Flandern JDN epoch shift
+  //   c = 1721425 or // JDN of 0001‑01‑01 (Gregorian)
+  //   c = 1721119 or // alt epoch offset
+  //   c = 2400000 or // MJD → JDN conversion
+  //   c = 2400001 or // alt MJD → JDN conversion
+  //   c = 2141 or // fixed‑point month/day extraction
+  //   c = 2000 or // observed in some conversions
+  //   c = 65536 or // observed in some conversions
+  //   c = 7834 or // observed in some conversions
+  //   c = 256 or // observed in some conversions
+  //   c = 1900 or // struct tm base‑year offset; harmless
+  //   c = 1899 or // Observed in uses with 1900 to address off by one scenarios
+  //   c = 292275056 or // qdatetime.h Qt Core year range first year constant
+  //   c = 292278994 // qdatetime.h Qt Core year range last year constant
 }
 
 /**
@@ -133,6 +146,7 @@ class IgnorablePointerOrCharArithmetic extends IgnorableOperation {
  */
 predicate isOperationSourceCandidate(Expr e) {
   not e instanceof IgnorableOperation and
+  not e.getEnclosingFunction() instanceof IgnorableFunction and
   (
     e instanceof SubExpr
     or
@@ -361,12 +375,10 @@ predicate isUsedInFeb29Check(YearFieldAccess fa) {
   )
 }
 
-class MonthEqualityCheck extends EqualityOperation{
-  MonthEqualityCheck(){
-    this.getAnOperand() instanceof MonthFieldAccess
-  }
+class MonthEqualityCheck extends EqualityOperation {
+  MonthEqualityCheck() { this.getAnOperand() instanceof MonthFieldAccess }
 
-  Expr getExprCompared(){
+  Expr getExprCompared() {
     exists(Expr e |
       e = this.getAnOperand() and
       not e instanceof MonthFieldAccess and
@@ -374,18 +386,14 @@ class MonthEqualityCheck extends EqualityOperation{
     )
   }
 
-  MonthFieldAccess getMonthFieldAccess(){
-    result = this.getAnOperand()
-  }
+  MonthFieldAccess getMonthFieldAccess() { result = this.getAnOperand() }
 }
 
-class MonthEqualityCheckGuard extends GuardCondition instanceof MonthEqualityCheck{
-  MonthEqualityCheckGuard(){ any() }
-}
+class MonthEqualityCheckGuard extends GuardCondition instanceof MonthEqualityCheck { }
 
 bindingset[e]
 pragma[inline_late]
-predicate isControlledByMonthEqualityCheckNonFebruary(Expr e){
+predicate isControlledByMonthEqualityCheckNonFebruary(Expr e) {
   exists(MonthEqualityCheckGuard monthGuard |
     monthGuard.controls(e.getBasicBlock(), true) and
     not monthGuard.(MonthEqualityCheck).getExprCompared().getValueText() = "2"
