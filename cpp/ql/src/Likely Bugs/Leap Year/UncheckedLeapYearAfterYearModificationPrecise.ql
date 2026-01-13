@@ -11,6 +11,7 @@
 
 import cpp
 import LeapYear
+import semmle.code.cpp.controlflow.IRGuards
 
 /**
  * The set of expressions which are ignorable; either because they seem to not be part of a year mutation,
@@ -360,10 +361,42 @@ predicate isUsedInFeb29Check(YearFieldAccess fa) {
   )
 }
 
+class MonthEqualityCheck extends EqualityOperation{
+  MonthEqualityCheck(){
+    this.getAnOperand() instanceof MonthFieldAccess
+  }
+
+  Expr getExprCompared(){
+    exists(Expr e |
+      e = this.getAnOperand() and
+      not e instanceof MonthFieldAccess and
+      result = e
+    )
+  }
+
+  MonthFieldAccess getMonthFieldAccess(){
+    result = this.getAnOperand()
+  }
+}
+
+class MonthEqualityCheckGuard extends GuardCondition instanceof MonthEqualityCheck{
+  MonthEqualityCheckGuard(){ any() }
+}
+
+bindingset[e]
+pragma[inline_late]
+predicate isControlledByMonthEqualityCheckNonFebruary(Expr e){
+  exists(MonthEqualityCheckGuard monthGuard |
+    monthGuard.controls(e.getBasicBlock(), true) and
+    not monthGuard.(MonthEqualityCheck).getExprCompared().getValueText() = "2"
+  )
+}
+
 import OperationToYearAssignmentFlow::PathGraph
 
 from OperationToYearAssignmentFlow::PathNode src, OperationToYearAssignmentFlow::PathNode sink
 where
   OperationToYearAssignmentFlow::flowPath(src, sink) and
-  not isYearModifiedWithCheck(sink.getNode().asExpr().(YearFieldAssignment).getYearFieldAccess())
+  not isYearModifiedWithCheck(sink.getNode().asExpr().(YearFieldAssignment).getYearFieldAccess()) and
+  not isControlledByMonthEqualityCheckNonFebruary(sink.getNode().asExpr())
 select sink, src, sink, "TEST"

@@ -73,6 +73,30 @@ struct logtime {
 	long     usec;
 };
 
+/*
+ * Data structure representing a broken-down timestamp.
+ *
+ * CAUTION: the IANA timezone library (src/timezone/) follows the POSIX
+ * convention that tm_mon counts from 0 and tm_year is relative to 1900.
+ * However, Postgres' datetime functions generally treat tm_mon as counting
+ * from 1 and tm_year as relative to 1 BC.  Be sure to make the appropriate
+ * adjustments when moving from one code domain to the other.
+ */
+struct pg_tm
+{
+    int         tm_sec;
+    int         tm_min;
+    int         tm_hour;
+    int         tm_mday;
+    int         tm_mon;         /* see above */
+    int         tm_year;        /* see above */
+    int         tm_wday;
+    int         tm_yday;
+    int         tm_isdst;
+    long int    tm_gmtoff;
+    const char *tm_zone;
+};
+
 BOOL
 SystemTimeToFileTime(
 	const SYSTEMTIME* lpSystemTime,
@@ -1088,4 +1112,39 @@ void fn_year_set_through_out_arg(){
 	// GetSystemTime(&st);
 	// Bad, year incremented without check
 	increment_arg_by_pointer(&st.wYear);
+}
+
+
+/* void
+GetEpochTime(struct pg_tm *tm)
+{
+	struct pg_tm *t0;
+	pg_time_t	epoch = 0;
+
+	t0 = pg_gmtime(&epoch);
+
+	tm->tm_year = t0->tm_year;
+	tm->tm_mon = t0->tm_mon;
+	tm->tm_mday = t0->tm_mday;
+	tm->tm_hour = t0->tm_hour;
+	tm->tm_min = t0->tm_min;
+	tm->tm_sec = t0->tm_sec;
+
+	tm->tm_year += 1900;
+	tm->tm_mon++;
+} */
+
+void
+fp_guarded_by_month(struct pg_tm *tm){
+	int woy = 52;
+	int MONTHS_PER_YEAR = 12;
+	/*
+	* If it is week 52/53 and the month is January, then the
+	* week must belong to the previous year. Also, some
+	* December dates belong to the next year.
+	*/
+	if (woy >= 52 && tm->tm_mon == 1)
+		--tm->tm_year; // Negative Test Case
+	if (woy <= 1 && tm->tm_mon == MONTHS_PER_YEAR)
+		++tm->tm_year; // Negative Test Case
 }
