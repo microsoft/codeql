@@ -312,10 +312,11 @@ module OperationToYearAssignmentConfig implements DataFlow::ConfigSig {
     isLeapYearCheckSink(n)
   }
 
-  // Block flow out of an operation source to get the "closest" operation to the sink
+  /** Block flow out of an operation source to get the "closest" operation to the sink */
   predicate isBarrierIn(DataFlow::Node n) { isSource(n) }
 
   predicate isBarrierOut(DataFlow::Node n) { isSink(n) }
+
   // DataFlow::FlowFeature getAFeature() { result instanceof DataFlow::FeatureHasSourceCallContext }
 }
 
@@ -358,6 +359,7 @@ module YearFieldAccessToLeapYearCheckConfig implements DataFlow::ConfigSig {
   // DataFlow::FlowFeature getAFeature() {
   //   result instanceof DataFlow::FeatureEqualSourceSinkCallContext
   // }
+
   /**
    * Enforcing the check must occur in the same call context as the source,
    * i.e., do not return from the source function and check in a caller.
@@ -389,6 +391,9 @@ predicate isUsedInFeb29Check(YearFieldAccess fa) {
   )
 }
 
+/**
+ * An expression which checks the value of a Month field `a->month == 1`.
+ */
 class MonthEqualityCheck extends EqualityOperation {
   MonthEqualityCheck() { this.getAnOperand() instanceof MonthFieldAccess }
 
@@ -405,6 +410,9 @@ class MonthEqualityCheck extends EqualityOperation {
 
 class MonthEqualityCheckGuard extends GuardCondition instanceof MonthEqualityCheck { }
 
+/**
+ * Verifies if the expression is guarded by a check on the Month property of a date struct, that is NOT February.
+ */
 bindingset[e]
 pragma[inline_late]
 predicate isControlledByMonthEqualityCheckNonFebruary(Expr e) {

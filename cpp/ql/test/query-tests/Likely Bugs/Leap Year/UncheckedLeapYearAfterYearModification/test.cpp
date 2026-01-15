@@ -1115,7 +1115,8 @@ void fn_year_set_through_out_arg(){
 }
 
 
-/* void
+/* TODO: don't alert on simple copies from another struct where all three {year,month,day} are copied
+void
 GetEpochTime(struct pg_tm *tm)
 {
 	struct pg_tm *t0;
@@ -1147,4 +1148,22 @@ fp_guarded_by_month(struct pg_tm *tm){
 		--tm->tm_year; // Negative Test Case
 	if (woy <= 1 && tm->tm_mon == MONTHS_PER_YEAR)
 		++tm->tm_year; // Negative Test Case
+}
+
+typedef unsigned short CSHORT;
+
+typedef struct _TIME_FIELDS {
+  CSHORT Year;
+  CSHORT Month;
+  CSHORT Day;
+  CSHORT Hour;
+  CSHORT Minute;
+  CSHORT Second;
+  CSHORT Milliseconds;
+  CSHORT Weekday;
+} TIME_FIELDS, *PTIME_FIELDS;
+
+void
+tp_ptime(PTIME_FIELDS ptm){
+	ptm->Year = ptm->Year - 1; // Positive Test Case
 }
