@@ -248,11 +248,6 @@ class YearFieldAssignmentNode extends DataFlow::Node {
     //   aoe.getOperand() instanceof YearFieldAccess
     // )
   }
-
-  YearFieldAccess getYearFieldAccess() {
-    result = this.asDefiningArgument() or
-    result = this.asExpr().(YearFieldAssignment).getYearFieldAccess()
-  }
 }
 
 /**
@@ -404,8 +399,6 @@ class MonthEqualityCheck extends EqualityOperation {
       result = e
     )
   }
-
-  MonthFieldAccess getMonthFieldAccess() { result = this.getAnOperand() }
 }
 
 class MonthEqualityCheckGuard extends GuardCondition instanceof MonthEqualityCheck { }
