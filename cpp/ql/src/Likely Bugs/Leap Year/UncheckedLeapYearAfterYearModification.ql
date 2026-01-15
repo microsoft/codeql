@@ -82,29 +82,16 @@ class IgnorableCharLiteralArithmetic extends IgnorableOperation {
 
 /**
  * Constants often used in date conversions (from one date data type to another)
+ * Numerous examples exist, like 1900 or 2000 that convert years from one
+ * representation to another. All examples found tend to be 100 or greater,
+ * so just using this as a heuristic for detecting such conversion constants.
+ * Also '0' is sometimes observed as an atoi style conversion.
  */
 bindingset[c]
 predicate isLikelyConversionConstant(int c) {
   exists(int i | i = c.abs() | i >= 100)
   or
   c = 0
-  //   c = 146097 or // days in 400-year Gregorian cycle
-  //   c = 36524 or // days in 100-year Gregorian subcycle
-  //   c = 1461 or // days in 4-year cycle (incl. 1 leap)
-  //   c = 32044 or // Fliegel–van Flandern JDN epoch shift
-  //   c = 1721425 or // JDN of 0001‑01‑01 (Gregorian)
-  //   c = 1721119 or // alt epoch offset
-  //   c = 2400000 or // MJD → JDN conversion
-  //   c = 2400001 or // alt MJD → JDN conversion
-  //   c = 2141 or // fixed‑point month/day extraction
-  //   c = 2000 or // observed in some conversions
-  //   c = 65536 or // observed in some conversions
-  //   c = 7834 or // observed in some conversions
-  //   c = 256 or // observed in some conversions
-  //   c = 1900 or // struct tm base‑year offset; harmless
-  //   c = 1899 or // Observed in uses with 1900 to address off by one scenarios
-  //   c = 292275056 or // qdatetime.h Qt Core year range first year constant
-  //   c = 292278994 // qdatetime.h Qt Core year range last year constant
 }
 
 /**
@@ -311,7 +298,6 @@ module OperationToYearAssignmentConfig implements DataFlow::ConfigSig {
   predicate isBarrierIn(DataFlow::Node n) { isSource(n) }
 
   predicate isBarrierOut(DataFlow::Node n) { isSink(n) }
-
   // DataFlow::FlowFeature getAFeature() { result instanceof DataFlow::FeatureHasSourceCallContext }
 }
 
@@ -354,7 +340,6 @@ module YearFieldAccessToLeapYearCheckConfig implements DataFlow::ConfigSig {
   // DataFlow::FlowFeature getAFeature() {
   //   result instanceof DataFlow::FeatureEqualSourceSinkCallContext
   // }
-
   /**
    * Enforcing the check must occur in the same call context as the source,
    * i.e., do not return from the source function and check in a caller.
