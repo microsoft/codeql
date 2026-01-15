@@ -407,4 +407,5 @@ where
   OperationToYearAssignmentFlow::flowPath(src, sink) and
   not isYearModifiedWithCheck(sink.getNode().asExpr().(YearFieldAssignment).getYearFieldAccess()) and
   not isControlledByMonthEqualityCheckNonFebruary(sink.getNode().asExpr())
-select sink, src, sink, "TEST"
+select sink, src, sink,
+  "Year field has been modified, but no appropriate check for LeapYear was found."
