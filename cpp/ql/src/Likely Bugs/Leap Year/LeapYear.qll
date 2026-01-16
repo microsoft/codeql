@@ -395,8 +395,6 @@ class DateFebruary29Check extends Operation {
     exists(DateCheckMonthFebruary checkFeb, DateCheckDay29 check29 |
       checkFeb = this.getAnOperand() and
       check29 = this.getAnOperand()
-      // and
-      // hashCons(checkFeb.getDateQualifier()) = hashCons(check29.getDateQualifier())
     )
   }
 
@@ -536,7 +534,7 @@ class TimeConversionFunction extends Function {
         "FileTimeToSystemTime", "SystemTimeToFileTime", "SystemTimeToTzSpecificLocalTime",
         "SystemTimeToTzSpecificLocalTimeEx", "TzSpecificLocalTimeToSystemTime",
         "TzSpecificLocalTimeToSystemTimeEx", "RtlLocalTimeToSystemTime",
-        "RtlTimeToSecondsSince1970", "_mkgmtime"
+        "RtlTimeToSecondsSince1970", "_mkgmtime", "SetSystemTime"
       ]
   }
 }

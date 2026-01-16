@@ -15,7 +15,7 @@ import semmle.code.cpp.controlflow.IRGuards
 
 /**
  * Functions whose operations should never be considered a
- * source of a dangerous leap year operation.
+ * source or sink of a dangerous leap year operation.
  */
 class IgnorableFunction extends Function {
   IgnorableFunction() {
@@ -33,6 +33,18 @@ class IgnorableFunction extends Function {
     or
     // Windows APIs that do time conversions
     this.getName().matches("%SpecificLocalTimeToSystemTime%")
+    or
+    // postgres function for diffing timestamps, date for leap year
+    // is not applicable.
+    this.getName().toLowerCase().matches("%timestamp%age%")
+    or
+    // Reading byte streams often involves operations of some base, but that's
+    // not a real source of leap year issues.
+    this.getName().toLowerCase().matches("%read%bytes%")
+    or
+    // A postgres function for local time conversions
+    // conversion operations (from one time structure to another) are generally ignorable
+    this.getName() = "localsub"
   }
 }
 
@@ -83,15 +95,32 @@ class IgnorableCharLiteralArithmetic extends IgnorableOperation {
 /**
  * Constants often used in date conversions (from one date data type to another)
  * Numerous examples exist, like 1900 or 2000 that convert years from one
- * representation to another. All examples found tend to be 100 or greater,
- * so just using this as a heuristic for detecting such conversion constants.
+ * representation to another.
  * Also '0' is sometimes observed as an atoi style conversion.
  */
 bindingset[c]
 predicate isLikelyConversionConstant(int c) {
-  exists(int i | i = c.abs() | i >= 100)
-  or
-  c = 0
+  exists(int i | i = c.abs() |
+    //| i >= 100)
+    i = 146097 or // days in 400-year Gregorian cycle
+    i = 36524 or // days in 100-year Gregorian subcycle
+    i = 1461 or // days in 4-year cycle (incl. 1 leap)
+    i = 32044 or // Fliegel–van Flandern JDN epoch shift
+    i = 1721425 or // JDN of 0001‑01‑01 (Gregorian)
+    i = 1721119 or // alt epoch offset
+    i = 2400000 or // MJD → JDN conversion
+    i = 2400001 or // alt MJD → JDN conversion
+    i = 2141 or // fixed‑point month/day extraction
+    i = 2000 or // observed in some conversions
+    i = 65536 or // observed in some conversions
+    i = 7834 or // observed in some conversions
+    i = 256 or // observed in some conversions
+    i = 1900 or // struct tm base‑year offset; harmless
+    i = 1899 or // Observed in uses with 1900 to address off by one scenarios
+    i = 292275056 or // qdatetime.h Qt Core year range first year constant
+    i = 292278994 or // qdatetime.h Qt Core year range last year constant
+    i = 0
+  )
 }
 
 /**
@@ -112,7 +141,35 @@ class IgnorableConstantArithmetic extends IgnorableOperation {
 }
 
 // If a unary minus assume it is some sort of conversion
-class IgnorableUnaryMinus extends IgnorableOperation instanceof UnaryMinusExpr { }
+class IgnorableUnaryMinus extends IgnorableOperation {
+  IgnorableUnaryMinus() {
+    this instanceof UnaryMinusExpr
+    or
+    this.(Operation).getAnOperand() instanceof UnaryMinusExpr
+  }
+}
+
+class OperationAsArgToIgnorableFunction extends IgnorableOperation {
+  OperationAsArgToIgnorableFunction() {
+    exists(Call c |
+      c.getAnArgument().getAChild*() = this and
+      c.getTarget() instanceof IgnorableFunction
+    )
+  }
+}
+
+/**
+ * Literal OP literal means the result is constant/known
+ * and the operation is basically ignorable (it's not a real operation but
+ * probably one visual simplicity what it means).
+ */
+class ConstantBinaryArithmeticOperation extends IgnorableOperation {
+  ConstantBinaryArithmeticOperation() {
+    this instanceof BinaryArithmeticOperation and
+    this.(BinaryArithmeticOperation).getLeftOperand() instanceof Literal and
+    this.(BinaryArithmeticOperation).getRightOperand() instanceof Literal
+  }
+}
 
 class IgnorableBinaryBitwiseOperation extends IgnorableOperation instanceof BinaryBitwiseOperation {
 }
@@ -132,12 +189,31 @@ class IgnorablePointerOrCharArithmetic extends IgnorableOperation {
       this.(BinaryArithmeticOperation).getAnOperand().getUnspecifiedType() instanceof PointerType
       or
       this.(BinaryArithmeticOperation).getAnOperand().getUnspecifiedType() instanceof CharType
+      or
+      // Operations on calls to functions that accept char or char*
+      this.(BinaryArithmeticOperation)
+          .getAnOperand()
+          .(Call)
+          .getAnArgument()
+          .getUnspecifiedType()
+          .stripType() instanceof CharType
+      or
+      // Operations on calls to functions named like "strlen", "wcslen", etc
+      // NOTE: workaround for cases where the wchar_t type is not a char, but an unsigned short
+      // unclear if there is a best way to filter cases like these out based on type info.
+      this.(BinaryArithmeticOperation).getAnOperand().(Call).getTarget().getName().matches("%len%")
     )
     or
     exists(AssignArithmeticOperation a | a.getRValue() = this |
       a.getAnOperand().getUnspecifiedType() instanceof PointerType
       or
       a.getAnOperand().getUnspecifiedType() instanceof CharType
+      or
+      // Operations on calls to functions that accept char or char*
+      a.getAnOperand().(Call).getAnArgument().getUnspecifiedType().stripType() instanceof CharType
+      or
+      // Operations on calls to functions named like "strlen", "wcslen", etc
+      this.(BinaryArithmeticOperation).getAnOperand().(Call).getTarget().getName().matches("%len%")
     )
   }
 }
@@ -160,25 +236,6 @@ predicate isOperationSourceCandidate(Expr e) {
     exists(AssignAddExpr a | a.getRValue() = e)
   )
 }
-
-/**
- * A Dataflow that identifies flows from an Operation (addition, subtraction, etc) to some ignorable operation (bitwise operations for example) that disqualify it
- */
-module OperationSourceCandidateToIgnorableOperationConfig implements DataFlow::ConfigSig {
-  predicate isSource(DataFlow::Node n) { isOperationSourceCandidate(n.asExpr()) }
-
-  predicate isSink(DataFlow::Node n) { n.asExpr() instanceof IgnorableOperation }
-
-  // looking for sources and sinks in the same function
-  DataFlow::FlowFeature getAFeature() {
-    result instanceof DataFlow::FeatureEqualSourceSinkCallContext
-  }
-
-  predicate isBarrierOut(DataFlow::Node n) { isSink(n) }
-}
-
-module OperationSourceCandidateToIgnorableOperationFlow =
-  TaintTracking::Global<OperationSourceCandidateToIgnorableOperationConfig>;
 
 /**
  * A dataflow that tracks an ignorable operation (eg. bitwise op) to a operation source, so we may disqualify it.
@@ -210,10 +267,10 @@ module IgnorableOperationToOperationSourceCandidateFlow =
 class OperationSource extends Expr {
   OperationSource() {
     isOperationSourceCandidate(this) and
-    not exists(OperationSourceCandidateToIgnorableOperationFlow::PathNode src |
-      src.getNode().asExpr() = this and
-      src.isSource()
-    ) and
+    // If the candidate came from an ignorable operation, ignore the candidate
+    // NOTE: we cannot easily flow the candidate to an ignorable operation as that can
+    // be tricky in practice, e.g., a mod operation on a year would be part of a leap year check
+    // but a mod operation ending in a year is more indicative of something to ignore (a conversion)
     not exists(IgnorableOperationToOperationSourceCandidateFlow::PathNode sink |
       sink.getNode().asExpr() = this and
       sink.isSink()
@@ -223,26 +280,35 @@ class OperationSource extends Expr {
 
 class YearFieldAssignmentNode extends DataFlow::Node {
   YearFieldAssignmentNode() {
-    this.asExpr() instanceof YearFieldAssignment
-    // or
-    // this.asDefiningArgument() instanceof YearFieldAccess
-    // or
-    // // TODO: is there a better way to do this?
-    // // i.e., without having to be cognizant of the addressof
-    // // occurring, especially if this occurs on a dataflow
-    // exists(AddressOfExpr aoe |
-    //   aoe = this.asDefiningArgument() and
-    //   aoe.getOperand() instanceof YearFieldAccess
-    // )
+    not this.getEnclosingCallable().getUnderlyingCallable() instanceof IgnorableFunction and
+    (
+      this.asExpr() instanceof YearFieldAssignment or
+      this.asDefiningArgument() instanceof YearFieldOutArgAssignment
+    )
   }
 }
 
 /**
  * An assignment to a year field, which will be a sink
- * NOTE: could not make this abstract, it was binding to all expressions
  */
 abstract class YearFieldAssignment extends Expr {
   abstract YearFieldAccess getYearFieldAccess();
+}
+
+class YearFieldOutArgAssignment extends YearFieldAssignment {
+  YearFieldAccess access;
+
+  YearFieldOutArgAssignment() {
+    exists(Call c | c.getAnArgument() = access and this = access)
+    or
+    exists(Call c, AddressOfExpr aoe |
+      c.getAnArgument() = aoe and
+      aoe.getOperand() = access and
+      this = aoe
+    )
+  }
+
+  override YearFieldAccess getYearFieldAccess() { result = access }
 }
 
 /**
@@ -298,7 +364,6 @@ module OperationToYearAssignmentConfig implements DataFlow::ConfigSig {
   predicate isBarrierIn(DataFlow::Node n) { isSource(n) }
 
   predicate isBarrierOut(DataFlow::Node n) { isSink(n) }
-  // DataFlow::FlowFeature getAFeature() { result instanceof DataFlow::FeatureHasSourceCallContext }
 }
 
 module OperationToYearAssignmentFlow = TaintTracking::Global<OperationToYearAssignmentConfig>;
@@ -335,11 +400,6 @@ module YearFieldAccessToLeapYearCheckConfig implements DataFlow::ConfigSig {
     node2.asExpr() = node1.asExpr().(YearFieldAccess).getQualifier()
   }
 
-  // Use this to make the sink for leap year check intra-proc only
-  // i.e., the sink must be in the same scope (function) as the source.
-  // DataFlow::FlowFeature getAFeature() {
-  //   result instanceof DataFlow::FeatureEqualSourceSinkCallContext
-  // }
   /**
    * Enforcing the check must occur in the same call context as the source,
    * i.e., do not return from the source function and check in a caller.
@@ -357,20 +417,26 @@ predicate isYearModifiedWithCheck(YearFieldAccess fa) {
     src.getNode().asExpr().(YearFieldAssignment).getYearFieldAccess() = fa
   )
   or
-  isUsedInFeb29Check(fa)
-}
-
-/**
- * If there is a flow from a date struct year field access/assignment to a Feb 29 check
- */
-predicate isUsedInFeb29Check(YearFieldAccess fa) {
-  exists(DateFebruary29Check check |
-    DataFlow::localExprFlow(fa.getQualifier(), check.getDateQualifier())
-    or
-    DataFlow::localExprFlow(check.getDateQualifier(), fa.getQualifier())
+  // If the time flows to a time conversion whose value/result is checked,
+  // assume the leap year is being handled.
+  exists(TimeStructToCheckedTimeConversionFlow::PathNode timeQualSrc |
+    timeQualSrc.isSource() and
+    timeQualSrc.getNode().asExpr() = fa.getQualifier()
   )
+  // or
+  // isUsedInFeb29Check(fa)
 }
 
+// /**
+//  * If there is a flow from a date struct year field access/assignment to a Feb 29 check
+//  */
+// predicate isUsedInFeb29Check(YearFieldAccess fa) {
+//   exists(DateFebruary29Check check |
+//     DataFlow::localExprFlow(fa.getQualifier(), check.getDateQualifier())
+//     or
+//     DataFlow::localExprFlow(check.getDateQualifier(), fa.getQualifier())
+//   )
+// }
 /**
  * An expression which checks the value of a Month field `a->month == 1`.
  */
@@ -400,12 +466,66 @@ predicate isControlledByMonthEqualityCheckNonFebruary(Expr e) {
   )
 }
 
+module TimeStructToCheckedTimeConversionConfig implements DataFlow::StateConfigSig {
+  class FlowState = boolean;
+
+  predicate isSource(DataFlow::Node source, FlowState state) {
+    exists(YearFieldAccess yfa | source.asExpr() = yfa.getQualifier()) and
+    state = false
+  }
+
+  predicate isSink(DataFlow::Node sink, FlowState state) {
+    state = true and
+    exists(IfStmt ifs | ifs.getCondition().getAChild*() = sink.asExpr())
+  }
+
+  predicate isAdditionalFlowStep(
+    DataFlow::Node node1, FlowState state1, DataFlow::Node node2, FlowState state2
+  ) {
+    state1 in [true, false] and
+    state2 = true and
+    exists(Call c |
+      c.getTarget() instanceof TimeConversionFunction and
+      c.getAnArgument().getAChild*() = node1.asExpr() and
+      node2.asExpr() = c
+    )
+  }
+
+  DataFlow::FlowFeature getAFeature() { result instanceof DataFlow::FeatureHasSourceCallContext }
+}
+
+module TimeStructToCheckedTimeConversionFlow =
+  DataFlow::GlobalWithState<TimeStructToCheckedTimeConversionConfig>;
+
 import OperationToYearAssignmentFlow::PathGraph
 
 from OperationToYearAssignmentFlow::PathNode src, OperationToYearAssignmentFlow::PathNode sink
 where
   OperationToYearAssignmentFlow::flowPath(src, sink) and
   not isYearModifiedWithCheck(sink.getNode().asExpr().(YearFieldAssignment).getYearFieldAccess()) and
-  not isControlledByMonthEqualityCheckNonFebruary(sink.getNode().asExpr())
+  not isControlledByMonthEqualityCheckNonFebruary(sink.getNode().asExpr()) and
+  // TODO: this is an older heuristic that should be reassessed.
+  // The heuristic stipulates that if a month or day is set to a constant in the local flow up to or after
+  // a modified year's sink, then assume the user is knowingly handling the conversion correctly.
+  // There is no interpretation of the assignment of the month/day or consideration for what branch the assignment is on.
+  // Merely if the assignment of a constant day/month occurs anywhere, the year modification can likely
+  // be ignored.
+  not exists(FieldAccess mfa, AssignExpr ae, YearFieldAccess yfa, int val, Variable var |
+    mfa instanceof MonthFieldAccess or mfa instanceof DayFieldAccess
+  |
+    yfa = sink.getNode().asExpr().(YearFieldAssignment).getYearFieldAccess() and
+    var.getAnAccess() = yfa.getQualifier() and
+    mfa.getQualifier() = var.getAnAccess() and
+    mfa.isModified() and
+    (
+      mfa.getBasicBlock() = yfa.getBasicBlock().getASuccessor*() or
+      yfa.getBasicBlock() = mfa.getBasicBlock().getASuccessor+()
+    ) and
+    ae = mfa.getEnclosingElement() and
+    ae.getAnOperand().getValue().toInt() = val and
+    // If the constant looks like it relates to february, then there still might be an error
+    // so only look for any other constant.
+    not val in [2, 28, 29]
+  )
 select sink, src, sink,
   "Year field has been modified, but no appropriate check for LeapYear was found."

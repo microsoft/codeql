@@ -419,7 +419,7 @@ void AntiPattern_unchecked_filetime_conversion2a()
 	GetSystemTime(&st);
 
 	// BUG - UncheckedLeapYearAfterYearModification
-	st.wYear += 2;
+	st.wYear += 2; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 
 	// BUG - UncheckedReturnValueForTimeFunctions
 	SystemTimeToFileTime(&st, &ft);
@@ -437,7 +437,7 @@ void AntiPattern_unchecked_filetime_conversion2b()
 	GetSystemTime(&st);
 
 	// BUG - UncheckedLeapYearAfterYearModification
-	st.wYear++;
+	st.wYear++; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 
 	// BUG - UncheckedReturnValueForTimeFunctions
 	SystemTimeToFileTime(&st, &ft);
@@ -453,7 +453,7 @@ void AntiPattern_unchecked_filetime_conversion2b(SYSTEMTIME* st)
 	FILETIME ft;
 
 	// BUG - UncheckedLeapYearAfterYearModification
-	st->wYear++;
+	st->wYear++; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 
 	// BUG - UncheckedReturnValueForTimeFunctions
 	SystemTimeToFileTime(st, &ft);
@@ -635,24 +635,26 @@ void CorrectPattern_NotManipulated_DateFromAPI_1(HANDLE hWatchdog)
 /////////////////////////////////////////////////////////////////
 
 /**
- * Positive Case - Anti-pattern 1: [year ±n, month, day]
- * Years is incremented by some integer but a leap year is not handled.
+ * Negative Case - Anti-pattern 1: [year ±n, month, day]
+ * Year is incremented by some integer and checked through a conversion through an inter procedural function check
 */
 void AntiPattern_1_year_addition()
 {
 	SYSTEMTIME st;
 	GetSystemTime(&st);
 
-	// BUG - UncheckedLeapYearAfterYearModification 
-	st.wYear++; // BUg V2
+	// Safe, checked interprocedurally through Correct_filetime_conversion_check
+	st.wYear++; 
 
 	// Usage of potentially invalid date
 	Correct_filetime_conversion_check(st);
 }
 
+
+
 /**
- * Positive Case - Anti-pattern 1: [year ±n, month, day]
- * Years is incremented by some integer but a leap year is not handled.
+ * Negative Case - Anti-pattern 1: [year ±n, month, day]
+ * Years is incremented by some integer and checked through a conversion through an inter procedural function check
 */
 void AntiPattern_simple_addition(int yearAddition)
 {
@@ -660,8 +662,7 @@ void AntiPattern_simple_addition(int yearAddition)
 
 	GetSystemTime(&st);
 
-	// BUG - UncheckedLeapYearAfterYearModification
-	st.wYear += yearAddition; // Bug V2
+	st.wYear += yearAddition; 
 
 	// Usage of potentially invalid date
 	Correct_filetime_conversion_check(st);
@@ -677,7 +678,7 @@ void AntiPattern_IncorrectGuard(int yearsToAdd)
 	GetSystemTime(&st);
 
 	// BUG - UncheckedLeapYearAfterYearModification
-	st.wYear += yearsToAdd;
+	st.wYear += yearsToAdd; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 
 	// Incorrect Guard
 	if (st.wMonth == 2 && st.wDay == 29)
@@ -690,9 +691,6 @@ void AntiPattern_IncorrectGuard(int yearsToAdd)
 			st.wDay = 28;
 		}
 	}
-
-	// Potentially Unsafe to use
-	Correct_filetime_conversion_check(st);
 }
 
 /*************************************************
@@ -767,7 +765,8 @@ void Incorrect_LinuxPattern()
 	errno_t err = gmtime_s(&timeinfo, &rawtime);
 
 	/* from 1900 -> from 1980 */
-	timeinfo.tm_year -= 80; // bug - no check for leap year
+	// BUG - UncheckedLeapYearAfterYearModification
+	timeinfo.tm_year -= 80; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 	/* 0~11 -> 1~12 */
 	timeinfo.tm_mon++;
 	/* 0~59 -> 0~29(2sec counts) */
@@ -781,7 +780,8 @@ void Incorrect_LinuxPattern()
 
 /**
  * Negative Case - Anti-pattern 1: [year ±n, month, day]
- * Years is incremented by some integer and leap year is not handled correctly.
+ * Years is incremented by some integer and leap year is assumed checked through
+ * check of a conversion functions return value. 
 */
 void AntiPattern_year_addition_struct_tm()
 {
@@ -789,36 +789,19 @@ void AntiPattern_year_addition_struct_tm()
 	struct tm timeinfo;
 	time(&rawtime);
 	gmtime_s(&timeinfo, &rawtime);
-	// BUG - UncheckedLeapYearAfterYearModification
-	timeinfo.tm_year++; // Bug V2
+	timeinfo.tm_year++; 
 
-	// Usage of potentially invalid date
+	// mkgmtime result checked in nested call here, assume leap year conversion is potentially handled
 	CorrectUsageOf_mkgmtime(timeinfo);
 }
 
 /////////////////////////////////////////////////////////
 
-/**
- * Negative Case - Anti-pattern 1: [year ±n, month, day]
- * False positive: Years is initialized to or incremented by some integer (but never used).
-*/
-void FalsePositiveTests(int x)
-{
-	struct tm timeinfo;
-	SYSTEMTIME st;
-
-	timeinfo.tm_year = x;
-	timeinfo.tm_year = 1970;
-
-	st.wYear = x;
-	st.wYear = 1900 + x;
-}
 
 /**
  * Positive Case - Anti-pattern 1: [year ±n, month, day]
- * False positive: Years is initialized to or incremented by some integer (but never used).
 */
-void FalseNegativeTests(int x)
+void test(int x)
 {
 	struct tm timeinfo;
 	SYSTEMTIME st;
@@ -827,18 +810,12 @@ void FalseNegativeTests(int x)
 
 	// BUG - UncheckedLeapYearAfterYearModification
 	// Positive Case - Anti-pattern 1: [year ±n, month, day]
-	timeinfo.tm_year = x + timeinfo.tm_year;	// Bug V2
-	// BUG - UncheckedLeapYearAfterYearModification
-	// Positive Case - Anti-pattern 1: [year ±n, month, day]
-	timeinfo.tm_year = 1970 + timeinfo.tm_year;  // Bug V2
+	timeinfo.tm_year = x + timeinfo.tm_year;	// $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 
 	st.wYear = x;
 	// BUG - UncheckedLeapYearAfterYearModification
 	// Positive Case - Anti-pattern 1: [year ±n, month, day]
-	st.wYear = x + st.wYear;  // Bug V2
-	// BUG - UncheckedLeapYearAfterYearModification
-	// Positive Case - Anti-pattern 1: [year ±n, month, day]
-	st.wYear = (1986 + st.wYear) - 1; // Bug V2
+	st.wYear = x + st.wYear;  // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 }
 
 /**
@@ -874,10 +851,10 @@ bool tp_intermediaryVar(struct timespec now, struct logtime &timestamp_remote)
 	timestamp_remote.tm = tm_parsed;
 	timestamp_remote.tm.tm_isdst = -1;
 	timestamp_remote.usec = now.tv_nsec * 0.001;
-	for (year = tm_now.tm_year + 1;; --year)
+	for (year = tm_now.tm_year + 1;; --year) // $ Source
 	{
 		// assert(year >= tm_now.tm_year - 1);
-		timestamp_remote.tm.tm_year = year;
+		timestamp_remote.tm.tm_year = year; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 		if (mktime(&timestamp_remote.tm) < t_now + 7 * 24 * 60 * 60)
 			break;
 	}
@@ -973,7 +950,8 @@ bool tp_intermediaryVar(struct timespec now, struct logtime &timestamp_remote)
 
 		GetSystemTime(&st);
 
-		st.wYear = st.wYear + 1; // BAD
+		// BUG - UncheckedLeapYearAfterYearModification
+		st.wYear = st.wYear + 1; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 
 		SystemTimeToFileTime(&st, &ft);
 	}
@@ -990,14 +968,16 @@ bool tp_intermediaryVar(struct timespec now, struct logtime &timestamp_remote)
 
 		GetSystemTime(&st);
 
-		st.wYear++; // BAD Positive Case - Anti-pattern 1: [year ±n, month, day]
+		// BUG - UncheckedLeapYearAfterYearModification
+		st.wYear++; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 
 		SystemTimeToFileTime(&st, &ft);
 	}
 
 	/**
 	 * Negative Case - Anti-pattern 1: [year ±n, month, day]
-	 * Modification of SYSTEMTIME struct adding to year but no leap year guard is conducted.
+	 * Modification of SYSTEMTIME struct adding to year but value passed to a 
+	 * conversion function that can be checked for success, and the result is checked. 
 	 */
 	void modified5()
 	{
@@ -1007,8 +987,13 @@ bool tp_intermediaryVar(struct timespec now, struct logtime &timestamp_remote)
 
 		GetSystemTime(&st);
 
-		st.wYear++; // Negative Case - Anti-pattern 1: [year ±n, month, day], guard condition below.
+		st.wYear++; 
 
+		// Presumed safe usage, as if the conversion is incorrect, a user can handle the error. 
+		// NOTE: it doesn't mean the user actually does the correct conversion and it it also
+		// doesn't mean it will error our in all cases that may be invalid. 
+		// For example, if a leap year and the date is 28, we may want 29 if the time is meant
+		// to capture the end of the month, but 28 is still valid and will not error out.
 		if (SystemTimeToFileTime(&st, &ft))
 		{
 			///...
@@ -1095,11 +1080,11 @@ void fp_daymonth_guard(){
 }
 
 void increment_arg(WORD &x){
-	x++;
+	x++; // $ Source
 }
 
 void increment_arg_by_pointer(WORD *x){
-	(*x)++;
+	(*x)++; // $ Source
 }
 
 
@@ -1107,11 +1092,11 @@ void fn_year_set_through_out_arg(){
 	SYSTEMTIME st;
 	GetSystemTime(&st);
 	// BAD, year incremented without check
-	increment_arg(st.wYear);
+	increment_arg(st.wYear); // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 
 	// GetSystemTime(&st);
 	// Bad, year incremented without check
-	increment_arg_by_pointer(&st.wYear);
+	increment_arg_by_pointer(&st.wYear); // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 }
 
 
@@ -1165,5 +1150,5 @@ typedef struct _TIME_FIELDS {
 
 void
 tp_ptime(PTIME_FIELDS ptm){
-	ptm->Year = ptm->Year - 1; // Positive Test Case
+	ptm->Year = ptm->Year - 1; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 }
