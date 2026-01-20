@@ -1152,3 +1152,51 @@ void
 tp_ptime(PTIME_FIELDS ptm){
 	ptm->Year = ptm->Year - 1; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 }
+
+
+bool isLeapYearRaw(WORD year)
+{
+	return year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+}
+
+void leap_year_checked_raw_false_positive1(WORD year, WORD offset, WORD day){
+	struct tm tmp;
+
+	year += offset;
+
+	if (isLeapYearRaw(year)){
+		// in this simplified example, assume the logic of this function
+		// can assume a day is 28 by default
+		// this check is more to establish the leap year guard is present
+		day += 1;
+	}
+
+	// Assume the check handled leap year correctly
+	tmp.tm_year = year; // GOOD 
+	tmp.tm_mday = day;
+}
+
+
+void leap_year_checked_raw_false_positive2(WORD year, WORD offset, WORD day){
+	struct tm tmp;
+
+	year += offset;
+
+	tmp.tm_year = year; // GOOD, check performed immediately after on raw year
+
+	// Adding some additional checks to resemble cases observed in the wild
+	if ( day > 0)
+	{
+		if (isLeapYearRaw(year)){
+			// Assume logic that would adjust the day correctly
+		}
+	}
+	else{
+		if (isLeapYearRaw(year)){
+			// Assume logic that would adjust the day correctly
+		}
+	}
+
+	tmp.tm_mday = day;
+	
+}

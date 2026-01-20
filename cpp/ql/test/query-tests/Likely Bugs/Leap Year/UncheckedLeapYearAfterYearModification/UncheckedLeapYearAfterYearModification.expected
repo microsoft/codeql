@@ -22,6 +22,8 @@ edges
 | test.cpp:1083:2:1083:4 | ... ++ | test.cpp:1082:26:1082:26 | *x | provenance |  |
 | test.cpp:1086:37:1086:37 | *x | test.cpp:1099:27:1099:35 | increment_arg_by_pointer output argument | provenance |  |
 | test.cpp:1087:2:1087:7 | ... ++ | test.cpp:1086:37:1086:37 | *x | provenance |  |
+| test.cpp:1183:2:1183:15 | ... += ... | test.cpp:1185:16:1185:19 | year | provenance |  |
+| test.cpp:1183:10:1183:15 | offset | test.cpp:1183:2:1183:15 | ... += ... | provenance |  |
 nodes
 | test.cpp:422:14:422:14 | 2 | semmle.label | 2 |
 | test.cpp:440:2:440:11 | ... ++ | semmle.label | ... ++ |
@@ -56,6 +58,9 @@ nodes
 | test.cpp:1099:27:1099:35 | increment_arg_by_pointer output argument | semmle.label | increment_arg_by_pointer output argument |
 | test.cpp:1133:3:1133:15 | -- ... | semmle.label | -- ... |
 | test.cpp:1153:14:1153:26 | ... - ... | semmle.label | ... - ... |
+| test.cpp:1183:2:1183:15 | ... += ... | semmle.label | ... += ... |
+| test.cpp:1183:10:1183:15 | offset | semmle.label | offset |
+| test.cpp:1185:16:1185:19 | year | semmle.label | year |
 subpaths
 testFailures
 | test.cpp:1075:2:1075:11 | ... ++ | Unexpected result: Alert |

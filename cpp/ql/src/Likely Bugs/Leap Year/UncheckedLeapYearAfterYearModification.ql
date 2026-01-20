@@ -16,9 +16,19 @@ import semmle.code.cpp.controlflow.IRGuards
 /**
  * Functions whose operations should never be considered a
  * source or sink of a dangerous leap year operation.
+ * The general concept is to add conversion functions
+ * that convert one time type to another. Often
+ * other ignorable operation heuristics will filter these,
+ * but some cases, the simplest approach is to simply filter
+ * the function entirely.
+ * Note that flow through these functions should still be allowed
+ * we just cannot start or end flow from an operation to a
+ * year assignment in one of these functions.
  */
 class IgnorableFunction extends Function {
   IgnorableFunction() {
+    this instanceof TimeConversionFunction
+    or
     // Helper utility in postgres with string time conversions
     this.getName() = "DecodeISO8601Interval"
     or
@@ -119,6 +129,9 @@ predicate isLikelyConversionConstant(int c) {
     i = 1899 or // Observed in uses with 1900 to address off by one scenarios
     i = 292275056 or // qdatetime.h Qt Core year range first year constant
     i = 292278994 or // qdatetime.h Qt Core year range last year constant
+    i = 1601 or // Windows FILETIME epoch start year
+    i = 1970 or // Unix epoch start year
+    i = 70 or // Unix epoch start year short form
     i = 0
   )
 }
@@ -351,9 +364,12 @@ module OperationToYearAssignmentConfig implements DataFlow::ConfigSig {
   predicate isBarrier(DataFlow::Node n) {
     exists(ArrayExpr arr | arr.getArrayOffset() = n.asExpr())
     or
-    n.asExpr().getUnspecifiedType() instanceof PointerType
+    n.getType().getUnspecifiedType() instanceof PointerType
     or
-    n.asExpr().getUnspecifiedType() instanceof CharType
+    n.getType().getUnspecifiedType() instanceof CharType
+    or
+    // If a type resembles "string" ignore flow (likely string conversion, currently ignored)
+    n.getType().getUnspecifiedType().stripType().getName().toLowerCase().matches("%string%")
     or
     n.asExpr() instanceof IgnorableOperation
     or

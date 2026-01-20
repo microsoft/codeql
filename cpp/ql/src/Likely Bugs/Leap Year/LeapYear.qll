@@ -534,7 +534,8 @@ class TimeConversionFunction extends Function {
         "FileTimeToSystemTime", "SystemTimeToFileTime", "SystemTimeToTzSpecificLocalTime",
         "SystemTimeToTzSpecificLocalTimeEx", "TzSpecificLocalTimeToSystemTime",
         "TzSpecificLocalTimeToSystemTimeEx", "RtlLocalTimeToSystemTime",
-        "RtlTimeToSecondsSince1970", "_mkgmtime", "SetSystemTime"
+        "RtlTimeToSecondsSince1970", "_mkgmtime", "SetSystemTime", "SystemTimeToVariantTime",
+        "VariantTimeToSystemTime"
       ]
   }
 }
