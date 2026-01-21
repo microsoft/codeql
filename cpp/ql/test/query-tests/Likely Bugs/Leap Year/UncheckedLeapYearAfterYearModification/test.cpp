@@ -1198,5 +1198,62 @@ void leap_year_checked_raw_false_positive2(WORD year, WORD offset, WORD day){
 	}
 
 	tmp.tm_mday = day;
-	
+
+	year += offset; // $ Source
+
+	tmp.tm_year = year; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
+
 }
+
+
+bool isNotLeapYear(struct tm tm)
+{
+	return !(tm.tm_year % 4 == 0 && (tm.tm_year % 100 != 0 || tm.tm_year % 400 == 0));
+}
+
+bool isNotLeapYear2(struct tm tm)
+{
+	return (tm.tm_year % 4 != 0 || (tm.tm_year % 100 == 0 && tm.tm_year % 400 != 0));
+}
+
+
+void inverted_leap_year_check(WORD year, WORD offset, WORD day){
+	struct tm tmp;
+
+	tmp.tm_year = year + offset;
+
+	if (isNotLeapYear(tmp)){
+		day = 28;
+	}
+
+	tmp.tm_year = year + offset;
+
+	if(isNotLeapYear2(tmp)){
+		day = 28;
+	}
+
+
+	tmp.tm_year = year + offset;
+	bool isNotLeapYear = (tmp.tm_year % 4 != 0 || (tmp.tm_year % 100 == 0 && tmp.tm_year % 400 != 0));
+
+	if(isNotLeapYear){
+		day = 28;
+	}
+
+	tmp.tm_year = year + offset; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
+}
+
+
+void simplified_leap_year_check(WORD year, WORD offset){
+	struct tm tmp;
+
+	tmp.tm_year = year + offset;
+
+	bool isLeap = !(tmp.tm_year % 4) && (tmp.tm_year % 100 || !(tmp.tm_year % 400));
+	if(isLeap){
+		// do something
+	}
+
+	tmp.tm_year = year + offset; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
+}
+

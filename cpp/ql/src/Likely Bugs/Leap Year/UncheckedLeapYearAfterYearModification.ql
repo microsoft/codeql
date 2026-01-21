@@ -385,22 +385,11 @@ module OperationToYearAssignmentConfig implements DataFlow::ConfigSig {
 module OperationToYearAssignmentFlow = TaintTracking::Global<OperationToYearAssignmentConfig>;
 
 predicate isLeapYearCheckSink(DataFlow::Node sink) {
-  exists(ExprCheckLeapYear e | sink.asExpr() = e.getAChild*())
-  or
-  // Local leap year check
-  sink.asExpr().(LeapYearFieldAccess).isUsedInCorrectLeapYearCheck()
-  or
-  // passed to function that seems to check for leap year
-  exists(ChecksForLeapYearFunctionCall fc |
-    sink.asExpr() = fc.getAnArgument()
-    or
-    sink.asExpr() = fc.getAnArgument().(FieldAccess).getQualifier()
-    or
-    exists(AddressOfExpr aoe |
-      fc.getAnArgument() = aoe and
-      aoe.getOperand() = sink.asExpr()
-    )
+  exists(LeapYearGuardCondition lgc |
+    lgc.checkedYearAccess() = [sink.asExpr(), sink.asIndirectExpr()]
   )
+  or
+  isLeapYearCheckCall(_, [sink.asExpr(), sink.asIndirectExpr()])
 }
 
 /**
@@ -512,6 +501,147 @@ module TimeStructToCheckedTimeConversionConfig implements DataFlow::StateConfigS
 
 module TimeStructToCheckedTimeConversionFlow =
   DataFlow::GlobalWithState<TimeStructToCheckedTimeConversionConfig>;
+
+/**
+ * Finds flow from a parameter of a function to a leap year check.
+ * This is necessary to handle for scenarios like this:
+ *
+ *    year = DANGEROUS_OP // source
+ *    isLeap = isLeapYear(year);
+ *    // logic based on isLeap
+ *    struct.year = year; // sink
+ *
+ * In this case, we may flow a dangerous op to a year assignment, failing
+ * to barrier the flow through a leap year check, as the leap year check
+ * is nested, and dataflow does not progress down into the check and out.
+ * Instead, the point of this flow is to detect isLeapYear's argument
+ * is checked for leap year, making the isLeapYear call a barrier for
+ * the dangerous flow if we flow through the parameter identified to
+ * be checked.
+ */
+module ParameterToLeapYearCheckConfig implements DataFlow::ConfigSig {
+  predicate isSource(DataFlow::Node source) { exists(source.asParameter()) }
+
+  predicate isSink(DataFlow::Node sink) {
+    exists(LeapYearGuardCondition lgc |
+      lgc.checkedYearAccess() = [sink.asExpr(), sink.asIndirectExpr()]
+    )
+  }
+
+  predicate isAdditionalFlowStep(DataFlow::Node node1, DataFlow::Node node2) {
+    // flow from a YearFieldAccess to the qualifier
+    node2.asExpr() = node1.asExpr().(YearFieldAccess).getQualifier()
+    or
+    // flow from a year access qualifier to a year field
+    exists(YearFieldAccess yfa | node2.asExpr() = yfa and node1.asExpr() = yfa.getQualifier())
+  }
+
+  /**
+   * Enforcing the check must occur in the same call context as the source,
+   * i.e., do not return from the source function and check in a caller.
+   */
+  DataFlow::FlowFeature getAFeature() { result instanceof DataFlow::FeatureHasSourceCallContext }
+}
+
+// NOTE: I do not believe taint flow is necessary here as we should
+// be flowing directyly from some parameter to a leap year check.
+module ParameterToLeapYearCheckFlow = DataFlow::Global<ParameterToLeapYearCheckConfig>;
+
+predicate isLeapYearCheckCall(Call c, Expr arg) {
+  exists(ParameterToLeapYearCheckFlow::PathNode src, Function f, int i |
+    src.isSource() and
+    f.getParameter(i) = src.getNode().asParameter() and
+    c.getTarget() = f and
+    c.getArgument(i) = arg
+  )
+}
+
+class LeapYearGuardCondition extends GuardCondition {
+  Expr yearSinkDiv4;
+  Expr yearSinkDiv100;
+  Expr yearSinkDiv400;
+
+  LeapYearGuardCondition() {
+    exists(
+      LogicalAndExpr andExpr, LogicalOrExpr orExpr, GuardCondition div4Check,
+      GuardCondition div100Check, GuardCondition div400Check, GuardValue gv
+    |
+      // Cannonical case:
+      // form: `(year % 4 == 0) && (year % 100 != 0 || year % 400 == 0)`
+      // or : `!(year % 4 == 0) && (year % 100 != 0 || year % 400 == 0)`
+      this = andExpr and
+      andExpr.hasOperands(div4Check, orExpr) and
+      orExpr.hasOperands(div100Check, div400Check) and
+      exists(RemExpr e |
+        div4Check.comparesEq(e, 0, true, gv) and
+        e.getRightOperand().getValue().toInt() = 4 and
+        yearSinkDiv4 = e.getLeftOperand()
+      ) and
+      exists(RemExpr e |
+        div100Check.comparesEq(e, 0, false, gv) and
+        e.getRightOperand().getValue().toInt() = 100 and
+        yearSinkDiv100 = e.getLeftOperand()
+      ) and
+      exists(RemExpr e |
+        div400Check.comparesEq(e, 0, true, gv) and
+        e.getRightOperand().getValue().toInt() = 400 and
+        yearSinkDiv400 = e.getLeftOperand()
+      )
+      or
+      // Inverted logic case:
+      //  `year % 400 == 0 || (year % 100 != 0 && year % 4 == 0)`
+      this = orExpr and
+      orExpr.hasOperands(div4Check, andExpr) and
+      andExpr.hasOperands(div100Check, div400Check) and
+      exists(RemExpr e |
+        div4Check.comparesEq(e, 0, false, gv) and
+        e.getRightOperand().getValue().toInt() = 4 and
+        yearSinkDiv4 = e.getLeftOperand()
+      ) and
+      exists(RemExpr e |
+        div100Check.comparesEq(e, 0, true, gv) and
+        e.getRightOperand().getValue().toInt() = 100 and
+        yearSinkDiv100 = e.getLeftOperand()
+      ) and
+      exists(RemExpr e |
+        div400Check.comparesEq(e, 0, false, gv) and
+        e.getRightOperand().getValue().toInt() = 400 and
+        yearSinkDiv400 = e.getLeftOperand()
+      )
+    )
+  }
+
+  Expr getYearSinkDiv4() { result = yearSinkDiv4 }
+
+  Expr getYearSinkDiv100() { result = yearSinkDiv100 }
+
+  Expr getYearSinkDiv400() { result = yearSinkDiv400 }
+
+  /**
+   * The variable access that is used in all 3 components of the leap year check
+   * e.g., see getYearSinkDiv4/100/400..
+   * If a field access is used, the qualifier and the field access are both returned
+   * in checked condition.
+   * NOTE: if the year is not checked using the same access in all 3 components, no result is returned.
+   * The typical case observed is a consistent variable access is used. If not, this may indicate a bug.
+   * We could check more accurately with a dataflow analysis, but this is likely sufficient for now.
+   */
+  VariableAccess checkedYearAccess() {
+    exists(Variable var |
+      (
+        this.getYearSinkDiv4().getAChild*() = var.getAnAccess() and
+        this.getYearSinkDiv100().getAChild*() = var.getAnAccess() and
+        this.getYearSinkDiv400().getAChild*() = var.getAnAccess() and
+        result = var.getAnAccess() and
+        (
+          result = this.getYearSinkDiv4().getAChild*() or
+          result = this.getYearSinkDiv100().getAChild*() or
+          result = this.getYearSinkDiv400().getAChild*()
+        )
+      )
+    )
+  }
+}
 
 import OperationToYearAssignmentFlow::PathGraph
 

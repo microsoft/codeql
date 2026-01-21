@@ -14,6 +14,9 @@
 | test.cpp:1095:16:1095:23 | increment_arg output argument | test.cpp:1083:2:1083:4 | ... ++ | test.cpp:1095:16:1095:23 | increment_arg output argument | Year field has been modified, but no appropriate check for LeapYear was found. |
 | test.cpp:1099:27:1099:35 | increment_arg_by_pointer output argument | test.cpp:1087:2:1087:7 | ... ++ | test.cpp:1099:27:1099:35 | increment_arg_by_pointer output argument | Year field has been modified, but no appropriate check for LeapYear was found. |
 | test.cpp:1153:14:1153:26 | ... - ... | test.cpp:1153:14:1153:26 | ... - ... | test.cpp:1153:14:1153:26 | ... - ... | Year field has been modified, but no appropriate check for LeapYear was found. |
+| test.cpp:1204:16:1204:19 | year | test.cpp:1202:10:1202:15 | offset | test.cpp:1204:16:1204:19 | year | Year field has been modified, but no appropriate check for LeapYear was found. |
+| test.cpp:1243:16:1243:28 | ... + ... | test.cpp:1243:16:1243:28 | ... + ... | test.cpp:1243:16:1243:28 | ... + ... | Year field has been modified, but no appropriate check for LeapYear was found. |
+| test.cpp:1257:16:1257:28 | ... + ... | test.cpp:1257:16:1257:28 | ... + ... | test.cpp:1257:16:1257:28 | ... + ... | Year field has been modified, but no appropriate check for LeapYear was found. |
 edges
 | test.cpp:854:7:854:31 | ... = ... | test.cpp:857:33:857:36 | year | provenance |  |
 | test.cpp:854:14:854:31 | ... + ... | test.cpp:854:7:854:31 | ... = ... | provenance |  |
@@ -24,6 +27,8 @@ edges
 | test.cpp:1087:2:1087:7 | ... ++ | test.cpp:1086:37:1086:37 | *x | provenance |  |
 | test.cpp:1183:2:1183:15 | ... += ... | test.cpp:1185:16:1185:19 | year | provenance |  |
 | test.cpp:1183:10:1183:15 | offset | test.cpp:1183:2:1183:15 | ... += ... | provenance |  |
+| test.cpp:1202:2:1202:15 | ... += ... | test.cpp:1204:16:1204:19 | year | provenance |  |
+| test.cpp:1202:10:1202:15 | offset | test.cpp:1202:2:1202:15 | ... += ... | provenance |  |
 nodes
 | test.cpp:422:14:422:14 | 2 | semmle.label | 2 |
 | test.cpp:440:2:440:11 | ... ++ | semmle.label | ... ++ |
@@ -61,6 +66,15 @@ nodes
 | test.cpp:1183:2:1183:15 | ... += ... | semmle.label | ... += ... |
 | test.cpp:1183:10:1183:15 | offset | semmle.label | offset |
 | test.cpp:1185:16:1185:19 | year | semmle.label | year |
+| test.cpp:1202:2:1202:15 | ... += ... | semmle.label | ... += ... |
+| test.cpp:1202:10:1202:15 | offset | semmle.label | offset |
+| test.cpp:1204:16:1204:19 | year | semmle.label | year |
+| test.cpp:1223:16:1223:28 | ... + ... | semmle.label | ... + ... |
+| test.cpp:1229:16:1229:28 | ... + ... | semmle.label | ... + ... |
+| test.cpp:1236:16:1236:28 | ... + ... | semmle.label | ... + ... |
+| test.cpp:1243:16:1243:28 | ... + ... | semmle.label | ... + ... |
+| test.cpp:1250:16:1250:28 | ... + ... | semmle.label | ... + ... |
+| test.cpp:1257:16:1257:28 | ... + ... | semmle.label | ... + ... |
 subpaths
 testFailures
 | test.cpp:1075:2:1075:11 | ... ++ | Unexpected result: Alert |
