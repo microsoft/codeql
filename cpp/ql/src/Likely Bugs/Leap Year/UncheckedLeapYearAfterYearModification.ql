@@ -12,6 +12,8 @@
 import cpp
 import LeapYear
 import semmle.code.cpp.controlflow.IRGuards
+import semmle.code.cpp.dataflow.new.TaintTracking
+import semmle.code.cpp.commons.DateTime
 
 /**
  * Functions whose operations should never be considered a
