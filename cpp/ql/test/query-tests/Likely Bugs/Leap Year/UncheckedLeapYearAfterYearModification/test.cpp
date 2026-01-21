@@ -1257,3 +1257,32 @@ void simplified_leap_year_check(WORD year, WORD offset){
 	tmp.tm_year = year + offset; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 }
 
+void compound_leap_year_check(WORD year, WORD offset, WORD month, WORD day){
+	struct tm tmp;
+
+	tmp.tm_year = year + offset;
+
+	bool isLeap = tmp.tm_year % 4 == 0 && (tmp.tm_year % 100 != 0 || tmp.tm_year % 400 == 0) && (month == 2 && day == 29);
+	
+	if(isLeap){
+		// do something
+	}
+	tmp.tm_mday = day;
+	tmp.tm_mon = month;
+}
+
+void indirect_time_conversion_check(WORD year, WORD offset){
+	SYSTEMTIME tmp;
+
+	tmp.wYear = year + offset;
+
+	FILETIME ft;
+
+	// (out-of-scope) GeneralBug: Unchecked call to SystemTimeToFileTime. this may have failed, but we didn't check the return value!
+	BOOL res = SystemTimeToFileTime(&tmp, &ft);
+
+	// Assume this check of the result is sufficient as an implicit leap year check. 
+	bool x = (res == 0) ? true : false;
+}
+
+

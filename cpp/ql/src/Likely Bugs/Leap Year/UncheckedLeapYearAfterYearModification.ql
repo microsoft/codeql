@@ -473,6 +473,13 @@ predicate isControlledByMonthEqualityCheckNonFebruary(Expr e) {
   )
 }
 
+/**
+ * Flow from a year field access through a time conversion function
+ * where the call's result is used to check error. The result must
+ * be used as a guard for an if or ternary operator. If so,
+ * assume some sort of error handling is occurring that could be used
+ * to detect bad dates due to leap year.
+ */
 module TimeStructToCheckedTimeConversionConfig implements DataFlow::StateConfigSig {
   class FlowState = boolean;
 
@@ -483,7 +490,11 @@ module TimeStructToCheckedTimeConversionConfig implements DataFlow::StateConfigS
 
   predicate isSink(DataFlow::Node sink, FlowState state) {
     state = true and
-    exists(IfStmt ifs | ifs.getCondition().getAChild*() = sink.asExpr())
+    (
+      exists(IfStmt ifs | ifs.getCondition().getAChild*() = sink.asExpr())
+      or
+      exists(ConditionalExpr ce | ce.getCondition().getAChild*() = sink.asExpr())
+    )
   }
 
   predicate isAdditionalFlowStep(

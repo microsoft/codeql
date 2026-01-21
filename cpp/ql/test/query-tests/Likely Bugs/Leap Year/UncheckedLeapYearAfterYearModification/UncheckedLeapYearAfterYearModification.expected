@@ -75,6 +75,8 @@ nodes
 | test.cpp:1243:16:1243:28 | ... + ... | semmle.label | ... + ... |
 | test.cpp:1250:16:1250:28 | ... + ... | semmle.label | ... + ... |
 | test.cpp:1257:16:1257:28 | ... + ... | semmle.label | ... + ... |
+| test.cpp:1263:16:1263:28 | ... + ... | semmle.label | ... + ... |
+| test.cpp:1277:14:1277:26 | ... + ... | semmle.label | ... + ... |
 subpaths
 testFailures
 | test.cpp:1075:2:1075:11 | ... ++ | Unexpected result: Alert |
