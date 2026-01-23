@@ -1288,7 +1288,7 @@ void indirect_time_conversion_check(WORD year, WORD offset){
 void set_time(WORD year, WORD month, WORD day){
 	SYSTEMTIME tmp;
 
-	tmp.wYear = year;
+	tmp.wYear = year; //$ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 	tmp.wMonth = month;
 	tmp.wDay = day;
 }
@@ -1303,7 +1303,7 @@ void constant_month_on_year_modification1(WORD year, WORD offset, WORD month){
 
 	if(month++ > 12){
 
-		set_time(year+1, 1, 1);// OK since the year is incremented with a known non-leap year month change
+		set_time(year+1, 1, 31);// OK since the year is incremented with a known non-leap year month change
 	}
 }
 
@@ -1324,7 +1324,7 @@ void constant_month_on_year_modification2(WORD year, WORD offset, WORD month){
 		WORD monthtmp;
 		yeartmp = year + 1;
 		monthtmp = 1;
-		set_time(yeartmp, monthtmp, 1);// OK since the year is incremented with a known non-leap year month change
+		set_time(yeartmp, monthtmp, 31);// OK since the year is incremented with a known non-leap year month change
 	}
 }
 
@@ -1362,3 +1362,23 @@ void intermediate_time_struct(WORD year, WORD offset){
 
 }
 
+void constant_day_on_year_modification1(WORD year, WORD offset, WORD month){
+	SYSTEMTIME tmp;
+
+	if(month++ > 12){
+		tmp.wDay = 1;
+		tmp.wYear = year + 1;// OK since the year is incremented with a known non-leap year day
+	}
+
+	if(month++ > 12){
+
+		set_time(year+1, month, 1);// OK since the year is incremented with a known non-leap year day
+	}
+
+	if(month++ > 12){
+
+		// BAD, year incremented, month unknown in block, and date is set to 31
+		// which is dangerous. 
+		set_time(year+1, month, 31);// $ Source
+	}
+}

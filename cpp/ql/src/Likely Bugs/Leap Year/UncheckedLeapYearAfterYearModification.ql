@@ -712,32 +712,31 @@ class LeapYearGuardCondition extends GuardCondition {
 }
 
 /**
- * A difficult case to detect is if a year modification is tied to a month modification
- * and the month is safe for leap year.
+ * A difficult case to detect is if a year modification is tied to a month or day modification
+ * and the month or day is safe for leap year.
  *    e.g.,
  *          year++;
  *          month = 1;
+ *          // alternative: day = 15;
  *        ... values eventually used in the same time struct
  * If this is even more challenging if the struct the values end up in are not
  * local (set inter-procedurally).
- * This flow flows constants 1-12 (but not 2 as this likely means february) to a month assignment.
+ * This flow flows constants 1-31 to a month or day assignment.
  * It is assumed a user of this flow will check if the month/day source and month/day sink
  * are in the same basic blocks as a year modification source and a year modification sink.
  * It is also assumed a user will check if the constant source is a value that is ignorable
- * e.g., if it is 2 and the sink is a month assignment, then it isn't ignorable.
+ * e.g., if it is 2 and the sink is a month assignment, then it isn't ignorable or
+ * if the value is < 27 and is a day assignment, it is likely ignorable
  *
  * Obviously this does not handle all conditions (e.g., the month set in another block).
  * It is meant to capture the most common cases of false positives.
  */
-module NonFebConstantToMonthAssignmentConfig implements DataFlow::ConfigSig {
-  predicate isSource(DataFlow::Node source) {
-    source.asExpr().getValue().toInt() in [1 .. 12] and
-    source.asExpr().getValue().toInt() != 2
-  }
+module CandidateConstantToDayOrMonthAssignmentConfig implements DataFlow::ConfigSig {
+  predicate isSource(DataFlow::Node source) { source.asExpr().getValue().toInt() in [1 .. 31] }
 
   predicate isSink(DataFlow::Node sink) {
     exists(Assignment a |
-      a.getLValue() instanceof MonthFieldAccess and
+      (a.getLValue() instanceof MonthFieldAccess or a.getLValue() instanceof DayFieldAccess) and
       a.getRValue() = sink.asExpr()
     )
   }
@@ -745,8 +744,8 @@ module NonFebConstantToMonthAssignmentConfig implements DataFlow::ConfigSig {
 
 // NOTE: only data flow here (no taint tracking) as we want the exact
 // constant flowing to the month assignment
-module NonFebConstantToMonthAssignmentFlow =
-  DataFlow::Global<NonFebConstantToMonthAssignmentConfig>;
+module CandidateConstantToDayOrMonthAssignmentFlow =
+  DataFlow::Global<CandidateConstantToDayOrMonthAssignmentConfig>;
 
 import OperationToYearAssignmentFlow::PathGraph
 
@@ -759,10 +758,73 @@ where
   // and the month value would indicate its set to any other month than february.
   // Finds if the source year node is in the same block as a source month block
   // and if the same for the sinks.
-  not exists(DataFlow::Node monthValSrc, DataFlow::Node monthValSink |
-    NonFebConstantToMonthAssignmentFlow::flow(monthValSrc, monthValSink) and
-    monthValSrc.asExpr().getBasicBlock() = src.getNode().asExpr().getBasicBlock() and
-    monthValSink.asExpr().getBasicBlock() = sink.getNode().asExpr().getBasicBlock()
+  not exists(DataFlow::Node dayOrMonthValSrc, DataFlow::Node dayOrMonthValSink, Assignment a |
+    CandidateConstantToDayOrMonthAssignmentFlow::flow(dayOrMonthValSrc, dayOrMonthValSink) and
+    a.getRValue() = dayOrMonthValSink.asExpr() and
+    dayOrMonthValSrc.asExpr().getBasicBlock() = src.getNode().asExpr().getBasicBlock() and
+    dayOrMonthValSink.asExpr().getBasicBlock() = sink.getNode().asExpr().getBasicBlock() and
+    (
+      a.getLValue() instanceof MonthFieldAccess and
+      dayOrMonthValSrc.asExpr().getValue().toInt() != 2
+      or
+      a.getLValue() instanceof DayFieldAccess and
+      dayOrMonthValSrc.asExpr().getValue().toInt() <= 27
+    )
   )
 select sink, src, sink,
   "Year field has been modified, but no appropriate check for LeapYear was found."
+// int limit() { result = 5 }
+// module Partial = TimeStructToCheckedTimeConversionFlow::FlowExplorationFwd<limit/0>;
+// import Partial::PartialPathGraph
+// from Partial::PartialPathNode src, Partial::PartialPathNode sink
+// where Partial::partialFlow(src, sink, _) and src.getLocation().getStartLine() = 1331
+// select sink, src, sink, "RequestHandle use path"
+// TODO: this is an older heuristic that should be reassessed.
+// The heuristic stipulates that if a month or day is set to a constant in the local flow up to or after
+// a modified year's sink, then assume the user is knowingly handling the conversion correctly.
+// There is no interpretation of the assignment of the month/day or consideration for what branch the assignment is on.
+// Merely if the assignment of a constant day/month occurs anywhere, the year modification can likely
+// be ignored.
+// not exists(FieldAccess mfa, AssignExpr ae, YearFieldAccess yfa, int val, Variable var |
+//   mfa instanceof MonthFieldAccess or mfa instanceof DayFieldAccess
+// |
+//   yfa = sink.getNode().asExpr().(YearFieldAssignment).getYearFieldAccess() and
+//   var.getAnAccess() = yfa.getQualifier*() and
+//   mfa.getQualifier*() = var.getAnAccess() and
+//   mfa.isModified() and
+//   (
+//     mfa.getBasicBlock() = yfa.getBasicBlock().getASuccessor*() or
+//     yfa.getBasicBlock() = mfa.getBasicBlock().getASuccessor+()
+//   ) and
+//   ae = mfa.getEnclosingElement() and
+//   ae.getAnOperand().getValue().toInt() = val and
+//   // If the constant looks like it relates to february, then there still might be an error
+//   // so only look for any other constant.
+//   not val in [2, 28, 29]
+// ) and
+// // This is a quick huerstic to account for similar cases as the above heuristic for constant
+// // months, but sometimes the month is set in a time struct inter-procedurally.
+// //    e.g.,
+// //          year++;
+// //          month = 1;
+// //          ... values passed to function that sets in a time struct
+// // It is tricky to catch these situations with CodeQL. An AI should be able to detect it
+// // however, in the meantime, a simple heuristic is to check within the same block as
+// // the year assignment source, if there is another variable that looks like a month
+// // set to a value that isn't 2, 28, or 29. Of course this is a workaround as it is
+// // still possible for the user to incorrectly account for leap year (e.g., by not using
+// // the month set in the block), but the rationale is it is more typically indicative
+// // of a false positive in these cases.
+// // TODO: can we remove this later an use an AI assessment to filter false positives?
+// not exists(Variable v, VariableAccess va, BasicBlock bb, AssignExpr a, int val |
+//   v.getName().toLowerCase().matches("%month%") and
+//   va = v.getAnAccess() and
+//   va.getBasicBlock() = bb and
+//   bb = src.getNode().asExpr().getBasicBlock() and
+//   a.getBasicBlock() = bb and
+//   a.getLValue() = va and
+//   a.getRValue().getValue().toInt() = val and
+//   // If the constant looks like it relates to february, then there still might be an error
+//   // so only look for any other constant.
+//   val != 2
+// )
