@@ -535,7 +535,9 @@ class TimeConversionFunction extends Function {
         "SystemTimeToTzSpecificLocalTimeEx", "TzSpecificLocalTimeToSystemTime",
         "TzSpecificLocalTimeToSystemTimeEx", "RtlLocalTimeToSystemTime",
         "RtlTimeToSecondsSince1970", "_mkgmtime", "SetSystemTime", "SystemTimeToVariantTime",
-        "VariantTimeToSystemTime", "mktime", "_mktime32", "_mktime64"
+        "VariantTimeToSystemTime", "mktime", "_mktime32", "_mktime64", "VarUdateFromDate"
       ]
+    or
+    this.getQualifiedName().matches("GetDateFormat%")
   }
 }

@@ -57,6 +57,21 @@ class IgnorableFunction extends Function {
     // A postgres function for local time conversions
     // conversion operations (from one time structure to another) are generally ignorable
     this.getName() = "localsub"
+    or
+    // Hijri years are not applicable for gregorian leap year checks
+    this.getName().toLowerCase().matches("%hijri%")
+    or
+    this.getFile().getBaseName().toLowerCase().matches("%hijri%")
+    or
+    // Persian calendar conversions are not applicable for gregorian leap year checks
+    this.getName().toLowerCase().matches("%persian%")
+    or
+    this.getFile().getBaseName().toLowerCase().matches("%persian%")
+    // or
+    // // Functions with "convert" in the name are often conversion functions
+    // // This is a very broad heuristic to handle a few observed false positives
+    // // involving conversions with Hijri years.
+    // this.getName().toLowerCase().matches("%convert%")
   }
 }
 
@@ -123,17 +138,21 @@ predicate isLikelyConversionConstant(int c) {
     i = 2400000 or // MJD → JDN conversion
     i = 2400001 or // alt MJD → JDN conversion
     i = 2141 or // fixed‑point month/day extraction
-    i = 2000 or // observed in some conversions
     i = 65536 or // observed in some conversions
     i = 7834 or // observed in some conversions
     i = 256 or // observed in some conversions
-    i = 1900 or // struct tm base‑year offset; harmless
-    i = 1899 or // Observed in uses with 1900 to address off by one scenarios
     i = 292275056 or // qdatetime.h Qt Core year range first year constant
     i = 292278994 or // qdatetime.h Qt Core year range last year constant
     i = 1601 or // Windows FILETIME epoch start year
     i = 1970 or // Unix epoch start year
     i = 70 or // Unix epoch start year short form
+    i = 1899 or // Observed in uses with 1900 to address off by one scenarios
+    i = 1900 or // Used when converting a 2 digit year
+    i = 2000 or // Used when converting a 2 digit year
+    i = 1400 or // Hijri base year, used when converting a 2 digit year
+    i = 1980 or // FAT filesystem epoch start year
+    i = 227013 or // constant observed for Hirji year conversion, and Hirji years are not applicable for gregorian leap year
+    i = 10631 or // constant observed for Hirji year conversion, and Hirji years are not applicable for gregorian leap year
     i = 0
   )
 }
@@ -375,6 +394,12 @@ module OperationToYearAssignmentConfig implements DataFlow::ConfigSig {
     or
     n.asExpr() instanceof IgnorableOperation
     or
+    // Hijri or Persian  years are not applicable for gregorian leap year checks
+    exists(Variable v |
+      v.getName().toLowerCase().matches(["%hijri%, %persian%"]) and
+      v.getAnAccess() = [n.asIndirectExpr(), n.asExpr()]
+    )
+    or
     isLeapYearCheckSink(n)
   }
 
@@ -404,7 +429,17 @@ module YearFieldAccessToLeapYearCheckConfig implements DataFlow::ConfigSig {
 
   predicate isAdditionalFlowStep(DataFlow::Node node1, DataFlow::Node node2) {
     // flow from a YearFieldAccess to the qualifier
-    node2.asExpr() = node1.asExpr().(YearFieldAccess).getQualifier()
+    node2.asExpr() = node1.asExpr().(YearFieldAccess).getQualifier*()
+    or
+    // Pass through any intermediate struct
+    exists(Assignment a, DataFlow::PostUpdateNode pun |
+      a.getLValue().(YearFieldAccess).getQualifier*() = pun.getPreUpdateNode().asExpr() and
+      a.getRValue() = node1.asExpr() and
+      node2.asExpr() = a.getLValue().(YearFieldAccess).getQualifier*()
+    )
+    or
+    // flow from a year access qualifier to a year field
+    exists(YearFieldAccess yfa | node2.asExpr() = yfa and node1.asExpr() = yfa.getQualifier())
   }
 
   /**
@@ -428,7 +463,7 @@ predicate isYearModifiedWithCheck(YearFieldAccess fa) {
   // assume the leap year is being handled.
   exists(TimeStructToCheckedTimeConversionFlow::PathNode timeQualSrc |
     timeQualSrc.isSource() and
-    timeQualSrc.getNode().asExpr() = fa.getQualifier()
+    timeQualSrc.getNode().asExpr() = fa.getQualifier*()
   )
   // or
   // isUsedInFeb29Check(fa)
@@ -491,9 +526,13 @@ module TimeStructToCheckedTimeConversionConfig implements DataFlow::StateConfigS
   predicate isSink(DataFlow::Node sink, FlowState state) {
     state = true and
     (
-      exists(IfStmt ifs | ifs.getCondition().getAChild*() = sink.asExpr())
+      exists(IfStmt ifs | ifs.getCondition().getAChild*() = [sink.asExpr(), sink.asIndirectExpr()])
       or
-      exists(ConditionalExpr ce | ce.getCondition().getAChild*() = sink.asExpr())
+      exists(ConditionalExpr ce |
+        ce.getCondition().getAChild*() = [sink.asExpr(), sink.asIndirectExpr()]
+      )
+      or
+      exists(Loop l | l.getCondition().getAChild*() = [sink.asExpr(), sink.asIndirectExpr()])
     )
   }
 
@@ -504,9 +543,24 @@ module TimeStructToCheckedTimeConversionConfig implements DataFlow::StateConfigS
     state2 = true and
     exists(Call c |
       c.getTarget() instanceof TimeConversionFunction and
-      c.getAnArgument().getAChild*() = node1.asExpr() and
+      c.getAnArgument().getAChild*() = [node1.asExpr(), node1.asIndirectExpr()] and
       node2.asExpr() = c
     )
+  }
+
+  predicate isAdditionalFlowStep(DataFlow::Node node1, DataFlow::Node node2) {
+    // flow from a YearFieldAccess to the qualifier
+    node2.asExpr() = node1.asExpr().(YearFieldAccess).getQualifier*()
+    or
+    // Pass through any intermediate struct
+    exists(Assignment a, DataFlow::PostUpdateNode pun |
+      a.getLValue().(YearFieldAccess).getQualifier*() = pun.getPreUpdateNode().asExpr() and
+      a.getRValue() = node1.asExpr() and
+      node2.asExpr() = a.getLValue().(YearFieldAccess).getQualifier*()
+    )
+    or
+    // flow from a year access qualifier to a year field
+    exists(YearFieldAccess yfa | node2.asExpr() = yfa and node1.asExpr() = yfa.getQualifier())
   }
 
   DataFlow::FlowFeature getAFeature() { result instanceof DataFlow::FeatureHasSourceCallContext }
@@ -543,7 +597,7 @@ module ParameterToLeapYearCheckConfig implements DataFlow::ConfigSig {
 
   predicate isAdditionalFlowStep(DataFlow::Node node1, DataFlow::Node node2) {
     // flow from a YearFieldAccess to the qualifier
-    node2.asExpr() = node1.asExpr().(YearFieldAccess).getQualifier()
+    node2.asExpr() = node1.asExpr().(YearFieldAccess).getQualifier*()
     or
     // flow from a year access qualifier to a year field
     exists(YearFieldAccess yfa | node2.asExpr() = yfa and node1.asExpr() = yfa.getQualifier())
@@ -656,6 +710,43 @@ class LeapYearGuardCondition extends GuardCondition {
   }
 }
 
+/**
+ * A difficult case to detect is if a year modification is tied to a month modification
+ * and the month is safe for leap year.
+ *    e.g.,
+ *          year++;
+ *          month = 1;
+ *        ... values eventually used in the same time struct
+ * If this is even more challenging if the struct the values end up in are not
+ * local (set inter-procedurally).
+ * This flow flows constants 1-12 (but not 2 as this likely means february) to a month assignment.
+ * It is assumed a user of this flow will check if the month/day source and month/day sink
+ * are in the same basic blocks as a year modification source and a year modification sink.
+ * It is also assumed a user will check if the constant source is a value that is ignorable
+ * e.g., if it is 2 and the sink is a month assignment, then it isn't ignorable.
+ *
+ * Obviously this does not handle all conditions (e.g., the month set in another block).
+ * It is meant to capture the most common cases of false positives.
+ */
+module NonFebConstantToMonthAssignmentConfig implements DataFlow::ConfigSig {
+  predicate isSource(DataFlow::Node source) {
+    source.asExpr().getValue().toInt() in [1 .. 12] and
+    source.asExpr().getValue().toInt() != 2
+  }
+
+  predicate isSink(DataFlow::Node sink) {
+    exists(Assignment a |
+      a.getLValue() instanceof MonthFieldAccess and
+      a.getRValue() = sink.asExpr()
+    )
+  }
+}
+
+// NOTE: only data flow here (no taint tracking) as we want the exact
+// constant flowing to the month assignment
+module NonFebConstantToMonthAssignmentFlow =
+  DataFlow::Global<NonFebConstantToMonthAssignmentConfig>;
+
 import OperationToYearAssignmentFlow::PathGraph
 
 from OperationToYearAssignmentFlow::PathNode src, OperationToYearAssignmentFlow::PathNode sink
@@ -663,28 +754,12 @@ where
   OperationToYearAssignmentFlow::flowPath(src, sink) and
   not isYearModifiedWithCheck(sink.getNode().asExpr().(YearFieldAssignment).getYearFieldAccess()) and
   not isControlledByMonthEqualityCheckNonFebruary(sink.getNode().asExpr()) and
-  // TODO: this is an older heuristic that should be reassessed.
-  // The heuristic stipulates that if a month or day is set to a constant in the local flow up to or after
-  // a modified year's sink, then assume the user is knowingly handling the conversion correctly.
-  // There is no interpretation of the assignment of the month/day or consideration for what branch the assignment is on.
-  // Merely if the assignment of a constant day/month occurs anywhere, the year modification can likely
-  // be ignored.
-  not exists(FieldAccess mfa, AssignExpr ae, YearFieldAccess yfa, int val, Variable var |
-    mfa instanceof MonthFieldAccess or mfa instanceof DayFieldAccess
-  |
-    yfa = sink.getNode().asExpr().(YearFieldAssignment).getYearFieldAccess() and
-    var.getAnAccess() = yfa.getQualifier() and
-    mfa.getQualifier() = var.getAnAccess() and
-    mfa.isModified() and
-    (
-      mfa.getBasicBlock() = yfa.getBasicBlock().getASuccessor*() or
-      yfa.getBasicBlock() = mfa.getBasicBlock().getASuccessor+()
-    ) and
-    ae = mfa.getEnclosingElement() and
-    ae.getAnOperand().getValue().toInt() = val and
-    // If the constant looks like it relates to february, then there still might be an error
-    // so only look for any other constant.
-    not val in [2, 28, 29]
+  // Check if a month is set in the same block as the year operation source
+  // to a month that would be considered safe.
+  not exists(DataFlow::Node monthValSrc, DataFlow::Node monthValSink |
+    NonFebConstantToMonthAssignmentFlow::flow(monthValSrc, monthValSink) and
+    monthValSrc.asExpr().getBasicBlock() = src.getNode().asExpr().getBasicBlock() and
+    monthValSink.asExpr().getBasicBlock() = sink.getNode().asExpr().getBasicBlock()
   )
 select sink, src, sink,
   "Year field has been modified, but no appropriate check for LeapYear was found."

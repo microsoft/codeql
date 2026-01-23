@@ -819,7 +819,7 @@ void test(int x)
 }
 
 /**
- * Positive AntiPattern 1
+ * Positive AntiPattern 1 NOTE: historically considered positive but mktime checks year validity, needs re-assessment
  * Year field is modified but via an intermediary variable.
 */
 bool tp_intermediaryVar(struct timespec now, struct logtime &timestamp_remote)
@@ -1285,4 +1285,80 @@ void indirect_time_conversion_check(WORD year, WORD offset){
 	bool x = (res == 0) ? true : false;
 }
 
+void set_time(WORD year, WORD month, WORD day){
+	SYSTEMTIME tmp;
+
+	tmp.wYear = year;
+	tmp.wMonth = month;
+	tmp.wDay = day;
+}
+
+void constant_month_on_year_modification1(WORD year, WORD offset, WORD month){
+	SYSTEMTIME tmp;
+
+	if(month++ > 12){
+		tmp.wMonth = 1;
+		tmp.wYear = year + 1;// OK since the year is incremented with a known non-leap year month change
+	}
+
+	if(month++ > 12){
+
+		set_time(year+1, 1, 1);// OK since the year is incremented with a known non-leap year month change
+	}
+}
+
+void constant_month_on_year_modification2(WORD year, WORD offset, WORD month){
+	SYSTEMTIME tmp;
+
+	if(month++ > 12){
+		tmp.wMonth = 1;
+		tmp.wYear = year + 1;// OK since the year is incremented with a known non-leap year month change
+	}
+
+	
+	if(month++ > 12){
+		// some hueristics to detect a false positive here rely on variable names
+		// which is often consistent in the wild. 
+		// This variant uses the variable names yeartmp and monthtmp
+		WORD yeartmp;
+		WORD monthtmp;
+		yeartmp = year + 1;
+		monthtmp = 1;
+		set_time(yeartmp, monthtmp, 1);// OK since the year is incremented with a known non-leap year month change
+	}
+}
+
+typedef struct parent_struct {
+	SYSTEMTIME t;
+} PARENT_STRUCT;
+
+
+
+void nested_time_struct(WORD year, WORD offset){
+	PARENT_STRUCT ps;
+
+	ps.t.wYear = year + offset; // OK, checked below
+
+	bool isLeap = isLeapYearRaw(ps.t.wYear);
+
+	if(isLeap){
+		// do something
+	}
+}
+
+void intermediate_time_struct(WORD year, WORD offset){
+	SYSTEMTIME tm, tm2;
+	FILETIME ftTime;
+
+	tm.wYear = year + offset; 
+
+	tm2.wYear = tm.wYear;
+
+
+	while ( !SystemTimeToFileTime( &tm2, &ftTime ) )
+	{
+		/// handle error
+	}
+
+}
 
