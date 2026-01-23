@@ -394,9 +394,10 @@ module OperationToYearAssignmentConfig implements DataFlow::ConfigSig {
     or
     n.asExpr() instanceof IgnorableOperation
     or
-    // Hijri or Persian  years are not applicable for gregorian leap year checks
+    // Flowing into variables that indicate likely non-gregorian years are barriers
+    // e.g., names similar to hijri, persian, lunar, chinese, etc.
     exists(Variable v |
-      v.getName().toLowerCase().matches(["%hijri%, %persian%"]) and
+      v.getName().toLowerCase().matches(["%hijri%", "%persian%", "%lunar%", "%chinese%"]) and
       v.getAnAccess() = [n.asIndirectExpr(), n.asExpr()]
     )
     or
@@ -755,7 +756,9 @@ where
   not isYearModifiedWithCheck(sink.getNode().asExpr().(YearFieldAssignment).getYearFieldAccess()) and
   not isControlledByMonthEqualityCheckNonFebruary(sink.getNode().asExpr()) and
   // Check if a month is set in the same block as the year operation source
-  // to a month that would be considered safe.
+  // and the month value would indicate its set to any other month than february.
+  // Finds if the source year node is in the same block as a source month block
+  // and if the same for the sinks.
   not exists(DataFlow::Node monthValSrc, DataFlow::Node monthValSink |
     NonFebConstantToMonthAssignmentFlow::flow(monthValSrc, monthValSink) and
     monthValSrc.asExpr().getBasicBlock() = src.getNode().asExpr().getBasicBlock() and
