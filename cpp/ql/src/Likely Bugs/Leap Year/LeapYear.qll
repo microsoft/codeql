@@ -41,7 +41,6 @@ class CheckForLeapYearOperation extends Expr {
   }
 }
 
-bindingset[modVal]
 Expr moduloCheckEQ_0(EQExpr eq, int modVal) {
   exists(RemExpr rem | rem = eq.getLeftOperand() |
     result = rem.getLeftOperand() and
@@ -50,55 +49,12 @@ Expr moduloCheckEQ_0(EQExpr eq, int modVal) {
   eq.getRightOperand().getValue().toInt() = 0
 }
 
-bindingset[modVal]
 Expr moduloCheckNEQ_0(NEExpr neq, int modVal) {
   exists(RemExpr rem | rem = neq.getLeftOperand() |
     result = rem.getLeftOperand() and
     rem.getRightOperand().getValue().toInt() = modVal
   ) and
   neq.getRightOperand().getValue().toInt() = 0
-}
-
-/**
- * Returns if the two expressions resolve to the same value, albeit it is a fuzzy attempt.
- * SSA is not fit for purpose here as calls break SSA equivalence.
- */
-predicate exprEq_propertyPermissive(Expr e1, Expr e2) {
-  not e1 = e2 and
-  (
-    DataFlow::localFlow(DataFlow::exprNode(e1), DataFlow::exprNode(e2))
-    or
-    if e1 instanceof ThisExpr and e2 instanceof ThisExpr
-    then any()
-    else
-      /* If it's a direct Access, check that the target is the same. */
-      if e1 instanceof Access
-      then e1.(Access).getTarget() = e2.(Access).getTarget()
-      else
-        /* If it's a Call, compare qualifiers and only permit no-argument Calls. */
-        if e1 instanceof Call
-        then
-          e1.(Call).getTarget() = e2.(Call).getTarget() and
-          e1.(Call).getNumberOfArguments() = 0 and
-          e2.(Call).getNumberOfArguments() = 0 and
-          if e1.(Call).hasQualifier()
-          then exprEq_propertyPermissive(e1.(Call).getQualifier(), e2.(Call).getQualifier())
-          else any()
-        else
-          /* If it's a binaryOperation, compare op and recruse */
-          if e1 instanceof BinaryOperation
-          then
-            e1.(BinaryOperation).getOperator() = e2.(BinaryOperation).getOperator() and
-            exprEq_propertyPermissive(e1.(BinaryOperation).getLeftOperand(),
-              e2.(BinaryOperation).getLeftOperand()) and
-            exprEq_propertyPermissive(e1.(BinaryOperation).getRightOperand(),
-              e2.(BinaryOperation).getRightOperand())
-          else
-            // Otherwise fail (and permit the raising of a finding)
-            if e1 instanceof Literal
-            then e1.(Literal).getValue() = e2.(Literal).getValue()
-            else none()
-  )
 }
 
 /**
@@ -226,8 +182,7 @@ class ExprCheckCenturyComponent extends LogicalOrExpr {
   ExprCheckCenturyComponent() {
     exists(ExprCheckCenturyComponentDiv400 exprDiv400, ExprCheckCenturyComponentDiv100 exprDiv100 |
       this.getAnOperand() = exprDiv100 and
-      this.getAnOperand() = exprDiv400 and
-      exprEq_propertyPermissive(exprDiv100.getYearExpr(), exprDiv400.getYearExpr())
+      this.getAnOperand() = exprDiv400
     )
   }
 
@@ -252,8 +207,7 @@ final class ExprCheckLeapYearFormA extends ExprCheckLeapYear, LogicalAndExpr {
   ExprCheckLeapYearFormA() {
     exists(Expr e, ExprCheckCenturyComponent centuryCheck |
       e = moduloCheckEQ_0(this.getLeftOperand(), 4) and
-      centuryCheck = this.getAnOperand().getAChild*() and
-      exprEq_propertyPermissive(e, centuryCheck.getYearExpr())
+      centuryCheck = this.getAnOperand().getAChild*()
     )
   }
 }
@@ -268,12 +222,7 @@ final class ExprCheckLeapYearFormB extends ExprCheckLeapYear, LogicalOrExpr {
     exists(VariableAccess va1, VariableAccess va2, VariableAccess va3 |
       va1 = moduloCheckEQ_0(this.getAnOperand(), 400) and
       va2 = moduloCheckNEQ_0(this.getAnOperand().(LogicalAndExpr).getAnOperand(), 100) and
-      va3 = moduloCheckEQ_0(this.getAnOperand().(LogicalAndExpr).getAnOperand(), 4) and
-      // The 400-leap year check may be offset by [1900,1970,2000].
-      exists(Expr va1_subExpr | va1_subExpr = va1.getAChild*() |
-        exprEq_propertyPermissive(va1_subExpr, va2) and
-        exprEq_propertyPermissive(va2, va3)
-      )
+      va3 = moduloCheckEQ_0(this.getAnOperand().(LogicalAndExpr).getAnOperand(), 4)
     )
   }
 }
@@ -411,6 +360,50 @@ class StructTmLeapYearFieldAccess extends LeapYearFieldAccess {
 }
 
 /**
+ * `stDate.wMonth == 2`
+ */
+class DateCheckMonthFebruary extends Operation {
+  DateCheckMonthFebruary() {
+    this.getOperator() = "==" and
+    this.getAnOperand() instanceof MonthFieldAccess and
+    this.getAnOperand().(Literal).getValue() = "2"
+  }
+
+  Expr getDateQualifier() { result = this.getAnOperand().(MonthFieldAccess).getQualifier() }
+}
+
+/**
+ * `stDate.wDay == 29`
+ */
+class DateCheckDay29 extends Operation {
+  DateCheckDay29() {
+    this.getOperator() = "==" and
+    this.getAnOperand() instanceof DayFieldAccess and
+    this.getAnOperand().(Literal).getValue() = "29"
+  }
+
+  Expr getDateQualifier() { result = this.getAnOperand().(DayFieldAccess).getQualifier() }
+}
+
+/**
+ * The combination of a February and Day 29 verification
+ * `stDate.wMonth == 2 && stDate.wDay == 29`
+ */
+class DateFebruary29Check extends Operation {
+  DateFebruary29Check() {
+    this.getOperator() = "&&" and
+    exists(DateCheckMonthFebruary checkFeb, DateCheckDay29 check29 |
+      checkFeb = this.getAnOperand() and
+      check29 = this.getAnOperand()
+    )
+  }
+
+  Expr getDateQualifier() {
+    result = this.getAnOperand().(DateCheckMonthFebruary).getDateQualifier()
+  }
+}
+
+/**
  * `Function` that includes an operation that is checking for leap year.
  */
 class ChecksForLeapYearFunction extends Function {
@@ -425,7 +418,7 @@ class ChecksForLeapYearFunctionCall extends FunctionCall {
 }
 
 /**
- * A `DataFlow` configuraiton for finding a variable access that would flow into
+ * A `DataFlow` configuration for finding a variable access that would flow into
  * a function call that includes an operation to check for leap year.
  */
 private module LeapYearCheckFlowConfig implements DataFlow::ConfigSig {
@@ -541,7 +534,12 @@ class TimeConversionFunction extends Function {
         "FileTimeToSystemTime", "SystemTimeToFileTime", "SystemTimeToTzSpecificLocalTime",
         "SystemTimeToTzSpecificLocalTimeEx", "TzSpecificLocalTimeToSystemTime",
         "TzSpecificLocalTimeToSystemTimeEx", "RtlLocalTimeToSystemTime",
-        "RtlTimeToSecondsSince1970", "_mkgmtime"
+        "RtlTimeToSecondsSince1970", "_mkgmtime", "SetSystemTime", "SystemTimeToVariantTime",
+        "VariantTimeToSystemTime",
+        // NOTE: mktime will normalize a Feb 29 on a non-leap year to Mar 1 silently,
+        "mktime", "_mktime32", "_mktime64", "VarUdateFromDate"
       ]
+    or
+    this.getQualifiedName().matches("GetDateFormat%")
   }
 }
