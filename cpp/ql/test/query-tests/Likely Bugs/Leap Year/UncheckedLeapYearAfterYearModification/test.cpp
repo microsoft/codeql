@@ -851,10 +851,10 @@ bool tp_intermediaryVar(struct timespec now, struct logtime &timestamp_remote)
 	timestamp_remote.tm = tm_parsed;
 	timestamp_remote.tm.tm_isdst = -1;
 	timestamp_remote.usec = now.tv_nsec * 0.001;
-	for (year = tm_now.tm_year + 1;; --year) // $ Source
+	for (year = tm_now.tm_year + 1;; --year) 
 	{
 		// assert(year >= tm_now.tm_year - 1);
-		timestamp_remote.tm.tm_year = year; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
+		timestamp_remote.tm.tm_year = year; 
 		if (mktime(&timestamp_remote.tm) < t_now + 7 * 24 * 60 * 60)
 			break;
 	}
@@ -1382,3 +1382,158 @@ void constant_day_on_year_modification1(WORD year, WORD offset, WORD month){
 		set_time(year+1, month, 31);// $ Source
 	}
 }
+
+
+void modification_after_conversion1(tm timeinfo){
+	// convert a tm year into a civil year, then modify after conversion
+	// This case shows a false negative where the year might be used and it is incorrectly modified, 
+	// and never reassigned to another struct.
+	WORD year = timeinfo.tm_year + 1900;
+
+	year += 1; // $ MISSING: Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
+}
+
+WORD get_civil_year(tm timeinfo){
+	return timeinfo.tm_year + 1900;
+}
+
+void modification_after_conversion2(tm timeinfo){
+	// convert a tm year into a civil year, then modify after conversion
+	// This case shows a false negative where the year might be used and it is incorrectly modified, 
+	// and never reassigned to another struct.
+	WORD year = get_civil_year(timeinfo);
+	year += 1; // $ MISSING: Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
+}
+
+void modification_after_conversion_saved_to_other_time_struct1(tm timeinfo){
+	// convert a tm year into a civil year, then modify after conversion
+	// This case shows a false negative where the year might be used and it is incorrectly modified, 
+	// and never reassigned to another struct.
+	WORD year = timeinfo.tm_year + 1900;
+
+	year += 1; // $ Source
+
+	SYSTEMTIME s;
+	// FALSE NEGATIVE: missing this because the conversion happens locally before 
+	// the year adjustment, which seems as though it is part of a conversion itself
+	s.wYear = year; // $ MISSING: Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
+}
+
+
+
+void modification_after_conversion_saved_to_other_time_struct2(tm timeinfo){
+	// convert a tm year into a civil year, then modify after conversion
+	// This case shows a false negative where the year might be used and it is incorrectly modified, 
+	// and never reassigned to another struct.
+	WORD year = get_civil_year(timeinfo);
+
+	year += 1; // $ Source
+
+	SYSTEMTIME s;
+	s.wYear = year; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
+}
+
+void modification_after_conversion_saved_to_other_time_struct3(tm timeinfo){
+	// convert a tm year into a civil year, then modify after conversion
+	// This case shows a false negative where the year might be used and it is incorrectly modified, 
+	// and never reassigned to another struct.
+	WORD year = timeinfo.tm_year + 1900;
+
+	year = year + 1; // $ Source
+
+	SYSTEMTIME s;
+	// FALSE NEGATIVE: missing this because the conversion happens locally before 
+	// the year adjustment, which seems as though it is part of a conversion itself
+	s.wYear = year; // $ MISSING: Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
+}
+
+
+void year_saved_to_variable_then_modified1(tm timeinfo){
+	// A modified year is not directly assigned to the year, rather, the year is 
+	// saved to a variable, modified, used, but never assigned back.  
+	WORD year = timeinfo.tm_year;
+
+	// NOTE: should we even try to detect cases like this? 
+	// Our current rationale is that a year in a struct is more dangerous than a year in isolation
+	// A year in isolation is harder to interpret
+	year += 1; // MISSING: $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
+}
+
+void modification_before_conversion1(tm timeinfo){
+	timeinfo.tm_year += 1; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
+	// convert a tm year into a civil year, then modify after conversion
+	// This case shows a false negative where the year might be used and it is incorrectly modified, 
+	// and never reassigned to another struct.
+	WORD year = timeinfo.tm_year + 1900;
+}
+
+void modification_before_conversion2(tm timeinfo){
+	timeinfo.tm_year += 1; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
+	// convert a tm year into a civil year, then modify after conversion
+	// This case shows a false negative where the year might be used and it is incorrectly modified, 
+	// and never reassigned to another struct.
+	WORD year = get_civil_year(timeinfo);
+}
+
+
+
+void year_saved_to_variable_then_modified_with_leap_check1(tm timeinfo){
+	// A modified year is not directly assigned to the year, rather, the year is 
+	// saved to a variable, modified, used, but never assigned back.  
+	WORD year = timeinfo.tm_year;
+
+	year += 1; 
+
+	// performing a check is considered good enough, even if not used correctly
+	bool b = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+}
+
+
+void modification_after_conversion_with_leap_check1(tm timeinfo){
+	// convert a tm year into a civil year, then modify after conversion
+	// This case shows a false negative where the year might be used and it is incorrectly modified, 
+	// and never reassigned to another struct.
+	WORD year = timeinfo.tm_year + 1900;
+
+	year += 1; 
+
+	// performing a check is considered good enough, even if not used correctly
+	bool b = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+}
+
+void modification_after_conversion_with_leap_check2(tm timeinfo){
+	// convert a tm year into a civil year, then modify after conversion
+	// This case shows a false negative where the year might be used and it is incorrectly modified, 
+	// and never reassigned to another struct.
+	WORD year = get_civil_year(timeinfo);
+
+	year += 1; 
+
+	// performing a check is considered good enough, even if not used correctly
+	bool b = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+}
+
+void modification_before_conversion_with_leap_check1(tm timeinfo){
+	timeinfo.tm_year += 1; 
+	// convert a tm year into a civil year, then modify after conversion
+	// This case shows a false negative where the year might be used and it is incorrectly modified, 
+	// and never reassigned to another struct.
+	WORD year = timeinfo.tm_year + 1900;
+
+	// performing a check is considered good enough, even if not used correctly
+	bool b = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+}
+
+void modification_before_conversion_with_leap_check2(tm timeinfo){
+	timeinfo.tm_year += 1; 
+	// convert a tm year into a civil year, then modify after conversion
+	// This case shows a false negative where the year might be used and it is incorrectly modified, 
+	// and never reassigned to another struct.
+	WORD year = get_civil_year(timeinfo);
+
+	// performing a check is considered good enough, even if not used correctly
+	bool b = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+}
+
+
+
