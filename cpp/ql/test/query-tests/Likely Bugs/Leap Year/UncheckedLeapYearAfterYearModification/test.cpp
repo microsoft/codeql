@@ -1071,8 +1071,10 @@ void fp_daymonth_guard(){
 	SYSTEMTIME st;
 	FILETIME ft;
 	GetSystemTime(&st);
-
-	st.wYear++;
+    // FALSE POSITIVE: year is incremented but month is checked and day corrected
+	// in a ternary operation. It may be possible to fix this with a more sophisticated
+	// data flow analysis.
+	st.wYear++; // $ SPURIOUS: Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 
 	st.wDay = st.wMonth == 2 && st.wDay == 29 ? 28 : st.wDay;
 
@@ -1411,7 +1413,7 @@ void modification_after_conversion_saved_to_other_time_struct1(tm timeinfo){
 	// and never reassigned to another struct.
 	WORD year = timeinfo.tm_year + 1900;
 
-	year += 1; // $ Source
+	year += 1; // $ MISSING: Source
 
 	SYSTEMTIME s;
 	// FALSE NEGATIVE: missing this because the conversion happens locally before 
@@ -1439,7 +1441,7 @@ void modification_after_conversion_saved_to_other_time_struct3(tm timeinfo){
 	// and never reassigned to another struct.
 	WORD year = timeinfo.tm_year + 1900;
 
-	year = year + 1; // $ Source
+	year = year + 1; // $ MISSING: Source
 
 	SYSTEMTIME s;
 	// FALSE NEGATIVE: missing this because the conversion happens locally before 
