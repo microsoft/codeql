@@ -715,7 +715,12 @@ where
   not exists(DataFlow::Node dayOrMonthValSrc, DataFlow::Node dayOrMonthValSink, Assignment a |
     CandidateConstantToDayOrMonthAssignmentFlow::flow(dayOrMonthValSrc, dayOrMonthValSink) and
     a.getRValue() = dayOrMonthValSink.asExpr() and
-    dayOrMonthValSrc.getBasicBlock() = src.getNode().getBasicBlock() and
+    (
+      // The source of the day is set in the same block as the source for the year
+      // or the source for the day is set in the same block as the sink for the year
+      dayOrMonthValSrc.getBasicBlock() = src.getNode().getBasicBlock() or
+      dayOrMonthValSrc.getBasicBlock() = sink.getNode().getBasicBlock()
+    ) and
     dayOrMonthValSink.getBasicBlock() = sink.getNode().getBasicBlock() and
     (
       a.getLValue() instanceof MonthFieldAccess and

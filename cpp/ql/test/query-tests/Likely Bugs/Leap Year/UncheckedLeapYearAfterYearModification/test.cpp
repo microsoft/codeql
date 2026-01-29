@@ -1385,6 +1385,38 @@ void constant_day_on_year_modification1(WORD year, WORD offset, WORD month){
 	}
 }
 
+void constant_day_on_year_modification2(WORD year, WORD month){
+	SYSTEMTIME tmp;
+
+	// FLASE POSITIVE SOURCE:
+	// flowing into set_time, the set time does pass a constant day
+	// but the source here and the source of that constant month don't align
+	// Current heuristics require the source of the constant day align with the
+	// source and/or the sink of the year modification.
+	// We could potentially improve this by checking the paths of both the year and day
+	// flows, but this may be more complex than is warranted for now.
+	year = year + 1; // $ SPURIOUS: Source
+
+	if(month++ > 12){
+		tmp.wDay = 1;
+		tmp.wYear = year;// OK since the year is incremented with a known non-leap year day
+	}
+
+	if(month++ > 12){
+
+		set_time(year, month, 1);// OK since the year is incremented with a known non-leap year day
+	}
+
+	year = year + 1; // $ Source
+
+	if(month++ > 12){
+
+		// BAD, year incremented, month unknown in block, and date is set to 31
+		// which is dangerous. 
+		set_time(year, month, 31);
+	}
+}
+
 
 void modification_after_conversion1(tm timeinfo){
 	// convert a tm year into a civil year, then modify after conversion
