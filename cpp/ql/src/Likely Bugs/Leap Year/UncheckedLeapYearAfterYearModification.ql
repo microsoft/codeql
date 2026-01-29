@@ -67,6 +67,11 @@ class IgnorableFunction extends Function {
     this.getName().toLowerCase().matches("%persian%")
     or
     this.getFile().getBaseName().toLowerCase().matches("%persian%")
+    or
+    // misc. from string/char converters heuristic
+    this.getName()
+        .toLowerCase()
+        .matches(["%char%to%", "%string%to%", "%from%char%", "%from%string%"])
   }
 }
 
@@ -730,5 +735,6 @@ where
       dayOrMonthValSrc.asExpr().getValue().toInt() <= 27
     )
   )
+// TODO: all days to sink are safe?
 select sink, src, sink,
   "Year field has been modified, but no appropriate check for LeapYear was found."
