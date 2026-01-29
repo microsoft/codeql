@@ -596,7 +596,7 @@ class LeapYearGuardCondition extends GuardCondition {
       // Cannonical case:
       // form: `(year % 4 == 0) && (year % 100 != 0 || year % 400 == 0)`
       // or : `!((year % 4 == 0) && (year % 100 != 0 || year % 400 == 0))`
-      // Also accepting `(year & 3 == 0) && (year % 100 != 0 || year % 400 == 0)`
+      // Also accepting `((year & 3) == 0) && (year % 100 != 0 || year % 400 == 0)`
       this = andExpr and
       andExpr.hasOperands(div4Check, orExpr) and
       orExpr.hasOperands(div100Check, div400Check) and
