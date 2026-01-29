@@ -1569,5 +1569,39 @@ void modification_before_conversion_with_leap_check2(tm timeinfo){
 	bool b = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
 }
 
+void odd_leap_year_check1(tm timeinfo){
+	timeinfo.tm_year += 1;
+
+
+	// Using an odd sytle of checking divisible by 4 presumably as an optimization trick
+	if(((timeinfo.tm_year & 3) == 0) && (timeinfo.tm_year % 100 != 0 || timeinfo.tm_year % 400 == 0))
+	{
+		// do something
+	}
+}
+
+void odd_leap_year_check2(tm timeinfo){
+	timeinfo.tm_year += 1; // $ SPURIOUS: Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
+
+	// Using an odd sytle of checking divisible by 4 presumably as an optimization trick
+	// but also check unrelated conditions on the year as an optimization to rule out irrelevant years
+	// for gregorian leap years
+	if(timeinfo.tm_mon == 2 && ((timeinfo.tm_year & 3) == 0) && (timeinfo.tm_year <= 1582 || timeinfo.tm_year % 100 != 0 || timeinfo.tm_year % 400 == 0))
+	{
+		// do something
+	}
+}
+
+void odd_leap_year_check3(tm timeinfo){
+	timeinfo.tm_year += 1; // $ SPURIOUS: Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
+
+	// Using an odd sytle of checking divisible by 4 presumably as an optimization trick
+	// but also check unrelated conditions on the year as an optimization to rule out irrelevant years
+	// for gregorian leap years
+	if(timeinfo.tm_mon == 2 && (timeinfo.tm_year % 4) == 0 && (timeinfo.tm_year <= 1582 || timeinfo.tm_year % 100 != 0 || timeinfo.tm_year % 400 == 0))
+	{
+		// do something
+	}
+}
 
 
