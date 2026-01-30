@@ -194,6 +194,9 @@ class IgnorableUnaryMinus extends IgnorableOperation {
   }
 }
 
+/**
+ * An argument to a function is ignorable if the function that is called is an ignored function
+ */
 class OperationAsArgToIgnorableFunction extends IgnorableOperation {
   OperationAsArgToIgnorableFunction() {
     exists(Call c |
