@@ -159,4 +159,7 @@ nodes
 | test.cpp:1584:2:1584:22 | ... += ... | semmle.label | ... += ... |
 | test.cpp:1596:2:1596:22 | ... += ... | semmle.label | ... += ... |
 | test.cpp:1609:2:1609:22 | ... += ... | semmle.label | ... += ... |
+| test.cpp:1644:2:1644:22 | ... += ... | semmle.label | ... += ... |
+| test.cpp:1649:2:1649:22 | ... += ... | semmle.label | ... += ... |
+| test.cpp:1678:2:1678:22 | ... += ... | semmle.label | ... += ... |
 subpaths

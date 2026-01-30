@@ -1,6 +1,6 @@
 /**
  * @name Year field changed using an arithmetic operation without checking for leap year (AntiPattern 1)
- * @description A field that represents a year is being modified by an arithmetic operation, but no proper check for leap years can be detected afterwards.
+ * @description A field that represents a year is being modified by an arithmetic operation, but no proper check for leap years can be detected.
  * @kind path-problem
  * @problem.severity warning
  * @id cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification
@@ -76,6 +76,10 @@ class IgnorableFunction extends Function {
     this.getName()
         .toLowerCase()
         .matches(["%char%to%", "%string%to%", "%from%char%", "%from%string%"])
+    or
+    // boost's gregorian.cpp has year manipulations that are checked in complex ways.
+    // ignore the entire file as a source or sink.
+    this.getFile().getAbsolutePath().toLowerCase().matches("%boost%gregorian.cpp%")
   }
 }
 
@@ -490,11 +494,9 @@ predicate isControlledByMonthEqualityCheckNonFebruary(Expr e) {
 }
 
 /**
- * Flow from a year field access through a time conversion function
- * where the call's result is used to check error. The result must
- * be used as a guard for an if or ternary operator. If so,
- * assume some sort of error handling is occurring that could be used
- * to detect bad dates due to leap year.
+ * From from a year field access to a time conversion function
+ * that auto converts feb29 in non-leap year, or through a conversion function that doesn't
+ * auto convert to a sanity check guard of the result for error conditions.
  */
 module YearAssignmentToCheckedTimeConversionConfig implements DataFlow::StateConfigSig {
   class FlowState = boolean;
@@ -514,6 +516,13 @@ module YearAssignmentToCheckedTimeConversionConfig implements DataFlow::StateCon
       )
       or
       exists(Loop l | l.getCondition().getAChild*() = [sink.asExpr(), sink.asIndirectExpr()])
+    )
+    or
+    state in [true, false] and
+    exists(Call c, TimeConversionFunction f |
+      f.isAutoConverting() and
+      c.getTarget() = f and
+      c.getAnArgument().getAChild*() = [sink.asExpr(), sink.asIndirectExpr()]
     )
   }
 

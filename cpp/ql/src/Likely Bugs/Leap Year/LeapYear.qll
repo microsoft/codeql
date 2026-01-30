@@ -528,18 +528,30 @@ class SafeTimeGatheringFunction extends Function {
  * This list of APIs should check for the return value to detect problems during the conversion.
  */
 class TimeConversionFunction extends Function {
+  boolean autoConverts;
+
   TimeConversionFunction() {
-    this.getQualifiedName() =
-      [
-        "FileTimeToSystemTime", "SystemTimeToFileTime", "SystemTimeToTzSpecificLocalTime",
-        "SystemTimeToTzSpecificLocalTimeEx", "TzSpecificLocalTimeToSystemTime",
-        "TzSpecificLocalTimeToSystemTimeEx", "RtlLocalTimeToSystemTime",
-        "RtlTimeToSecondsSince1970", "_mkgmtime", "SetSystemTime", "SystemTimeToVariantTime",
-        "VariantTimeToSystemTime",
-        // NOTE: mktime will normalize a Feb 29 on a non-leap year to Mar 1 silently,
-        "mktime", "_mktime32", "_mktime64", "VarUdateFromDate"
-      ]
+    autoConverts = false and
+    (
+      this.getQualifiedName() =
+        [
+          "FileTimeToSystemTime", "SystemTimeToFileTime", "SystemTimeToTzSpecificLocalTime",
+          "SystemTimeToTzSpecificLocalTimeEx", "TzSpecificLocalTimeToSystemTime",
+          "TzSpecificLocalTimeToSystemTimeEx", "RtlLocalTimeToSystemTime",
+          "RtlTimeToSecondsSince1970", "_mkgmtime", "SetSystemTime", "SystemTimeToVariantTime",
+          "VariantTimeToSystemTime", "VarUdateFromDate", "boost::gregorian::date::from_tm"
+        ]
+      or
+      this.getQualifiedName().matches("GetDateFormat%")
+    )
     or
-    this.getQualifiedName().matches("GetDateFormat%")
+    // NOTE: mktime will normalize a Feb 29 on a non-leap year to Mar 1 silently,
+    autoConverts = true and
+    this.getQualifiedName() = ["mktime", "_mktime32", "_mktime64"]
   }
+
+  /**
+   * Holds if the function is expected to auto convert a bad leap year date.
+   */
+  predicate isAutoConverting() { autoConverts = true }
 }

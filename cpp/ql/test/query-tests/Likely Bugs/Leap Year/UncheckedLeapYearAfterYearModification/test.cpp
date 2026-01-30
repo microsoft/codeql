@@ -1671,5 +1671,13 @@ void leap_year_check_call_on_conversion3(tm timeinfo, WORD year, WORD month, WOR
 	timeinfo.tm_year = year;
 }
 
+void assumed_maketime_conversion1(tm timeinfo)
+{
+	//the docs of mktime suggest feb29 is handled, and conversion will occur automatically
+	//no check required.
+	timeinfo.tm_year += 1;
+
+	mktime(&timeinfo);
+}
 
 
