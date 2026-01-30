@@ -117,6 +117,8 @@ class IgnorableExpr48Mapping extends IgnorableOperation {
   }
 }
 
+/** A binary or arithemtic operation whereby one of the components is textual or a string.
+ */
 class IgnorableCharLiteralArithmetic extends IgnorableOperation {
   IgnorableCharLiteralArithmetic() {
     exists(this.(BinaryArithmeticOperation).getAnOperand().(TextLiteral).getValue())
