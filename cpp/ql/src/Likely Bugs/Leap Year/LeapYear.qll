@@ -528,10 +528,10 @@ class SafeTimeGatheringFunction extends Function {
  * This list of APIs should check for the return value to detect problems during the conversion.
  */
 class TimeConversionFunction extends Function {
-  boolean autoConverts;
+  boolean autoLeapYearCorrecting;
 
   TimeConversionFunction() {
-    autoConverts = false and
+    autoLeapYearCorrecting = false and
     (
       this.getQualifiedName() =
         [
@@ -546,12 +546,12 @@ class TimeConversionFunction extends Function {
     )
     or
     // NOTE: mktime will normalize a Feb 29 on a non-leap year to Mar 1 silently,
-    autoConverts = true and
+    autoLeapYearCorrecting = true and
     this.getQualifiedName() = ["mktime", "_mktime32", "_mktime64"]
   }
 
   /**
    * Holds if the function is expected to auto convert a bad leap year date.
    */
-  predicate isAutoConverting() { autoConverts = true }
+  predicate isAutoLeapYearCorrecting() { autoLeapYearCorrecting = true }
 }

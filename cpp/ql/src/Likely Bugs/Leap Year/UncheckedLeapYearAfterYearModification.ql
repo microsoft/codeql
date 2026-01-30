@@ -520,7 +520,7 @@ module YearAssignmentToCheckedTimeConversionConfig implements DataFlow::StateCon
     or
     state in [true, false] and
     exists(Call c, TimeConversionFunction f |
-      f.isAutoConverting() and
+      f.isAutoLeapYearCorrecting() and
       c.getTarget() = f and
       c.getAnArgument().getAChild*() = [sink.asExpr(), sink.asIndirectExpr()]
     )
