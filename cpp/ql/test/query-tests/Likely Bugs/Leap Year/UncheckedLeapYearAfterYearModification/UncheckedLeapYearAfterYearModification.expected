@@ -21,6 +21,9 @@
 | test.cpp:1467:2:1467:15 | ... = ... | test.cpp:1464:2:1464:10 | ... += ... | test.cpp:1467:2:1467:15 | ... = ... | Year field has been modified, but no appropriate check for LeapYear was found. |
 | test.cpp:1497:2:1497:22 | ... += ... | test.cpp:1497:2:1497:22 | ... += ... | test.cpp:1497:2:1497:22 | ... += ... | Year field has been modified, but no appropriate check for LeapYear was found. |
 | test.cpp:1505:2:1505:22 | ... += ... | test.cpp:1505:2:1505:22 | ... += ... | test.cpp:1505:2:1505:22 | ... += ... | Year field has been modified, but no appropriate check for LeapYear was found. |
+| test.cpp:1584:2:1584:22 | ... += ... | test.cpp:1584:2:1584:22 | ... += ... | test.cpp:1584:2:1584:22 | ... += ... | Year field has been modified, but no appropriate check for LeapYear was found. |
+| test.cpp:1596:2:1596:22 | ... += ... | test.cpp:1596:2:1596:22 | ... += ... | test.cpp:1596:2:1596:22 | ... += ... | Year field has been modified, but no appropriate check for LeapYear was found. |
+| test.cpp:1609:2:1609:22 | ... += ... | test.cpp:1609:2:1609:22 | ... += ... | test.cpp:1609:2:1609:22 | ... += ... | Year field has been modified, but no appropriate check for LeapYear was found. |
 edges
 | test.cpp:813:21:813:40 | ... + ... | test.cpp:813:2:813:40 | ... = ... | provenance |  |
 | test.cpp:818:13:818:24 | ... + ... | test.cpp:818:2:818:24 | ... = ... | provenance |  |
@@ -152,4 +155,8 @@ nodes
 | test.cpp:1505:2:1505:22 | ... += ... | semmle.label | ... += ... |
 | test.cpp:1551:2:1551:22 | ... += ... | semmle.label | ... += ... |
 | test.cpp:1562:2:1562:22 | ... += ... | semmle.label | ... += ... |
+| test.cpp:1573:2:1573:22 | ... += ... | semmle.label | ... += ... |
+| test.cpp:1584:2:1584:22 | ... += ... | semmle.label | ... += ... |
+| test.cpp:1596:2:1596:22 | ... += ... | semmle.label | ... += ... |
+| test.cpp:1609:2:1609:22 | ... += ... | semmle.label | ... += ... |
 subpaths

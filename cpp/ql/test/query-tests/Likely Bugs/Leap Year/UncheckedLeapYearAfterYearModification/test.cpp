@@ -1605,3 +1605,28 @@ void odd_leap_year_check3(tm timeinfo){
 }
 
 
+void date_adjusted_through_mkgmtime(tm timeinfo){
+	timeinfo.tm_year += 1; // $ SPURIOUS: Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
+
+	// Using an odd sytle of checking divisible by 4 presumably as an optimization trick
+	// but also check unrelated conditions on the year as an optimization to rule out irrelevant years
+	// for gregorian leap years
+	if(timeinfo.tm_mon == 2 && (timeinfo.tm_year % 4) == 0 && (timeinfo.tm_year <= 1582 || timeinfo.tm_year % 100 != 0 || timeinfo.tm_year % 400 == 0))
+	{
+		// do something
+	}
+}
+
+bool data_killer(WORD *d){
+	(*d) = 1;
+	return true;
+}
+
+void interproc_data_killer1(tm timeinfo, WORD delta){
+	WORD year = delta + 1;
+
+	if(data_killer(&year)){
+		timeinfo.tm_year = year; 
+	}
+}
+
