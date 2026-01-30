@@ -1519,7 +1519,7 @@ void year_saved_to_variable_then_modified_with_leap_check1(tm timeinfo){
 	year += 1; 
 
 	// performing a check is considered good enough, even if not used correctly
-	bool b = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+	bool b = (year+1900) % 4 == 0 && ((year+1900) % 100 != 0 || (year+1900) % 400 == 0);
 }
 
 
@@ -1566,7 +1566,7 @@ void modification_before_conversion_with_leap_check2(tm timeinfo){
 	WORD year = get_civil_year(timeinfo);
 
 	// performing a check is considered good enough, even if not used correctly
-	bool b = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+	bool b = (year) % 4 == 0 && ((year) % 100 != 0 || (year) % 400 == 0);
 }
 
 void odd_leap_year_check1(tm timeinfo){
@@ -1574,7 +1574,7 @@ void odd_leap_year_check1(tm timeinfo){
 
 
 	// Using an odd sytle of checking divisible by 4 presumably as an optimization trick
-	if(((timeinfo.tm_year & 3) == 0) && (timeinfo.tm_year % 100 != 0 || timeinfo.tm_year % 400 == 0))
+	if(((timeinfo.tm_year+1900) & 3) == 0 && ((timeinfo.tm_year+1900) % 100 != 0 || (timeinfo.tm_year+1900) % 400 == 0))
 	{
 		// do something
 	}
@@ -1586,7 +1586,7 @@ void odd_leap_year_check2(tm timeinfo){
 	// Using an odd sytle of checking divisible by 4 presumably as an optimization trick
 	// but also check unrelated conditions on the year as an optimization to rule out irrelevant years
 	// for gregorian leap years
-	if(timeinfo.tm_mon == 2 && ((timeinfo.tm_year & 3) == 0) && (timeinfo.tm_year <= 1582 || timeinfo.tm_year % 100 != 0 || timeinfo.tm_year % 400 == 0))
+	if(timeinfo.tm_mon == 2 && ((timeinfo.tm_year+1900) & 3) == 0 && ((timeinfo.tm_year+1900) <= 1582 || (timeinfo.tm_year+1900) % 100 != 0 || (timeinfo.tm_year+1900) % 400 == 0))
 	{
 		// do something
 	}
@@ -1598,7 +1598,7 @@ void odd_leap_year_check3(tm timeinfo){
 	// Using an odd sytle of checking divisible by 4 presumably as an optimization trick
 	// but also check unrelated conditions on the year as an optimization to rule out irrelevant years
 	// for gregorian leap years
-	if(timeinfo.tm_mon == 2 && (timeinfo.tm_year % 4) == 0 && (timeinfo.tm_year <= 1582 || timeinfo.tm_year % 100 != 0 || timeinfo.tm_year % 400 == 0))
+	if(timeinfo.tm_mon == 2 && ((timeinfo.tm_year+1900) % 4) == 0 && ((timeinfo.tm_year+1900) <= 1582 || (timeinfo.tm_year+1900) % 100 != 0 || (timeinfo.tm_year+1900) % 400 == 0))
 	{
 		// do something
 	}
@@ -1611,7 +1611,7 @@ void date_adjusted_through_mkgmtime(tm timeinfo){
 	// Using an odd sytle of checking divisible by 4 presumably as an optimization trick
 	// but also check unrelated conditions on the year as an optimization to rule out irrelevant years
 	// for gregorian leap years
-	if(timeinfo.tm_mon == 2 && (timeinfo.tm_year % 4) == 0 && (timeinfo.tm_year <= 1582 || timeinfo.tm_year % 100 != 0 || timeinfo.tm_year % 400 == 0))
+	if(timeinfo.tm_mon == 2 && ((timeinfo.tm_year+1900) % 4) == 0 && ((timeinfo.tm_year+1900) <= 1582 || (timeinfo.tm_year+1900) % 100 != 0 || (timeinfo.tm_year+1900) % 400 == 0))
 	{
 		// do something
 	}
@@ -1629,4 +1629,47 @@ void interproc_data_killer1(tm timeinfo, WORD delta){
 		timeinfo.tm_year = year; 
 	}
 }
+
+
+void leap_year_check_after_normalization(tm timeinfo, WORD delta){
+	WORD year = delta + 1;
+
+	if(data_killer(&year)){
+		timeinfo.tm_year = year; 
+	}
+}
+
+
+void leap_year_check_call_on_conversion1(tm timeinfo){
+	timeinfo.tm_year += 1; 
+	isLeapYearRaw(timeinfo.tm_year + 1900);
+}
+
+void leap_year_check_call_on_conversion2(tm timeinfo){
+	timeinfo.tm_year += 1; 
+	WORD year = get_civil_year(timeinfo);
+	isLeapYearRaw(year);
+}
+
+WORD getDaysInMonth(WORD year, WORD month){
+	// simplified
+	if(month == 2){
+		return isLeapYearRaw(year) ? 29 : 28;
+	}
+	// else assume logic for every other month, 
+	// returning 30 for simplicity
+	return 30;
+}
+
+WORD get_civil_year_raw(WORD year){
+	return year + 1900;
+}
+
+void leap_year_check_call_on_conversion3(tm timeinfo, WORD year, WORD month, WORD delta){
+	year += delta;
+	WORD days = getDaysInMonth(get_civil_year_raw(year), month);
+	timeinfo.tm_year = year;
+}
+
+
 

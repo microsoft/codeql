@@ -365,6 +365,18 @@ module OperationToYearAssignmentConfig implements DataFlow::ConfigSig {
     or
     isLeapYearCheckSink(n)
     or
+    // this is a bit of a hack to address cases where a year is normalized and checked, but the
+    // normalized year is never itself assigned to the final year struct
+    //    isLeapYear(getCivilYear(year))
+    //    struct.year = year
+    // This is assuming a user would have done this all on one line though.
+    // setting a variable for the conversion and passing that separately would be more difficult to track
+    // considering this approach good enough for current observed false positives
+    // TODO: can this approach be made better?
+    exists(Call c, Expr arg |
+      isLeapYearCheckCall(c, arg) and arg.getAChild*() = [n.asExpr(), n.asIndirectExpr()]
+    )
+    or
     // If as the flow progresses, the value holding a dangerous operation result
     // is apparently being passed by address to some function, it is more than likely
     // intended to be modified, and therefore, the definition is killed.
