@@ -58,15 +58,19 @@ class IgnorableFunction extends Function {
     // conversion operations (from one time structure to another) are generally ignorable
     this.getName() = "localsub"
     or
-    // Hijri years are not applicable for gregorian leap year checks
+    // Indication of a calendar not applicable to
+    // gregorian leap year, e.g., Hijri, Persian, Hebrew
     this.getName().toLowerCase().matches("%hijri%")
     or
     this.getFile().getBaseName().toLowerCase().matches("%hijri%")
     or
-    // Persian calendar conversions are not applicable for gregorian leap year checks
     this.getName().toLowerCase().matches("%persian%")
     or
     this.getFile().getBaseName().toLowerCase().matches("%persian%")
+    or
+    this.getName().toLowerCase().matches("%hebrew%")
+    or
+    this.getFile().getBaseName().toLowerCase().matches("%hebrew%")
     or
     // misc. from string/char converters heuristic
     this.getName()
@@ -357,9 +361,11 @@ module OperationToYearAssignmentConfig implements DataFlow::ConfigSig {
     n.asExpr() instanceof IgnorableOperation
     or
     // Flowing into variables that indicate likely non-gregorian years are barriers
-    // e.g., names similar to hijri, persian, lunar, chinese, etc.
+    // e.g., names similar to hijri, persian, lunar, chinese, hebrew, etc.
     exists(Variable v |
-      v.getName().toLowerCase().matches(["%hijri%", "%persian%", "%lunar%", "%chinese%"]) and
+      v.getName()
+          .toLowerCase()
+          .matches(["%hijri%", "%persian%", "%lunar%", "%chinese%", "%hebrew%"]) and
       v.getAnAccess() = [n.asIndirectExpr(), n.asExpr()]
     )
     or
