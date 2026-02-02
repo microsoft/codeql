@@ -501,7 +501,7 @@ predicate isControlledByMonthEqualityCheckNonFebruary(Expr e) {
 }
 
 /**
- * From from a year field access to a time conversion function
+ * Flow from a year field access to a time conversion function
  * that auto converts feb29 in non-leap year, or through a conversion function that doesn't
  * auto convert to a sanity check guard of the result for error conditions.
  */
