@@ -12,6 +12,7 @@
 import cpp
 import LeapYear
 import semmle.code.cpp.controlflow.IRGuards
+import semmle.code.cpp.ir.IR
 import semmle.code.cpp.dataflow.new.TaintTracking
 import semmle.code.cpp.commons.DateTime
 
@@ -764,6 +765,19 @@ module CandidateConstantToDayOrMonthAssignmentFlow =
 
 import OperationToYearAssignmentFlow::PathGraph
 
+/**
+ * The value that the assignment resolves to doesn't represent February,
+ * and/or if it represents a day, is a 'safe' day (meaning the 27th or prior).
+ */
+bindingset[dayOrMonthValSrcExpr]
+predicate isSafeValueForAssignmentOfMonthOrDayValue(Assignment a, Expr dayOrMonthValSrcExpr){
+  a.getLValue() instanceof MonthFieldAccess and
+  dayOrMonthValSrcExpr.getValue().toInt() != 2
+  or
+  a.getLValue() instanceof DayFieldAccess and
+  dayOrMonthValSrcExpr.getValue().toInt() <= 27
+}
+
 from OperationToYearAssignmentFlow::PathNode src, OperationToYearAssignmentFlow::PathNode sink
 where
   OperationToYearAssignmentFlow::flowPath(src, sink) and
@@ -776,20 +790,17 @@ where
   not exists(DataFlow::Node dayOrMonthValSrc, DataFlow::Node dayOrMonthValSink, Assignment a |
     CandidateConstantToDayOrMonthAssignmentFlow::flow(dayOrMonthValSrc, dayOrMonthValSink) and
     a.getRValue() = dayOrMonthValSink.asExpr() and
-    (
+    dayOrMonthValSink.getBasicBlock() = sink.getNode().getBasicBlock() and
+    exists(IRBlock dayOrMonthValBB |
+      dayOrMonthValBB = dayOrMonthValSrc.getBasicBlock() and
       // The source of the day is set in the same block as the source for the year
       // or the source for the day is set in the same block as the sink for the year
-      dayOrMonthValSrc.getBasicBlock() = src.getNode().getBasicBlock() or
-      dayOrMonthValSrc.getBasicBlock() = sink.getNode().getBasicBlock()
+      dayOrMonthValBB in [
+        src.getNode().getBasicBlock(),
+        sink.getNode().getBasicBlock()
+      ]
     ) and
-    dayOrMonthValSink.getBasicBlock() = sink.getNode().getBasicBlock() and
-    (
-      a.getLValue() instanceof MonthFieldAccess and
-      dayOrMonthValSrc.asExpr().getValue().toInt() != 2
-      or
-      a.getLValue() instanceof DayFieldAccess and
-      dayOrMonthValSrc.asExpr().getValue().toInt() <= 27
-    )
+    isSafeValueForAssignmentOfMonthOrDayValue(a, dayOrMonthValSrc.asExpr())
   )
 // TODO: all days to sink are safe?
 select sink, src, sink,
