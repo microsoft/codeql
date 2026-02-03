@@ -1246,18 +1246,112 @@ void inverted_leap_year_check(WORD year, WORD offset, WORD day){
 }
 
 
-void simplified_leap_year_check(WORD year, WORD offset){
+void simplified_leap_year_check1(WORD year, WORD offset){
 	struct tm tmp;
 
-	tmp.tm_year = year + offset;
+	tmp.tm_year = year + offset;  // OK
 
-	bool isLeap = !(tmp.tm_year % 4) && (tmp.tm_year % 100 || !(tmp.tm_year % 400));
+	bool isLeap = (!((tmp.tm_year + 1900) % 4)) && ((tmp.tm_year + 1900) % 100 || !((tmp.tm_year + 1900) % 400));
 	if(isLeap){
 		// do something
 	}
 
+	// Modified after check, could be dangerous
 	tmp.tm_year = year + offset; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 }
+
+void simplified_leap_year_check2(WORD year, WORD offset){
+	struct tm tmp;
+
+	tmp.tm_year = year + offset; // OK
+
+	bool isNotLeap = ((tmp.tm_year + 1900) % 4) || (!((tmp.tm_year + 1900) % 100) && ((tmp.tm_year + 1900) % 400));
+	if(isNotLeap){
+		// do something
+	}
+
+	// Modified after check, could be dangerous
+	tmp.tm_year = year + offset;  // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
+}
+
+void simplified_leap_year_check3(WORD year, WORD offset){
+	SYSTEMTIME tmp;
+
+	tmp.wYear = year + offset; // OK
+
+	bool isLeap = (!(tmp.wYear % 4)) && (tmp.wYear % 100 || !(tmp.wYear% 400));
+	if(isLeap){
+		// do something
+	}
+
+	// Modified after check, could be dangerous
+	tmp.wYear = year + offset; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
+}
+
+void simplified_leap_year_check4(WORD year, WORD offset){
+	SYSTEMTIME tmp;
+
+	tmp.wYear = year + offset; // OK
+
+	bool isNotLeap = (tmp.wYear % 4) || (!(tmp.wYear % 100) && (tmp.wYear % 400));
+	if(isNotLeap){
+		// do something
+	}
+
+	// Modified after check, could be dangerous
+	tmp.wYear = year + offset;  // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
+}
+
+void bad_simplified_leap_year_check1(WORD year, WORD offset){
+	struct tm tmp;
+
+	tmp.tm_year = year + offset; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
+
+	// incorrect logic, should negate the %4 result
+	bool isLeap = ((tmp.tm_year + 1900) % 4) && ((tmp.tm_year + 1900) % 100 || !((tmp.tm_year + 1900) % 400));
+	if(isLeap){
+		// do something
+	}
+}
+
+void bad_simplified_leap_year_check2(WORD year, WORD offset){
+	struct tm tmp;
+
+	tmp.tm_year = year + offset; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
+
+
+	// incorrect logic, should not negate the %4 result
+	bool isNotLeap = (!((tmp.tm_year + 1900) % 4)) || (!((tmp.tm_year + 1900) % 100) && ((tmp.tm_year + 1900) % 400));
+	if(isNotLeap){
+		// do something
+	}
+}
+
+void bad_simplified_leap_year_check3(WORD year, WORD offset){
+	SYSTEMTIME tmp;
+
+	tmp.wYear = year + offset; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
+
+	// incorrect logic, should negate the %4 result
+	bool isLeap = (tmp.wYear % 4) && (tmp.wYear % 100 || !(tmp.wYear % 400));
+	if(isLeap){
+		// do something
+	}
+}
+
+void bad_simplified_leap_year_check4(WORD year, WORD offset){
+	SYSTEMTIME tmp;
+
+	tmp.wYear = year + offset; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
+
+
+	// incorrect logic, should not negate the %4 result
+	bool isNotLeap = (!(tmp.wYear % 4)) || (!(tmp.wYear % 100) && (tmp.wYear % 400));
+	if(isNotLeap){
+		// do something
+	}
+}
+
 
 void compound_leap_year_check(WORD year, WORD offset, WORD month, WORD day){
 	struct tm tmp;
@@ -1700,4 +1794,14 @@ void assumed_maketime_conversion1(tm timeinfo)
 	mktime(&timeinfo);
 }
 
+
+void bad_leap_year_check_logic1(tm timeinfo){
+	timeinfo.tm_year += 1; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
+
+	WORD year = get_civil_year(timeinfo);
+
+	// expected logic:
+	//(year % 4) && ((year % 100) || !(year % 400 )))
+ 	WORD days = (!(year % 4) && (!(year % 100) || (year % 400))) ? 366 : 365;
+}
 

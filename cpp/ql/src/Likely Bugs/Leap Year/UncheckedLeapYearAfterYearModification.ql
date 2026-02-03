@@ -118,7 +118,8 @@ class IgnorableExpr48Mapping extends IgnorableOperation {
   }
 }
 
-/** A binary or arithemtic operation whereby one of the components is textual or a string.
+/**
+ * A binary or arithemtic operation whereby one of the components is textual or a string.
  */
 class IgnorableCharLiteralArithmetic extends IgnorableOperation {
   IgnorableCharLiteralArithmetic() {
@@ -139,33 +140,34 @@ class IgnorableCharLiteralArithmetic extends IgnorableOperation {
 bindingset[c]
 predicate isLikelyConversionConstant(int c) {
   exists(int i | i = c.abs() |
-    i = [
-      146097, // days in 400-year Gregorian cycle
-      36524, // days in 100-year Gregorian subcycle
-      1461, // days in 4-year cycle (incl. 1 leap)
-      32044, // Fliegel–van Flandern JDN epoch shift
-      1721425, // JDN of 0001‑01‑01 (Gregorian)
-      1721119, // alt epoch offset
-      2400000, // MJD → JDN conversion
-      2400001, // alt MJD → JDN conversion
-      2141, // fixed‑point month/day extraction
-      65536, // observed in some conversions
-      7834, // observed in some conversions
-      256, // observed in some conversions
-      292275056, // qdatetime.h Qt Core year range first year constant
-      292278994, // qdatetime.h Qt Core year range last year constant
-      1601, // Windows FILETIME epoch start year
-      1970, // Unix epoch start year
-      70, // Unix epoch start year short form
-      1899, // Observed in uses with 1900 to address off by one scenarios
-      1900, // Used when converting a 2 digit year
-      2000, // Used when converting a 2 digit year
-      1400, // Hijri base year, used when converting a 2 digit year
-      1980, // FAT filesystem epoch start year
-      227013, // constant observed for Hirji year conversion, and Hirji years are not applicable for gregorian leap year
-      10631, // constant observed for Hirji year conversion, and Hirji years are not applicable for gregorian leap year
-      0
-    ]
+    i =
+      [
+        146097, // days in 400-year Gregorian cycle
+        36524, // days in 100-year Gregorian subcycle
+        1461, // days in 4-year cycle (incl. 1 leap)
+        32044, // Fliegel–van Flandern JDN epoch shift
+        1721425, // JDN of 0001‑01‑01 (Gregorian)
+        1721119, // alt epoch offset
+        2400000, // MJD → JDN conversion
+        2400001, // alt MJD → JDN conversion
+        2141, // fixed‑point month/day extraction
+        65536, // observed in some conversions
+        7834, // observed in some conversions
+        256, // observed in some conversions
+        292275056, // qdatetime.h Qt Core year range first year constant
+        292278994, // qdatetime.h Qt Core year range last year constant
+        1601, // Windows FILETIME epoch start year
+        1970, // Unix epoch start year
+        70, // Unix epoch start year short form
+        1899, // Observed in uses with 1900 to address off by one scenarios
+        1900, // Used when converting a 2 digit year
+        2000, // Used when converting a 2 digit year
+        1400, // Hijri base year, used when converting a 2 digit year
+        1980, // FAT filesystem epoch start year
+        227013, // constant observed for Hirji year conversion, and Hirji years are not applicable for gregorian leap year
+        10631, // constant observed for Hirji year conversion, and Hirji years are not applicable for gregorian leap year
+        0
+      ]
   )
 }
 
@@ -634,7 +636,8 @@ class LeapYearGuardCondition extends GuardCondition {
     |
       // Cannonical case:
       // form: `(year % 4 == 0) && (year % 100 != 0 || year % 400 == 0)`
-      // or : `!((year % 4 == 0) && (year % 100 != 0 || year % 400 == 0))`
+      //    `!((year % 4 == 0) && (year % 100 != 0 || year % 400 == 0))`
+      //    `!(year % 4) && (year % 100 || !(year % 400))`
       // Also accepting `((year & 3) == 0) && (year % 100 != 0 || year % 400 == 0)`
       // and `(year % 4 == 0) && (year % 100 > 0 || year % 400 == 0)`
       this = andExpr and
@@ -656,10 +659,9 @@ class LeapYearGuardCondition extends GuardCondition {
         )
       ) and
       exists(RemExpr e |
+        // year % 100 != 0 or year % 100 > 0
         (
-          // year % 100 != 0 or year % 100 > 0
-          div100Check.comparesEq(e, 0, false, gv)
-          or
+          div100Check.comparesEq(e, 0, false, gv) or
           div100Check.comparesLt(e, 1, false, gv)
         ) and
         e.getRightOperand().getValue().toInt() = 100 and
@@ -683,7 +685,8 @@ class LeapYearGuardCondition extends GuardCondition {
         // year % 4 != 0 or year % 4 > 0
         exists(RemExpr e |
           (
-            div4Check.comparesEq(e, 0, false, gv) or
+            div4Check.comparesEq(e, 0, false, gv)
+            or
             div4Check.comparesLt(e, 1, false, gv)
           ) and
           e.getRightOperand().getValue().toInt() = 4 and
@@ -784,20 +787,20 @@ module CandidateConstantToDayOrMonthAssignmentConfig implements DataFlow::Config
 module CandidateConstantToDayOrMonthAssignmentFlow =
   DataFlow::Global<CandidateConstantToDayOrMonthAssignmentConfig>;
 
-import OperationToYearAssignmentFlow::PathGraph
-
 /**
  * The value that the assignment resolves to doesn't represent February,
  * and/or if it represents a day, is a 'safe' day (meaning the 27th or prior).
  */
 bindingset[dayOrMonthValSrcExpr]
-predicate isSafeValueForAssignmentOfMonthOrDayValue(Assignment a, Expr dayOrMonthValSrcExpr){
+predicate isSafeValueForAssignmentOfMonthOrDayValue(Assignment a, Expr dayOrMonthValSrcExpr) {
   a.getLValue() instanceof MonthFieldAccess and
   dayOrMonthValSrcExpr.getValue().toInt() != 2
   or
   a.getLValue() instanceof DayFieldAccess and
   dayOrMonthValSrcExpr.getValue().toInt() <= 27
 }
+
+import OperationToYearAssignmentFlow::PathGraph
 
 from OperationToYearAssignmentFlow::PathNode src, OperationToYearAssignmentFlow::PathNode sink
 where
@@ -817,9 +820,9 @@ where
       // The source of the day is set in the same block as the source for the year
       // or the source for the day is set in the same block as the sink for the year
       dayOrMonthValBB in [
-        src.getNode().getBasicBlock(),
-        sink.getNode().getBasicBlock()
-      ]
+          src.getNode().getBasicBlock(),
+          sink.getNode().getBasicBlock()
+        ]
     ) and
     isSafeValueForAssignmentOfMonthOrDayValue(a, dayOrMonthValSrc.asExpr())
   )
