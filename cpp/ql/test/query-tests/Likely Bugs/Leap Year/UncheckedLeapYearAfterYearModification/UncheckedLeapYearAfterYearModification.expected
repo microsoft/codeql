@@ -23,7 +23,7 @@
 | test.cpp:1505:2:1505:22 | ... += ... | test.cpp:1505:2:1505:22 | ... += ... | test.cpp:1505:2:1505:22 | ... += ... | Year field has been modified, but no appropriate check for LeapYear was found. |
 | test.cpp:1584:2:1584:22 | ... += ... | test.cpp:1584:2:1584:22 | ... += ... | test.cpp:1584:2:1584:22 | ... += ... | Year field has been modified, but no appropriate check for LeapYear was found. |
 | test.cpp:1596:2:1596:22 | ... += ... | test.cpp:1596:2:1596:22 | ... += ... | test.cpp:1596:2:1596:22 | ... += ... | Year field has been modified, but no appropriate check for LeapYear was found. |
-| test.cpp:1609:2:1609:22 | ... += ... | test.cpp:1609:2:1609:22 | ... += ... | test.cpp:1609:2:1609:22 | ... += ... | Year field has been modified, but no appropriate check for LeapYear was found. |
+| test.cpp:1629:2:1629:22 | ... += ... | test.cpp:1629:2:1629:22 | ... += ... | test.cpp:1629:2:1629:22 | ... += ... | Year field has been modified, but no appropriate check for LeapYear was found. |
 edges
 | test.cpp:813:21:813:40 | ... + ... | test.cpp:813:2:813:40 | ... = ... | provenance |  |
 | test.cpp:818:13:818:24 | ... + ... | test.cpp:818:2:818:24 | ... = ... | provenance |  |
@@ -158,8 +158,10 @@ nodes
 | test.cpp:1573:2:1573:22 | ... += ... | semmle.label | ... += ... |
 | test.cpp:1584:2:1584:22 | ... += ... | semmle.label | ... += ... |
 | test.cpp:1596:2:1596:22 | ... += ... | semmle.label | ... += ... |
-| test.cpp:1609:2:1609:22 | ... += ... | semmle.label | ... += ... |
-| test.cpp:1644:2:1644:22 | ... += ... | semmle.label | ... += ... |
-| test.cpp:1649:2:1649:22 | ... += ... | semmle.label | ... += ... |
-| test.cpp:1678:2:1678:22 | ... += ... | semmle.label | ... += ... |
+| test.cpp:1608:2:1608:22 | ... += ... | semmle.label | ... += ... |
+| test.cpp:1618:2:1618:22 | ... += ... | semmle.label | ... += ... |
+| test.cpp:1629:2:1629:22 | ... += ... | semmle.label | ... += ... |
+| test.cpp:1664:2:1664:22 | ... += ... | semmle.label | ... += ... |
+| test.cpp:1669:2:1669:22 | ... += ... | semmle.label | ... += ... |
+| test.cpp:1698:2:1698:22 | ... += ... | semmle.label | ... += ... |
 subpaths

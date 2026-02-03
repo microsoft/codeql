@@ -629,16 +629,19 @@ class LeapYearGuardCondition extends GuardCondition {
       // form: `(year % 4 == 0) && (year % 100 != 0 || year % 400 == 0)`
       // or : `!((year % 4 == 0) && (year % 100 != 0 || year % 400 == 0))`
       // Also accepting `((year & 3) == 0) && (year % 100 != 0 || year % 400 == 0)`
+      // and `(year % 4 == 0) && (year % 100 > 0 || year % 400 == 0)`
       this = andExpr and
       andExpr.hasOperands(div4Check, orExpr) and
       orExpr.hasOperands(div100Check, div400Check) and
       (
+        // year % 4 == 0
         exists(RemExpr e |
           div4Check.comparesEq(e, 0, true, gv) and
           e.getRightOperand().getValue().toInt() = 4 and
           yearSinkDiv4 = e.getLeftOperand()
         )
         or
+        // year & 3 == 0
         exists(BitwiseAndExpr e |
           div4Check.comparesEq(e, 0, true, gv) and
           e.getRightOperand().getValue().toInt() = 3 and
@@ -646,10 +649,16 @@ class LeapYearGuardCondition extends GuardCondition {
         )
       ) and
       exists(RemExpr e |
-        div100Check.comparesEq(e, 0, false, gv) and
+        (
+          // year % 100 != 0 or year % 100 > 0
+          div100Check.comparesEq(e, 0, false, gv)
+          or
+          div100Check.comparesLt(e, 1, false, gv)
+        ) and
         e.getRightOperand().getValue().toInt() = 100 and
         yearSinkDiv100 = e.getLeftOperand()
       ) and
+      // year % 400 == 0
       exists(RemExpr e |
         div400Check.comparesEq(e, 0, true, gv) and
         e.getRightOperand().getValue().toInt() = 400 and
@@ -659,29 +668,41 @@ class LeapYearGuardCondition extends GuardCondition {
       // Inverted logic case:
       //  `year % 4 != 0 || (year % 100 == 0 && year % 400 != 0)`
       // or `year & 3 != 0 || (year % 100 == 0 && year % 400 != 0)`
+      // also accepting `year % 4 > 0 || (year % 100 == 0 && year % 400 > 0)`
       this = orExpr and
       orExpr.hasOperands(div4Check, andExpr) and
       andExpr.hasOperands(div100Check, div400Check) and
       (
+        // year % 4 != 0 or year % 4 > 0
         exists(RemExpr e |
-          div4Check.comparesEq(e, 0, false, gv) and
+          (
+            div4Check.comparesEq(e, 0, false, gv) or
+            div4Check.comparesLt(e, 1, false, gv)
+          ) and
           e.getRightOperand().getValue().toInt() = 4 and
           yearSinkDiv4 = e.getLeftOperand()
         )
         or
+        // year & 3 != 0
         exists(BitwiseAndExpr e |
           div4Check.comparesEq(e, 0, false, gv) and
           e.getRightOperand().getValue().toInt() = 3 and
           yearSinkDiv4 = e.getLeftOperand()
         )
       ) and
+      // year % 100 == 0
       exists(RemExpr e |
         div100Check.comparesEq(e, 0, true, gv) and
         e.getRightOperand().getValue().toInt() = 100 and
         yearSinkDiv100 = e.getLeftOperand()
       ) and
+      // year % 400 != 0 or year % 400 > 0
       exists(RemExpr e |
-        div400Check.comparesEq(e, 0, false, gv) and
+        (
+          div400Check.comparesEq(e, 0, false, gv)
+          or
+          div400Check.comparesLt(e, 1, false, gv)
+        ) and
         e.getRightOperand().getValue().toInt() = 400 and
         yearSinkDiv400 = e.getLeftOperand()
       )

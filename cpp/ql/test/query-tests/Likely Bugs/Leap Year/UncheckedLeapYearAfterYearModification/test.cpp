@@ -1604,6 +1604,26 @@ void odd_leap_year_check3(tm timeinfo){
 	}
 }
 
+void odd_leap_year_check4(tm timeinfo){
+	timeinfo.tm_year += 1; 
+	WORD year = timeinfo.tm_year + 1900;
+
+	if( (year % 4 == 0) && (year % 100 > 0 || (year % 400 == 0)))
+	{
+		// do something
+	}
+}
+
+void odd_leap_year_check5(tm timeinfo){
+	timeinfo.tm_year += 1; 
+	WORD year = timeinfo.tm_year + 1900;
+
+	if( (year % 4 > 0) || (year % 100 == 0 && (year % 400 > 0)))
+	{
+		// do something
+	}
+}
+
 
 void date_adjusted_through_mkgmtime(tm timeinfo){
 	timeinfo.tm_year += 1; // $ SPURIOUS: Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
