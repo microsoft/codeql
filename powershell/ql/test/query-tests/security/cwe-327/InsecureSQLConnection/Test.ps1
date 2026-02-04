@@ -6,7 +6,7 @@
 
 function Test1 {
     # Okay, set in initializer
-    $hostingConnectionString = "localhost"
+    $hostingConnectionString = "localhost;Encrypt=false"
     $hostingConnStringBuilder = [Microsoft.Data.SqlClient.SqlConnectionStringBuilder]::new($hostingConnectionString)
     $hostingConnStringBuilder.Encrypt = $true
 }
@@ -18,63 +18,31 @@ function Test2 {
 }
 
 function Test3 {
-    # Flagged
-    $hostingConnectionString = "localhost"
-    $hostingConnStringBuilder = [Microsoft.Data.SqlClient.SqlConnectionStringBuilder]::new($hostingConnectionString)
-}
-
-function Test4 {
-    # Flagged - Using New-Object cmdlet
-    $hostingConnectionString = "localhost"
-    $hostingConnStringBuilder = New-Object Microsoft.Data.SqlClient.SqlConnectionStringBuilder($hostingConnectionString)
-}
-
-function Test5 {
-    # Okay - Using New-Object with encryption enabled
-    $hostingConnectionString = "localhost"
-    $hostingConnStringBuilder = New-Object Microsoft.Data.SqlClient.SqlConnectionStringBuilder($hostingConnectionString)
-    $hostingConnStringBuilder.Encrypt = $true
-}
-
-function Test6 {
-    # Flagged - Empty constructor then setting DataSource
-    $hostingConnStringBuilder = [Microsoft.Data.SqlClient.SqlConnectionStringBuilder]::new()
-    $hostingConnStringBuilder.DataSource = "localhost"
-}
-
-function Test7 {
-    # Okay - Empty constructor with encryption enabled
-    $hostingConnStringBuilder = [Microsoft.Data.SqlClient.SqlConnectionStringBuilder]::new()
-    $hostingConnStringBuilder.DataSource = "localhost"
-    $hostingConnStringBuilder.Encrypt = $true
-}
-
-function Test8 {
-    # Flagged - New-Object with empty constructor
-    $hostingConnStringBuilder = New-Object Microsoft.Data.SqlClient.SqlConnectionStringBuilder
-    $hostingConnStringBuilder.DataSource = "localhost"
-}
-
-function Test9 {
-    # Okay - Connection string with Encrypt=true in the string
-    $hostingConnectionString = "Data Source=localhost;Encrypt=true"
-    $hostingConnStringBuilder = [Microsoft.Data.SqlClient.SqlConnectionStringBuilder]::new($hostingConnectionString)
-}
-
-function Test10 {
-    # Flagged - Connection string with Encrypt=false
-    $hostingConnectionString = "Data Source=localhost;Encrypt=false"
-    $hostingConnStringBuilder = [Microsoft.Data.SqlClient.SqlConnectionStringBuilder]::new($hostingConnectionString)
-}
-
-function Test11 {
     # Okay - Using property assignment with boolean $true
     $hostingConnStringBuilder = New-Object Microsoft.Data.SqlClient.SqlConnectionStringBuilder
     $hostingConnStringBuilder.DataSource = "localhost"
     $hostingConnStringBuilder.Encrypt = [bool]$true
 }
 
-function Test12 {
+function Test4 {
+    # Okay - Connection string with Encrypt=true in the string
+    $hostingConnectionString = "Data Source=localhost;Encrypt=true"
+    $hostingConnStringBuilder = [Microsoft.Data.SqlClient.SqlConnectionStringBuilder]::new($hostingConnectionString)
+}
+
+function Test5 {
+    # Flagged
+    $hostingConnectionString = "localhost;Encrypt=false"
+    $hostingConnStringBuilder = [Microsoft.Data.SqlClient.SqlConnectionStringBuilder]::new($hostingConnectionString)
+}
+
+function Test6 {
+    # Flagged - Using New-Object cmdlet
+    $hostingConnectionString = "localhost;Encrypt=false"
+    $hostingConnStringBuilder = New-Object Microsoft.Data.SqlClient.SqlConnectionStringBuilder($hostingConnectionString)
+}
+
+function Test7 {
     # Flagged - Setting Encrypt to false explicitly
     $hostingConnStringBuilder = [Microsoft.Data.SqlClient.SqlConnectionStringBuilder]::new()
     $hostingConnStringBuilder.DataSource = "localhost"
