@@ -39,7 +39,7 @@ function Test5 {
 function Test6 {
     # Flagged - Using New-Object cmdlet
     $hostingConnectionString = "localhost;Encrypt=false"
-    $hostingConnStringBuilder = New-Object Microsoft.Data.SqlClient.SqlConnectionStringBuilder($hostingConnectionString)
+    $hostingConnStringBuilder = New-Object Microsoft.Data.SqlClient.SqlConnectionStringBuilder -ArgumentList $hostingConnectionString
 }
 
 function Test7 {
