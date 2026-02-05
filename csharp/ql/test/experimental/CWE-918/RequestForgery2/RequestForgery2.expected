@@ -1,0 +1,287 @@
+edges
+| testAsync.cs:17:68:17:70 | env : String | testAsync.cs:19:56:19:58 | access to parameter env : String | provenance |  |
+| testAsync.cs:19:17:19:19 | access to local variable uri : String | testAsync.cs:20:36:20:38 | access to local variable uri : String | provenance |  |
+| testAsync.cs:19:29:19:87 | call to method ConfigureAwait : ConfiguredTaskAwaitable<String> | testAsync.cs:19:17:19:19 | access to local variable uri : String | provenance |  |
+| testAsync.cs:19:56:19:58 | access to parameter env : String | testAsync.cs:23:60:23:60 | s : String | provenance |  |
+| testAsync.cs:20:36:20:38 | access to local variable uri : String | testAsync.cs:38:48:38:48 | s : String | provenance |  |
+| testAsync.cs:23:60:23:60 | s : String | testAsync.cs:24:17:24:25 | access to local variable uriString : String | provenance |  |
+| testAsync.cs:24:17:24:25 | access to local variable uriString : String | testAsync.cs:25:20:25:28 | access to local variable uriString : String | provenance |  |
+| testAsync.cs:25:20:25:28 | access to local variable uriString : String | testAsync.cs:19:29:19:87 | call to method ConfigureAwait : ConfiguredTaskAwaitable<String> | provenance | Config |
+| testAsync.cs:38:48:38:48 | s : String | testAsync.cs:40:56:40:56 | access to parameter s : String | provenance |  |
+| testAsync.cs:40:56:40:56 | access to parameter s : String | testAsync.cs:40:48:40:57 | object creation of type Uri | provenance | MaD:3700 Sink:MaD:2462 |
+| testBad.cs:17:54:17:56 | env : String | testBad.cs:24:56:24:72 | $"..." : String | provenance |  |
+| testBad.cs:17:54:17:56 | env : String | testBad.cs:26:64:26:80 | $"..." : String | provenance |  |
+| testBad.cs:17:54:17:56 | env : String | testBad.cs:28:49:28:65 | $"..." : String | provenance |  |
+| testBad.cs:17:54:17:56 | env : String | testBad.cs:30:49:30:75 | $"..." : String | provenance |  |
+| testBad.cs:17:54:17:56 | env : String | testBad.cs:33:49:33:65 | ... + ... : String | provenance |  |
+| testBad.cs:17:54:17:56 | env : String | testBad.cs:35:49:35:75 | ... + ... : String | provenance |  |
+| testBad.cs:17:54:17:56 | env : String | testBad.cs:39:35:39:37 | access to parameter env : String | provenance |  |
+| testBad.cs:17:54:17:56 | env : String | testBad.cs:44:54:44:56 | access to parameter env : String | provenance |  |
+| testBad.cs:17:54:17:56 | env : String | testBad.cs:49:35:49:37 | access to parameter env : String | provenance |  |
+| testBad.cs:17:54:17:56 | env : String | testBad.cs:54:75:54:77 | access to parameter env : String | provenance |  |
+| testBad.cs:17:54:17:56 | env : String | testBad.cs:57:79:57:81 | access to parameter env : String | provenance |  |
+| testBad.cs:17:54:17:56 | env : String | testBad.cs:60:20:60:33 | access to local variable fixFormatFpEnv : String | provenance |  |
+| testBad.cs:17:54:17:56 | env : String | testBad.cs:67:57:67:59 | access to parameter env : String | provenance |  |
+| testBad.cs:17:54:17:56 | env : String | testBad.cs:71:71:71:73 | access to parameter env : String | provenance |  |
+| testBad.cs:17:54:17:56 | env : String | testBad.cs:75:31:75:47 | $"..." : String | provenance |  |
+| testBad.cs:17:54:17:56 | env : String | testBad.cs:80:27:80:43 | $"..." : String | provenance |  |
+| testBad.cs:17:54:17:56 | env : String | testBad.cs:85:56:85:72 | $"..." : String | provenance |  |
+| testBad.cs:17:54:17:56 | env : String | testBad.cs:88:32:88:48 | $"..." : String | provenance |  |
+| testBad.cs:17:54:17:56 | env : String | testBad.cs:92:65:92:67 | access to parameter env : String | provenance |  |
+| testBad.cs:17:54:17:56 | env : String | testBad.cs:95:65:95:67 | access to parameter env : String | provenance |  |
+| testBad.cs:17:54:17:56 | env : String | testBad.cs:101:24:101:26 | access to parameter env : String | provenance |  |
+| testBad.cs:17:54:17:56 | env : String | testBad.cs:108:32:108:34 | access to parameter env : String | provenance |  |
+| testBad.cs:17:54:17:56 | env : String | testBad.cs:113:39:113:41 | access to parameter env : String | provenance |  |
+| testBad.cs:17:54:17:56 | env : String | testBad.cs:123:17:123:20 | access to local variable uri3 : String | provenance |  |
+| testBad.cs:24:56:24:72 | $"..." : String | testBad.cs:24:48:24:73 | object creation of type Uri | provenance | MaD:3700 Sink:MaD:2462 |
+| testBad.cs:26:64:26:80 | $"..." : String | testBad.cs:26:56:26:81 | object creation of type Uri | provenance | MaD:3700 Sink:MaD:2462 |
+| testBad.cs:28:49:28:65 | $"..." : String | testBad.cs:28:41:28:66 | object creation of type Uri | provenance | MaD:3700 Sink:MaD:2408 |
+| testBad.cs:30:49:30:75 | $"..." : String | testBad.cs:30:41:30:76 | object creation of type Uri | provenance | MaD:3700 Sink:MaD:2408 |
+| testBad.cs:33:49:33:65 | ... + ... : String | testBad.cs:33:41:33:66 | object creation of type Uri | provenance | MaD:3700 Sink:MaD:2408 |
+| testBad.cs:35:49:35:75 | ... + ... : String | testBad.cs:35:41:35:76 | object creation of type Uri | provenance | MaD:3700 Sink:MaD:2408 |
+| testBad.cs:39:13:39:26 | [post] access to local variable stringBuilder1 : StringBuilder | testBad.cs:41:49:41:62 | access to local variable stringBuilder1 : StringBuilder | provenance |  |
+| testBad.cs:39:35:39:37 | access to parameter env : String | testBad.cs:39:13:39:26 | [post] access to local variable stringBuilder1 : StringBuilder | provenance | MaD:2553 |
+| testBad.cs:41:49:41:62 | access to local variable stringBuilder1 : StringBuilder | testBad.cs:41:49:41:73 | call to method ToString : String | provenance | MaD:2645 |
+| testBad.cs:41:49:41:73 | call to method ToString : String | testBad.cs:41:41:41:74 | object creation of type Uri | provenance | MaD:3700 Sink:MaD:2408 |
+| testBad.cs:44:13:44:45 | [post] call to method Append : StringBuilder | testBad.cs:45:49:45:62 | access to local variable stringBuilder2 : StringBuilder | provenance | MaD:2554 |
+| testBad.cs:44:54:44:56 | access to parameter env : String | testBad.cs:44:13:44:45 | [post] call to method Append : StringBuilder | provenance | MaD:2553 |
+| testBad.cs:45:49:45:62 | access to local variable stringBuilder2 : StringBuilder | testBad.cs:45:49:45:73 | call to method ToString : String | provenance | MaD:2645 |
+| testBad.cs:45:49:45:73 | call to method ToString : String | testBad.cs:45:41:45:74 | object creation of type Uri | provenance | MaD:3700 Sink:MaD:2408 |
+| testBad.cs:49:13:49:26 | [post] access to local variable stringBuilder3 : StringBuilder | testBad.cs:51:49:51:62 | access to local variable stringBuilder3 : StringBuilder | provenance |  |
+| testBad.cs:49:35:49:37 | access to parameter env : String | testBad.cs:49:13:49:26 | [post] access to local variable stringBuilder3 : StringBuilder | provenance | MaD:2553 |
+| testBad.cs:51:49:51:62 | access to local variable stringBuilder3 : StringBuilder | testBad.cs:51:49:51:73 | call to method ToString : String | provenance | MaD:2645 |
+| testBad.cs:51:49:51:73 | call to method ToString : String | testBad.cs:51:41:51:74 | object creation of type Uri | provenance | MaD:3700 Sink:MaD:2408 |
+| testBad.cs:54:49:54:78 | call to method Concat : String | testBad.cs:54:41:54:79 | object creation of type Uri | provenance | MaD:3700 Sink:MaD:2408 |
+| testBad.cs:54:75:54:77 | access to parameter env : String | testBad.cs:54:49:54:78 | call to method Concat : String | provenance | MaD:3346 |
+| testBad.cs:57:49:57:82 | call to method Format : String | testBad.cs:57:41:57:83 | object creation of type Uri | provenance | MaD:3700 Sink:MaD:2408 |
+| testBad.cs:57:79:57:81 | access to parameter env : String | testBad.cs:57:49:57:82 | call to method Format : String | provenance | MaD:3376 |
+| testBad.cs:60:20:60:33 | access to local variable fixFormatFpEnv : String | testBad.cs:62:83:62:96 | access to local variable fixFormatFpEnv : String | provenance |  |
+| testBad.cs:62:20:62:20 | access to local variable s : String | testBad.cs:63:41:63:41 | access to local variable s | provenance | Sink:MaD:2404 |
+| testBad.cs:62:24:62:116 | call to method Format : String | testBad.cs:62:20:62:20 | access to local variable s : String | provenance |  |
+| testBad.cs:62:83:62:96 | access to local variable fixFormatFpEnv : String | testBad.cs:62:24:62:116 | call to method Format : String | provenance | MaD:3361 |
+| testBad.cs:67:13:67:26 | [post] access to local variable stringBuilder4 : StringBuilder | testBad.cs:68:49:68:62 | access to local variable stringBuilder4 : StringBuilder | provenance |  |
+| testBad.cs:67:57:67:59 | access to parameter env : String | testBad.cs:67:13:67:26 | [post] access to local variable stringBuilder4 : StringBuilder | provenance | MaD:2593 |
+| testBad.cs:68:49:68:62 | access to local variable stringBuilder4 : StringBuilder | testBad.cs:68:49:68:73 | call to method ToString : String | provenance | MaD:2645 |
+| testBad.cs:68:49:68:73 | call to method ToString : String | testBad.cs:68:41:68:74 | object creation of type Uri | provenance | MaD:3700 Sink:MaD:2408 |
+| testBad.cs:71:17:71:26 | access to local variable stringJoin : String | testBad.cs:72:49:72:58 | access to local variable stringJoin : String | provenance |  |
+| testBad.cs:71:30:71:75 | call to method Join : String | testBad.cs:71:17:71:26 | access to local variable stringJoin : String | provenance |  |
+| testBad.cs:71:46:71:74 | array creation of type String[] : null [element] : String | testBad.cs:71:30:71:75 | call to method Join : String | provenance | MaD:3409 |
+| testBad.cs:71:58:71:74 | { ..., ... } : null [element] : String | testBad.cs:71:46:71:74 | array creation of type String[] : null [element] : String | provenance |  |
+| testBad.cs:71:71:71:73 | access to parameter env : String | testBad.cs:71:58:71:74 | { ..., ... } : null [element] : String | provenance |  |
+| testBad.cs:72:49:72:58 | access to local variable stringJoin : String | testBad.cs:72:41:72:59 | object creation of type Uri | provenance | MaD:3700 Sink:MaD:2408 |
+| testBad.cs:75:17:75:19 | access to local variable uri : Uri | testBad.cs:76:41:76:43 | access to local variable uri | provenance | Sink:MaD:2408 |
+| testBad.cs:75:23:75:48 | object creation of type Uri : Uri | testBad.cs:75:17:75:19 | access to local variable uri : Uri | provenance |  |
+| testBad.cs:75:31:75:47 | $"..." : String | testBad.cs:75:23:75:48 | object creation of type Uri : Uri | provenance | MaD:3700 |
+| testBad.cs:80:27:80:43 | $"..." : String | testBad.cs:80:68:80:73 | access to local variable outUri : Uri | provenance | MaD:3695 |
+| testBad.cs:80:68:80:73 | access to local variable outUri : Uri | testBad.cs:81:66:81:71 | access to local variable outUri : Uri | provenance |  |
+| testBad.cs:81:17:81:23 | access to local variable request : HttpRequestMessage | testBad.cs:82:42:82:48 | access to local variable request | provenance | Sink:MaD:2440 |
+| testBad.cs:81:27:81:84 | object creation of type HttpRequestMessage : HttpRequestMessage | testBad.cs:81:17:81:23 | access to local variable request : HttpRequestMessage | provenance |  |
+| testBad.cs:81:66:81:71 | access to local variable outUri : Uri | testBad.cs:81:66:81:83 | access to property AbsoluteUri : String | provenance | MaD:3708 |
+| testBad.cs:81:66:81:83 | access to property AbsoluteUri : String | testBad.cs:81:27:81:84 | object creation of type HttpRequestMessage : HttpRequestMessage | provenance | MaD:2449 |
+| testBad.cs:85:41:85:73 | object creation of type UriBuilder : UriBuilder [property Fragment] : String | testBad.cs:85:41:85:77 | access to property Uri | provenance | MaD:3731 Sink:MaD:2408 |
+| testBad.cs:85:41:85:73 | object creation of type UriBuilder : UriBuilder [property Host] : String | testBad.cs:85:41:85:77 | access to property Uri | provenance | MaD:3731 Sink:MaD:2408 |
+| testBad.cs:85:41:85:73 | object creation of type UriBuilder : UriBuilder [property Path] : String | testBad.cs:85:41:85:77 | access to property Uri | provenance | MaD:3731 Sink:MaD:2408 |
+| testBad.cs:85:41:85:73 | object creation of type UriBuilder : UriBuilder [property Port] : Int32 | testBad.cs:85:41:85:77 | access to property Uri | provenance | MaD:3731 Sink:MaD:2408 |
+| testBad.cs:85:41:85:73 | object creation of type UriBuilder : UriBuilder [property Query] : String | testBad.cs:85:41:85:77 | access to property Uri | provenance | MaD:3731 Sink:MaD:2408 |
+| testBad.cs:85:41:85:73 | object creation of type UriBuilder : UriBuilder [property Scheme] : String | testBad.cs:85:41:85:77 | access to property Uri | provenance | MaD:3731 Sink:MaD:2408 |
+| testBad.cs:85:56:85:72 | $"..." : String | testBad.cs:85:41:85:73 | object creation of type UriBuilder : UriBuilder [property Fragment] : String | provenance | MaD:3715 |
+| testBad.cs:85:56:85:72 | $"..." : String | testBad.cs:85:41:85:73 | object creation of type UriBuilder : UriBuilder [property Host] : String | provenance | MaD:3715 |
+| testBad.cs:85:56:85:72 | $"..." : String | testBad.cs:85:41:85:73 | object creation of type UriBuilder : UriBuilder [property Path] : String | provenance | MaD:3715 |
+| testBad.cs:85:56:85:72 | $"..." : String | testBad.cs:85:41:85:73 | object creation of type UriBuilder : UriBuilder [property Port] : Int32 | provenance | MaD:3715 |
+| testBad.cs:85:56:85:72 | $"..." : String | testBad.cs:85:41:85:73 | object creation of type UriBuilder : UriBuilder [property Query] : String | provenance | MaD:3715 |
+| testBad.cs:85:56:85:72 | $"..." : String | testBad.cs:85:41:85:73 | object creation of type UriBuilder : UriBuilder [property Scheme] : String | provenance | MaD:3715 |
+| testBad.cs:88:17:88:20 | access to local variable uri2 : Uri | testBad.cs:89:56:89:59 | access to local variable uri2 : Uri | provenance |  |
+| testBad.cs:88:24:88:49 | object creation of type Uri : Uri | testBad.cs:88:17:88:20 | access to local variable uri2 : Uri | provenance |  |
+| testBad.cs:88:32:88:48 | $"..." : String | testBad.cs:88:24:88:49 | object creation of type Uri : Uri | provenance | MaD:3700 |
+| testBad.cs:89:41:89:60 | object creation of type UriBuilder : UriBuilder [property Fragment] : String | testBad.cs:89:41:89:64 | access to property Uri | provenance | MaD:3731 Sink:MaD:2408 |
+| testBad.cs:89:41:89:60 | object creation of type UriBuilder : UriBuilder [property Host] : String | testBad.cs:89:41:89:64 | access to property Uri | provenance | MaD:3731 Sink:MaD:2408 |
+| testBad.cs:89:41:89:60 | object creation of type UriBuilder : UriBuilder [property Path] : String | testBad.cs:89:41:89:64 | access to property Uri | provenance | MaD:3731 Sink:MaD:2408 |
+| testBad.cs:89:41:89:60 | object creation of type UriBuilder : UriBuilder [property Port] : Int32 | testBad.cs:89:41:89:64 | access to property Uri | provenance | MaD:3731 Sink:MaD:2408 |
+| testBad.cs:89:41:89:60 | object creation of type UriBuilder : UriBuilder [property Query] : String | testBad.cs:89:41:89:64 | access to property Uri | provenance | MaD:3731 Sink:MaD:2408 |
+| testBad.cs:89:41:89:60 | object creation of type UriBuilder : UriBuilder [property Scheme] : String | testBad.cs:89:41:89:64 | access to property Uri | provenance | MaD:3731 Sink:MaD:2408 |
+| testBad.cs:89:56:89:59 | access to local variable uri2 : Uri | testBad.cs:89:41:89:60 | object creation of type UriBuilder : UriBuilder [property Fragment] : String | provenance | MaD:3716 |
+| testBad.cs:89:56:89:59 | access to local variable uri2 : Uri | testBad.cs:89:41:89:60 | object creation of type UriBuilder : UriBuilder [property Host] : String | provenance | MaD:3716 |
+| testBad.cs:89:56:89:59 | access to local variable uri2 : Uri | testBad.cs:89:41:89:60 | object creation of type UriBuilder : UriBuilder [property Path] : String | provenance | MaD:3716 |
+| testBad.cs:89:56:89:59 | access to local variable uri2 : Uri | testBad.cs:89:41:89:60 | object creation of type UriBuilder : UriBuilder [property Port] : Int32 | provenance | MaD:3716 |
+| testBad.cs:89:56:89:59 | access to local variable uri2 : Uri | testBad.cs:89:41:89:60 | object creation of type UriBuilder : UriBuilder [property Query] : String | provenance | MaD:3716 |
+| testBad.cs:89:56:89:59 | access to local variable uri2 : Uri | testBad.cs:89:41:89:60 | object creation of type UriBuilder : UriBuilder [property Scheme] : String | provenance | MaD:3716 |
+| testBad.cs:92:41:92:68 | object creation of type UriBuilder : UriBuilder [property Host] : String | testBad.cs:92:41:92:72 | access to property Uri | provenance | MaD:3731 Sink:MaD:2408 |
+| testBad.cs:92:65:92:67 | access to parameter env : String | testBad.cs:92:41:92:68 | object creation of type UriBuilder : UriBuilder [property Host] : String | provenance | MaD:3718 |
+| testBad.cs:95:41:95:73 | object creation of type UriBuilder : UriBuilder [property Host] : String | testBad.cs:95:41:95:77 | access to property Uri | provenance | MaD:3731 Sink:MaD:2408 |
+| testBad.cs:95:65:95:67 | access to parameter env : String | testBad.cs:95:41:95:73 | object creation of type UriBuilder : UriBuilder [property Host] : String | provenance | MaD:3720 |
+| testBad.cs:98:17:98:26 | access to local variable uriBuilder : UriBuilder [property Host] : String | testBad.cs:104:41:104:50 | access to local variable uriBuilder : UriBuilder [property Host] : String | provenance |  |
+| testBad.cs:99:13:103:13 | { ..., ... } : UriBuilder [property Host] : String | testBad.cs:98:17:98:26 | access to local variable uriBuilder : UriBuilder [property Host] : String | provenance |  |
+| testBad.cs:101:24:101:26 | access to parameter env : String | testBad.cs:99:13:103:13 | { ..., ... } : UriBuilder [property Host] : String | provenance |  |
+| testBad.cs:104:41:104:50 | access to local variable uriBuilder : UriBuilder [property Host] : String | testBad.cs:104:41:104:54 | access to property Uri | provenance | MaD:3731 Sink:MaD:2408 |
+| testBad.cs:108:13:108:23 | [post] access to local variable uriBuilder2 : UriBuilder [property Host] : String | testBad.cs:109:41:109:51 | access to local variable uriBuilder2 : UriBuilder [property Host] : String | provenance |  |
+| testBad.cs:108:32:108:34 | access to parameter env : String | testBad.cs:108:13:108:23 | [post] access to local variable uriBuilder2 : UriBuilder [property Host] : String | provenance |  |
+| testBad.cs:109:41:109:51 | access to local variable uriBuilder2 : UriBuilder [property Host] : String | testBad.cs:109:41:109:55 | access to property Uri | provenance | MaD:3731 Sink:MaD:2408 |
+| testBad.cs:113:17:113:27 | access to local variable relativeUri : Uri | testBad.cs:114:52:114:62 | access to local variable relativeUri : Uri | provenance |  |
+| testBad.cs:113:31:113:42 | object creation of type Uri : Uri | testBad.cs:113:17:113:27 | access to local variable relativeUri : Uri | provenance |  |
+| testBad.cs:113:39:113:41 | access to parameter env : String | testBad.cs:113:31:113:42 | object creation of type Uri : Uri | provenance | MaD:3700 |
+| testBad.cs:114:17:114:27 | access to local variable combinedUri : Uri | testBad.cs:115:41:115:51 | access to local variable combinedUri | provenance | Sink:MaD:2408 |
+| testBad.cs:114:17:114:27 | access to local variable combinedUri : Uri | testBad.cs:117:62:117:72 | access to local variable combinedUri : Uri | provenance |  |
+| testBad.cs:114:31:114:63 | object creation of type Uri : Uri | testBad.cs:114:17:114:27 | access to local variable combinedUri : Uri | provenance |  |
+| testBad.cs:114:52:114:62 | access to local variable relativeUri : Uri | testBad.cs:114:31:114:63 | object creation of type Uri : Uri | provenance | MaD:55950 |
+| testBad.cs:117:62:117:72 | access to local variable combinedUri : Uri | testBad.cs:117:41:117:73 | object creation of type Uri | provenance | MaD:55950 Sink:MaD:2408 |
+| testBad.cs:123:17:123:20 | access to local variable uri3 : String | testBad.cs:124:67:124:70 | access to local variable uri3 : String | provenance |  |
+| testBad.cs:124:17:124:24 | access to local variable request2 : HttpRequestMessage | testBad.cs:130:28:130:35 | access to local variable request2 : HttpRequestMessage | provenance |  |
+| testBad.cs:124:28:124:71 | object creation of type HttpRequestMessage : HttpRequestMessage | testBad.cs:124:17:124:24 | access to local variable request2 : HttpRequestMessage | provenance |  |
+| testBad.cs:124:67:124:70 | access to local variable uri3 : String | testBad.cs:124:28:124:71 | object creation of type HttpRequestMessage : HttpRequestMessage | provenance | MaD:2449 |
+| testBad.cs:130:28:130:35 | access to local variable request2 : HttpRequestMessage | testBad.cs:144:50:144:56 | request : HttpRequestMessage | provenance |  |
+| testBad.cs:144:50:144:56 | request : HttpRequestMessage | testBad.cs:146:42:146:48 | access to parameter request | provenance | Sink:MaD:2440 |
+| testBad.cs:144:50:144:56 | request : HttpRequestMessage | testBad.cs:146:42:146:48 | access to parameter request | provenance | Sink:MaD:2440 |
+nodes
+| testAsync.cs:17:68:17:70 | env : String | semmle.label | env : String |
+| testAsync.cs:19:17:19:19 | access to local variable uri : String | semmle.label | access to local variable uri : String |
+| testAsync.cs:19:29:19:87 | call to method ConfigureAwait : ConfiguredTaskAwaitable<String> | semmle.label | call to method ConfigureAwait : ConfiguredTaskAwaitable<String> |
+| testAsync.cs:19:56:19:58 | access to parameter env : String | semmle.label | access to parameter env : String |
+| testAsync.cs:20:36:20:38 | access to local variable uri : String | semmle.label | access to local variable uri : String |
+| testAsync.cs:23:60:23:60 | s : String | semmle.label | s : String |
+| testAsync.cs:24:17:24:25 | access to local variable uriString : String | semmle.label | access to local variable uriString : String |
+| testAsync.cs:25:20:25:28 | access to local variable uriString : String | semmle.label | access to local variable uriString : String |
+| testAsync.cs:38:48:38:48 | s : String | semmle.label | s : String |
+| testAsync.cs:40:48:40:57 | object creation of type Uri | semmle.label | object creation of type Uri |
+| testAsync.cs:40:56:40:56 | access to parameter s : String | semmle.label | access to parameter s : String |
+| testBad.cs:17:54:17:56 | env : String | semmle.label | env : String |
+| testBad.cs:24:48:24:73 | object creation of type Uri | semmle.label | object creation of type Uri |
+| testBad.cs:24:56:24:72 | $"..." : String | semmle.label | $"..." : String |
+| testBad.cs:26:56:26:81 | object creation of type Uri | semmle.label | object creation of type Uri |
+| testBad.cs:26:64:26:80 | $"..." : String | semmle.label | $"..." : String |
+| testBad.cs:28:41:28:66 | object creation of type Uri | semmle.label | object creation of type Uri |
+| testBad.cs:28:49:28:65 | $"..." : String | semmle.label | $"..." : String |
+| testBad.cs:30:41:30:76 | object creation of type Uri | semmle.label | object creation of type Uri |
+| testBad.cs:30:49:30:75 | $"..." : String | semmle.label | $"..." : String |
+| testBad.cs:33:41:33:66 | object creation of type Uri | semmle.label | object creation of type Uri |
+| testBad.cs:33:49:33:65 | ... + ... : String | semmle.label | ... + ... : String |
+| testBad.cs:35:41:35:76 | object creation of type Uri | semmle.label | object creation of type Uri |
+| testBad.cs:35:49:35:75 | ... + ... : String | semmle.label | ... + ... : String |
+| testBad.cs:39:13:39:26 | [post] access to local variable stringBuilder1 : StringBuilder | semmle.label | [post] access to local variable stringBuilder1 : StringBuilder |
+| testBad.cs:39:35:39:37 | access to parameter env : String | semmle.label | access to parameter env : String |
+| testBad.cs:41:41:41:74 | object creation of type Uri | semmle.label | object creation of type Uri |
+| testBad.cs:41:49:41:62 | access to local variable stringBuilder1 : StringBuilder | semmle.label | access to local variable stringBuilder1 : StringBuilder |
+| testBad.cs:41:49:41:73 | call to method ToString : String | semmle.label | call to method ToString : String |
+| testBad.cs:44:13:44:45 | [post] call to method Append : StringBuilder | semmle.label | [post] call to method Append : StringBuilder |
+| testBad.cs:44:54:44:56 | access to parameter env : String | semmle.label | access to parameter env : String |
+| testBad.cs:45:41:45:74 | object creation of type Uri | semmle.label | object creation of type Uri |
+| testBad.cs:45:49:45:62 | access to local variable stringBuilder2 : StringBuilder | semmle.label | access to local variable stringBuilder2 : StringBuilder |
+| testBad.cs:45:49:45:73 | call to method ToString : String | semmle.label | call to method ToString : String |
+| testBad.cs:49:13:49:26 | [post] access to local variable stringBuilder3 : StringBuilder | semmle.label | [post] access to local variable stringBuilder3 : StringBuilder |
+| testBad.cs:49:35:49:37 | access to parameter env : String | semmle.label | access to parameter env : String |
+| testBad.cs:51:41:51:74 | object creation of type Uri | semmle.label | object creation of type Uri |
+| testBad.cs:51:49:51:62 | access to local variable stringBuilder3 : StringBuilder | semmle.label | access to local variable stringBuilder3 : StringBuilder |
+| testBad.cs:51:49:51:73 | call to method ToString : String | semmle.label | call to method ToString : String |
+| testBad.cs:54:41:54:79 | object creation of type Uri | semmle.label | object creation of type Uri |
+| testBad.cs:54:49:54:78 | call to method Concat : String | semmle.label | call to method Concat : String |
+| testBad.cs:54:75:54:77 | access to parameter env : String | semmle.label | access to parameter env : String |
+| testBad.cs:57:41:57:83 | object creation of type Uri | semmle.label | object creation of type Uri |
+| testBad.cs:57:49:57:82 | call to method Format : String | semmle.label | call to method Format : String |
+| testBad.cs:57:79:57:81 | access to parameter env : String | semmle.label | access to parameter env : String |
+| testBad.cs:60:20:60:33 | access to local variable fixFormatFpEnv : String | semmle.label | access to local variable fixFormatFpEnv : String |
+| testBad.cs:62:20:62:20 | access to local variable s : String | semmle.label | access to local variable s : String |
+| testBad.cs:62:24:62:116 | call to method Format : String | semmle.label | call to method Format : String |
+| testBad.cs:62:83:62:96 | access to local variable fixFormatFpEnv : String | semmle.label | access to local variable fixFormatFpEnv : String |
+| testBad.cs:63:41:63:41 | access to local variable s | semmle.label | access to local variable s |
+| testBad.cs:67:13:67:26 | [post] access to local variable stringBuilder4 : StringBuilder | semmle.label | [post] access to local variable stringBuilder4 : StringBuilder |
+| testBad.cs:67:57:67:59 | access to parameter env : String | semmle.label | access to parameter env : String |
+| testBad.cs:68:41:68:74 | object creation of type Uri | semmle.label | object creation of type Uri |
+| testBad.cs:68:49:68:62 | access to local variable stringBuilder4 : StringBuilder | semmle.label | access to local variable stringBuilder4 : StringBuilder |
+| testBad.cs:68:49:68:73 | call to method ToString : String | semmle.label | call to method ToString : String |
+| testBad.cs:71:17:71:26 | access to local variable stringJoin : String | semmle.label | access to local variable stringJoin : String |
+| testBad.cs:71:30:71:75 | call to method Join : String | semmle.label | call to method Join : String |
+| testBad.cs:71:46:71:74 | array creation of type String[] : null [element] : String | semmle.label | array creation of type String[] : null [element] : String |
+| testBad.cs:71:58:71:74 | { ..., ... } : null [element] : String | semmle.label | { ..., ... } : null [element] : String |
+| testBad.cs:71:71:71:73 | access to parameter env : String | semmle.label | access to parameter env : String |
+| testBad.cs:72:41:72:59 | object creation of type Uri | semmle.label | object creation of type Uri |
+| testBad.cs:72:49:72:58 | access to local variable stringJoin : String | semmle.label | access to local variable stringJoin : String |
+| testBad.cs:75:17:75:19 | access to local variable uri : Uri | semmle.label | access to local variable uri : Uri |
+| testBad.cs:75:23:75:48 | object creation of type Uri : Uri | semmle.label | object creation of type Uri : Uri |
+| testBad.cs:75:31:75:47 | $"..." : String | semmle.label | $"..." : String |
+| testBad.cs:76:41:76:43 | access to local variable uri | semmle.label | access to local variable uri |
+| testBad.cs:80:27:80:43 | $"..." : String | semmle.label | $"..." : String |
+| testBad.cs:80:68:80:73 | access to local variable outUri : Uri | semmle.label | access to local variable outUri : Uri |
+| testBad.cs:81:17:81:23 | access to local variable request : HttpRequestMessage | semmle.label | access to local variable request : HttpRequestMessage |
+| testBad.cs:81:27:81:84 | object creation of type HttpRequestMessage : HttpRequestMessage | semmle.label | object creation of type HttpRequestMessage : HttpRequestMessage |
+| testBad.cs:81:66:81:71 | access to local variable outUri : Uri | semmle.label | access to local variable outUri : Uri |
+| testBad.cs:81:66:81:83 | access to property AbsoluteUri : String | semmle.label | access to property AbsoluteUri : String |
+| testBad.cs:82:42:82:48 | access to local variable request | semmle.label | access to local variable request |
+| testBad.cs:85:41:85:73 | object creation of type UriBuilder : UriBuilder [property Fragment] : String | semmle.label | object creation of type UriBuilder : UriBuilder [property Fragment] : String |
+| testBad.cs:85:41:85:73 | object creation of type UriBuilder : UriBuilder [property Host] : String | semmle.label | object creation of type UriBuilder : UriBuilder [property Host] : String |
+| testBad.cs:85:41:85:73 | object creation of type UriBuilder : UriBuilder [property Path] : String | semmle.label | object creation of type UriBuilder : UriBuilder [property Path] : String |
+| testBad.cs:85:41:85:73 | object creation of type UriBuilder : UriBuilder [property Port] : Int32 | semmle.label | object creation of type UriBuilder : UriBuilder [property Port] : Int32 |
+| testBad.cs:85:41:85:73 | object creation of type UriBuilder : UriBuilder [property Query] : String | semmle.label | object creation of type UriBuilder : UriBuilder [property Query] : String |
+| testBad.cs:85:41:85:73 | object creation of type UriBuilder : UriBuilder [property Scheme] : String | semmle.label | object creation of type UriBuilder : UriBuilder [property Scheme] : String |
+| testBad.cs:85:41:85:77 | access to property Uri | semmle.label | access to property Uri |
+| testBad.cs:85:56:85:72 | $"..." : String | semmle.label | $"..." : String |
+| testBad.cs:88:17:88:20 | access to local variable uri2 : Uri | semmle.label | access to local variable uri2 : Uri |
+| testBad.cs:88:24:88:49 | object creation of type Uri : Uri | semmle.label | object creation of type Uri : Uri |
+| testBad.cs:88:32:88:48 | $"..." : String | semmle.label | $"..." : String |
+| testBad.cs:89:41:89:60 | object creation of type UriBuilder : UriBuilder [property Fragment] : String | semmle.label | object creation of type UriBuilder : UriBuilder [property Fragment] : String |
+| testBad.cs:89:41:89:60 | object creation of type UriBuilder : UriBuilder [property Host] : String | semmle.label | object creation of type UriBuilder : UriBuilder [property Host] : String |
+| testBad.cs:89:41:89:60 | object creation of type UriBuilder : UriBuilder [property Path] : String | semmle.label | object creation of type UriBuilder : UriBuilder [property Path] : String |
+| testBad.cs:89:41:89:60 | object creation of type UriBuilder : UriBuilder [property Port] : Int32 | semmle.label | object creation of type UriBuilder : UriBuilder [property Port] : Int32 |
+| testBad.cs:89:41:89:60 | object creation of type UriBuilder : UriBuilder [property Query] : String | semmle.label | object creation of type UriBuilder : UriBuilder [property Query] : String |
+| testBad.cs:89:41:89:60 | object creation of type UriBuilder : UriBuilder [property Scheme] : String | semmle.label | object creation of type UriBuilder : UriBuilder [property Scheme] : String |
+| testBad.cs:89:41:89:64 | access to property Uri | semmle.label | access to property Uri |
+| testBad.cs:89:56:89:59 | access to local variable uri2 : Uri | semmle.label | access to local variable uri2 : Uri |
+| testBad.cs:92:41:92:68 | object creation of type UriBuilder : UriBuilder [property Host] : String | semmle.label | object creation of type UriBuilder : UriBuilder [property Host] : String |
+| testBad.cs:92:41:92:72 | access to property Uri | semmle.label | access to property Uri |
+| testBad.cs:92:65:92:67 | access to parameter env : String | semmle.label | access to parameter env : String |
+| testBad.cs:95:41:95:73 | object creation of type UriBuilder : UriBuilder [property Host] : String | semmle.label | object creation of type UriBuilder : UriBuilder [property Host] : String |
+| testBad.cs:95:41:95:77 | access to property Uri | semmle.label | access to property Uri |
+| testBad.cs:95:65:95:67 | access to parameter env : String | semmle.label | access to parameter env : String |
+| testBad.cs:98:17:98:26 | access to local variable uriBuilder : UriBuilder [property Host] : String | semmle.label | access to local variable uriBuilder : UriBuilder [property Host] : String |
+| testBad.cs:99:13:103:13 | { ..., ... } : UriBuilder [property Host] : String | semmle.label | { ..., ... } : UriBuilder [property Host] : String |
+| testBad.cs:101:24:101:26 | access to parameter env : String | semmle.label | access to parameter env : String |
+| testBad.cs:104:41:104:50 | access to local variable uriBuilder : UriBuilder [property Host] : String | semmle.label | access to local variable uriBuilder : UriBuilder [property Host] : String |
+| testBad.cs:104:41:104:54 | access to property Uri | semmle.label | access to property Uri |
+| testBad.cs:108:13:108:23 | [post] access to local variable uriBuilder2 : UriBuilder [property Host] : String | semmle.label | [post] access to local variable uriBuilder2 : UriBuilder [property Host] : String |
+| testBad.cs:108:32:108:34 | access to parameter env : String | semmle.label | access to parameter env : String |
+| testBad.cs:109:41:109:51 | access to local variable uriBuilder2 : UriBuilder [property Host] : String | semmle.label | access to local variable uriBuilder2 : UriBuilder [property Host] : String |
+| testBad.cs:109:41:109:55 | access to property Uri | semmle.label | access to property Uri |
+| testBad.cs:113:17:113:27 | access to local variable relativeUri : Uri | semmle.label | access to local variable relativeUri : Uri |
+| testBad.cs:113:31:113:42 | object creation of type Uri : Uri | semmle.label | object creation of type Uri : Uri |
+| testBad.cs:113:39:113:41 | access to parameter env : String | semmle.label | access to parameter env : String |
+| testBad.cs:114:17:114:27 | access to local variable combinedUri : Uri | semmle.label | access to local variable combinedUri : Uri |
+| testBad.cs:114:31:114:63 | object creation of type Uri : Uri | semmle.label | object creation of type Uri : Uri |
+| testBad.cs:114:52:114:62 | access to local variable relativeUri : Uri | semmle.label | access to local variable relativeUri : Uri |
+| testBad.cs:115:41:115:51 | access to local variable combinedUri | semmle.label | access to local variable combinedUri |
+| testBad.cs:117:41:117:73 | object creation of type Uri | semmle.label | object creation of type Uri |
+| testBad.cs:117:62:117:72 | access to local variable combinedUri : Uri | semmle.label | access to local variable combinedUri : Uri |
+| testBad.cs:123:17:123:20 | access to local variable uri3 : String | semmle.label | access to local variable uri3 : String |
+| testBad.cs:124:17:124:24 | access to local variable request2 : HttpRequestMessage | semmle.label | access to local variable request2 : HttpRequestMessage |
+| testBad.cs:124:28:124:71 | object creation of type HttpRequestMessage : HttpRequestMessage | semmle.label | object creation of type HttpRequestMessage : HttpRequestMessage |
+| testBad.cs:124:67:124:70 | access to local variable uri3 : String | semmle.label | access to local variable uri3 : String |
+| testBad.cs:130:28:130:35 | access to local variable request2 : HttpRequestMessage | semmle.label | access to local variable request2 : HttpRequestMessage |
+| testBad.cs:144:50:144:56 | request : HttpRequestMessage | semmle.label | request : HttpRequestMessage |
+| testBad.cs:144:50:144:56 | request : HttpRequestMessage | semmle.label | request : HttpRequestMessage |
+| testBad.cs:146:42:146:48 | access to parameter request | semmle.label | access to parameter request |
+subpaths
+#select
+| testAsync.cs:40:48:40:57 | object creation of type Uri | testAsync.cs:17:68:17:70 | env : String | testAsync.cs:40:48:40:57 | object creation of type Uri | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | testAsync.cs:17:68:17:70 | env | a user-provided value | System.Net.WebRequest | System.Net.WebRequest |
+| testBad.cs:24:48:24:73 | object creation of type Uri | testBad.cs:17:54:17:56 | env : String | testBad.cs:24:48:24:73 | object creation of type Uri | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | testBad.cs:17:54:17:56 | env | a user-provided value | System.Net.WebRequest | System.Net.WebRequest |
+| testBad.cs:26:56:26:81 | object creation of type Uri | testBad.cs:17:54:17:56 | env : String | testBad.cs:26:56:26:81 | object creation of type Uri | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | testBad.cs:17:54:17:56 | env | a user-provided value | System.Net.WebRequest | System.Net.WebRequest |
+| testBad.cs:28:41:28:66 | object creation of type Uri | testBad.cs:17:54:17:56 | env : String | testBad.cs:28:41:28:66 | object creation of type Uri | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | testBad.cs:17:54:17:56 | env | a user-provided value | System.Net.Http.HttpClient | System.Net.Http.HttpClient |
+| testBad.cs:30:41:30:76 | object creation of type Uri | testBad.cs:17:54:17:56 | env : String | testBad.cs:30:41:30:76 | object creation of type Uri | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | testBad.cs:17:54:17:56 | env | a user-provided value | System.Net.Http.HttpClient | System.Net.Http.HttpClient |
+| testBad.cs:33:41:33:66 | object creation of type Uri | testBad.cs:17:54:17:56 | env : String | testBad.cs:33:41:33:66 | object creation of type Uri | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | testBad.cs:17:54:17:56 | env | a user-provided value | System.Net.Http.HttpClient | System.Net.Http.HttpClient |
+| testBad.cs:35:41:35:76 | object creation of type Uri | testBad.cs:17:54:17:56 | env : String | testBad.cs:35:41:35:76 | object creation of type Uri | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | testBad.cs:17:54:17:56 | env | a user-provided value | System.Net.Http.HttpClient | System.Net.Http.HttpClient |
+| testBad.cs:41:41:41:74 | object creation of type Uri | testBad.cs:17:54:17:56 | env : String | testBad.cs:41:41:41:74 | object creation of type Uri | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | testBad.cs:17:54:17:56 | env | a user-provided value | System.Net.Http.HttpClient | System.Net.Http.HttpClient |
+| testBad.cs:45:41:45:74 | object creation of type Uri | testBad.cs:17:54:17:56 | env : String | testBad.cs:45:41:45:74 | object creation of type Uri | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | testBad.cs:17:54:17:56 | env | a user-provided value | System.Net.Http.HttpClient | System.Net.Http.HttpClient |
+| testBad.cs:51:41:51:74 | object creation of type Uri | testBad.cs:17:54:17:56 | env : String | testBad.cs:51:41:51:74 | object creation of type Uri | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | testBad.cs:17:54:17:56 | env | a user-provided value | System.Net.Http.HttpClient | System.Net.Http.HttpClient |
+| testBad.cs:54:41:54:79 | object creation of type Uri | testBad.cs:17:54:17:56 | env : String | testBad.cs:54:41:54:79 | object creation of type Uri | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | testBad.cs:17:54:17:56 | env | a user-provided value | System.Net.Http.HttpClient | System.Net.Http.HttpClient |
+| testBad.cs:57:41:57:83 | object creation of type Uri | testBad.cs:17:54:17:56 | env : String | testBad.cs:57:41:57:83 | object creation of type Uri | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | testBad.cs:17:54:17:56 | env | a user-provided value | System.Net.Http.HttpClient | System.Net.Http.HttpClient |
+| testBad.cs:63:41:63:41 | access to local variable s | testBad.cs:17:54:17:56 | env : String | testBad.cs:63:41:63:41 | access to local variable s | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | testBad.cs:17:54:17:56 | env | a user-provided value | System.Net.Http.HttpClient | System.Net.Http.HttpClient |
+| testBad.cs:68:41:68:74 | object creation of type Uri | testBad.cs:17:54:17:56 | env : String | testBad.cs:68:41:68:74 | object creation of type Uri | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | testBad.cs:17:54:17:56 | env | a user-provided value | System.Net.Http.HttpClient | System.Net.Http.HttpClient |
+| testBad.cs:72:41:72:59 | object creation of type Uri | testBad.cs:17:54:17:56 | env : String | testBad.cs:72:41:72:59 | object creation of type Uri | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | testBad.cs:17:54:17:56 | env | a user-provided value | System.Net.Http.HttpClient | System.Net.Http.HttpClient |
+| testBad.cs:76:41:76:43 | access to local variable uri | testBad.cs:17:54:17:56 | env : String | testBad.cs:76:41:76:43 | access to local variable uri | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | testBad.cs:17:54:17:56 | env | a user-provided value | System.Net.Http.HttpClient | System.Net.Http.HttpClient |
+| testBad.cs:82:42:82:48 | access to local variable request | testBad.cs:17:54:17:56 | env : String | testBad.cs:82:42:82:48 | access to local variable request | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | testBad.cs:17:54:17:56 | env | a user-provided value | System.Net.Http.HttpClient | System.Net.Http.HttpClient |
+| testBad.cs:85:41:85:77 | access to property Uri | testBad.cs:17:54:17:56 | env : String | testBad.cs:85:41:85:77 | access to property Uri | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | testBad.cs:17:54:17:56 | env | a user-provided value | System.Net.Http.HttpClient | System.Net.Http.HttpClient |
+| testBad.cs:89:41:89:64 | access to property Uri | testBad.cs:17:54:17:56 | env : String | testBad.cs:89:41:89:64 | access to property Uri | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | testBad.cs:17:54:17:56 | env | a user-provided value | System.Net.Http.HttpClient | System.Net.Http.HttpClient |
+| testBad.cs:92:41:92:72 | access to property Uri | testBad.cs:17:54:17:56 | env : String | testBad.cs:92:41:92:72 | access to property Uri | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | testBad.cs:17:54:17:56 | env | a user-provided value | System.Net.Http.HttpClient | System.Net.Http.HttpClient |
+| testBad.cs:95:41:95:77 | access to property Uri | testBad.cs:17:54:17:56 | env : String | testBad.cs:95:41:95:77 | access to property Uri | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | testBad.cs:17:54:17:56 | env | a user-provided value | System.Net.Http.HttpClient | System.Net.Http.HttpClient |
+| testBad.cs:104:41:104:54 | access to property Uri | testBad.cs:17:54:17:56 | env : String | testBad.cs:104:41:104:54 | access to property Uri | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | testBad.cs:17:54:17:56 | env | a user-provided value | System.Net.Http.HttpClient | System.Net.Http.HttpClient |
+| testBad.cs:109:41:109:55 | access to property Uri | testBad.cs:17:54:17:56 | env : String | testBad.cs:109:41:109:55 | access to property Uri | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | testBad.cs:17:54:17:56 | env | a user-provided value | System.Net.Http.HttpClient | System.Net.Http.HttpClient |
+| testBad.cs:115:41:115:51 | access to local variable combinedUri | testBad.cs:17:54:17:56 | env : String | testBad.cs:115:41:115:51 | access to local variable combinedUri | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | testBad.cs:17:54:17:56 | env | a user-provided value | System.Net.Http.HttpClient | System.Net.Http.HttpClient |
+| testBad.cs:117:41:117:73 | object creation of type Uri | testBad.cs:17:54:17:56 | env : String | testBad.cs:117:41:117:73 | object creation of type Uri | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | testBad.cs:17:54:17:56 | env | a user-provided value | System.Net.Http.HttpClient | System.Net.Http.HttpClient |
+| testBad.cs:146:42:146:48 | access to parameter request | testBad.cs:17:54:17:56 | env : String | testBad.cs:146:42:146:48 | access to parameter request | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | testBad.cs:17:54:17:56 | env | a user-provided value | System.Net.Http.HttpClient | System.Net.Http.HttpClient |
+| testBad.cs:146:42:146:48 | access to parameter request | testBad.cs:144:50:144:56 | request : HttpRequestMessage | testBad.cs:146:42:146:48 | access to parameter request | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | testBad.cs:144:50:144:56 | request | a user-provided value | System.Net.Http.HttpClient | System.Net.Http.HttpClient |

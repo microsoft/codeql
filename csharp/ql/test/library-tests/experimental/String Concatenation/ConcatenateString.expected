@@ -1,0 +1,80 @@
+| Concatenation.cs:11:36:11:48 | ... + ... | 11 | field_init3 |
+| Concatenation.cs:26:21:26:30 | ... + ... | 26 | var_init3 |
+| Concatenation.cs:32:24:32:29 | $"..." | 32 | a/b |
+| Concatenation.cs:33:17:33:38 | $"..." | 33 | field_init/field_assigned_from_constructor |
+| Concatenation.cs:34:17:34:38 | $"..." | 34 | field_init/<recursion_skipped> |
+| Concatenation.cs:35:17:35:38 | $"..." | 35 | field_init/field_assigned_from_constructor |
+| Concatenation.cs:36:17:36:36 | $"..." | 36 | <unknown>/param_default |
+| Concatenation.cs:37:17:37:32 | $"..." | 37 | var_init/var_assigned |
+| Concatenation.cs:38:17:38:32 | $"..." | 38 | var_init/<recursion_skipped> |
+| Concatenation.cs:39:17:39:52 | $"..." | 39 | property_init/property_assigned_from_method |
+| Concatenation.cs:40:17:40:52 | $"..." | 40 | property_init/<recursion_skipped> |
+| Concatenation.cs:41:17:41:52 | $"..." | 41 | property_init/property_assigned_from_constructor |
+| Concatenation.cs:45:24:45:38 | ... + ... | 45 | a/b |
+| Concatenation.cs:46:17:46:39 | ... + ... | 46 | field_init/field_assigned_from_constructor |
+| Concatenation.cs:47:17:47:39 | ... + ... | 47 | field_init/<recursion_skipped> |
+| Concatenation.cs:48:17:48:39 | ... + ... | 48 | field_init/field_assigned_from_constructor |
+| Concatenation.cs:49:17:49:37 | ... + ... | 49 | <unknown>/param_default |
+| Concatenation.cs:50:17:50:33 | ... + ... | 50 | var_init/var_assigned |
+| Concatenation.cs:51:17:51:33 | ... + ... | 51 | var_init/<recursion_skipped> |
+| Concatenation.cs:52:17:52:53 | ... + ... | 52 | property_init/property_assigned_from_method |
+| Concatenation.cs:53:17:53:53 | ... + ... | 53 | property_init/<recursion_skipped> |
+| Concatenation.cs:54:17:54:53 | ... + ... | 54 | property_init/property_assigned_from_constructor |
+| Concatenation.cs:58:30:58:67 | ... + ... | 58 | field_init/field_assigned_from_constructor/<recursion_skipped> |
+| Concatenation.cs:61:27:61:60 | call to method Format | 61 | a/b |
+| Concatenation.cs:62:20:62:61 | call to method Format | 62 | field_init/field_assigned_from_constructor |
+| Concatenation.cs:63:20:63:61 | call to method Format | 63 | field_init/<recursion_skipped> |
+| Concatenation.cs:64:20:64:61 | call to method Format | 64 | field_init/field_assigned_from_constructor |
+| Concatenation.cs:65:20:65:59 | call to method Format | 65 | <unknown>/param_default |
+| Concatenation.cs:66:20:66:55 | call to method Format | 66 | var_init/var_assigned |
+| Concatenation.cs:67:20:67:55 | call to method Format | 67 | var_init/<recursion_skipped> |
+| Concatenation.cs:68:20:68:75 | call to method Format | 68 | property_init/property_assigned_from_method |
+| Concatenation.cs:69:20:69:75 | call to method Format | 69 | property_init/<recursion_skipped> |
+| Concatenation.cs:70:20:70:75 | call to method Format | 70 | property_init/property_assigned_from_constructor |
+| Concatenation.cs:71:20:71:81 | call to method Format | 71 | a/b |
+| Concatenation.cs:76:26:76:42 | ... + ... | 76 | {0}/{1} |
+| Concatenation.cs:77:26:77:46 | $"..." | 77 | {0}/{1} |
+| Concatenation.cs:78:20:78:63 | call to method Format | 78 | var_init/var_assigned |
+| Concatenation.cs:79:20:79:67 | call to method Format | 79 | var_init/var_assigned |
+| Concatenation.cs:80:20:80:55 | call to method Format | 80 | <recursion_skipped> |
+| Concatenation.cs:81:20:81:55 | call to method Format | 81 | <recursion_skipped> |
+| Concatenation.cs:84:38:84:59 | object creation of type StringBuilder | 84 | a/b |
+| Concatenation.cs:89:38:89:56 | object creation of type StringBuilder | 89 | field_init/field_assigned_from_constructor |
+| Concatenation.cs:95:38:95:56 | object creation of type StringBuilder | 95 | field_init/field_assigned_from_constructor |
+| Concatenation.cs:99:38:99:56 | object creation of type StringBuilder | 99 | field_init/field_assigned_from_constructor/n |
+| Concatenation.cs:103:38:103:56 | object creation of type StringBuilder | 103 | field_init/field_assigned_from_constructor |
+| Concatenation.cs:107:39:107:57 | object creation of type StringBuilder | 107 | field_init/field_assigned_from_constructor |
+| Concatenation.cs:117:27:117:53 | call to method Concat | 117 | a/b |
+| Concatenation.cs:118:20:118:54 | call to method Concat | 118 | field_init/field_assigned_from_constructor |
+| Concatenation.cs:119:20:119:54 | call to method Concat | 119 | field_init/<recursion_skipped> |
+| Concatenation.cs:120:20:120:54 | call to method Concat | 120 | field_init/override_field_assigned_from_method |
+| Concatenation.cs:121:20:121:52 | call to method Concat | 121 | <unknown>/param_default |
+| Concatenation.cs:122:20:122:48 | call to method Concat | 122 | var_init/override_var_assigned |
+| Concatenation.cs:123:20:123:48 | call to method Concat | 123 | var_init/<recursion_skipped> |
+| Concatenation.cs:124:20:124:68 | call to method Concat | 124 | property_init/override_property_assigned_from_method |
+| Concatenation.cs:125:20:125:68 | call to method Concat | 125 | property_init/<recursion_skipped> |
+| Concatenation.cs:126:20:126:68 | call to method Concat | 126 | property_init/override_property_assigned_from_constructor |
+| Concatenation.cs:127:20:127:61 | call to method Concat | 127 | a/b |
+| Concatenation.cs:128:20:128:41 | call to method Concat | 128 | a/b |
+| Concatenation.cs:129:20:129:38 | call to method Concat | 129 | a/b |
+| Concatenation.cs:132:27:132:70 | call to method Join | 132 | a/b |
+| Concatenation.cs:133:20:133:67 | call to method Join | 133 | field_init/field_assigned_from_constructor |
+| Concatenation.cs:134:20:134:67 | call to method Join | 134 | field_init/<recursion_skipped> |
+| Concatenation.cs:135:20:135:67 | call to method Join | 135 | field_init/override_field_assigned_from_method |
+| Concatenation.cs:136:20:136:65 | call to method Join | 136 | <unknown>/param_default |
+| Concatenation.cs:137:20:137:61 | call to method Join | 137 | var_init/override_var_assigned |
+| Concatenation.cs:138:20:138:61 | call to method Join | 138 | var_init/<recursion_skipped> |
+| Concatenation.cs:139:20:139:81 | call to method Join | 139 | property_init/override_property_assigned_from_method |
+| Concatenation.cs:140:20:140:81 | call to method Join | 140 | property_init/<recursion_skipped> |
+| Concatenation.cs:141:20:141:81 | call to method Join | 141 | property_init/override_property_assigned_from_constructor |
+| Concatenation.cs:142:20:142:43 | call to method Join | 142 | a/b |
+| Concatenation.cs:143:20:143:40 | call to method Join | 143 | a/b |
+| Concatenation.cs:150:27:150:935 | call to method Concat | 150 | Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut eLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut e |
+| Concatenation.cs:153:32:153:119 | $"..." | 153 | exceeds elements limitation |
+| Concatenation.cs:154:25:154:122 | ... + ... | 154 | exceeds elements limitation |
+| Concatenation.cs:155:25:155:200 | call to method Format | 155 | exceeds elements limitation |
+| Concatenation.cs:156:25:156:122 | call to method Concat | 156 | exceeds elements limitation |
+| Concatenation.cs:157:25:157:138 | call to method Join | 157 | exceeds elements limitation |
+| Concatenation.cs:159:38:159:56 | object creation of type StringBuilder | 159 | exceeds elements limitation |
+| Concatenation.cs:162:38:162:56 | object creation of type StringBuilder | 162 | exceeds elements limitation |
+| Concatenation.cs:192:32:192:46 | $"..." | 192 | property_init3 |
