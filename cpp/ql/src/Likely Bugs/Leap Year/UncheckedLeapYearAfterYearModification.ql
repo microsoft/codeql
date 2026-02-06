@@ -273,7 +273,10 @@ class IgnorablePointerOrCharArithmetic extends IgnorableOperation {
  */
 predicate isOperationSourceCandidate(Expr e) {
   not e instanceof IgnorableOperation and
-  not e.getEnclosingFunction() instanceof IgnorableFunction and
+  exists(Function f |
+    f = e.getEnclosingFunction() and
+    not f instanceof IgnorableFunction
+  )
   (
     e instanceof SubExpr
     or
