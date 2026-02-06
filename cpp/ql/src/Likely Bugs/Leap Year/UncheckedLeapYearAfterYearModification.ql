@@ -275,7 +275,7 @@ predicate isOperationSourceCandidate(Expr e) {
   exists(Function f |
     f = e.getEnclosingFunction() and
     not f instanceof IgnorableFunction
-  )
+  ) and
   (
     e instanceof SubExpr
     or
