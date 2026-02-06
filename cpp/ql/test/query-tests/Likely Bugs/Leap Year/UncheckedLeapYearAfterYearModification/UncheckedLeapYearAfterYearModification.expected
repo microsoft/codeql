@@ -35,35 +35,22 @@
 edges
 | test.cpp:813:21:813:40 | ... + ... | test.cpp:813:2:813:40 | ... = ... | provenance |  |
 | test.cpp:818:13:818:24 | ... + ... | test.cpp:818:2:818:24 | ... = ... | provenance |  |
-| test.cpp:854:7:854:31 | ... = ... | test.cpp:857:3:857:36 | ... = ... | provenance |  |
-| test.cpp:854:14:854:31 | ... + ... | test.cpp:854:7:854:31 | ... = ... | provenance |  |
-| test.cpp:854:35:854:40 | -- ... | test.cpp:857:3:857:36 | ... = ... | provenance |  |
 | test.cpp:954:14:954:25 | ... + ... | test.cpp:954:3:954:25 | ... = ... | provenance |  |
 | test.cpp:1084:26:1084:26 | *x | test.cpp:1097:16:1097:23 | increment_arg output argument | provenance |  |
 | test.cpp:1085:2:1085:4 | ... ++ | test.cpp:1084:26:1084:26 | *x | provenance |  |
 | test.cpp:1088:37:1088:37 | *x | test.cpp:1101:27:1101:35 | increment_arg_by_pointer output argument | provenance |  |
 | test.cpp:1089:2:1089:7 | ... ++ | test.cpp:1088:37:1088:37 | *x | provenance |  |
 | test.cpp:1155:14:1155:26 | ... - ... | test.cpp:1155:2:1155:26 | ... = ... | provenance |  |
-| test.cpp:1185:2:1185:15 | ... += ... | test.cpp:1187:2:1187:19 | ... = ... | provenance |  |
 | test.cpp:1204:2:1204:15 | ... += ... | test.cpp:1206:2:1206:19 | ... = ... | provenance |  |
-| test.cpp:1225:16:1225:28 | ... + ... | test.cpp:1225:2:1225:28 | ... = ... | provenance |  |
-| test.cpp:1231:16:1231:28 | ... + ... | test.cpp:1231:2:1231:28 | ... = ... | provenance |  |
-| test.cpp:1238:16:1238:28 | ... + ... | test.cpp:1238:2:1238:28 | ... = ... | provenance |  |
 | test.cpp:1245:16:1245:28 | ... + ... | test.cpp:1245:2:1245:28 | ... = ... | provenance |  |
-| test.cpp:1252:16:1252:28 | ... + ... | test.cpp:1252:2:1252:28 | ... = ... | provenance |  |
 | test.cpp:1260:16:1260:28 | ... + ... | test.cpp:1260:2:1260:28 | ... = ... | provenance |  |
-| test.cpp:1266:16:1266:28 | ... + ... | test.cpp:1266:2:1266:28 | ... = ... | provenance |  |
 | test.cpp:1274:16:1274:28 | ... + ... | test.cpp:1274:2:1274:28 | ... = ... | provenance |  |
-| test.cpp:1280:14:1280:26 | ... + ... | test.cpp:1280:2:1280:26 | ... = ... | provenance |  |
 | test.cpp:1288:14:1288:26 | ... + ... | test.cpp:1288:2:1288:26 | ... = ... | provenance |  |
-| test.cpp:1294:14:1294:26 | ... + ... | test.cpp:1294:2:1294:26 | ... = ... | provenance |  |
 | test.cpp:1302:14:1302:26 | ... + ... | test.cpp:1302:2:1302:26 | ... = ... | provenance |  |
 | test.cpp:1308:16:1308:28 | ... + ... | test.cpp:1308:2:1308:28 | ... = ... | provenance |  |
 | test.cpp:1320:16:1320:28 | ... + ... | test.cpp:1320:2:1320:28 | ... = ... | provenance |  |
 | test.cpp:1333:14:1333:26 | ... + ... | test.cpp:1333:2:1333:26 | ... = ... | provenance |  |
 | test.cpp:1345:14:1345:26 | ... + ... | test.cpp:1345:2:1345:26 | ... = ... | provenance |  |
-| test.cpp:1359:16:1359:28 | ... + ... | test.cpp:1359:2:1359:28 | ... = ... | provenance |  |
-| test.cpp:1373:14:1373:26 | ... + ... | test.cpp:1373:2:1373:26 | ... = ... | provenance |  |
 | test.cpp:1384:20:1384:23 | year | test.cpp:1387:2:1387:17 | ... = ... | provenance |  |
 | test.cpp:1397:15:1397:22 | ... + ... | test.cpp:1397:3:1397:22 | ... = ... | provenance |  |
 | test.cpp:1402:12:1402:17 | ... + ... | test.cpp:1384:20:1384:23 | year | provenance |  |
@@ -71,8 +58,6 @@ edges
 | test.cpp:1421:3:1421:20 | ... = ... | test.cpp:1423:12:1423:18 | yeartmp | provenance |  |
 | test.cpp:1421:13:1421:20 | ... + ... | test.cpp:1421:3:1421:20 | ... = ... | provenance |  |
 | test.cpp:1423:12:1423:18 | yeartmp | test.cpp:1384:20:1384:23 | year | provenance |  |
-| test.cpp:1436:15:1436:27 | ... + ... | test.cpp:1436:2:1436:27 | ... = ... | provenance |  |
-| test.cpp:1449:13:1449:25 | ... + ... | test.cpp:1449:2:1449:25 | ... = ... | provenance |  |
 | test.cpp:1466:15:1466:22 | ... + ... | test.cpp:1466:3:1466:22 | ... = ... | provenance |  |
 | test.cpp:1471:12:1471:17 | ... + ... | test.cpp:1384:20:1384:23 | year | provenance |  |
 | test.cpp:1478:12:1478:17 | ... + ... | test.cpp:1384:20:1384:23 | year | provenance |  |
@@ -89,29 +74,16 @@ nodes
 | test.cpp:440:2:440:11 | ... ++ | semmle.label | ... ++ |
 | test.cpp:456:2:456:12 | ... ++ | semmle.label | ... ++ |
 | test.cpp:482:3:482:12 | ... ++ | semmle.label | ... ++ |
-| test.cpp:500:2:500:11 | ... ++ | semmle.label | ... ++ |
-| test.cpp:526:2:526:23 | ... += ... | semmle.label | ... += ... |
-| test.cpp:553:2:553:11 | ... ++ | semmle.label | ... ++ |
-| test.cpp:592:2:592:11 | ... ++ | semmle.label | ... ++ |
-| test.cpp:647:2:647:11 | ... ++ | semmle.label | ... ++ |
-| test.cpp:665:2:665:25 | ... += ... | semmle.label | ... += ... |
 | test.cpp:681:2:681:23 | ... += ... | semmle.label | ... += ... |
-| test.cpp:744:2:744:19 | ... ++ | semmle.label | ... ++ |
 | test.cpp:769:2:769:23 | ... -= ... | semmle.label | ... -= ... |
-| test.cpp:792:2:792:19 | ... ++ | semmle.label | ... ++ |
 | test.cpp:813:2:813:40 | ... = ... | semmle.label | ... = ... |
 | test.cpp:813:21:813:40 | ... + ... | semmle.label | ... + ... |
 | test.cpp:818:2:818:24 | ... = ... | semmle.label | ... = ... |
 | test.cpp:818:13:818:24 | ... + ... | semmle.label | ... + ... |
-| test.cpp:854:7:854:31 | ... = ... | semmle.label | ... = ... |
-| test.cpp:854:14:854:31 | ... + ... | semmle.label | ... + ... |
-| test.cpp:854:35:854:40 | -- ... | semmle.label | -- ... |
-| test.cpp:857:3:857:36 | ... = ... | semmle.label | ... = ... |
 | test.cpp:875:4:875:15 | ... ++ | semmle.label | ... ++ |
 | test.cpp:954:3:954:25 | ... = ... | semmle.label | ... = ... |
 | test.cpp:954:14:954:25 | ... + ... | semmle.label | ... + ... |
 | test.cpp:972:3:972:12 | ... ++ | semmle.label | ... ++ |
-| test.cpp:990:3:990:12 | ... ++ | semmle.label | ... ++ |
 | test.cpp:1077:2:1077:11 | ... ++ | semmle.label | ... ++ |
 | test.cpp:1084:26:1084:26 | *x | semmle.label | *x |
 | test.cpp:1085:2:1085:4 | ... ++ | semmle.label | ... ++ |
@@ -119,35 +91,18 @@ nodes
 | test.cpp:1089:2:1089:7 | ... ++ | semmle.label | ... ++ |
 | test.cpp:1097:16:1097:23 | increment_arg output argument | semmle.label | increment_arg output argument |
 | test.cpp:1101:27:1101:35 | increment_arg_by_pointer output argument | semmle.label | increment_arg_by_pointer output argument |
-| test.cpp:1135:3:1135:15 | -- ... | semmle.label | -- ... |
 | test.cpp:1155:2:1155:26 | ... = ... | semmle.label | ... = ... |
 | test.cpp:1155:14:1155:26 | ... - ... | semmle.label | ... - ... |
-| test.cpp:1185:2:1185:15 | ... += ... | semmle.label | ... += ... |
-| test.cpp:1187:2:1187:19 | ... = ... | semmle.label | ... = ... |
 | test.cpp:1204:2:1204:15 | ... += ... | semmle.label | ... += ... |
 | test.cpp:1206:2:1206:19 | ... = ... | semmle.label | ... = ... |
-| test.cpp:1225:2:1225:28 | ... = ... | semmle.label | ... = ... |
-| test.cpp:1225:16:1225:28 | ... + ... | semmle.label | ... + ... |
-| test.cpp:1231:2:1231:28 | ... = ... | semmle.label | ... = ... |
-| test.cpp:1231:16:1231:28 | ... + ... | semmle.label | ... + ... |
-| test.cpp:1238:2:1238:28 | ... = ... | semmle.label | ... = ... |
-| test.cpp:1238:16:1238:28 | ... + ... | semmle.label | ... + ... |
 | test.cpp:1245:2:1245:28 | ... = ... | semmle.label | ... = ... |
 | test.cpp:1245:16:1245:28 | ... + ... | semmle.label | ... + ... |
-| test.cpp:1252:2:1252:28 | ... = ... | semmle.label | ... = ... |
-| test.cpp:1252:16:1252:28 | ... + ... | semmle.label | ... + ... |
 | test.cpp:1260:2:1260:28 | ... = ... | semmle.label | ... = ... |
 | test.cpp:1260:16:1260:28 | ... + ... | semmle.label | ... + ... |
-| test.cpp:1266:2:1266:28 | ... = ... | semmle.label | ... = ... |
-| test.cpp:1266:16:1266:28 | ... + ... | semmle.label | ... + ... |
 | test.cpp:1274:2:1274:28 | ... = ... | semmle.label | ... = ... |
 | test.cpp:1274:16:1274:28 | ... + ... | semmle.label | ... + ... |
-| test.cpp:1280:2:1280:26 | ... = ... | semmle.label | ... = ... |
-| test.cpp:1280:14:1280:26 | ... + ... | semmle.label | ... + ... |
 | test.cpp:1288:2:1288:26 | ... = ... | semmle.label | ... = ... |
 | test.cpp:1288:14:1288:26 | ... + ... | semmle.label | ... + ... |
-| test.cpp:1294:2:1294:26 | ... = ... | semmle.label | ... = ... |
-| test.cpp:1294:14:1294:26 | ... + ... | semmle.label | ... + ... |
 | test.cpp:1302:2:1302:26 | ... = ... | semmle.label | ... = ... |
 | test.cpp:1302:14:1302:26 | ... + ... | semmle.label | ... + ... |
 | test.cpp:1308:2:1308:28 | ... = ... | semmle.label | ... = ... |
@@ -158,10 +113,6 @@ nodes
 | test.cpp:1333:14:1333:26 | ... + ... | semmle.label | ... + ... |
 | test.cpp:1345:2:1345:26 | ... = ... | semmle.label | ... = ... |
 | test.cpp:1345:14:1345:26 | ... + ... | semmle.label | ... + ... |
-| test.cpp:1359:2:1359:28 | ... = ... | semmle.label | ... = ... |
-| test.cpp:1359:16:1359:28 | ... + ... | semmle.label | ... + ... |
-| test.cpp:1373:2:1373:26 | ... = ... | semmle.label | ... = ... |
-| test.cpp:1373:14:1373:26 | ... + ... | semmle.label | ... + ... |
 | test.cpp:1384:20:1384:23 | year | semmle.label | year |
 | test.cpp:1387:2:1387:17 | ... = ... | semmle.label | ... = ... |
 | test.cpp:1397:3:1397:22 | ... = ... | semmle.label | ... = ... |
@@ -172,10 +123,6 @@ nodes
 | test.cpp:1421:3:1421:20 | ... = ... | semmle.label | ... = ... |
 | test.cpp:1421:13:1421:20 | ... + ... | semmle.label | ... + ... |
 | test.cpp:1423:12:1423:18 | yeartmp | semmle.label | yeartmp |
-| test.cpp:1436:2:1436:27 | ... = ... | semmle.label | ... = ... |
-| test.cpp:1436:15:1436:27 | ... + ... | semmle.label | ... + ... |
-| test.cpp:1449:2:1449:25 | ... = ... | semmle.label | ... = ... |
-| test.cpp:1449:13:1449:25 | ... + ... | semmle.label | ... + ... |
 | test.cpp:1466:3:1466:22 | ... = ... | semmle.label | ... = ... |
 | test.cpp:1466:15:1466:22 | ... + ... | semmle.label | ... + ... |
 | test.cpp:1471:12:1471:17 | ... + ... | semmle.label | ... + ... |
@@ -191,16 +138,8 @@ nodes
 | test.cpp:1561:2:1561:15 | ... = ... | semmle.label | ... = ... |
 | test.cpp:1591:2:1591:22 | ... += ... | semmle.label | ... += ... |
 | test.cpp:1599:2:1599:22 | ... += ... | semmle.label | ... += ... |
-| test.cpp:1645:2:1645:22 | ... += ... | semmle.label | ... += ... |
-| test.cpp:1656:2:1656:22 | ... += ... | semmle.label | ... += ... |
-| test.cpp:1667:2:1667:22 | ... += ... | semmle.label | ... += ... |
 | test.cpp:1678:2:1678:22 | ... += ... | semmle.label | ... += ... |
 | test.cpp:1690:2:1690:22 | ... += ... | semmle.label | ... += ... |
-| test.cpp:1702:2:1702:22 | ... += ... | semmle.label | ... += ... |
-| test.cpp:1712:2:1712:22 | ... += ... | semmle.label | ... += ... |
 | test.cpp:1723:2:1723:22 | ... += ... | semmle.label | ... += ... |
-| test.cpp:1758:2:1758:22 | ... += ... | semmle.label | ... += ... |
-| test.cpp:1763:2:1763:22 | ... += ... | semmle.label | ... += ... |
-| test.cpp:1792:2:1792:22 | ... += ... | semmle.label | ... += ... |
 | test.cpp:1799:2:1799:22 | ... += ... | semmle.label | ... += ... |
 subpaths
