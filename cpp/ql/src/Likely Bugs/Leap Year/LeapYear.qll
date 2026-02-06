@@ -361,14 +361,14 @@ class StructTmLeapYearFieldAccess extends LeapYearFieldAccess {
 /**
  * `stDate.wMonth == 2`
  */
-class DateCheckMonthFebruary extends Operation {
+private class DateCheckMonthFebruary extends EQExpr {
+  MonthFieldAccess mfa;
+  
   DateCheckMonthFebruary() {
-    this.getOperator() = "==" and
-    this.getAnOperand() instanceof MonthFieldAccess and
-    this.getAnOperand().(Literal).getValue() = "2"
+    this.hasOperands(mfa, any(Literal lit | lit.getValue() = "2"))
   }
 
-  Expr getDateQualifier() { result = this.getAnOperand().(MonthFieldAccess).getQualifier() }
+  Expr getDateQualifier() { result = mfa.getQualifier() }
 }
 
 /**

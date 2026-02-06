@@ -123,11 +123,10 @@ class IgnorableExpr48Mapping extends IgnorableOperation {
  */
 class IgnorableCharLiteralArithmetic extends IgnorableOperation {
   IgnorableCharLiteralArithmetic() {
-    exists(this.(BinaryArithmeticOperation).getAnOperand().(TextLiteral).getValue())
+    this.(BinaryArithmeticOperation).getAnOperand() instanceof TextLiteral
     or
-    exists(AssignArithmeticOperation e | e.getRValue() = this |
-      exists(this.(TextLiteral).getValue())
-    )
+    this instanceof TextLiteral and
+    any(AssignArithmeticOperation arith).getRValue() = this
   }
 }
 
@@ -214,11 +213,10 @@ class OperationAsArgToIgnorableFunction extends IgnorableOperation {
  * and the operation is basically ignorable (it's not a real operation but
  * probably one visual simplicity what it means).
  */
-class ConstantBinaryArithmeticOperation extends IgnorableOperation {
+class ConstantBinaryArithmeticOperation extends IgnorableOperation, BinaryArithmeticOperation {
   ConstantBinaryArithmeticOperation() {
-    this instanceof BinaryArithmeticOperation and
-    this.(BinaryArithmeticOperation).getLeftOperand() instanceof Literal and
-    this.(BinaryArithmeticOperation).getRightOperand() instanceof Literal
+    this.getLeftOperand() instanceof Literal and
+    this.getRightOperand() instanceof Literal
   }
 }
 
@@ -274,7 +272,10 @@ class IgnorablePointerOrCharArithmetic extends IgnorableOperation {
  */
 predicate isOperationSourceCandidate(Expr e) {
   not e instanceof IgnorableOperation and
-  not e.getEnclosingFunction() instanceof IgnorableFunction and
+  exists(Function f |
+    f = e.getEnclosingFunction() and
+    not f instanceof IgnorableFunction
+  )
   (
     e instanceof SubExpr
     or
@@ -494,7 +495,9 @@ class MonthEqualityCheck extends EqualityOperation {
   }
 }
 
-class MonthEqualityCheckGuard extends GuardCondition instanceof MonthEqualityCheck { }
+final class FinalMonthEqualityCheck = MonthEqualityCheck;
+
+class MonthEqualityCheckGuard extends GuardCondition, FinalMonthEqualityCheck { }
 
 /**
  * Verifies if the expression is guarded by a check on the Month property of a date struct, that is NOT February.
@@ -504,7 +507,7 @@ pragma[inline_late]
 predicate isControlledByMonthEqualityCheckNonFebruary(Expr e) {
   exists(MonthEqualityCheckGuard monthGuard |
     monthGuard.controls(e.getBasicBlock(), true) and
-    not monthGuard.(MonthEqualityCheck).getExprCompared().getValueText() = "2"
+    not monthGuard.getExprCompared().getValueText() = "2"
   )
 }
 
