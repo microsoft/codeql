@@ -1,0 +1,21 @@
+extensions:
+  - addsTo:
+      pack: codeql/cpp-all
+      extensible: summaryModel
+    data: # namespace, type, subtypes, name, signature, ext, input, output, kind, provenance
+      - ["web::http", "uri", True, "encode_uri", "", "", "Argument[*0]", "ReturnValue", "taint", "manual"]
+      - ["web::http", "uri", True, "encode_data_string", "", "", "Argument[*0]", "ReturnValue", "taint", "manual"]
+      - ["web::http", "uri", True, "decode", "", "", "Argument[*0]", "ReturnValue", "taint", "manual"]
+      - ["web::http", "uri", True, "split_path", "", "", "Argument[*0]", "ReturnValue.Element", "taint", "manual"]
+      - ["web::http", "uri", True, "uri", "", "", "Argument[*0]", "Argument[-1]", "value", "manual"]
+      - ["web::http", "uri", True, "operator=", "", "", "Argument[*0]", "Argument[-1]", "value", "manual"]
+      - ["web::http", "uri", True, "operator=", "", "", "Argument[*0]", "ReturnValue[*]", "value", "manual"]
+      - ["web::http", "uri", True, "scheme", "", "", "Argument[-1]", "ReturnValue[*]", "taint", "manual"]
+      - ["web::http", "uri", True, "user_info", "", "", "Argument[-1]", "ReturnValue[*]", "taint", "manual"]
+      - ["web::http", "uri", True, "host", "", "", "Argument[-1]", "ReturnValue[*]", "taint", "manual"]
+      - ["web::http", "uri", True, "path", "", "", "Argument[-1]", "ReturnValue[*]", "taint", "manual"]
+      - ["web::http", "uri", True, "query", "", "", "Argument[-1]", "ReturnValue[*]", "taint", "manual"]
+      - ["web::http", "uri", True, "fragment", "", "", "Argument[-1]", "ReturnValue[*]", "taint", "manual"]
+      - ["web::http", "uri", True, "authority", "", "", "Argument[-1]", "ReturnValue", "taint", "manual"]
+      - ["web::http", "uri", True, "resource", "", "", "Argument[-1]", "ReturnValue", "taint", "manual"]
+      - ["web::http", "uri", True, "to_string", "", "", "Argument[-1]", "ReturnValue", "taint", "manual"]
