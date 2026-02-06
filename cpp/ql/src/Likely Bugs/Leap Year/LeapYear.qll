@@ -538,16 +538,16 @@ class TimeConversionFunction extends Function {
           "FileTimeToSystemTime", "SystemTimeToFileTime", "SystemTimeToTzSpecificLocalTime",
           "SystemTimeToTzSpecificLocalTimeEx", "TzSpecificLocalTimeToSystemTime",
           "TzSpecificLocalTimeToSystemTimeEx", "RtlLocalTimeToSystemTime",
-          "RtlTimeToSecondsSince1970", "_mkgmtime", "SetSystemTime", "SystemTimeToVariantTime",
-          "VariantTimeToSystemTime", "VarUdateFromDate", "boost::gregorian::date::from_tm"
+          "RtlTimeToSecondsSince1970", "_mkgmtime", "SetSystemTime", "VarUdateFromDate",
+          "boost::gregorian::date::from_tm"
         ]
       or
       this.getQualifiedName().matches("GetDateFormat%")
     )
     or
-    // NOTE: mktime will normalize a Feb 29 on a non-leap year to Mar 1 silently,
     autoLeapYearCorrecting = true and
-    this.getQualifiedName() = ["mktime", "_mktime32", "_mktime64"]
+    this.getQualifiedName() =
+      ["mktime", "_mktime32", "_mktime64", "SystemTimeToVariantTime", "VariantTimeToSystemTime"]
   }
 
   /**
