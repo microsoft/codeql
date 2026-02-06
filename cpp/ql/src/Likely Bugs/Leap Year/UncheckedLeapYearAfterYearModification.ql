@@ -213,11 +213,10 @@ class OperationAsArgToIgnorableFunction extends IgnorableOperation {
  * and the operation is basically ignorable (it's not a real operation but
  * probably one visual simplicity what it means).
  */
-class ConstantBinaryArithmeticOperation extends IgnorableOperation {
+class ConstantBinaryArithmeticOperation extends IgnorableOperation, BinaryArithmeticOperation {
   ConstantBinaryArithmeticOperation() {
-    this instanceof BinaryArithmeticOperation and
-    this.(BinaryArithmeticOperation).getLeftOperand() instanceof Literal and
-    this.(BinaryArithmeticOperation).getRightOperand() instanceof Literal
+    this.getLeftOperand() instanceof Literal and
+    this.getRightOperand() instanceof Literal
   }
 }
 
