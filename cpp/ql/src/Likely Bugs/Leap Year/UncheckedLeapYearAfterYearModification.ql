@@ -123,11 +123,10 @@ class IgnorableExpr48Mapping extends IgnorableOperation {
  */
 class IgnorableCharLiteralArithmetic extends IgnorableOperation {
   IgnorableCharLiteralArithmetic() {
-    exists(this.(BinaryArithmeticOperation).getAnOperand().(TextLiteral).getValue())
+    this.(BinaryArithmeticOperation).getAnOperand() instanceof TextLiteral
     or
-    exists(AssignArithmeticOperation e | e.getRValue() = this |
-      exists(this.(TextLiteral).getValue())
-    )
+    this instanceof TextLiteral and
+    any(AssignArithmeticOperation arith).getRValue() = this
   }
 }
 
