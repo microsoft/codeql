@@ -333,7 +333,9 @@ class YearFieldAssignmentNode extends DataFlow::Node {
   YearFieldAccess access;
 
   YearFieldAssignmentNode() {
-    not this.getEnclosingCallable().getUnderlyingCallable() instanceof IgnorableFunction and
+    exists(Function f |
+      f = this.getEnclosingCallable().getUnderlyingCallable() and not f instanceof IgnorableFunction
+    ) and
     (
       this.asDefinition().(Assignment).getLValue() = access
       or
@@ -359,7 +361,11 @@ class YearFieldAssignmentNode extends DataFlow::Node {
 module OperationToYearAssignmentConfig implements DataFlow::ConfigSig {
   predicate isSource(DataFlow::Node n) { n.asExpr() instanceof OperationSource }
 
-  predicate isSink(DataFlow::Node n) { n instanceof YearFieldAssignmentNode }
+  predicate isSink(DataFlow::Node n) {
+    n instanceof YearFieldAssignmentNode and
+    not isYearModifiedWithCheck(n) and
+    not isControlledByMonthEqualityCheckNonFebruary(n.asExpr())
+  }
 
   predicate isBarrier(DataFlow::Node n) {
     exists(ArrayExpr arr | arr.getArrayOffset() = n.asExpr())
@@ -772,7 +778,14 @@ class LeapYearGuardCondition extends GuardCondition {
  * It is meant to capture the most common cases of false positives.
  */
 module CandidateConstantToDayOrMonthAssignmentConfig implements DataFlow::ConfigSig {
-  predicate isSource(DataFlow::Node source) { source.asExpr().getValue().toInt() in [1 .. 31] }
+  predicate isSource(DataFlow::Node source) {
+    source.asExpr().getValue().toInt() in [1 .. 31] and
+    (
+      exists(Assignment a | a.getRValue() = source.asExpr())
+      or
+      exists(Call c | c.getAnArgument() = source.asExpr())
+    )
+  }
 
   predicate isSink(DataFlow::Node sink) {
     exists(Assignment a |
@@ -805,8 +818,6 @@ import OperationToYearAssignmentFlow::PathGraph
 from OperationToYearAssignmentFlow::PathNode src, OperationToYearAssignmentFlow::PathNode sink
 where
   OperationToYearAssignmentFlow::flowPath(src, sink) and
-  not isYearModifiedWithCheck(sink.getNode()) and
-  not isControlledByMonthEqualityCheckNonFebruary(sink.getNode().asExpr()) and
   // Check if a month is set in the same block as the year operation source
   // and the month value would indicate its set to any other month than february.
   // Finds if the source year node is in the same block as a source month block

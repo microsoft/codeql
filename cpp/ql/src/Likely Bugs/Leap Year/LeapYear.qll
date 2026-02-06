@@ -180,10 +180,8 @@ final class ExprCheckCenturyComponentDiv400Inverted extends ExprCheckCenturyComp
  */
 class ExprCheckCenturyComponent extends LogicalOrExpr {
   ExprCheckCenturyComponent() {
-    exists(ExprCheckCenturyComponentDiv400 exprDiv400, ExprCheckCenturyComponentDiv100 exprDiv100 |
-      this.getAnOperand() = exprDiv100 and
-      this.getAnOperand() = exprDiv400
-    )
+    this.getAnOperand() instanceof ExprCheckCenturyComponentDiv100 and
+    this.getAnOperand() instanceof ExprCheckCenturyComponentDiv400
   }
 
   Expr getYearExpr() {
@@ -205,8 +203,8 @@ abstract class ExprCheckLeapYear extends Expr { }
  */
 final class ExprCheckLeapYearFormA extends ExprCheckLeapYear, LogicalAndExpr {
   ExprCheckLeapYearFormA() {
-    exists(Expr e, ExprCheckCenturyComponent centuryCheck |
-      e = moduloCheckEQ_0(this.getLeftOperand(), 4) and
+    exists(ExprCheckCenturyComponent centuryCheck |
+      exists(moduloCheckEQ_0(this.getLeftOperand(), 4)) and
       centuryCheck = this.getAnOperand().getAChild*()
     )
   }
@@ -219,10 +217,11 @@ final class ExprCheckLeapYearFormA extends ExprCheckLeapYear, LogicalAndExpr {
  */
 final class ExprCheckLeapYearFormB extends ExprCheckLeapYear, LogicalOrExpr {
   ExprCheckLeapYearFormB() {
-    exists(VariableAccess va1, VariableAccess va2, VariableAccess va3 |
-      va1 = moduloCheckEQ_0(this.getAnOperand(), 400) and
-      va2 = moduloCheckNEQ_0(this.getAnOperand().(LogicalAndExpr).getAnOperand(), 100) and
-      va3 = moduloCheckEQ_0(this.getAnOperand().(LogicalAndExpr).getAnOperand(), 4)
+    exists(LogicalAndExpr land |
+      exists(moduloCheckEQ_0(this.getAnOperand(), 400)) and
+      land = this.getAnOperand() and
+      exists(moduloCheckNEQ_0(land.getAnOperand(), 100)) and
+      exists(moduloCheckEQ_0(land.getAnOperand(), 4))
     )
   }
 }
@@ -375,32 +374,24 @@ class DateCheckMonthFebruary extends Operation {
 /**
  * `stDate.wDay == 29`
  */
-class DateCheckDay29 extends Operation {
-  DateCheckDay29() {
-    this.getOperator() = "==" and
-    this.getAnOperand() instanceof DayFieldAccess and
-    this.getAnOperand().(Literal).getValue() = "29"
-  }
+class DateCheckDay29 extends EQExpr {
+  DayFieldAccess dfa;
 
-  Expr getDateQualifier() { result = this.getAnOperand().(DayFieldAccess).getQualifier() }
+  DateCheckDay29() { this.hasOperands(dfa, any(Literal lit | lit.getValue() = "29")) }
+
+  Expr getDateQualifier() { result = dfa.getQualifier() }
 }
 
 /**
  * The combination of a February and Day 29 verification
  * `stDate.wMonth == 2 && stDate.wDay == 29`
  */
-class DateFebruary29Check extends Operation {
-  DateFebruary29Check() {
-    this.getOperator() = "&&" and
-    exists(DateCheckMonthFebruary checkFeb, DateCheckDay29 check29 |
-      checkFeb = this.getAnOperand() and
-      check29 = this.getAnOperand()
-    )
-  }
+class DateFebruary29Check extends LogicalAndExpr {
+  DateCheckMonthFebruary checkFeb;
 
-  Expr getDateQualifier() {
-    result = this.getAnOperand().(DateCheckMonthFebruary).getDateQualifier()
-  }
+  DateFebruary29Check() { this.hasOperands(checkFeb, any(DateCheckDay29 check29)) }
+
+  Expr getDateQualifier() { result = checkFeb.getDateQualifier() }
 }
 
 /**
@@ -533,20 +524,20 @@ class TimeConversionFunction extends Function {
   TimeConversionFunction() {
     autoLeapYearCorrecting = false and
     (
-      this.getQualifiedName() =
+      this.getName() =
         [
           "FileTimeToSystemTime", "SystemTimeToFileTime", "SystemTimeToTzSpecificLocalTime",
           "SystemTimeToTzSpecificLocalTimeEx", "TzSpecificLocalTimeToSystemTime",
           "TzSpecificLocalTimeToSystemTimeEx", "RtlLocalTimeToSystemTime",
-          "RtlTimeToSecondsSince1970", "_mkgmtime", "SetSystemTime", "VarUdateFromDate",
-          "boost::gregorian::date::from_tm"
+          "RtlTimeToSecondsSince1970", "_mkgmtime", "SetSystemTime", "VarUdateFromDate", "from_tm"
         ]
       or
-      this.getQualifiedName().matches("GetDateFormat%")
+      // Matches all forms of GetDateFormat, e.g. GetDateFormatA/W/Ex
+      this.getName().matches("GetDateFormat%")
     )
     or
     autoLeapYearCorrecting = true and
-    this.getQualifiedName() =
+    this.getName() =
       ["mktime", "_mktime32", "_mktime64", "SystemTimeToVariantTime", "VariantTimeToSystemTime"]
   }
 
