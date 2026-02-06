@@ -488,7 +488,9 @@ class MonthEqualityCheck extends EqualityOperation {
   }
 }
 
-class MonthEqualityCheckGuard extends GuardCondition instanceof MonthEqualityCheck { }
+final class FinalMonthEqualityCheck = MonthEqualityCheck;
+
+class MonthEqualityCheckGuard extends GuardCondition, FinalMonthEqualityCheck { }
 
 /**
  * Verifies if the expression is guarded by a check on the Month property of a date struct, that is NOT February.
@@ -498,7 +500,7 @@ pragma[inline_late]
 predicate isControlledByMonthEqualityCheckNonFebruary(Expr e) {
   exists(MonthEqualityCheckGuard monthGuard |
     monthGuard.controls(e.getBasicBlock(), true) and
-    not monthGuard.(MonthEqualityCheck).getExprCompared().getValueText() = "2"
+    not monthGuard.getExprCompared().getValueText() = "2"
   )
 }
 
