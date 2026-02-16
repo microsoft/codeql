@@ -730,6 +730,14 @@ module Transform<InstructionSig Input> {
           result = extRef.getExternalName()
         )
       }
+
+      /** Gets the parenthesized parameter type signature, e.g. `(System.String,System.Int32)`. */
+      string getExternalParamSignature() {
+        exists(Input::ExternalRefInstruction extRef |
+          this = TOldInstruction(extRef) and
+          result = extRef.getExternalParamSignature()
+        )
+      }
     }
 
     class FieldAddressInstruction extends Instruction {

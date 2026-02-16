@@ -202,6 +202,9 @@ signature module InstructionSig {
 
   class ExternalRefInstruction extends Instruction {
     string getExternalName();
+
+    /** Gets the parenthesized parameter type signature, e.g. `(System.String,System.Int32)`. */
+    string getExternalParamSignature();
   }
 
   class SubInstruction extends BinaryInstruction;
