@@ -1,3 +1,17 @@
+## 5.4.7
+
+### Minor Analysis Improvements
+
+* The model for `System.Web.HttpUtility` has been modified to better model the flow of tainted URIs.
+* C# 14: Added support for `extension` members in the extractor, QL library, data flow, and Models as Data, covering extension methods, properties, and operators.
+
+## 5.4.6
+
+### Minor Analysis Improvements
+
+* The predicate `SummarizedCallable.propagatesFlow` has been extended with the columns `Provenance p` and `boolean isExact`, and as a consequence the predicates `SummarizedCallable.hasProvenance` and `SummarizedCallable.hasExactModel` have been removed.
+* C# 14: Support for null-conditional assignments (such as `c?.Prop = p`). Furthermore, the `MaybeNullExpr` class now takes null-conditional access (such as `?.`) into account when modeling potential null values.
+
 ## 5.4.5
 
 ### Minor Analysis Improvements
