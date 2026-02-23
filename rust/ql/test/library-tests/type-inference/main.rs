@@ -95,6 +95,17 @@ mod method_impl {
     }
 }
 
+mod struct_self_call {
+    struct ATupleStruct(i64);
+
+    impl Default for ATupleStruct {
+        fn default() -> Self {
+            let n = Default::default(); // $ target=default type=n:i64
+            Self(n)
+        }
+    }
+}
+
 mod trait_impl {
     #[derive(Debug)]
     struct MyThing {
@@ -118,6 +129,9 @@ mod trait_impl {
 
         let y = MyThing { field: false };
         let b = MyTrait::trait_method(y); // $ type=b:bool target=MyThing::trait_method
+
+        let z = MyThing { field: false };
+        let c = <MyThing as MyTrait<bool>>::trait_method(z); // $ type=c:bool target=MyThing::trait_method
     }
 }
 
@@ -438,162 +452,11 @@ mod method_non_parametric_trait_impl {
 
         let thing = MyThing { a: S1 };
         let i = thing.convert_to(); // $ type=i:S1 target=T::convert_to
-        let j = convert_to(thing); // $ type=j:S1 target=convert_to
+        let j = convert_to(thing); // $ target=convert_to $ MISSING: type=j:S1 -- the blanket implementation `impl<T: MyTrait<S1>> ConvertTo<S1> for T` is currently not included in the constraint analysis
     }
 }
 
-mod impl_overlap {
-    #[derive(Debug, Clone, Copy)]
-    struct S1;
-
-    trait OverlappingTrait {
-        fn common_method(self) -> S1;
-
-        fn common_method_2(self, s1: S1) -> S1;
-    }
-
-    impl OverlappingTrait for S1 {
-        // <S1_as_OverlappingTrait>::common_method
-        fn common_method(self) -> S1 {
-            S1
-        }
-
-        // <S1_as_OverlappingTrait>::common_method_2
-        fn common_method_2(self, s1: S1) -> S1 {
-            S1
-        }
-    }
-
-    impl S1 {
-        // S1::common_method
-        fn common_method(self) -> S1 {
-            self
-        }
-
-        // S1::common_method_2
-        fn common_method_2(self) -> S1 {
-            self
-        }
-    }
-
-    struct S2<T2>(T2);
-
-    impl S2<i32> {
-        // S2<i32>::common_method
-        fn common_method(self) -> S1 {
-            S1
-        }
-
-        // S2<i32>::common_method
-        fn common_method_2(self) -> S1 {
-            S1
-        }
-    }
-
-    impl OverlappingTrait for S2<i32> {
-        // <S2<i32>_as_OverlappingTrait>::common_method
-        fn common_method(self) -> S1 {
-            S1
-        }
-
-        // <S2<i32>_as_OverlappingTrait>::common_method_2
-        fn common_method_2(self, s1: S1) -> S1 {
-            S1
-        }
-    }
-
-    impl OverlappingTrait for S2<S1> {
-        // <S2<S1>_as_OverlappingTrait>::common_method
-        fn common_method(self) -> S1 {
-            S1
-        }
-
-        // <S2<S1>_as_OverlappingTrait>::common_method_2
-        fn common_method_2(self, s1: S1) -> S1 {
-            S1
-        }
-    }
-
-    #[derive(Debug)]
-    struct S3<T3>(T3);
-
-    trait OverlappingTrait2<T> {
-        fn m(&self, x: &T) -> &Self;
-    }
-
-    impl<T> OverlappingTrait2<T> for S3<T> {
-        // <S3<T>_as_OverlappingTrait2<T>>::m
-        fn m(&self, x: &T) -> &Self {
-            self
-        }
-    }
-
-    impl<T> S3<T> {
-        // S3<T>::m
-        fn m(&self, x: T) -> &Self {
-            self
-        }
-    }
-
-    trait MyTrait1 {
-        // MyTrait1::m
-        fn m(&self) {}
-    }
-
-    trait MyTrait2: MyTrait1 {}
-
-    #[derive(Debug)]
-    struct S4;
-
-    impl MyTrait1 for S4 {
-        // <S4_as_MyTrait1>::m
-        fn m(&self) {}
-    }
-
-    impl MyTrait2 for S4 {}
-
-    #[derive(Debug)]
-    struct S5<T5>(T5);
-
-    impl MyTrait1 for S5<i32> {
-        // <S5<i32>_as_MyTrait1>::m
-        fn m(&self) {}
-    }
-
-    impl MyTrait2 for S5<i32> {}
-
-    impl MyTrait1 for S5<bool> {}
-
-    impl MyTrait2 for S5<bool> {}
-
-    pub fn f() {
-        let x = S1;
-        println!("{:?}", x.common_method()); // $ target=S1::common_method
-        println!("{:?}", S1::common_method(x)); // $ target=S1::common_method
-        println!("{:?}", x.common_method_2()); // $ target=S1::common_method_2
-        println!("{:?}", S1::common_method_2(x)); // $ target=S1::common_method_2
-
-        let y = S2(S1);
-        println!("{:?}", y.common_method()); // $ target=<S2<S1>_as_OverlappingTrait>::common_method
-        println!("{:?}", S2::<S1>::common_method(S2(S1))); // $ target=<S2<S1>_as_OverlappingTrait>::common_method
-
-        let z = S2(0);
-        println!("{:?}", z.common_method()); // $ target=S2<i32>::common_method
-        println!("{:?}", S2::common_method(S2(0))); // $ target=S2<i32>::common_method
-        println!("{:?}", S2::<i32>::common_method(S2(0))); // $ target=S2<i32>::common_method
-
-        let w = S3(S1);
-        println!("{:?}", w.m(x)); // $ target=S3<T>::m
-        println!("{:?}", S3::m(&w, x)); // $ target=S3<T>::m
-
-        S4.m(); // $ target=<S4_as_MyTrait1>::m
-        S4::m(&S4); // $ target=<S4_as_MyTrait1>::m
-        S5(0i32).m(); // $ target=<S5<i32>_as_MyTrait1>::m
-        S5::m(&S5(0i32)); // $ target=<S5<i32>_as_MyTrait1>::m
-        S5(true).m(); // $ target=MyTrait1::m
-        S5::m(&S5(true)); // $ target=MyTrait1::m
-    }
-}
+mod overloading;
 
 mod type_parameter_bounds {
     use std::fmt::Debug;
@@ -1885,7 +1748,7 @@ mod overloadable_operators {
         let i64_mul = 17i64 * 18i64; // $ type=i64_mul:i64 target=mul
         let i64_div = 19i64 / 20i64; // $ type=i64_div:i64 target=div
         let i64_rem = 21i64 % 22i64; // $ type=i64_rem:i64 target=rem
-        let i64_param_add = param_add(1i64, 2i64); // $ target=param_add $ MISSING: type=i64_param_add:i64
+        let i64_param_add = param_add(1i64, 2i64); // $ target=param_add $ type=i64_param_add:i64
 
         // Arithmetic assignment operators
         let mut i64_add_assign = 23i64;
@@ -2190,7 +2053,7 @@ mod indexers {
         let xs: [S; 1] = [S];
         let x = xs[0].foo(); // $ target=foo type=x:S target=index
 
-        let y = param_index(vec, 0); // $ target=param_index $ MISSING: type=y:S
+        let y = param_index(vec, 0); // $ target=param_index $ type=y:S
 
         analyze_slice(&xs); // $ target=analyze_slice
     }
@@ -2357,9 +2220,9 @@ mod method_determined_by_argument_type {
         x.my_add(&5i64); // $ target=MyAdd<&i64>::my_add
         x.my_add(true); // $ target=MyAdd<bool>::my_add
 
-        S(1i64).my_add(S(2i64)); // $ target=S::my_add1
-        S(1i64).my_add(3i64); // $ MISSING: target=S::my_add2
-        S(1i64).my_add(&3i64); // $ target=S::my_add3
+        S(1i64).my_add(S(2i64)); // $ target=S::my_add1 $ SPURIOUS: target=S::my_add2 -- we do not check the `T: MyAdd` constraint yet
+        S(1i64).my_add(3i64); // $ target=S::my_add2
+        S(1i64).my_add(&3i64); // $ target=S::my_add3 $ SPURIOUS: target=S::my_add2 -- we do not check the `T: MyAdd` constraint yet
 
         let x = i64::my_from(73i64); // $ target=MyFrom<i64>::my_from
         let y = i64::my_from(true); // $ target=MyFrom<bool>::my_from
@@ -2595,7 +2458,7 @@ mod tuples {
         let i: i64 = pair.0; // $ fieldof=Tuple2
         let j: bool = pair.1; // $ fieldof=Tuple2
 
-        let pair = [1, 1].into(); // $ type=pair:(T_2) type=pair:T0.i32 type=pair:T1.i32 MISSING: target=into
+        let pair = [1, 1].into(); // $ type=pair:(T_2) type=pair:T0.i32 type=pair:T1.i32 target=into
         match pair {
             (0, 0) => print!("unexpected"),
             _ => print!("expected"),
