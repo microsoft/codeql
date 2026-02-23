@@ -1,3 +1,19 @@
+## 7.0.0
+
+### Breaking Changes
+
+* The `BasicBlock` class is now defined using the shared basic blocks library. `BasicBlock.getRoot` has been replaced by `BasicBlock.getScope`. `BasicBlock.getAPredecessor` and `BasicBlock.getASuccessor` now take a `SuccessorType` argument. `ReachableJoinBlock.inDominanceFrontierOf` has been removed, so use `BasicBlock.inDominanceFrontier` instead, swapping the receiver and the argument.
+
+### Major Analysis Improvements
+
+* Go 1.26 is now supported.
+
+## 6.0.1
+
+### Minor Analysis Improvements
+
+* The predicate `SummarizedCallable.propagatesFlow` has been extended with the columns `Provenance p` and `boolean isExact`, and as a consequence the predicates `SummarizedCallable.hasProvenance` and `SummarizedCallable.hasExactModel` have been removed.
+
 ## 6.0.0
 
 ### Breaking Changes
