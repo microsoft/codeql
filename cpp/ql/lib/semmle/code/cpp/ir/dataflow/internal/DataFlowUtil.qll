@@ -2641,7 +2641,54 @@ module BarrierGuard<guardChecksSig/3 guardChecks> {
     exists(unit)
   }
 
-  import ParameterizedBarrierGuard<Unit, guardChecks/4>
+  private module P = ParameterizedBarrierGuard<Unit, guardChecks/4>;
+
+  predicate getABarrierNode = P::getABarrierNode/0;
+
+  /**
+   * Gets an indirect expression node with indirection index `indirectionIndex` that is
+   * safely guarded by the given guard check.
+   *
+   * For example, given the following code:
+   * ```cpp
+   * int* p;
+   * // ...
+   * *p = source();
+   * if(is_safe_pointer(p)) {
+   *   sink(*p);
+   * }
+   * ```
+   * and the following barrier guard check:
+   * ```ql
+   * predicate myGuardChecks(IRGuardCondition g, Expr e, boolean branch) {
+   *   exists(Call call |
+   *     g.getUnconvertedResultExpression() = call and
+   *     call.getTarget().hasName("is_safe_pointer") and
+   *     e = call.getAnArgument() and
+   *     branch = true
+   *   )
+   * }
+   * ```
+   * implementing `isBarrier` as:
+   * ```ql
+   * predicate isBarrier(DataFlow::Node barrier) {
+   *   barrier = DataFlow::BarrierGuard<myGuardChecks/3>::getAnIndirectBarrierNode(1)
+   * }
+   * ```
+   * will block flow from `x = source()` to `sink(x)`.
+   *
+   * NOTE: If a non-indirect expression is tracked, use `getABarrierNode` instead.
+   */
+  Node getAnIndirectBarrierNode(int indirectionIndex) {
+    result = P::getAnIndirectBarrierNode(indirectionIndex, _)
+  }
+
+  /**
+   * Gets an indirect expression node that is safely guarded by the given guard check.
+   *
+   * See `getAnIndirectBarrierNode/1` for examples.
+   */
+  Node getAnIndirectBarrierNode() { result = getAnIndirectBarrierNode(_) }
 }
 
 private module InstrWithParam<ParamSig P> {
@@ -2752,7 +2799,20 @@ module InstructionBarrierGuard<instructionGuardChecksSig/3 instructionGuardCheck
     exists(unit)
   }
 
-  import ParameterizedInstructionBarrierGuard<Unit, instructionGuardChecks/4>
+  private module P = ParameterizedInstructionBarrierGuard<Unit, instructionGuardChecks/4>;
+
+  predicate getABarrierNode = P::getABarrierNode/0;
+
+  /**
+   * Gets an indirect node with indirection index `indirectionIndex` that is
+   * safely guarded by the given guard check.
+   */
+  Node getAnIndirectBarrierNode(int indirectionIndex) {
+    result = P::getAnIndirectBarrierNode(indirectionIndex, _)
+  }
+
+  /** Gets an indirect node that is safely guarded by the given guard check. */
+  Node getAnIndirectBarrierNode() { result = getAnIndirectBarrierNode(_) }
 }
 
 /**
