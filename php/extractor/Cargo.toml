@@ -1,0 +1,16 @@
+[package]
+name = "codeql-extractor-php"
+version = "0.1.0"
+authors = ["GitHub"]
+edition = "2021"
+
+# When updating these dependencies, run `misc/bazel/3rdparty/update_cargo_deps.sh`
+[dependencies]
+tree-sitter = ">= 0.23.0"
+tree-sitter-php = "0.24.2"
+clap = { version = "4.5", features = ["derive"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
+rayon = "1.9.0"
+regex = "1.10.4"
+codeql-extractor = { path = "../../shared/tree-sitter-extractor" }

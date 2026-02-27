@@ -9,4 +9,5 @@ members = [
     "rust/extractor/macros",
     "rust/ast-generator",
     "rust/autobuild",
+    "php/extractor",
 ]
