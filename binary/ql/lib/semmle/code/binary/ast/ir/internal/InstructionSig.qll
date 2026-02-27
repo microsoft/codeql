@@ -34,6 +34,9 @@ signature module InstructionSig {
     Type getDeclaringType();
 
     predicate isPublic();
+
+    /** Gets the parenthesized parameter type signature, e.g. `(System.String,System.Int32)`. */
+    string getParamSignature();
   }
 
   class Operand {

@@ -184,6 +184,9 @@ module Transform<InstructionSig Input> {
       Type getDeclaringType() { result = super.getDeclaringType() }
 
       predicate isPublic() { super.isPublic() }
+
+      /** Gets the parenthesized parameter type signature, e.g. `(System.String,System.Int32)`. */
+      string getParamSignature() { result = super.getParamSignature() }
     }
 
     class Type instanceof Input::Type {
