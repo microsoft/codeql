@@ -16,6 +16,8 @@ class TranslatedStaticStorageDurationVarInit extends TranslatedRootElement,
 
   TranslatedStaticStorageDurationVarInit() { this = TTranslatedStaticStorageDurationVarInit(var) }
 
+  final override int getUniqueId_fast(int x) { x = 32 and result = idOfElement(var) }
+
   override string toString() { result = var.toString() }
 
   final override Variable getAst() { result = var }

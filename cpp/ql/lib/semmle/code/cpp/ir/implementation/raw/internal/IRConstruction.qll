@@ -540,6 +540,29 @@ private module CachedForDebugging {
       )
   }
 
+  private predicate instructionHasComponents(Instruction instr, int a, int b, int c) {
+    a = 1 and
+    b = getInstructionTranslatedElement(instr).getUniqueId_fast() and
+    c = getInstructionTag(instr).getUniqueId_fast()
+    or
+    a = 2 and
+    exists(IRFunctionBase irFunc |
+      instr = TRawUnreachedInstruction(irFunc) and
+      b = irFunc.getUniqueId_fast() and
+      c = 0
+    )
+  }
+
+  cached
+  int getInstructionUniqueId_fast(Instruction instruction) {
+    instruction =
+      rank[result + 1](Instruction cand, int a, int b, int c |
+        instructionHasComponents(cand, a, b, c)
+      |
+        cand order by a, b, c
+      )
+  }
+
   cached
   string getInstructionUniqueId(Instruction instruction) {
     result =

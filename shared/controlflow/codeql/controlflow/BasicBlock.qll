@@ -25,6 +25,8 @@ signature module InputSig<LocationSig Location> {
 
     /** Gets the location of this control flow node. */
     Location getLocation();
+
+    int getUniqueId_fast();
   }
 
   /** Gets the CFG scope in which this node occurs. */
@@ -137,6 +139,8 @@ signature module CfgSig<LocationSig Location> {
      * block `bb` must go through this basic block.
      */
     predicate postDominates(BasicBlock bb);
+
+    int getUniqueId_fast();
   }
 
   /**
@@ -179,6 +183,10 @@ module Make<LocationSig Location, InputSig<Location> Input> implements CfgSig<Lo
 
     /** Gets the location of this basic block. */
     Location getLocation() { result = this.getFirstNode().getLocation() }
+
+    int getUniqueId_fast() {
+      exists(Node n | this = TBasicBlockStart(n) and result = n.getUniqueId_fast())
+    }
 
     /** Gets an immediate successor of this basic block, if any. */
     BasicBlock getASuccessor() { result = this.getASuccessor(_) }

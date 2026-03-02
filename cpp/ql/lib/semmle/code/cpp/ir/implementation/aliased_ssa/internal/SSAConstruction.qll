@@ -1351,6 +1351,49 @@ private module CachedForDebugging {
     result = getOldTempVariable(var).getUniqueId()
   }
 
+  private predicate nonPhiInstructionHasComponents(Instruction instr, int a, int b) {
+    exists(OldInstruction oldInstr |
+      oldInstr = getOldInstruction(instr) and
+      a = 1 and
+      b = oldInstr.getUniqueId_fast()
+    )
+    or
+    exists(IRFunctionBase irFunc |
+      instr = unreachedInstruction(irFunc) and
+      a = 2 and
+      b = irFunc.getUniqueId_fast()
+    )
+    or
+    exists(VariableGroup vg |
+      instr = uninitializedGroup(vg) and
+      a = 3 and
+      b = 0
+    )
+  }
+
+  private predicate instructionHasComponents(Instruction instr, int a, int b, int c, int d) {
+    nonPhiInstructionHasComponents(instr, a, b) and
+    c = 0 and
+    d = 0
+    or
+    a = 3 and
+    exists(PhiInstruction phi, Alias::MemoryLocation location |
+      instr = phiInstruction(phi, location) and
+      nonPhiInstructionHasComponents(phi, b, c) and
+      d = location.getUniqueId_fast()
+    )
+  }
+
+  cached
+  int getInstructionUniqueId_fast(Instruction instr) {
+    instr =
+      rank[result + 1](Instruction cand, int a, int b, int c, int d |
+        instructionHasComponents(cand, a, b, c, d)
+      |
+        cand order by a, b, c, d
+      )
+  }
+
   cached
   string getInstructionUniqueId(Instruction instr) {
     exists(OldInstruction oldInstr |

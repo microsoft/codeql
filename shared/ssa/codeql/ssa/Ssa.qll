@@ -20,6 +20,8 @@ signature module InputSig<LocationSig Location, TypSig BasicBlock> {
 
     /** Gets the location of this variable. */
     Location getLocation();
+
+    int getUniqueId_fast();
   }
 
   /**
@@ -1325,6 +1327,32 @@ module Make<
     )
   }
 
+  private predicate definitioExtnHasComponents(DefinitionExt_ def, int a, int b, int c, int d) {
+    exists(SourceVariable v0, BasicBlock bb0, int i0 |
+      def = TWriteDef(v0, bb0, i0) and
+      a = 1 and
+      b = v0.getUniqueId_fast() and
+      c = bb0.getUniqueId_fast() and
+      d = i0
+    )
+    or
+    exists(SourceVariable v0, BasicBlock bb0 |
+      def = TPhiNode(v0, bb0) and
+      a = 2 and
+      b = v0.getUniqueId_fast() and
+      c = bb0.getUniqueId_fast() and
+      d = -1
+    )
+    or
+    exists(SourceVariable v0, BasicBlock bb0 |
+      def = TPhiReadNode(v0, bb0) and
+      a = 3 and
+      b = v0.getUniqueId_fast() and
+      c = bb0.getUniqueId_fast() and
+      d = -1
+    )
+  }
+
   /** A static single assignment (SSA) definition. */
   class Definition extends TDefinition {
     /** Gets the source variable underlying this SSA definition. */
@@ -1353,6 +1381,8 @@ module Make<
         if i = -1 then result = bb.getLocation() else result = bb.getNode(i).getLocation()
       )
     }
+
+    int getUniqueId_fast() { result = this.(DefinitionExt_).getUniqueId_fast() }
   }
 
   /** An SSA definition that corresponds to a write. */
@@ -1425,6 +1455,15 @@ module Make<
 
     /** Gets the location of this SSA definition. */
     Location getLocation() { result = this.(Definition).getLocation() }
+
+    final int getUniqueId_fast() {
+      this =
+        rank[result + 1](DefinitionExt_ cand, int a, int b, int c, int d |
+          definitioExtnHasComponents(cand, a, b, c, d)
+        |
+          cand order by a, b, c, d
+        )
+    }
   }
 
   deprecated class PhiReadNode = PhiReadNode_;
@@ -1946,6 +1985,8 @@ module Make<
 
       /** Holds if the `i`th node of basic block `bb` evaluates this expression. */
       predicate hasCfgNode(BasicBlock bb, int i);
+
+      int getUniqueId_fast();
     }
 
     /**
@@ -2247,8 +2288,31 @@ module Make<
 
       /** Gets a textual representation of this node. */
       abstract string toString();
+
+      abstract predicate hasComponents(int a, int b, int c);
+
+      final int getUniqueId_fast() {
+        this =
+          rank[result + 1](NodeImpl n, int a, int b, int c |
+            n.hasComponents(a, b, c)
+          |
+            n order by a, b, c
+          )
+      }
     }
 
+    private predicate foo(SsaPhiExt def_, string s) {
+      // not n.hasComponents(_, _, _) and
+      // not exists(def_.getUniqueId_fast()) and
+      not exists(def_.getUniqueId_fast()) and
+      // not exists(input_.getUniqueId_fast())
+      s = strictconcat(def_.getAQlClass(), ", ")
+    }
+
+    // private predicate fodo(SsaPhiExt cand, SourceVariable v0, BasicBlock bb0) {
+    //   cand = TPhiNode(v0, bb0) and
+    //   not exists(bb0.getUniqueId_fast())
+    // }
     final class Node = NodeImpl;
 
     /** A source of a write definition. */
@@ -2263,6 +2327,12 @@ module Make<
       override string toString() { result = "[source] " + def.toString() }
 
       override Location getLocation() { result = def.getLocation() }
+
+      final override predicate hasComponents(int a, int b, int c) {
+        a = 1 and
+        b = def.getUniqueId_fast() and
+        c = 0
+      }
     }
 
     final class WriteDefSourceNode = WriteDefSourceNodeImpl;
@@ -2282,6 +2352,12 @@ module Make<
           e.hasCfgNode(bb, i) and
           result = bb.getNode(i).getLocation()
         )
+      }
+
+      final override predicate hasComponents(int a, int b, int c) {
+        a = e.getUniqueId_fast() and
+        (if isPost = true then b = 1 else b = 0) and
+        c = 0
       }
     }
 
@@ -2372,6 +2448,12 @@ module Make<
       override Location getLocation() { result = def.getLocation() }
 
       override string toString() { result = def.toString() }
+
+      final override predicate hasComponents(int a, int b, int c) {
+        a = 2 and
+        b = def.getUniqueId_fast() and
+        c = 0
+      }
     }
 
     deprecated final class SsaDefinitionExtNode = SsaDefinitionExtNodeImpl;
@@ -2456,6 +2538,12 @@ module Make<
       override Location getLocation() { result = input_.getNode(input_.length() - 1).getLocation() }
 
       override string toString() { result = "[input] " + def_.toString() }
+
+      final override predicate hasComponents(int a, int b, int c) {
+        a = 3 and
+        b = def_.getUniqueId_fast() and
+        c = input_.getUniqueId_fast()
+      }
     }
 
     deprecated final class SsaInputNode = SsaInputNodeImpl;

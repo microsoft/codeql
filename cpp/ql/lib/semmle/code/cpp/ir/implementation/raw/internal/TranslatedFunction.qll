@@ -61,6 +61,8 @@ predicate hasReturnValue(Function func) { not func.getUnspecifiedType() instance
 class TranslatedFunction extends TranslatedRootElement, TTranslatedFunction {
   Function func;
 
+  final override int getUniqueId_fast(int x) { x = 23 and result = idOfElement(func) }
+
   TranslatedFunction() { this = TTranslatedFunction(func) }
 
   final override string toString() { result = func.toString() }
@@ -481,6 +483,8 @@ class TranslatedThisParameter extends TranslatedParameter, TTranslatedThisParame
 
   TranslatedThisParameter() { this = TTranslatedThisParameter(func) }
 
+  final override int getUniqueId_fast(int x) { x = 24 and result = idOfElement(func) }
+
   final override string toString() { result = "this" }
 
   final override Locatable getAst() { result = func }
@@ -512,6 +516,8 @@ class TranslatedPositionalParameter extends TranslatedParameter, TTranslatedPara
   Parameter param;
 
   TranslatedPositionalParameter() { this = TTranslatedParameter(param) }
+
+  final override int getUniqueId_fast(int x) { x = 25 and result = idOfElement(param) }
 
   final override string toString() { result = param.toString() }
 
@@ -550,6 +556,8 @@ class TranslatedEllipsisParameter extends TranslatedParameter, TTranslatedEllips
 
   TranslatedEllipsisParameter() { this = TTranslatedEllipsisParameter(func) }
 
+  final override int getUniqueId_fast(int x) { x = 26 and result = idOfElement(func) }
+
   final override string toString() { result = "..." }
 
   final override Locatable getAst() { result = func }
@@ -585,6 +593,8 @@ class TranslatedConstructorInitList extends TranslatedElement, InitializationCon
   Function func;
 
   TranslatedConstructorInitList() { this = TTranslatedConstructorInitList(func) }
+
+  final override int getUniqueId_fast(int x) { x = 27 and result = idOfElement(func) }
 
   override string toString() { result = "ctor init: " + func.toString() }
 
@@ -663,6 +673,8 @@ class TranslatedDestructorDestructionList extends TranslatedElement,
 
   TranslatedDestructorDestructionList() { this = TTranslatedDestructorDestructionList(func) }
 
+  final override int getUniqueId_fast(int x) { x = 28 and result = idOfElement(func) }
+
   override string toString() { result = "dtor destruction: " + func.toString() }
 
   override Locatable getAst() { result = func }
@@ -717,6 +729,8 @@ class TranslatedReadEffects extends TranslatedElement, TTranslatedReadEffects {
   Function func;
 
   TranslatedReadEffects() { this = TTranslatedReadEffects(func) }
+
+  final override int getUniqueId_fast(int x) { x = 29 and result = idOfElement(func) }
 
   override Locatable getAst() { result = func }
 
@@ -821,6 +835,8 @@ class TranslatedThisReadEffect extends TranslatedReadEffect, TTranslatedThisRead
 
   TranslatedThisReadEffect() { this = TTranslatedThisReadEffect(func) }
 
+  final override int getUniqueId_fast(int x) { x = 30 and result = idOfElement(func) }
+
   override Locatable getAst() { result = func }
 
   override Function getFunction() { result = func }
@@ -843,6 +859,8 @@ class TranslatedParameterReadEffect extends TranslatedReadEffect, TTranslatedPar
   Parameter param;
 
   TranslatedParameterReadEffect() { this = TTranslatedParameterReadEffect(param) }
+
+  final override int getUniqueId_fast(int x) { x = 31 and result = idOfElement(param) }
 
   override Locatable getAst() { result = param }
 

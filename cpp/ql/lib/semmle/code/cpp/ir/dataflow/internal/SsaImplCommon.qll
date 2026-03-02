@@ -310,6 +310,17 @@ abstract private class AbstractBaseSourceVariable extends TBaseSourceVariable {
 
   /** Gets the `CppType` of this base source variable. */
   abstract CppType getLanguageType();
+
+  abstract predicate hasComponents(int a, int b);
+
+  final int getUniqueId_fast() {
+    this =
+      rank[result + 1](AbstractBaseSourceVariable cand, int a, int b |
+        cand.hasComponents(a, b)
+      |
+        cand order by a, b
+      )
+  }
 }
 
 final class BaseSourceVariable = AbstractBaseSourceVariable;
@@ -326,6 +337,11 @@ class BaseIRVariable extends AbstractBaseSourceVariable, TBaseIRVariable {
   override Location getLocation() { result = var.getLocation() }
 
   override CppType getLanguageType() { result = var.getLanguageType() }
+
+  override predicate hasComponents(int a, int b) {
+    a = 1 and
+    b = var.getUniqueId_fast()
+  }
 }
 
 class BaseCallVariable extends AbstractBaseSourceVariable, TBaseCallVariable {
@@ -340,6 +356,11 @@ class BaseCallVariable extends AbstractBaseSourceVariable, TBaseCallVariable {
   override Location getLocation() { result = call.getLocation() }
 
   override CppType getLanguageType() { result = getResultLanguageType(call) }
+
+  override predicate hasComponents(int a, int b) {
+    a = 2 and
+    b = call.getUniqueId_fast()
+  }
 }
 
 private module IsModifiableAtImpl {

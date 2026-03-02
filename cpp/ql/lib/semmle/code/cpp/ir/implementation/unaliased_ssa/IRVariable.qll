@@ -70,6 +70,17 @@ abstract private class AbstractIRVariable extends TIRVariable {
    * Gets the function that references this variable.
    */
   final Language::Declaration getEnclosingFunction() { result = func }
+
+  abstract predicate hasComponents(int a, int b, int c, int d, int e);
+
+  final int getUniqueId_fast() {
+    this =
+      rank[result + 1](AbstractIRVariable cand, int a, int b, int c, int d, int e |
+        cand.hasComponents(a, b, c, d, e)
+      |
+        cand order by a, b, c, d, e
+      )
+  }
 }
 
 /**
@@ -79,6 +90,10 @@ abstract private class AbstractIRVariable extends TIRVariable {
  * by the AST-to-IR translation (`IRTempVariable`).
  */
 final class IRVariable = AbstractIRVariable;
+
+private predicate id(@element x, @element y) { x = y }
+
+private int idOfElement(@element x) = equivalenceRelation(id/2)(x, result)
 
 /**
  * A user-declared variable referenced by the IR for a function.
@@ -103,6 +118,14 @@ class IRUserVariable extends AbstractIRVariable, TIRUserVariable {
    * Gets the original user-declared variable.
    */
   Language::Variable getVariable() { result = var }
+
+  final override predicate hasComponents(int a, int b, int c, int d, int e) {
+    a = 1 and
+    b = idOfElement(var) and
+    c = type.getUniqueId_fast() and
+    d = idOfElement(func) and
+    e = 0
+  }
 }
 
 /**
@@ -214,6 +237,14 @@ class IRTempVariable extends AbstractIRGeneratedVariable, AbstractIRAutomaticVar
   final TempVariableTag getTag() { result = tag }
 
   override string getBaseString() { result = "#temp" }
+
+  final override predicate hasComponents(int a, int b, int c, int d, int e) {
+    a = 1 and
+    b = idOfElement(func) and
+    c = idOfElement(ast) and
+    d = getTempVariableUniqueId_fast(tag) and
+    e = type.getUniqueId_fast()
+  }
 }
 
 /**
@@ -278,6 +309,14 @@ class IRStringLiteral extends AbstractIRGeneratedVariable, TIRStringLiteral {
    * Gets the AST of the string literal represented by this `IRStringLiteral`.
    */
   final Language::StringLiteral getLiteral() { result = literal }
+
+  final override predicate hasComponents(int a, int b, int c, int d, int e) {
+    a = 1 and
+    b = idOfElement(func) and
+    c = idOfElement(ast) and
+    d = type.getUniqueId_fast() and
+    e = idOfElement(literal)
+  }
 }
 
 /**
@@ -305,6 +344,14 @@ class IRDynamicInitializationFlag extends AbstractIRGeneratedVariable, TIRDynami
   }
 
   final override string getBaseString() { result = "#init:" + var.toString() + ":" }
+
+  final override predicate hasComponents(int a, int b, int c, int d, int e) {
+    a = 1 and
+    b = idOfElement(func) and
+    c = idOfElement(var) and
+    d = type.getUniqueId_fast() and
+    e = 0
+  }
 }
 
 /**

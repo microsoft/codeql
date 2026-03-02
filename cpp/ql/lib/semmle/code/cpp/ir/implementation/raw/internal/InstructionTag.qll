@@ -110,8 +110,219 @@ newtype TInstructionTag =
   AssertionOpTag() or
   AssertionBranchTag()
 
+private predicate instructionTagComponents(InstructionTag tag, int a, int b) {
+  tag = OnlyInstructionTag() and a = 1 and b = 0
+  or
+  tag = InitializerVariableAddressTag() and a = 2 and b = 0
+  or
+  tag = InitializerLoadStringTag() and a = 3 and b = 0
+  or
+  tag = InitializerStoreTag() and a = 4 and b = 0
+  or
+  tag = InitializerIndirectAddressTag() and a = 5 and b = 0
+  or
+  tag = InitializerIndirectStoreTag() and a = 6 and b = 0
+  or
+  tag = DynamicInitializationFlagAddressTag() and a = 7 and b = 0
+  or
+  tag = DynamicInitializationFlagLoadTag() and a = 8 and b = 0
+  or
+  tag = DynamicInitializationConditionalBranchTag() and a = 9 and b = 0
+  or
+  tag = DynamicInitializationFlagConstantTag() and a = 10 and b = 0
+  or
+  tag = DynamicInitializationFlagStoreTag() and a = 11 and b = 0
+  or
+  tag = ZeroPadStringConstantTag() and a = 12 and b = 0
+  or
+  tag = ZeroPadStringElementIndexTag() and a = 13 and b = 0
+  or
+  tag = ZeroPadStringElementAddressTag() and a = 14 and b = 0
+  or
+  tag = ZeroPadStringStoreTag() and a = 15 and b = 0
+  or
+  tag = AssignOperationConvertLeftTag() and a = 16 and b = 0
+  or
+  tag = AssignOperationOpTag() and a = 17 and b = 0
+  or
+  tag = AssignOperationConvertResultTag() and a = 18 and b = 0
+  or
+  tag = AssignmentStoreTag() and a = 19 and b = 0
+  or
+  tag = CrementConstantTag() and a = 20 and b = 0
+  or
+  tag = CrementOpTag() and a = 21 and b = 0
+  or
+  tag = CrementStoreTag() and a = 22 and b = 0
+  or
+  tag = EnterFunctionTag() and a = 23 and b = 0
+  or
+  tag = ReturnValueAddressTag() and a = 24 and b = 0
+  or
+  tag = ReturnTag() and a = 25 and b = 0
+  or
+  tag = ExitFunctionTag() and a = 26 and b = 0
+  or
+  tag = AliasedDefinitionTag() and a = 27 and b = 0
+  or
+  tag = InitializeNonLocalTag() and a = 28 and b = 0
+  or
+  tag = AliasedUseTag() and a = 29 and b = 0
+  or
+  tag = SwitchBranchTag() and a = 30 and b = 0
+  or
+  tag = CallTargetTag() and a = 31 and b = 0
+  or
+  tag = CallTag() and a = 32 and b = 0
+  or
+  tag = CallSideEffectTag() and a = 33 and b = 0
+  or
+  tag = CallNoReturnTag() and a = 34 and b = 0
+  or
+  tag = AllocationSizeTag() and a = 35 and b = 0
+  or
+  tag = AllocationElementSizeTag() and a = 36 and b = 0
+  or
+  tag = AllocationExtentConvertTag() and a = 37 and b = 0
+  or
+  tag = ValueConditionCompareTag() and a = 38 and b = 0
+  or
+  tag = ValueConditionConstantTag() and a = 39 and b = 0
+  or
+  tag = ValueConditionConditionalBranchTag() and a = 40 and b = 0
+  or
+  tag = ValueConditionConditionalConstantTag() and a = 41 and b = 0
+  or
+  tag = ValueConditionConditionalCompareTag() and a = 42 and b = 0
+  or
+  tag = ConditionValueTrueTempAddressTag() and a = 43 and b = 0
+  or
+  tag = ConditionValueTrueConstantTag() and a = 44 and b = 0
+  or
+  tag = ConditionValueTrueStoreTag() and a = 45 and b = 0
+  or
+  tag = ConditionValueFalseTempAddressTag() and a = 46 and b = 0
+  or
+  tag = ConditionValueFalseConstantTag() and a = 47 and b = 0
+  or
+  tag = ConditionValueFalseStoreTag() and a = 48 and b = 0
+  or
+  tag = ConditionValueResultTempAddressTag() and a = 49 and b = 0
+  or
+  tag = ConditionValueResultLoadTag() and a = 50 and b = 0
+  or
+  tag = BoolConversionConstantTag() and a = 51 and b = 0
+  or
+  tag = BoolConversionCompareTag() and a = 52 and b = 0
+  or
+  tag = NotExprOperationTag() and a = 53 and b = 0
+  or
+  tag = NotExprConstantTag() and a = 54 and b = 0
+  or
+  tag = ResultCopyTag() and a = 55 and b = 0
+  or
+  tag = LoadTag() and a = 56 and b = 0
+  or
+  tag = CatchTag() and a = 57 and b = 0
+  or
+  tag = ThrowTag() and a = 58 and b = 0
+  or
+  tag = UnwindTag() and a = 59 and b = 0
+  or
+  tag = InitializerUninitializedTag() and a = 60 and b = 0
+  or
+  tag = InitializerFieldAddressTag() and a = 61 and b = 0
+  or
+  tag = InitializerFieldDefaultValueTag() and a = 62 and b = 0
+  or
+  tag = InitializerFieldDefaultValueStoreTag() and a = 63 and b = 0
+  or
+  tag = InitializerElementIndexTag() and a = 64 and b = 0
+  or
+  tag = InitializerElementAddressTag() and a = 65 and b = 0
+  or
+  tag = InitializerElementDefaultValueTag() and a = 66 and b = 0
+  or
+  tag = InitializerElementDefaultValueStoreTag() and a = 67 and b = 0
+  or
+  tag = VarArgsStartEllipsisAddressTag() and a = 68 and b = 0
+  or
+  tag = VarArgsStartTag() and a = 69 and b = 0
+  or
+  tag = VarArgsVAListLoadTag() and a = 70 and b = 0
+  or
+  tag = VarArgsArgAddressTag() and a = 71 and b = 0
+  or
+  tag = VarArgsArgLoadTag() and a = 72 and b = 0
+  or
+  tag = VarArgsMoveNextTag() and a = 73 and b = 0
+  or
+  tag = VarArgsVAListStoreTag() and a = 74 and b = 0
+  or
+  tag = AsmTag() and a = 75 and b = 0
+  or
+  tag = AsmInputTag(b) and a = 76
+  or
+  tag = DynamicInitializationFlagAddressTag() and a = 77 and b = 0
+  or
+  tag = DynamicInitializationFlagLoadTag() and a = 78 and b = 0
+  or
+  tag = DynamicInitializationConditionalBranchTag() and a = 79 and b = 0
+  or
+  tag = DynamicInitializationFlagConstantTag() and a = 80 and b = 0
+  or
+  tag = DynamicInitializationFlagStoreTag() and a = 81 and b = 0
+  or
+  tag = ThisAddressTag() and a = 82 and b = 0
+  or
+  tag = ThisLoadTag() and a = 83 and b = 0
+  or
+  tag = StructuredBindingAccessTag() and a = 84 and b = 0
+  or
+  tag = TryExceptCompareNegativeOne() and a = 85 and b = 0
+  or
+  tag = TryExceptCompareZero() and a = 86 and b = 0
+  or
+  tag = TryExceptCompareOne() and a = 87 and b = 0
+  or
+  tag = TryExceptGenerateNegativeOne() and a = 88 and b = 0
+  or
+  tag = TryExceptGenerateZero() and a = 89 and b = 0
+  or
+  tag = TryExceptGenerateOne() and a = 90 and b = 0
+  or
+  tag = TryExceptCompareNegativeOneBranch() and a = 91 and b = 0
+  or
+  tag = TryExceptCompareZeroBranch() and a = 92 and b = 0
+  or
+  tag = TryExceptCompareOneBranch() and a = 93 and b = 0
+  or
+  tag = ImplicitDestructorTag(b) and a = 94
+  or
+  tag = CoAwaitBranchTag() and a = 95 and b = 0
+  or
+  tag = BoolToIntConversionTag() and a = 96 and b = 0
+  or
+  tag = AssertionVarAddressTag() and a = 97 and b = 0
+  or
+  tag = AssertionVarLoadTag() and a = 98 and b = 0
+  or
+  tag = AssertionOpTag() and a = 99 and b = 0
+  or
+  tag = AssertionBranchTag() and a = 100 and b = 0
+}
+
 class InstructionTag extends TInstructionTag {
   final string toString() { result = getInstructionTagId(this) }
+
+  final int getUniqueId_fast() {
+    this =
+      rank[result + 1](InstructionTag cand, int a, int b |
+        instructionTagComponents(cand, a, b)
+      |
+        cand order by a, b
+      )
+  }
 }
 
 /**

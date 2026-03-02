@@ -192,6 +192,17 @@ abstract private class TranslatedAssertionOperand extends TranslatedElement,
 
   TranslatedAssertionOperand() { this = TTranslatedAssertionOperand(mi, index) }
 
+  final override int getUniqueId_fast(int x) {
+    x = 1 and
+    this =
+      rank[result + 1](TranslatedAssertionOperand cand, MacroInvocation mi0, int index0, int a |
+        cand = TTranslatedAssertionOperand(mi0, index0) and
+        a = idOfElement(mi0)
+      |
+        cand order by a, index0
+      )
+  }
+
   MacroInvocation getMacroInvocation() { result = mi }
 
   /**

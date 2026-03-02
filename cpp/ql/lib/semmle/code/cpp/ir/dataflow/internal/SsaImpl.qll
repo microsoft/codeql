@@ -124,6 +124,17 @@ private module SourceVariables {
 
     /** Gets the location of this variable. */
     Location getLocation() { result = this.getBaseVariable().getLocation() }
+
+    abstract predicate hasComponents(int a, int b, int c);
+
+    final int getUniqueId_fast() {
+      this =
+        rank[result + 1](AbstractSourceVariable cand, int a, int b, int c |
+          cand.hasComponents(a, b, c)
+        |
+          cand order by a, b, c
+        )
+    }
   }
 
   final class SourceVariable = AbstractSourceVariable;
@@ -137,6 +148,12 @@ private module SourceVariables {
 
     final override string toString() {
       result = repeatStars(this.getIndirection()) + base.toString()
+    }
+
+    final override predicate hasComponents(int a, int b, int c) {
+      a = 1 and
+      b = base.getUniqueId_fast() and
+      c = ind
     }
   }
 
@@ -171,6 +188,12 @@ private module SourceVariables {
      * value before the increment.
      */
     Operand getOperand() { isUseAfterPostfixCrement(store, result) }
+
+    final override predicate hasComponents(int a, int b, int c) {
+      a = 2 and
+      b = store.getUniqueId_fast() and
+      c = ind
+    }
   }
 }
 
@@ -426,6 +449,17 @@ abstract class UseImpl extends TUseImpl {
    * associated variable.
    */
   abstract predicate isCertain();
+
+  abstract predicate hasComponents(int a, int b, int c);
+
+  final int getUniqueId_fast() {
+    this =
+      rank[result + 1](UseImpl cand, int a, int b, int c |
+        cand.hasComponents(a, b, c)
+      |
+        cand order by a, b, c
+      )
+  }
 }
 
 pragma[noinline]
@@ -589,6 +623,12 @@ private class DirectUseImpl extends UseImpl, TDirectUseImpl {
   override predicate isCertain() { isUse(true, operand, _, _, indirectionIndex) }
 
   override Node getNode() { nodeHasOperand(result, operand, indirectionIndex) }
+
+  final override predicate hasComponents(int a, int b, int c) {
+    a = 3 and
+    b = operand.getUniqueId_fast() and
+    c = indirectionIndex
+  }
 }
 
 /**
@@ -617,6 +657,12 @@ private class SavedPostfixCrementUseImpl extends UseImpl, TSavedPostfixCrementUs
   override predicate isCertain() { isUse(true, this.getOperand(), _, _, indirectionIndex) }
 
   override Node getNode() { nodeHasOperand(result, this.getOperand(), indirectionIndex) }
+
+  final override predicate hasComponents(int a, int b, int c) {
+    a = 4 and
+    b = sv.getUniqueId_fast() and
+    c = indirectionIndex
+  }
 }
 
 pragma[nomagic]
@@ -637,6 +683,10 @@ private predicate hasReturnPosition(IRFunction f, IRBlock block, int index) {
     return.getEnclosingIRFunction() = f
   )
 }
+
+private predicate id(@element x, @element y) { x = y }
+
+int idOfElement(@element x) = equivalenceRelation(id/2)(x, result)
 
 class FinalParameterUse extends UseImpl, TFinalParameterUse {
   Parameter p;
@@ -694,6 +744,12 @@ class FinalParameterUse extends UseImpl, TFinalParameterUse {
       sourceVariableHasBaseAndIndex(result, v, indirection) and
       this.hasBaseSourceVariableAndIndirection(v, indirection)
     )
+  }
+
+  final override predicate hasComponents(int a, int b, int c) {
+    a = 5 and
+    b = idOfElement(p) and
+    c = indirectionIndex
   }
 }
 
@@ -801,6 +857,12 @@ class GlobalUse extends UseImpl, TGlobalUse {
   Type getUnderlyingType() { result = global.getUnderlyingType() }
 
   override predicate isCertain() { any() }
+
+  final override predicate hasComponents(int a, int b, int c) {
+    a = 6 and
+    b = idOfElement(global) and
+    c = indirectionIndex
+  }
 }
 
 /**

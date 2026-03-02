@@ -226,6 +226,8 @@ class TranslatedConditionValue extends TranslatedCoreExpr, ConditionContext,
 {
   TranslatedConditionValue() { this = TTranslatedConditionValue(expr) }
 
+  final override int getUniqueId_fast(int x) { x = 13 and result = idOfElement(expr) }
+
   override TranslatedElement getChildInternal(int id) { id = 0 and result = this.getCondition() }
 
   override Instruction getFirstInstruction(EdgeKind kind) {
@@ -398,6 +400,8 @@ private predicate hasSehExceptionEdge(Expr expr) {
 class TranslatedLoad extends TranslatedValueCategoryAdjustment, TTranslatedLoad {
   TranslatedLoad() { this = TTranslatedLoad(expr) }
 
+  final override int getUniqueId_fast(int x) { x = 14 and result = idOfElement(expr) }
+
   override string toString() { result = "Load of " + expr.toString() }
 
   override predicate hasInstruction(Opcode opcode, InstructionTag tag, CppType resultType) {
@@ -457,6 +461,8 @@ class TranslatedSyntheticTemporaryObject extends TranslatedValueCategoryAdjustme
   TTranslatedSyntheticTemporaryObject
 {
   TranslatedSyntheticTemporaryObject() { this = TTranslatedSyntheticTemporaryObject(expr) }
+
+  final override int getUniqueId_fast(int x) { x = 15 and result = idOfElement(expr) }
 
   override string toString() { result = "Temporary materialization of " + expr.toString() }
 
@@ -520,6 +526,8 @@ class TranslatedSyntheticBoolToIntConversion extends TranslatedValueCategoryAdju
 {
   TranslatedSyntheticBoolToIntConversion() { this = TTranslatedSyntheticBoolToIntConversion(expr) }
 
+  final override int getUniqueId_fast(int x) { x = 16 and result = idOfElement(expr) }
+
   override string toString() { result = "Bool-to-int conversion of " + expr.toString() }
 
   override predicate hasInstruction(Opcode opcode, InstructionTag tag, CppType resultType) {
@@ -561,6 +569,8 @@ class TranslatedSyntheticBoolToIntConversion extends TranslatedValueCategoryAdju
  */
 class TranslatedResultCopy extends TranslatedExpr, TTranslatedResultCopy {
   TranslatedResultCopy() { this = TTranslatedResultCopy(expr) }
+
+  final override int getUniqueId_fast(int x) { x = 17 and result = idOfElement(expr) }
 
   override string toString() { result = "Result of " + expr.toString() }
 
@@ -1235,6 +1245,8 @@ abstract class TranslatedNonConstantExpr extends TranslatedCoreExpr, TTranslated
     this = TTranslatedValueExpr(expr) and
     not isIRConstant(expr)
   }
+
+  final override int getUniqueId_fast(int x) { x = 18 and result = idOfElement(expr) }
 }
 
 /**
@@ -1247,6 +1259,8 @@ abstract class TranslatedConstantExpr extends TranslatedCoreExpr, TTranslatedVal
     this = TTranslatedValueExpr(expr) and
     isIRConstant(expr)
   }
+
+  final override int getUniqueId_fast(int x) { x = 19 and result = idOfElement(expr) }
 
   final override Instruction getFirstInstruction(EdgeKind kind) {
     result = this.getInstruction(OnlyInstructionTag()) and
@@ -2320,6 +2334,8 @@ class TranslatedAssignOperation extends TranslatedNonConstantExpr {
 abstract class TranslatedAllocationSize extends TranslatedExpr, TTranslatedAllocationSize {
   override NewOrNewArrayExpr expr;
 
+  final override int getUniqueId_fast(int x) { x = 20 and result = idOfElement(expr) }
+
   TranslatedAllocationSize() { this = TTranslatedAllocationSize(expr) }
 
   final override string toString() { result = "Allocation size for " + expr.toString() }
@@ -2484,6 +2500,8 @@ class TranslatedNonConstantAllocationSize extends TranslatedAllocationSize {
  */
 class TranslatedAllocatorCall extends TTranslatedAllocatorCall, TranslatedDirectCall {
   override NewOrNewArrayExpr expr;
+
+  final override int getUniqueId_fast(int x) { x = 21 and result = idOfElement(expr) }
 
   TranslatedAllocatorCall() { this = TTranslatedAllocatorCall(expr) }
 
@@ -3215,6 +3233,8 @@ class TranslatedReuseExpr extends TranslatedNonConstantExpr {
  */
 class TranslatedDestructorsAfterThrow extends TranslatedElement, TTranslatedDestructorsAfterThrow {
   ThrowExpr throw;
+
+  final override int getUniqueId_fast(int x) { x = 22 and result = idOfElement(throw) }
 
   TranslatedDestructorsAfterThrow() { this = TTranslatedDestructorsAfterThrow(throw) }
 

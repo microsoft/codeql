@@ -56,6 +56,17 @@ class IRType extends TIRType {
    * Gets a single instance of `LanguageType` that maps to this `IRType`.
    */
   Language::LanguageType getCanonicalLanguageType() { none() }
+
+  predicate hasComponents(int a, int b, int c, int d) { none() }
+
+  final int getUniqueId_fast() {
+    this =
+      rank[result + 1](IRType cand, int a, int b, int c, int d |
+        cand.hasComponents(a, b, c, d)
+      |
+        cand order by a, b, c, d
+      )
+  }
 }
 
 /**
@@ -69,6 +80,10 @@ class IRUnknownType extends IRType, TIRUnknownType {
 
   final override Language::LanguageType getCanonicalLanguageType() {
     result = Language::getCanonicalUnknownType()
+  }
+
+  final override predicate hasComponents(int a, int b, int c, int d) {
+    a = 1 and b = 0 and c = 0 and d = 0
   }
 }
 
@@ -84,6 +99,10 @@ class IRVoidType extends IRType, TIRVoidType {
   final override Language::LanguageType getCanonicalLanguageType() {
     result = Language::getCanonicalVoidType()
   }
+
+  final override predicate hasComponents(int a, int b, int c, int d) {
+    a = 2 and b = 0 and c = 0 and d = 0
+  }
 }
 
 /**
@@ -97,6 +116,10 @@ class IRErrorType extends IRType, TIRErrorType {
 
   final override Language::LanguageType getCanonicalLanguageType() {
     result = Language::getCanonicalErrorType()
+  }
+
+  final override predicate hasComponents(int a, int b, int c, int d) {
+    a = 3 and b = 0 and c = 0 and d = 0
   }
 }
 
@@ -128,6 +151,10 @@ class IRBooleanType extends IRSizedType, TIRBooleanType {
 
   pragma[noinline]
   final override int getByteSize() { result = byteSize }
+
+  final override predicate hasComponents(int a, int b, int c, int d) {
+    a = 4 and b = byteSize and c = 0 and d = 0
+  }
 }
 
 /**
@@ -177,6 +204,10 @@ class IRSignedIntegerType extends IRIntegerType, TIRSignedIntegerType {
   final override int getByteSize() { result = byteSize }
 
   override predicate isSigned() { any() }
+
+  final override predicate hasComponents(int a, int b, int c, int d) {
+    a = 5 and b = byteSize and c = 0 and d = 0
+  }
 }
 
 /**
@@ -194,6 +225,10 @@ class IRUnsignedIntegerType extends IRIntegerType, TIRUnsignedIntegerType {
   final override int getByteSize() { result = byteSize }
 
   override predicate isUnsigned() { any() }
+
+  final override predicate hasComponents(int a, int b, int c, int d) {
+    a = 6 and b = byteSize and c = 0 and d = 0
+  }
 }
 
 /**
@@ -237,6 +272,10 @@ class IRFloatingPointType extends IRNumericType, TIRFloatingPointType {
     or
     domain instanceof Language::ImaginaryDomain and result = "i"
   }
+
+  final override predicate hasComponents(int a, int b, int c, int d) {
+    a = 7 and b = byteSize and c = base and d = domain.getUniqueId_fast()
+  }
 }
 
 /**
@@ -254,6 +293,10 @@ class IRAddressType extends IRSizedType, TIRAddressType {
 
   pragma[noinline]
   final override int getByteSize() { result = byteSize }
+
+  final override predicate hasComponents(int a, int b, int c, int d) {
+    a = 8 and b = byteSize and c = 0 and d = 0
+  }
 }
 
 /**
@@ -269,6 +312,10 @@ class IRFunctionAddressType extends IRSizedType, TIRFunctionAddressType {
 
   pragma[noinline]
   final override int getByteSize() { result = byteSize }
+
+  final override predicate hasComponents(int a, int b, int c, int d) {
+    a = 9 and b = byteSize and c = 0 and d = 0
+  }
 }
 
 /**
@@ -300,6 +347,10 @@ class IROpaqueType extends IRSizedType, TIROpaqueType {
 
   pragma[noinline]
   final override int getByteSize() { result = byteSize }
+
+  final override predicate hasComponents(int a, int b, int c, int d) {
+    a = 10 and b = byteSize and c = 0 and d = 0
+  }
 }
 
 /**

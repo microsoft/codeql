@@ -27,6 +27,8 @@ class TranslatedMicrosoftTryExceptHandler extends TranslatedElement,
 
   TranslatedMicrosoftTryExceptHandler() { this = TTranslatedMicrosoftTryExceptHandler(tryExcept) }
 
+  final override int getUniqueId_fast(int x) { x = 42 and result = idOfElement(tryExcept) }
+
   final override string toString() { result = tryExcept.toString() }
 
   final override Locatable getAst() { result = tryExcept.getExcept() }
@@ -249,6 +251,8 @@ class TranslatedMicrosoftTryFinallyHandler extends TranslatedElement,
     this = TTranslatedMicrosoftTryFinallyHandler(tryFinally)
   }
 
+  final override int getUniqueId_fast(int x) { x = 43 and result = idOfElement(tryFinally) }
+
   final override string toString() { result = tryFinally.toString() }
 
   final override Locatable getAst() { result = tryFinally.getFinally() }
@@ -294,6 +298,8 @@ abstract class TranslatedStmt extends TranslatedElement, TTranslatedStmt {
   Stmt stmt;
 
   TranslatedStmt() { this = TTranslatedStmt(stmt) }
+
+  final override int getUniqueId_fast(int x) { x = 44 and result = idOfElement(stmt) }
 
   abstract TranslatedElement getChildInternal(int id);
 
@@ -860,6 +866,8 @@ class TranslatedDestructorsAfterHandler extends TranslatedElement,
   Handler handler;
 
   TranslatedDestructorsAfterHandler() { this = TTranslatedDestructorsAfterHandler(handler) }
+
+  final override int getUniqueId_fast(int x) { x = 45 and result = idOfElement(handler) }
 
   override string toString() { result = "Destructor calls after handler: " + handler }
 

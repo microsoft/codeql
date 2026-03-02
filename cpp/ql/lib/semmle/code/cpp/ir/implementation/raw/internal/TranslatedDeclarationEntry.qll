@@ -28,6 +28,8 @@ abstract class TranslatedDeclarationEntry extends TranslatedElement, TTranslated
 
   TranslatedDeclarationEntry() { this = TTranslatedDeclarationEntry(entry) }
 
+  final override int getUniqueId_fast(int x) { x = 10 and result = entry.getUniqueId_fast() }
+
   final override Declaration getFunction() {
     exists(DeclStmt stmt | stmt = entry.getStmt() |
       result = entry.getDeclaration().(StaticInitializedStaticLocalVariable)
@@ -236,6 +238,8 @@ class TranslatedStaticLocalVariableInitialization extends TranslatedElement,
   IRVariableDeclarationEntry entry;
   StaticLocalVariable var;
 
+  final override int getUniqueId_fast(int x) { x = 11 and result = entry.getUniqueId_fast() }
+
   TranslatedStaticLocalVariableInitialization() {
     this = TTranslatedStaticLocalVariableInitialization(entry) and
     var = entry.getDeclaration()
@@ -266,6 +270,8 @@ class TranslatedConditionDecl extends TranslatedLocalVariableDeclaration, TTrans
   ConditionDeclExpr conditionDeclExpr;
 
   TranslatedConditionDecl() { this = TTranslatedConditionDecl(conditionDeclExpr) }
+
+  final override int getUniqueId_fast(int x) { x = 12 and result = idOfElement(conditionDeclExpr) }
 
   override string toString() { result = "decl: " + conditionDeclExpr.toString() }
 

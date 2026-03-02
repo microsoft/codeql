@@ -47,6 +47,8 @@ abstract class TranslatedFlexibleCondition extends TranslatedCondition, Conditio
 {
   TranslatedFlexibleCondition() { this = TTranslatedFlexibleCondition(expr) }
 
+  final override int getUniqueId_fast(int x) { x = 7 and result = idOfElement(expr) }
+
   final override predicate handlesDestructorsExplicitly() { none() } // TODO: this needs to be revisited when we get unnamed destructors
 
   final override TranslatedElement getChild(int id) { id = 0 and result = this.getOperand() }
@@ -94,6 +96,8 @@ class TranslatedParenthesisCondition extends TranslatedFlexibleCondition {
 
 abstract class TranslatedNativeCondition extends TranslatedCondition, TTranslatedNativeCondition {
   TranslatedNativeCondition() { this = TTranslatedNativeCondition(expr) }
+
+  final override int getUniqueId_fast(int x) { x = 8 and result = idOfElement(expr) }
 
   final override Instruction getChildSuccessorInternal(TranslatedElement child, EdgeKind kind) {
     none()
@@ -174,6 +178,8 @@ class TranslatedLogicalOrExpr extends TranslatedBinaryLogicalOperation {
 
 class TranslatedValueCondition extends TranslatedCondition, TTranslatedValueCondition {
   TranslatedValueCondition() { this = TTranslatedValueCondition(expr) }
+
+  final override int getUniqueId_fast(int x) { x = 9 and result = idOfElement(expr) }
 
   override TranslatedElement getChild(int id) { id = 0 and result = this.getValueExpr() }
 

@@ -289,6 +289,12 @@ class Node0Impl extends TIRDataFlowNode0 {
 
   /** Holds if the value of this node is a glvalue */
   predicate isGLValue() { none() } // overridden in subclasses
+
+  int getUniqueId_fast(int x) { none() }
+
+  final int getUniqueId_fast() {
+    this = rank[result + 1](Node0Impl n, int a, int b | a = n.getUniqueId_fast(b) | n order by a, b)
+  }
 }
 
 /**
@@ -344,6 +350,8 @@ abstract class InstructionNode0 extends Node0Impl {
  */
 private class InstructionInstructionNode0 extends InstructionNode0, TInstructionNode0 {
   InstructionInstructionNode0() { this = TInstructionNode0(instr) }
+
+  final override int getUniqueId_fast(int x) { x = 1 and result = instr.getUniqueId_fast() }
 }
 
 /**
@@ -389,6 +397,8 @@ abstract class OperandNode0 extends Node0Impl {
  */
 private class MultipleUseOperandNode0 extends OperandNode0, TMultipleUseOperandNode0 {
   MultipleUseOperandNode0() { this = TMultipleUseOperandNode0(op) }
+
+  final override int getUniqueId_fast(int x) { x = 2 and result = op.getUniqueId_fast() }
 }
 
 /**
@@ -396,6 +406,8 @@ private class MultipleUseOperandNode0 extends OperandNode0, TMultipleUseOperandN
  */
 private class SingleUseOperandNode0 extends OperandNode0, TSingleUseOperandNode0 {
   SingleUseOperandNode0() { this = TSingleUseOperandNode0(op) }
+
+  final override int getUniqueId_fast(int x) { x = 3 and result = op.getUniqueId_fast() }
 }
 
 private module IndirectOperands {
@@ -2055,6 +2067,8 @@ module IteratorFlow {
 
     /** Gets the locatino of this node. */
     Location getLocation() { result = super.getBasicBlock().getLocation() }
+
+    int getUniqueId_fast() { result = super.getUniqueId_fast() }
   }
 
   private predicate defToNode(Node node, Def def) {

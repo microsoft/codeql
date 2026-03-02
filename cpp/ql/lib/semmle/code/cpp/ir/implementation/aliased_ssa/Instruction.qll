@@ -176,6 +176,8 @@ class Instruction extends Construction::TStageInstruction {
    */
   final string getUniqueId() { result = Construction::getInstructionUniqueId(this) }
 
+  int getUniqueId_fast() { result = Construction::getInstructionUniqueId_fast(this) }
+
   /**
    * INTERNAL: Do not use.
    *

@@ -196,6 +196,20 @@ class VariableGroup extends AllocationSet::EquivalenceClass {
   }
 
   string toString() { result = "{" + strictconcat(this.getAnAllocation().toString(), ", ") + "}" }
+
+  private predicate hasComponents(int a, int b) {
+    a = this.getIRFunction().getUniqueId_fast() and
+    b = this.getInitializationOrder()
+  }
+
+  final int getUniqueId_fast() {
+    this =
+      rank[result + 1](VariableGroup cand, int a, int b |
+        cand.hasComponents(a, b)
+      |
+        cand order by a, b
+      )
+  }
 }
 
 private newtype TMemoryLocation =
@@ -285,6 +299,17 @@ abstract class MemoryLocation0 extends TMemoryLocation {
   predicate isAlwaysAllocatedOnStack() { none() }
 
   final predicate canReuseSsa() { none() }
+
+  abstract predicate hasComponents(int a, int b, int c, int d, int e, int f);
+
+  final int getUniqueId_fast() {
+    this =
+      rank[result + 1](MemoryLocation0 cand, int a, int b, int c, int d, int e, int f |
+        cand.hasComponents(a, b, c, d, e, f)
+      |
+        cand order by a, b, c, d, e, f
+      )
+  }
 }
 
 /**
@@ -341,6 +366,15 @@ class VariableMemoryLocation extends TVariableMemoryLocation, AllocationMemoryLo
   VariableMemoryLocation() {
     this =
       TVariableMemoryLocation(var, type, languageType, startBitOffset, endBitOffset, isMayAccess)
+  }
+
+  final override predicate hasComponents(int a, int b, int c, int d, int e, int f) {
+    a = 1 and
+    b = getUniqueAllocationId(var) and
+    c = type.getUniqueId_fast() and
+    d = startBitOffset and
+    e = endBitOffset and
+    if isMayAccess = true then f = 1 else f = 0
   }
 
   private string getIntervalString() {
@@ -463,6 +497,15 @@ class GroupedMemoryLocation extends TGroupedMemoryLocation, MemoryLocation0 {
 
   /** Holds if this memory location represents one or more of the enclosing allocations. */
   predicate isSome() { isAll = false }
+
+  final override predicate hasComponents(int a, int b, int c, int d, int e, int f) {
+    a = 2 and
+    b = vg.getUniqueId_fast() and
+    (if isMayAccess = true then c = 1 else c = 0) and
+    (if isAll = true then d = 1 else d = 0) and
+    e = 0 and
+    f = 0
+  }
 }
 
 private GroupedMemoryLocation getGroupedMemoryLocation(
@@ -487,6 +530,15 @@ class EntireAllocationMemoryLocation extends TEntireAllocationMemoryLocation,
   EntireAllocationMemoryLocation() { this = TEntireAllocationMemoryLocation(var, isMayAccess) }
 
   final override string toStringInternal() { result = var.toString() }
+
+  final override predicate hasComponents(int a, int b, int c, int d, int e, int f) {
+    a = 3 and
+    b = getUniqueAllocationId(var) and
+    (if isMayAccess = true then c = 1 else c = 0) and
+    d = 0 and
+    e = 0 and
+    f = 0
+  }
 
   final override Language::LanguageType getType() {
     result = any(IRUnknownType unknownType).getCanonicalLanguageType()
@@ -533,6 +585,15 @@ class UnknownMemoryLocation extends TUnknownMemoryLocation, MemoryLocation0 {
 
   UnknownMemoryLocation() { this = TUnknownMemoryLocation(irFunc, isMayAccess) }
 
+  final override predicate hasComponents(int a, int b, int c, int d, int e, int f) {
+    a = 4 and
+    b = irFunc.getUniqueId_fast() and
+    (if isMayAccess = true then c = 1 else c = 0) and
+    d = 0 and
+    e = 0 and
+    f = 0
+  }
+
   final override string toStringInternal() { result = "{Unknown}" }
 
   final override VirtualVariable getVirtualVariable() { result = TAllAliasedMemory(irFunc, false) }
@@ -561,6 +622,15 @@ class AllNonLocalMemory extends TAllNonLocalMemory, MemoryLocation0 {
   AllNonLocalMemory() { this = TAllNonLocalMemory(irFunc, isMayAccess) }
 
   final override string toStringInternal() { result = "{AllNonLocal}" }
+
+  final override predicate hasComponents(int a, int b, int c, int d, int e, int f) {
+    a = 5 and
+    b = irFunc.getUniqueId_fast() and
+    (if isMayAccess = true then c = 1 else c = 0) and
+    d = 0 and
+    e = 0 and
+    f = 0
+  }
 
   final override AliasedVirtualVariable getVirtualVariable() { result.getIRFunction() = irFunc }
 
@@ -593,6 +663,15 @@ class AllAliasedMemory extends TAllAliasedMemory, MemoryLocation0 {
   boolean isMayAccess;
 
   AllAliasedMemory() { this = TAllAliasedMemory(irFunc, isMayAccess) }
+
+  final override predicate hasComponents(int a, int b, int c, int d, int e, int f) {
+    a = 6 and
+    b = irFunc.getUniqueId_fast() and
+    (if isMayAccess = true then c = 1 else c = 0) and
+    d = 0 and
+    e = 0 and
+    f = 0
+  }
 
   final override string toStringInternal() { result = "{AllAliased}" }
 

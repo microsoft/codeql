@@ -236,6 +236,8 @@ class IRBlock extends IRBlockBase {
     this = this.getEnclosingIRFunction().getEntryBlock() or
     this.getAPredecessor().isReachableFromFunctionEntry()
   }
+
+  final int getUniqueId_fast() { result = this.getFirstInstruction().getUniqueId_fast() }
 }
 
 private predicate startsBasicBlock(Instruction instr) {
@@ -298,6 +300,8 @@ module IRCfg implements BB::CfgSig<Language::Location> {
     predicate strictlyPostDominates(BasicBlock bb) { super.strictlyPostDominates(bb) }
 
     predicate postDominates(BasicBlock bb) { super.postDominates(bb) }
+
+    int getUniqueId_fast() { result = super.getUniqueId_fast() }
   }
 
   class EntryBasicBlock extends BasicBlock {

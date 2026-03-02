@@ -16,6 +16,10 @@ private import TranslatedAssertion
 private import semmle.code.cpp.models.interfaces.SideEffect
 private import SideEffects
 
+private predicate id(@element x, @element y) { x = y }
+
+int idOfElement(@element x) = equivalenceRelation(id/2)(x, result)
+
 /**
  * Gets the "real" parent of `expr`. This predicate treats conversions as if
  * they were explicit nodes in the expression tree, rather than as implicit
@@ -595,6 +599,26 @@ private module IRDeclarationEntries {
       stmt.getDeclaration(index) = d
     }
 
+  private predicate iRDeclarationEntryComponents(
+    IRDeclarationEntry entry, int a, int b, int c, int d
+  ) {
+    exists(DeclarationEntry e |
+      entry = TPresentDeclarationEntry(e) and
+      a = 1 and
+      b = idOfElement(e) and
+      c = 0 and
+      d = 0
+    )
+    or
+    exists(DeclStmt stmt, Declaration decl, int index |
+      entry = TMissingDeclarationEntry(stmt, decl, index) and
+      a = 2 and
+      b = idOfElement(stmt) and
+      c = idOfElement(decl) and
+      d = index
+    )
+  }
+
   /**
    * An entity that represents a declaration entry in the database.
    *
@@ -607,6 +631,15 @@ private module IRDeclarationEntries {
   abstract class IRDeclarationEntry extends TIRDeclarationEntry {
     /** Gets a string representation of this `IRDeclarationEntry`. */
     abstract string toString();
+
+    final int getUniqueId_fast() {
+      this =
+        rank[result + 1](IRDeclarationEntry cand, int a, int b, int c, int d |
+          iRDeclarationEntryComponents(cand, a, b, c, d)
+        |
+          cand order by a, b, c, d
+        )
+    }
 
     /** Gets the `DeclStmt` that this `IRDeclarationEntry` belongs to. */
     abstract DeclStmt getStmt();
@@ -668,6 +701,8 @@ private module IRDeclarationEntries {
     Variable v;
 
     IRVariableDeclarationEntry() { super.getDeclaration() = v }
+
+    int getUniqueId_fast() { result = super.getUniqueId_fast() }
 
     Variable getDeclaration() { result = v }
 
@@ -976,6 +1011,17 @@ private predicate isFirstValueInitializedElementInRange(
  */
 abstract class TranslatedElement extends TTranslatedElement {
   abstract string toString();
+
+  abstract int getUniqueId_fast(int a);
+
+  final int getUniqueId_fast() {
+    this =
+      rank[result + 1](TranslatedElement cand, int a, int b |
+        a = cand.getUniqueId_fast(b)
+      |
+        cand order by a, b
+      )
+  }
 
   /**
    * Gets the AST node being translated.

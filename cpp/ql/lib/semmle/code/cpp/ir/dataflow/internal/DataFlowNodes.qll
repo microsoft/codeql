@@ -322,6 +322,12 @@ module Public {
     Operand asIndirectOperand(int index) { hasOperandAndIndex(this, result, index) }
 
     /**
+     * Gets the instruction that is indirectly tracked by this node behind `index`
+     * number of indirections.
+     */
+    Instruction asIndirectInstruction(int index) { hasInstructionAndIndex(this, result, index) }
+
+    /**
      * Holds if this node is at index `i` in basic block `block`.
      *
      * Note: Phi nodes are considered to be at index `-1`.
@@ -712,6 +718,105 @@ module Public {
     string toStringImpl() {
       none() // overridden by subclasses
     }
+
+    int getUniqueId_fast() {
+      this =
+        rank[result](Node n0, int a, int b, int c |
+          nodeComponents(n0, a, b, c)
+        |
+          n0 order by a, b, c
+        )
+    }
+  }
+
+  private predicate id(@element x, @element y) { x = y }
+
+  private int idOfElement(@element x) = equivalenceRelation(id/2)(x, result)
+
+  private predicate nodeComponents(Node node, int a, int b, int c) {
+    exists(Node0Impl n |
+      node = TNode0(n) and
+      a = 1 and
+      b = n.getUniqueId_fast() and
+      c = 0
+    )
+    or
+    exists(GlobalLikeVariable var, int indirectionIndex |
+      node = TGlobalLikeVariableNode(var, indirectionIndex) and
+      a = 2 and
+      b = idOfElement(var) and
+      c = indirectionIndex
+    )
+    or
+    exists(Operand operand, int indirectionIndex |
+      node = TPostUpdateNodeImpl(operand, indirectionIndex) and
+      a = 3 and
+      b = operand.getUniqueId_fast() and
+      c = indirectionIndex
+    )
+    or
+    exists(SsaImpl::SynthNode n |
+      node = TSsaSynthNode(n) and
+      a = 4 and
+      b = n.getUniqueId_fast() and
+      c = 0
+    )
+    or
+    exists(IteratorFlow::IteratorFlowNode n |
+      node = TSsaIteratorNode(n) and
+      a = 5 and
+      b = n.getUniqueId_fast() and
+      c = 0
+    )
+    or
+    exists(Node0Impl n, int indirectionIndex |
+      node = TRawIndirectOperand0(n, indirectionIndex) and
+      a = 6 and
+      b = n.getUniqueId_fast() and
+      c = indirectionIndex
+    )
+    or
+    exists(Node0Impl n, int indirectionIndex |
+      node = TRawIndirectInstruction0(n, indirectionIndex) and
+      a = 7 and
+      b = n.getUniqueId_fast() and
+      c = indirectionIndex
+    )
+    or
+    exists(Parameter p, int indirectionIndex |
+      node = TFinalParameterNode(p, indirectionIndex) and
+      a = 8 and
+      b = idOfElement(p) and
+      c = indirectionIndex
+    )
+    or
+    exists(SsaImpl::GlobalUse globalUse |
+      node = TFinalGlobalValue(globalUse) and
+      a = 9 and
+      b = globalUse.getUniqueId_fast() and
+      c = 0
+    )
+    or
+    exists(SsaImpl::GlobalDef globalUse |
+      node = TInitialGlobalValue(globalUse) and
+      a = 10 and
+      b = globalUse.getUniqueId_fast() and
+      c = 0
+    )
+    or
+    exists(Parameter p, int indirectionIndex |
+      node = TBodyLessParameterNodeImpl(p, indirectionIndex) and
+      a = 11 and
+      b = idOfElement(p) and
+      c = indirectionIndex
+    )
+    // or
+    // exists(FlowSummaryImpl::Private::SummaryNode sn |
+    //   node = TFlowSummaryNode(sn) and
+    //   a = 14 and
+    //   b = sn.getUniqueId_fast() and // TODO
+    //   c = 0
+    // )
   }
 
   /**

@@ -71,6 +71,8 @@ class MemoryLocation extends TMemoryLocation {
   final string getUniqueId() { result = var.getUniqueId() }
 
   final predicate canReuseSsa() { canReuseSsaForVariable(var) }
+
+  final int getUniqueId_fast() { result = var.getUniqueId_fast() }
 }
 
 class MemoryLocation0 = MemoryLocation;

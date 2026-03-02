@@ -25,6 +25,17 @@ private newtype TEdgeKind =
 abstract private class EdgeKindImpl extends TEdgeKind {
   /** Gets a textual representation of this edge kind. */
   abstract string toString();
+
+  abstract predicate hasComponents(int a, string b, string c);
+
+  final int getUniqueId_fast() {
+    this =
+      rank[result + 1](EdgeKind k, int a, string b, string c |
+        k.hasComponents(a, b, c)
+      |
+        k order by a, b, c
+      )
+  }
 }
 
 final class EdgeKind = EdgeKindImpl;
@@ -50,6 +61,12 @@ SuccessorType getAMatchingSuccessorType(EdgeKind k) {
  */
 class GotoEdge extends EdgeKindImpl, TGotoEdge {
   final override string toString() { result = "Goto" }
+
+  final override predicate hasComponents(int a, string b, string c) {
+    a = 1 and
+    b = "" and
+    c = ""
+  }
 }
 
 /**
@@ -65,6 +82,12 @@ final class BooleanEdge = BooleanEdgeKindImpl;
  */
 class TrueEdge extends BooleanEdgeKindImpl, TTrueEdge {
   final override string toString() { result = "True" }
+
+  final override predicate hasComponents(int a, string b, string c) {
+    a = 2 and
+    b = "" and
+    c = ""
+  }
 }
 
 /**
@@ -73,6 +96,12 @@ class TrueEdge extends BooleanEdgeKindImpl, TTrueEdge {
  */
 class FalseEdge extends BooleanEdgeKindImpl, TFalseEdge {
   final override string toString() { result = "False" }
+
+  final override predicate hasComponents(int a, string b, string c) {
+    a = 3 and
+    b = "" and
+    c = ""
+  }
 }
 
 abstract private class ExceptionEdgeImpl extends EdgeKindImpl { }
@@ -92,6 +121,12 @@ final class ExceptionEdge = ExceptionEdgeImpl;
  */
 class CppExceptionEdge extends ExceptionEdgeImpl, TCppExceptionEdge {
   final override string toString() { result = "C++ Exception" }
+
+  final override predicate hasComponents(int a, string b, string c) {
+    a = 4 and
+    b = "" and
+    c = ""
+  }
 }
 
 /**
@@ -100,6 +135,12 @@ class CppExceptionEdge extends ExceptionEdgeImpl, TCppExceptionEdge {
  */
 class SehExceptionEdge extends ExceptionEdgeImpl, TSehExceptionEdge {
   final override string toString() { result = "SEH Exception" }
+
+  final override predicate hasComponents(int a, string b, string c) {
+    a = 5 and
+    b = "" and
+    c = ""
+  }
 }
 
 /**
@@ -137,6 +178,12 @@ class DefaultEdge extends SwitchEdgeKindImpl, TDefaultEdge {
   final override string toString() { result = "Default" }
 
   final override predicate isDefault() { any() }
+
+  final override predicate hasComponents(int a, string b, string c) {
+    a = 6 and
+    b = "" and
+    c = ""
+  }
 }
 
 /**
@@ -158,6 +205,12 @@ class CaseEdge extends SwitchEdgeKindImpl, TCaseEdge {
   final override string getMinValue() { result = minValue }
 
   final override string getMaxValue() { result = maxValue }
+
+  final override predicate hasComponents(int a, string b, string c) {
+    a = 7 and
+    b = minValue and
+    c = maxValue
+  }
 }
 
 /**

@@ -417,6 +417,8 @@ class TranslatedCallSideEffects extends TranslatedSideEffects, TTranslatedCallSi
 
   TranslatedCallSideEffects() { this = TTranslatedCallSideEffects(expr) }
 
+  final override int getUniqueId_fast(int a) { a = 2 and result = idOfElement(expr) }
+
   final override string toString() { result = "(side effects  for " + expr.toString() + ")" }
 
   final override Expr getExpr() { result = expr }
@@ -619,6 +621,19 @@ class TranslatedArgumentExprSideEffect extends TranslatedArgumentSideEffect,
     this = TTranslatedArgumentExprSideEffect(call, arg, index, sideEffectOpcode)
   }
 
+  final override int getUniqueId_fast(int x) {
+    x = 3 and
+    this =
+      rank[result + 1](TranslatedArgumentExprSideEffect cand, Call call0, Expr arg0, int index0,
+        SideEffectOpcode opcode0, int a, int b |
+        cand = TTranslatedArgumentExprSideEffect(call0, arg0, index0, opcode0) and
+        a = idOfElement(call0) and
+        b = idOfElement(arg0)
+      |
+        cand order by a, b, index0
+      )
+  }
+
   final override Locatable getAst() { result = arg }
 
   final override Type getIndirectionType() {
@@ -651,6 +666,8 @@ class TranslatedStructorQualifierSideEffect extends TranslatedArgumentSideEffect
     index = -1
   }
 
+  final override int getUniqueId_fast(int x) { x = 4 and result = idOfElement(call) }
+
   final override Locatable getAst() { result = call }
 
   final override Type getIndirectionType() { result = call.getTarget().getDeclaringType() }
@@ -671,6 +688,8 @@ class TranslatedCallSideEffect extends TranslatedSideEffect, TTranslatedCallSide
   SideEffectOpcode sideEffectOpcode;
 
   TranslatedCallSideEffect() { this = TTranslatedCallSideEffect(expr, sideEffectOpcode) }
+
+  final override int getUniqueId_fast(int x) { x = 5 and result = idOfElement(expr) }
 
   override Locatable getAst() { result = expr }
 
@@ -709,6 +728,8 @@ class TranslatedAllocationSideEffect extends TranslatedSideEffect, TTranslatedAl
   AllocationExpr expr;
 
   TranslatedAllocationSideEffect() { this = TTranslatedAllocationSideEffect(expr) }
+
+  final override int getUniqueId_fast(int x) { x = 6 and result = idOfElement(expr) }
 
   override Locatable getAst() { result = expr }
 

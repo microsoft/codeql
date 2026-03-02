@@ -141,6 +141,8 @@ abstract class TranslatedVariableInitialization extends TranslatedElement, Initi
 abstract class TranslatedInitialization extends TranslatedElement, TTranslatedInitialization {
   Expr expr;
 
+  final override int getUniqueId_fast(int x) { x = 33 and result = idOfElement(expr) }
+
   TranslatedInitialization() { this = TTranslatedInitialization(expr) }
 
   final override string toString() { result = "init: " + expr.toString() }
@@ -580,6 +582,20 @@ class TranslatedExplicitFieldInitialization extends TranslatedFieldInitializatio
     this = TTranslatedExplicitFieldInitialization(ast, field, expr, position)
   }
 
+  final override int getUniqueId_fast(int x) {
+    x = 34 and
+    this =
+      rank[result + 1](TranslatedExplicitFieldInitialization cand, Expr ast0, Field field0,
+        Expr expr0, int position0, int a, int b, int c |
+        cand = TTranslatedExplicitFieldInitialization(ast0, field0, expr0, position0) and
+        a = idOfElement(ast0) and
+        b = idOfElement(field0) and
+        c = idOfElement(expr0)
+      |
+        cand order by a, b, c, position0
+      )
+  }
+
   override Instruction getALastInstructionInternal() {
     result = this.getInitialization().getALastInstruction()
   }
@@ -622,6 +638,19 @@ class TranslatedFieldValueInitialization extends TranslatedFieldInitialization,
   TTranslatedFieldValueInitialization
 {
   TranslatedFieldValueInitialization() { this = TTranslatedFieldValueInitialization(ast, field) }
+
+  final override int getUniqueId_fast(int x) {
+    x = 35 and
+    this =
+      rank[result + 1](TTranslatedFieldValueInitialization cand, Expr ast0, Field field0, int a,
+        int b |
+        cand = TTranslatedFieldValueInitialization(ast0, field0) and
+        a = idOfElement(ast0) and
+        b = idOfElement(field0)
+      |
+        cand order by a, b
+      )
+  }
 
   override Instruction getALastInstructionInternal() {
     result = this.getInstruction(this.getFieldDefaultValueStoreTag())
@@ -772,6 +801,18 @@ class TranslatedExplicitElementInitialization extends TranslatedElementInitializ
     this = TTranslatedExplicitElementInitialization(initList, elementIndex, position)
   }
 
+  final override int getUniqueId_fast(int x) {
+    x = 36 and
+    this =
+      rank[result + 1](TranslatedExplicitElementInitialization cand,
+        ArrayOrVectorAggregateLiteral initList0, int elementIndex0, int position0, int a |
+        cand = TTranslatedExplicitElementInitialization(initList0, elementIndex0, position0) and
+        a = idOfElement(initList0)
+      |
+        cand order by a, elementIndex0, position0
+      )
+  }
+
   override Instruction getALastInstructionInternal() {
     result = this.getInitialization().getALastInstruction()
   }
@@ -819,6 +860,18 @@ class TranslatedElementValueInitialization extends TranslatedElementInitializati
 
   TranslatedElementValueInitialization() {
     this = TTranslatedElementValueInitialization(initList, elementIndex, elementCount)
+  }
+
+  final override int getUniqueId_fast(int x) {
+    x = 37 and
+    this =
+      rank[result + 1](TranslatedElementValueInitialization cand,
+        ArrayOrVectorAggregateLiteral initList0, int elementIndex0, int elementCount0, int a |
+        cand = TTranslatedElementValueInitialization(initList0, elementIndex0, elementCount0) and
+        a = idOfElement(initList0)
+      |
+        cand order by a, elementIndex0, elementCount0
+      )
   }
 
   override Instruction getALastInstructionInternal() {
@@ -981,6 +1034,8 @@ TranslatedConstructorCallFromConstructor getTranslatedConstructorBaseInit(Constr
 class TranslatedConstructorDelegationInit extends TranslatedConstructorCallFromConstructor {
   override ConstructorDelegationInit call;
 
+  final override int getUniqueId_fast(int x) { x = 38 and result = idOfElement(call) }
+
   final override string toString() { result = "delegation construct: " + call.toString() }
 
   final override Instruction getFirstInstruction(EdgeKind kind) {
@@ -1013,6 +1068,8 @@ class TranslatedConstructorBaseInit extends TranslatedConstructorCallFromConstru
 {
   TranslatedConstructorBaseInit() { not call instanceof ConstructorDelegationInit }
 
+  final override int getUniqueId_fast(int x) { x = 39 and result = idOfElement(call) }
+
   final override string toString() { result = "construct base: " + call.toString() }
 }
 
@@ -1031,6 +1088,8 @@ class TranslatedDestructorBaseDestruction extends TranslatedBaseStructorCall,
 {
   TranslatedDestructorBaseDestruction() { this = TTranslatedDestructorBaseDestruction(call) }
 
+  final override int getUniqueId_fast(int x) { x = 40 and result = idOfElement(call) }
+
   final override string toString() { result = "destroy base: " + call.toString() }
 }
 
@@ -1043,6 +1102,8 @@ class TranslatedConstructorBareInit extends TranslatedElement, TTranslatedConstr
   ConstructorInit init;
 
   TranslatedConstructorBareInit() { this = TTranslatedConstructorBareInit(init) }
+
+  final override int getUniqueId_fast(int x) { x = 41 and result = idOfElement(init) }
 
   override Locatable getAst() { result = init }
 

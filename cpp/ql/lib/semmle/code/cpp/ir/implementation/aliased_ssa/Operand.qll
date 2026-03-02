@@ -28,6 +28,11 @@ private class KnownLocation extends Language::Location {
   KnownLocation() { not this instanceof Language::UnknownLocation }
 }
 
+private predicate operandHasComponents(Operand op, int a, int b) {
+  a = op.getUse().getUniqueId_fast() and
+  b = op.getAnyDef().getUniqueId_fast()
+}
+
 /**
  * An operand of an `Instruction`. The operand represents a use of the result of one instruction
  * (the defining instruction) in another instruction (the use instruction)
@@ -46,6 +51,15 @@ class Operand extends TStageOperand {
     )
     or
     this = chiOperand(_, _)
+  }
+
+  int getUniqueId_fast() {
+    this =
+      rank[result + 1](Operand cand, int a, int b |
+        operandHasComponents(cand, a, b)
+      |
+        cand order by a, b
+      )
   }
 
   /** Gets a textual representation of this element. */

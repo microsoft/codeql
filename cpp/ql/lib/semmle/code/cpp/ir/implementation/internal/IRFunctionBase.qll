@@ -8,6 +8,10 @@ private newtype TIRFunction =
   TFunctionIRFunction(Language::Function func) { IRConstruction::Raw::functionHasIR(func) } or
   TVarInitIRFunction(Language::Variable var) { IRConstruction::Raw::varHasIRFunc(var) }
 
+private predicate id(@element x, @element y) { x = y }
+
+private int idOfElement(@element x) = equivalenceRelation(id/2)(x, result)
+
 /**
  * The IR for a function. This base class contains only the predicates that are the same between all
  * phases of the IR. Each instantiation of `IRFunction` extends this class.
@@ -29,4 +33,6 @@ class IRFunctionBase extends TIRFunction {
 
   /** Gets the location of the function. */
   final Language::Location getLocation() { result = decl.getLocation() }
+
+  int getUniqueId_fast() { result = idOfElement(decl) }
 }

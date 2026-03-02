@@ -732,6 +732,14 @@ private newtype TTypeDomain =
 class TypeDomain extends TTypeDomain {
   /** Gets a textual representation of this type domain. */
   string toString() { none() }
+
+  final int getUniqueId_fast() {
+    this = TRealDomain() and result = 1
+    or
+    this = TComplexDomain() and result = 2
+    or
+    this = TImaginaryDomain() and result = 3
+  }
 }
 
 /**

@@ -256,7 +256,18 @@ class CppType extends TCppType {
       type = typedefType.getUnderlyingType()
     )
   }
+
+  predicate hasComponents(int a, int b) { none() }
+
+  final int getUniqueId_fast() {
+    this =
+      rank[result + 1](CppType cand, int a, int b | cand.hasComponents(a, b) | cand order by a, b)
+  }
 }
+
+private predicate id(@element x, @element y) { x = y }
+
+private int idOfElement(@element x) = equivalenceRelation(id/2)(x, result)
 
 /**
  * A `CppType` that wraps an existing `Type` (either as a prvalue or a glvalue).
@@ -267,6 +278,16 @@ private class CppWrappedType extends CppType {
   CppWrappedType() {
     this = TPRValueType(ctype) or
     this = TGLValueAddressType(ctype)
+  }
+
+  final override predicate hasComponents(int a, int b) {
+    this = TPRValueType(ctype) and
+    a = 1 and
+    b = idOfElement(ctype)
+    or
+    this = TGLValueAddressType(ctype) and
+    a = 2 and
+    b = idOfElement(ctype)
   }
 }
 
@@ -295,6 +316,11 @@ private class CppUnknownOpaqueType extends CppType, TUnknownOpaqueType {
   int byteSize;
 
   CppUnknownOpaqueType() { this = TUnknownOpaqueType(byteSize) }
+
+  final override predicate hasComponents(int a, int b) {
+    a = 3 and
+    b = byteSize
+  }
 
   final override string toString() { result = "unknown[" + byteSize.toString() + "]" }
 
@@ -331,6 +357,11 @@ private class CppGLValueAddressType extends CppWrappedType, TGLValueAddressType 
 private class CppFunctionGLValueType extends CppType, TFunctionGLValueType {
   final override string toString() { result = "glval<unknown>" }
 
+  final override predicate hasComponents(int a, int b) {
+    a = 4 and
+    b = 0
+  }
+
   final override IRFunctionAddressType getIRType() { result.getByteSize() = getPointerSize() }
 
   final override predicate hasType(Type type, boolean isGLValue) {
@@ -343,6 +374,11 @@ private class CppFunctionGLValueType extends CppType, TFunctionGLValueType {
  */
 private class CppUnknownType extends CppType, TUnknownType {
   final override string toString() { result = any(UnknownType type).toString() }
+
+  final override predicate hasComponents(int a, int b) {
+    a = 5 and
+    b = 0
+  }
 
   final override IRUnknownType getIRType() { any() }
 
