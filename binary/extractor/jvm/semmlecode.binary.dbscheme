@@ -3012,3 +3012,13 @@ jvm_stack_slot(
   int slot: int ref,
   int producer_id: @jvm_instruction ref
 );
+
+/**
+ * Parameter type signature for JVM method call targets.
+ * The param_signature is a parenthesized, comma-separated list of human-readable
+ * parameter type names, e.g. "(Object,long,long)" or "()" for no parameters.
+ */
+jvm_call_target_param_signature(
+  int instruction: @jvm_instruction ref,
+  string param_signature: string ref
+);

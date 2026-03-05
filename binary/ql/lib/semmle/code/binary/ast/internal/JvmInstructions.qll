@@ -1212,7 +1212,7 @@ class JvmPutfield extends @jvm_putfield, JvmFieldStore { }
 abstract class JvmInvoke extends JvmInstruction {
   string getCallTarget() { jvm_call_target_unresolved(this, result) }
 
-  string getParamSignature() { il_call_target_param_signature(this, result) }
+  string getParamSignature() { jvm_call_target_param_signature(this, result) }
 
   int getNumberOfArguments() { jvm_number_of_arguments(this, result) }
 

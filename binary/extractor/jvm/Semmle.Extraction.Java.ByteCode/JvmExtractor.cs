@@ -654,7 +654,7 @@ public class JvmExtractor
             // Write parameter type signature for overload-precise matching
             if (!string.IsNullOrEmpty(descriptor))
             {
-                trap.WriteTuple("il_call_target_param_signature", instrId, ParseParamSignature(descriptor));
+                trap.WriteTuple("jvm_call_target_param_signature", instrId, ParseParamSignature(descriptor));
             }
 
             if (!IsVoidReturn(descriptor))
