@@ -95,8 +95,19 @@ Function getStateMachineImplementation(Function stub) { isStateMachineImplementa
  * state machine implementations.
  */
 Function getAVulnerableMethod(string id) {
-  // Direct call to vulnerable method
+  // Direct call to vulnerable method (cross-assembly via ExternalRef)
   result = getADirectlyVulnerableMethod(id)
+  or
+  // Method defined in this binary that matches the model.
+  // This handles root cause mode where the vulnerable method is in the same
+  // package being analyzed, not referenced cross-assembly via ExternalRef.
+  // The result set includes the root cause methods themselves plus all their
+  // transitive callers, filtered downstream to public methods for export.
+  exists(string namespace, string className, string methodName, string paramSignature |
+    vulnerableCallModel(namespace, className, methodName, paramSignature, id) and
+    result.hasFullyQualifiedName(namespace, className, methodName) and
+    (paramSignature = "*" or result.getParamSignature() = paramSignature)
+  )
   or
   // Transitive: method calls another method that is vulnerable (via ExternalRef for external calls)
   exists(CallInstruction call, Function callee |
