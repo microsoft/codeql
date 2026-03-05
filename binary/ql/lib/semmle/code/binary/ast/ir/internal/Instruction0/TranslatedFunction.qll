@@ -329,8 +329,7 @@ class TranslatedJvmMethod extends TranslatedFunction, TTranslatedJvmMethod {
 
   override string getName() { result = method.getName() }
 
-  // JVM does not currently extract parameter type signatures
-  override string getParamSignature() { result = "*" }
+  override string getParamSignature() { result = method.getParamSignature() }
 
   override predicate isProgramEntryPoint() { none() }
 

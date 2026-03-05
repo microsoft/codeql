@@ -2769,6 +2769,11 @@ class TranslatedJvmInvoke extends TranslatedJvmInstruction, TTranslatedJvmInvoke
     result = instr.getCallTarget()
   }
 
+  final override string getExternalParamSignature(InstructionTag tag) {
+    tag = JvmCallTargetTag() and
+    result = instr.getParamSignature()
+  }
+
   override Instruction getChildSuccessor(TranslatedElement child, SuccessorType succType) { none() }
 
   override Instruction getSuccessor(InstructionTag tag, SuccessorType succType) {

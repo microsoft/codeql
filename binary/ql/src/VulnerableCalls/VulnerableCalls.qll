@@ -36,6 +36,8 @@ class VulnerableMethodCall extends CallInstruction {
           paramSignature = "*"
           or
           extRef.getExternalParamSignature() = paramSignature
+          or
+          not exists(extRef.getExternalParamSignature()) // JVM calls lack param signatures
         )
       )
     )
@@ -106,7 +108,11 @@ Function getAVulnerableMethod(string id) {
   exists(string namespace, string className, string methodName, string paramSignature |
     vulnerableCallModel(namespace, className, methodName, paramSignature, id) and
     result.hasFullyQualifiedName(namespace, className, methodName) and
-    (paramSignature = "*" or result.getParamSignature() = paramSignature)
+    (
+      paramSignature = "*" or
+      result.getParamSignature() = paramSignature or
+      result.getParamSignature() = "*"  // JVM functions don't have param signatures yet
+    )
   )
   or
   // Transitive: method calls another method that is vulnerable (via ExternalRef for external calls)
