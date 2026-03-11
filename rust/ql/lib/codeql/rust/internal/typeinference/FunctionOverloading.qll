@@ -86,7 +86,7 @@ predicate traitTypeParameterOccurrence(
   TypeParameter traitTp
 ) {
   f = trait.getAssocItem(functionName) and
-  traitTp = getAssocFunctionTypeInclNonMethodSelfAt(f, trait, pos, path) and
+  traitTp = getAssocFunctionTypeAt(f, trait, pos, path) and
   traitTp = trait.(TraitTypeAbstraction).getATypeParameter()
 }
 
@@ -124,7 +124,7 @@ private predicate functionResolutionDependsOnArgumentCand(
     implHasSibling(impl, trait) and
     traitTypeParameterOccurrence(trait, _, functionName, pos, path, traitTp) and
     f = impl.getASuccessor(functionName) and
-    not pos.isSelf()
+    not pos.isSelfOrTypeQualifier()
   )
 }
 
@@ -141,7 +141,7 @@ pragma[nomagic]
 private Type getAssocFunctionNonTypeParameterTypeAt(
   ImplItemNode impl, Function f, FunctionPosition pos, TypePath path
 ) {
-  result = getAssocFunctionTypeInclNonMethodSelfAt(f, impl, pos, path) and
+  result = getAssocFunctionTypeAt(f, impl, pos, path) and
   not result instanceof TypeParameter
 }
 
