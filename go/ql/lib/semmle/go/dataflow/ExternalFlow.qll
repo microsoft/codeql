@@ -153,7 +153,10 @@ module ModelValidation {
         not part = "" and
         not (part = "Argument" and pred = "sink") and
         not parseArg(part, _) and
-        not part.getName() = "Field"
+        // If the database does not contain any fields/pointer types then no
+        // FieldContent/PointerContent exists, so we spuriously think that
+        // these spec components are invalid.
+        not part.getName() = ["Field", "Dereference"]
         or
         part = input.getToken(0) and
         parseParam(part, _)
@@ -176,7 +179,10 @@ module ModelValidation {
         invalidSpecComponent(output, part) and
         not part = "" and
         not (part = ["Argument", "Parameter"] and pred = "source") and
-        not part.getName() = "Field"
+        // If the database does not contain any fields/pointer types then no
+        // FieldContent/PointerContent exists, so we spuriously think that
+        // these spec components are invalid.
+        not part.getName() = ["Field", "Dereference"]
         or
         invalidIndexComponent(output, part)
       ) and
@@ -503,44 +509,23 @@ predicate barrierNode(DataFlow::Node node, string kind) { barrierNode(node, kind
 
 // adapter class for converting Mad summaries to `SummarizedCallable`s
 private class SummarizedCallableAdapter extends Public::SummarizedCallable {
-  SummarizedCallableAdapter() { summaryElement(this, _, _, _, _, _) }
+  string input_;
+  string output_;
+  string kind;
+  Public::Provenance p_;
+  string model_;
 
-  private predicate relevantSummaryElementManual(
-    string input, string output, string kind, string model
-  ) {
-    exists(Public::Provenance provenance |
-      summaryElement(this, input, output, kind, provenance, model) and
-      provenance.isManual()
-    )
-  }
-
-  private predicate relevantSummaryElementGenerated(
-    string input, string output, string kind, string model
-  ) {
-    exists(Public::Provenance provenance |
-      summaryElement(this, input, output, kind, provenance, model) and
-      provenance.isGenerated()
-    ) and
-    not exists(Public::Provenance provenance |
-      neutralElement(this, "summary", provenance) and
-      provenance.isManual()
-    )
-  }
+  SummarizedCallableAdapter() { summaryElement(this, input_, output_, kind, p_, model_) }
 
   override predicate propagatesFlow(
-    string input, string output, boolean preservesValue, string model
+    string input, string output, boolean preservesValue, Public::Provenance p, boolean isExact,
+    string model
   ) {
-    exists(string kind |
-      this.relevantSummaryElementManual(input, output, kind, model)
-      or
-      not this.relevantSummaryElementManual(_, _, _, _) and
-      this.relevantSummaryElementGenerated(input, output, kind, model)
-    |
-      if kind = "value" then preservesValue = true else preservesValue = false
-    )
-  }
-
-  override predicate hasProvenance(Public::Provenance provenance) {
-    summaryElement(this, _, _, _, provenance, _)
+    input = input_ and
+    output = output_ and
+    (if kind = "value" then preservesValue = true else preservesValue = false) and
+    p = p_ and
+    isExact = true and
+    model = model_
   }
 }
