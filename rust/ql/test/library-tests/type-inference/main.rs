@@ -2636,6 +2636,13 @@ mod block_types {
 }
 
 mod context_typed {
+    #[derive(Default)]
+    struct S;
+
+    impl S {
+        fn f(self) {}
+    }
+
     pub fn f() {
         let x = None; // $ type=x:T.i32
         let x: Option<i32> = x;
@@ -2683,6 +2690,9 @@ mod context_typed {
 
         let y = Default::default(); // $ type=y:i32 target=default
         x.push(y); // $ target=push
+
+        let s = Default::default(); // $ target=default type=s:S
+        S::f(s); // $ target=f
     }
 }
 
@@ -2740,6 +2750,7 @@ mod blanket_impl;
 mod closure;
 mod dereference;
 mod dyn_type;
+mod regressions;
 
 fn main() {
     field_access::f(); // $ target=f

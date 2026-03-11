@@ -23,6 +23,10 @@ class FunctionPosition extends TFunctionPosition {
 
   ArgumentPosition asArgumentPosition() { this = TArgumentFunctionPosition(result) }
 
+  predicate isTypeQualifier() { this.asArgumentPosition().isTypeQualifier() }
+
+  predicate isSelfOrTypeQualifier() { this.isSelf() or this.isTypeQualifier() }
+
   predicate isReturn() { this = TReturnFunctionPosition() }
 
   /** Gets the corresponding position when `f` is invoked via a function call. */
@@ -82,9 +86,9 @@ private newtype TAssocFunctionType =
     // through `i`. This ensures that `parent` is either a supertrait of `i` or
     // `i` in an `impl` block implementing `parent`.
     (parent = i or BaseTypes::rootTypesSatisfaction(_, TTrait(parent), i, _, _)) and
-    // We always include the `self` position, even for non-methods, where it is used
+    // We always include the type qualifier position, even for non-methods, where it is used
     // to match type qualifiers against the `impl` or trait type, such as in `Vec::new`.
-    (exists(pos.getTypeMention(f)) or pos.isSelf())
+    (exists(pos.getTypeMention(f)) or pos.isTypeQualifier())
   }
 
 bindingset[abs, constraint, tp]
@@ -116,21 +120,9 @@ Type getAssocFunctionTypeAt(Function f, ImplOrTraitItemNode i, FunctionPosition 
       else result = getTraitConstraintTypeAt(i, constraint, tp, suffix)
     )
   )
-}
-
-/**
- * Same as `getAssocFunctionTypeAt`, but also includes types at the `self` position
- * for non-methods.
- */
-pragma[nomagic]
-Type getAssocFunctionTypeInclNonMethodSelfAt(
-  Function f, ImplOrTraitItemNode i, FunctionPosition pos, TypePath path
-) {
-  result = getAssocFunctionTypeAt(f, i, pos, path)
   or
   f = i.getASuccessor(_) and
-  not f.hasSelfParam() and
-  pos.isSelf() and
+  pos.isTypeQualifier() and
   result = resolveImplOrTraitType(i, path)
 }
 
@@ -192,7 +184,7 @@ class AssocFunctionType extends MkAssocFunctionType {
   Type getTypeAt(TypePath path) {
     exists(Function f, FunctionPosition pos, ImplOrTraitItemNode i, Type t |
       this.appliesTo(f, i, pos) and
-      t = getAssocFunctionTypeInclNonMethodSelfAt(f, i, pos, path)
+      t = getAssocFunctionTypeAt(f, i, pos, path)
     |
       not t instanceof SelfTypeParameter and
       result = t
@@ -420,13 +412,20 @@ module ArgsAreInstantiationsOf<ArgsAreInstantiationsOfInputSig Input> {
     ArgIsInstantiationOf<CallAndPos, ArgIsInstantiationOfToIndexInput>;
 
   pragma[nomagic]
+  private predicate argIsInstantiationOf(
+    Input::Call call, FunctionPosition pos, ImplOrTraitItemNode i, Function f, int rnk
+  ) {
+    ArgIsInstantiationOfToIndex::argIsInstantiationOf(MkCallAndPos(call, pos), i, _) and
+    toCheckRanked(i, f, _, pos, rnk)
+  }
+
+  pragma[nomagic]
   private predicate argsAreInstantiationsOfToIndex(
     Input::Call call, ImplOrTraitItemNode i, Function f, int rnk
   ) {
     exists(FunctionPosition pos |
-      ArgIsInstantiationOfToIndex::argIsInstantiationOf(MkCallAndPos(call, pos), i, _) and
-      call.hasTargetCand(i, f) and
-      toCheckRanked(i, f, _, pos, rnk)
+      argIsInstantiationOf(call, pos, i, f, rnk) and
+      call.hasTargetCand(i, f)
     |
       rnk = 0
       or
