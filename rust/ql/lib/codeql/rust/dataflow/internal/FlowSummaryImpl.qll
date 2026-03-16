@@ -9,6 +9,7 @@ private import codeql.rust.dataflow.internal.DataFlowImpl
 private import codeql.rust.internal.PathResolution
 private import codeql.rust.dataflow.FlowSummary
 private import codeql.rust.dataflow.Ssa
+private import codeql.rust.dataflow.internal.ModelsAsData
 private import Content
 
 predicate encodeContentTupleField(TupleFieldContent c, string arg) {
@@ -45,6 +46,16 @@ module Input implements InputSig<Location, RustDataFlow> {
   abstract class SourceBase extends SourceSinkBase { }
 
   abstract class SinkBase extends SourceSinkBase { }
+
+  predicate neutralElement(
+    Input::SummarizedCallableBase c, string kind, string provenance, boolean isExact
+  ) {
+    exists(string path |
+      neutralModel(path, kind, provenance, _) and
+      c.getCanonicalPath() = path and
+      isExact = true
+    )
+  }
 
   private class CallExprFunction extends SourceBase, SinkBase {
     private CallExpr call;
