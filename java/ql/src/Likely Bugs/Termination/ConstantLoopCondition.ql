@@ -57,15 +57,13 @@ predicate loopExitGuard(LoopStmt loop, Expr cond) {
  */
 predicate mainLoopCondition(LoopStmt loop, Expr cond) {
   loop.getCondition() = cond and
-  exists(BasicBlock condBlock | condBlock.getANode().isBefore(cond) |
-    1 < strictcount(condBlock.getAPredecessor()) or loop instanceof DoStmt
-  )
-}
-
-predicate ssaDefinitionInLoop(LoopStmt loop, SsaDefinition ssa) {
-  exists(ControlFlowNode node | node = ssa.getControlFlowNode() |
-    node.getAstNode().(Stmt).getEnclosingStmt*() = loop or
-    node.getAstNode().(Expr).getEnclosingStmt().getEnclosingStmt*() = loop
+  exists(Expr loopReentry, ControlFlowNode last |
+    if exists(loop.(ForStmt).getAnUpdate())
+    then loopReentry = loop.(ForStmt).getUpdate(0)
+    else loopReentry = cond
+  |
+    last.getEnclosingStmt().getEnclosingStmt*() = loop.getBody() and
+    last.getASuccessor().asExpr().getParent*() = loopReentry
   )
 }
 
@@ -78,7 +76,7 @@ where
   ) and
   // None of the ssa variables in `cond` are updated inside the loop.
   forex(SsaDefinition ssa, VarRead use | ssa.getARead() = use and use.getParent*() = cond |
-    not ssaDefinitionInLoop(loop, ssa) or
+    not ssa.getControlFlowNode().getEnclosingStmt().getEnclosingStmt*() = loop or
     ssa.getControlFlowNode().asExpr().getParent*() = loop.(ForStmt).getAnInit()
   ) and
   // And `cond` does not use method calls, field reads, or array reads.

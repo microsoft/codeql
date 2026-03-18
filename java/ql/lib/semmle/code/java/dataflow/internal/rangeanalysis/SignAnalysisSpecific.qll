@@ -161,9 +161,13 @@ module Private {
       this instanceof J::AssignUnsignedRightShiftExpr and result = TUnsignedRightShiftOp()
     }
 
-    Expr getLeftOperand() { result = this.(J::BinaryExpr).getLeftOperand() }
+    Expr getLeftOperand() {
+      result = this.(J::BinaryExpr).getLeftOperand() or result = this.(J::AssignOp).getDest()
+    }
 
-    Expr getRightOperand() { result = this.(J::BinaryExpr).getRightOperand() }
+    Expr getRightOperand() {
+      result = this.(J::BinaryExpr).getRightOperand() or result = this.(J::AssignOp).getRhs()
+    }
   }
 
   predicate ssaRead = RU::ssaRead/2;

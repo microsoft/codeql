@@ -31,7 +31,10 @@ class RightShiftOp extends Expr {
     this instanceof AssignUnsignedRightShiftExpr
   }
 
-  private Expr getLhs() { this.(BinaryExpr).getLeftOperand() = result }
+  private Expr getLhs() {
+    this.(BinaryExpr).getLeftOperand() = result or
+    this.(Assignment).getDest() = result
+  }
 
   /**
    * Gets the variable that is shifted.

@@ -54,8 +54,9 @@ private module PredictableSeedFlowConfig implements DataFlow::ConfigSig {
 private module PredictableSeedFlow = DataFlow::Global<PredictableSeedFlowConfig>;
 
 private predicate predictableCalcStep(Expr e1, Expr e2) {
-  e2.(BinaryExpr).hasOperands(e1, any(PredictableSeedExpr p)) and
-  not e2 instanceof AssignExpr
+  e2.(BinaryExpr).hasOperands(e1, any(PredictableSeedExpr p))
+  or
+  exists(AssignOp a | a = e2 | e1 = a.getDest() and a.getRhs() instanceof PredictableSeedExpr)
   or
   exists(ConstructorCall cc, TypeNumber t | cc = e2 |
     cc.getArgument(0) = e1 and

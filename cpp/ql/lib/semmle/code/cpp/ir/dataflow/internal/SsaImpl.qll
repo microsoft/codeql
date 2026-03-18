@@ -10,9 +10,8 @@ private import semmle.code.cpp.models.interfaces.PartialFlow as PartialFlow
 private import semmle.code.cpp.models.interfaces.FunctionInputsAndOutputs as FIO
 private import semmle.code.cpp.ir.internal.IRCppLanguage
 private import semmle.code.cpp.ir.dataflow.internal.ModelUtil
-private import semmle.code.cpp.ir.implementation.raw.internal.IRConstruction as IRConstruction
+private import semmle.code.cpp.ir.implementation.raw.internal.TranslatedInitialization
 private import DataFlowPrivate
-private import DataFlowNodes
 import SsaImplCommon
 
 private module SourceVariables {
@@ -439,7 +438,10 @@ private predicate sourceVariableHasBaseAndIndex(SourceVariable v, BaseSourceVari
  * initialize `v`.
  */
 private Instruction getInitializationTargetAddress(IRVariable v) {
-  result = IRConstruction::Raw::getInitializationTargetAddress(v)
+  exists(TranslatedVariableInitialization init |
+    init.getIRVariable() = v and
+    result = init.getTargetAddress()
+  )
 }
 
 /** An initial definition of an SSA variable address. */

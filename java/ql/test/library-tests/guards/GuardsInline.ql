@@ -11,9 +11,7 @@ string ppGuard(Guard g, Boolean branch) {
   or
   exists(BinaryExpr bin |
     bin = g and
-    result =
-      "'" + bin.getLeftOperand() + " " + bin.getOp() + " " + bin.getRightOperand() + ":" + branch +
-        "'"
+    result = "'" + bin.getLeftOperand() + bin.getOp() + bin.getRightOperand() + ":" + branch + "'"
   )
   or
   exists(SwitchCase cc, Expr s, string match, string value |

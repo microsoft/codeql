@@ -1,9 +1,9 @@
-import java
-import utils.test.BasicBlock
+import default
+import semmle.code.java.controlflow.Dominance
 
-from Method func, BasicBlock dominator, BasicBlock bb
+from Method func, ControlFlowNode dominator, ControlFlowNode node
 where
-  dominator.immediatelyDominates(bb) and
-  dominator.getEnclosingCallable() = func and
+  iDominates(dominator, node) and
+  dominator.getEnclosingStmt().getEnclosingCallable() = func and
   func.getDeclaringType().hasName("Test")
-select getFirstAstNodeOrSynth(dominator), getFirstAstNodeOrSynth(bb)
+select dominator, node

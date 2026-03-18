@@ -7,5 +7,5 @@ where
   iDominates(dom1, node) and
   iDominates(dom2, node) and
   dom1 != dom2 and
-  func = node.getEnclosingCallable()
+  func = node.getEnclosingStmt().getEnclosingCallable()
 select func, node, dom1, dom2

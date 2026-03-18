@@ -1,7 +1,6 @@
 import testModels
 private import semmle.code.cpp.ir.dataflow.internal.DataFlowPrivate
 private import semmle.code.cpp.ir.dataflow.internal.DataFlowUtil
-private import semmle.code.cpp.ir.dataflow.internal.DataFlowNodes
 
 string describe(DataFlow::Node n) {
   n instanceof ParameterNode and result = "ParameterNode"

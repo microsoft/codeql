@@ -93,7 +93,8 @@ class ArithExpr extends Expr {
     ) and
     forall(Expr e |
       e = this.(BinaryExpr).getAnOperand() or
-      e = this.(UnaryAssignExpr).getOperand()
+      e = this.(UnaryAssignExpr).getOperand() or
+      e = this.(AssignOp).getSource()
     |
       e.getType() instanceof NumType
     )
@@ -113,17 +114,21 @@ class ArithExpr extends Expr {
    */
   Expr getLeftOperand() {
     result = this.(BinaryExpr).getLeftOperand() or
-    result = this.(UnaryAssignExpr).getOperand()
+    result = this.(UnaryAssignExpr).getOperand() or
+    result = this.(AssignOp).getDest()
   }
 
   /**
    * Gets the right-hand operand if this is a binary expression.
    */
-  Expr getRightOperand() { result = this.(BinaryExpr).getRightOperand() }
+  Expr getRightOperand() {
+    result = this.(BinaryExpr).getRightOperand() or result = this.(AssignOp).getRhs()
+  }
 
   /** Gets an operand of this arithmetic expression. */
   Expr getAnOperand() {
     result = this.(BinaryExpr).getAnOperand() or
-    result = this.(UnaryAssignExpr).getOperand()
+    result = this.(UnaryAssignExpr).getOperand() or
+    result = this.(AssignOp).getSource()
   }
 }

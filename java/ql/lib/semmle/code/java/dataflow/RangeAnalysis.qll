@@ -86,7 +86,23 @@ module Sem implements Semantic<Location> {
 
   class ConstantIntegerExpr = RU::ConstantIntegerExpr;
 
-  class BinaryExpr = J::BinaryExpr;
+  abstract class BinaryExpr extends Expr {
+    Expr getLeftOperand() {
+      result = this.(J::BinaryExpr).getLeftOperand() or result = this.(J::AssignOp).getDest()
+    }
+
+    Expr getRightOperand() {
+      result = this.(J::BinaryExpr).getRightOperand() or result = this.(J::AssignOp).getRhs()
+    }
+
+    final Expr getAnOperand() { result = this.getLeftOperand() or result = this.getRightOperand() }
+
+    final predicate hasOperands(Expr e1, Expr e2) {
+      this.getLeftOperand() = e1 and this.getRightOperand() = e2
+      or
+      this.getLeftOperand() = e2 and this.getRightOperand() = e1
+    }
+  }
 
   class AddExpr extends BinaryExpr {
     AddExpr() { this instanceof J::AddExpr or this instanceof J::AssignAddExpr }
@@ -203,8 +219,6 @@ module Sem implements Semantic<Location> {
   private predicate idOf(BasicBlock x, int y) { idOfAst(x.getFirstNode().getAstNode(), y) }
 
   int getBlockId1(BasicBlock bb) { idOf(bb, result) }
-
-  string getBlockId2(BasicBlock bb) { bb.getFirstNode().getIdTag() = result }
 
   class Guard extends G::Guards_v2::Guard {
     Expr asExpr() { result = this }
