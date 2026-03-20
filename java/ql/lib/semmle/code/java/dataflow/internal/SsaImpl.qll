@@ -115,7 +115,7 @@ private ControlFlowNode captureNode(TrackedVar capturedvar, TrackedVar closureva
     inner != outer and
     inner.getDeclaringType() = innerclass and
     result = parentDef(desugaredGetEnclosingType*(innerclass)) and
-    result.getEnclosingCallable() = outer and
+    result.getEnclosingStmt().getEnclosingCallable() = outer and
     capturedvar = TLocalVar(outer, v) and
     closurevar = TLocalVar(inner, v)
   )
@@ -130,7 +130,8 @@ private predicate variableCapture(TrackedVar capturedvar, TrackedVar closurevar,
 pragma[nomagic]
 private predicate certainVariableUpdate(TrackedVar v, ControlFlowNode n, BasicBlock b, int i) {
   exists(VariableUpdate a | a.getControlFlowNode() = n | getDestVar(a) = v) and
-  b.getNode(i) = n
+  b.getNode(i) = n and
+  hasDominanceInformation(b)
   or
   certainVariableUpdate(v.getQualifier(), n, b, i)
 }
@@ -152,8 +153,9 @@ private predicate hasEntryDef(TrackedVar v, BasicBlock b) {
 overlay[global]
 pragma[nomagic]
 private predicate uncertainVariableUpdateImpl(TrackedVar v, ControlFlowNode n, BasicBlock b, int i) {
-  exists(Call c | c.getControlFlowNode() = n | updatesNamedField(c, v, _)) and
-  b.getNode(i) = n
+  exists(Call c | c = n.asCall() | updatesNamedField(c, v, _)) and
+  b.getNode(i) = n and
+  hasDominanceInformation(b)
   or
   uncertainVariableUpdateImpl(v.getQualifier(), n, b, i)
 }
@@ -189,15 +191,18 @@ private module SsaImplInput implements SsaImplCommon::InputSig<Location, BasicBl
    * This includes implicit reads via calls.
    */
   predicate variableRead(BasicBlock bb, int i, SourceVariable v, boolean certain) {
-    exists(VarRead use |
-      v instanceof TrackedVar and
-      v.getAnAccess() = use and
-      bb.getNode(i) = use.getControlFlowNode() and
-      certain = true
+    hasDominanceInformation(bb) and
+    (
+      exists(VarRead use |
+        v instanceof TrackedVar and
+        v.getAnAccess() = use and
+        bb.getNode(i) = use.getControlFlowNode() and
+        certain = true
+      )
+      or
+      variableCapture(v, _, bb, i) and
+      certain = false
     )
-    or
-    variableCapture(v, _, bb, i) and
-    certain = false
   }
 }
 
@@ -520,11 +525,8 @@ private module Cached {
   overlay[global]
   cached
   predicate defUpdatesNamedField(SsaImplicitWrite calldef, TrackedField f, Callable setter) {
-    exists(Call call |
-      f = calldef.getSourceVariable() and
-      call.getControlFlowNode() = calldef.getControlFlowNode() and
-      updatesNamedField0(call, f, setter)
-    )
+    f = calldef.getSourceVariable() and
+    updatesNamedField0(calldef.getControlFlowNode().asCall(), f, setter)
   }
 
   /** Holds if `init` is a closure variable that captures the value of `capturedvar`. */

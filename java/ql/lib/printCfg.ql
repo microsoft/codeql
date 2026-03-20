@@ -21,7 +21,7 @@ external int selectedSourceColumn();
 
 private predicate selectedSourceColumnAlias = selectedSourceColumn/0;
 
-module ViewCfgQueryInput implements ControlFlow::ViewCfgQueryInputSig<File> {
+module ViewCfgQueryInput implements ViewCfgQueryInputSig<File> {
   predicate selectedSourceFile = selectedSourceFileAlias/0;
 
   predicate selectedSourceLine = selectedSourceLineAlias/0;
@@ -42,4 +42,4 @@ module ViewCfgQueryInput implements ControlFlow::ViewCfgQueryInputSig<File> {
   }
 }
 
-import ControlFlow::ViewCfgQuery<File, ViewCfgQueryInput>
+import ViewCfgQuery<File, ViewCfgQueryInput>

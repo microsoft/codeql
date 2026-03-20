@@ -23,9 +23,7 @@ private predicate idOfAst(BB::ExprParent x, int y) = equivalenceRelation(id/2)(x
 
 private predicate idOf(BasicBlock x, int y) { idOfAst(x.getFirstNode().getAstNode(), y) }
 
-private int getId1(BasicBlock bb) { idOf(bb, result) }
-
-private string getId2(BasicBlock bb) { bb.getFirstNode().getIdTag() = result }
+private int getId(BasicBlock bb) { idOf(bb, result) }
 
 /**
  * Declarations to be exposed to users of SsaReadPositionCommon
@@ -41,7 +39,7 @@ module Public {
       rank[r](SsaReadPositionPhiInputEdge e |
         e.phiInput(phi, _)
       |
-        e order by getId1(e.getOrigBlock()), getId2(e.getOrigBlock())
+        e order by getId(e.getOrigBlock())
       )
   }
 }

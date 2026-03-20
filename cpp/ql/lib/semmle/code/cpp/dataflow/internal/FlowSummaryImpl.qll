@@ -201,7 +201,7 @@ module SourceSinkInterpretationInput implements
     string toString() {
       result = this.asElement().toString()
       or
-      result = this.asNode().toStringImpl()
+      result = this.asNode().toString()
       or
       result = this.asCall().toString()
     }

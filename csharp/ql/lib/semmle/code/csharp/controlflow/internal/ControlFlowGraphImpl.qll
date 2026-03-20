@@ -94,19 +94,9 @@ private Element getAChild(Element p) {
   result = p.(AssignOperation).getExpandedAssignment()
 }
 
-pragma[nomagic]
-private predicate astNode(Element e) {
-  e = any(@top_level_exprorstmt_parent p | not p instanceof Attribute)
-  or
-  exists(Element parent |
-    astNode(parent) and
-    e = getAChild(parent)
-  )
-}
-
 /** An AST node. */
 class AstNode extends Element, TAstNode {
-  AstNode() { astNode(this) }
+  AstNode() { this = getAChild*(any(@top_level_exprorstmt_parent p | not p instanceof Attribute)) }
 
   int getId() { idOf(this, result) }
 }
@@ -308,93 +298,6 @@ private class ConstructorTree extends ControlFlowTree instanceof Constructor {
   }
 }
 
-cached
-private module SwithStmtInternal {
-  // Reorders default to be last if needed
-  cached
-  CaseStmt getCase(SwitchStmt ss, int i) {
-    exists(int index, int rankIndex |
-      caseIndex(ss, result, index) and
-      rankIndex = i + 1 and
-      index = rank[rankIndex](int j, CaseStmt cs | caseIndex(ss, cs, j) | j)
-    )
-  }
-
-  /** Implicitly reorder case statements to put the default case last if needed. */
-  private predicate caseIndex(SwitchStmt ss, CaseStmt case, int index) {
-    exists(int i | case = ss.getChildStmt(i) |
-      if case instanceof DefaultCase
-      then index = max(int j | exists(ss.getChildStmt(j))) + 1
-      else index = i
-    )
-  }
-
-  /**
-   * Gets the `i`th statement in the body of this `switch` statement.
-   *
-   * Example:
-   *
-   * ```csharp
-   * switch (x) {
-   *   case "abc":              // i = 0
-   *     return 0;
-   *   case int i when i > 0:   // i = 1
-   *     return 1;
-   *   case string s:           // i = 2
-   *     Console.WriteLine(s);
-   *     return 2;              // i = 3
-   *   default:                 // i = 4
-   *     return 3;              // i = 5
-   * }
-   * ```
-   *
-   * Note that each non-`default` case is a labeled statement, so the statement
-   * that follows is a child of the labeled statement, and not the `switch` block.
-   */
-  cached
-  Stmt getStmt(SwitchStmt ss, int i) {
-    exists(int index, int rankIndex |
-      result = ss.getChildStmt(index) and
-      rankIndex = i + 1 and
-      index =
-        rank[rankIndex](int j, Stmt s |
-          // `getChild` includes both labeled statements and the targeted
-          // statements of labeled statement as separate children, but we
-          // only want the labeled statement
-          s = getLabeledStmt(ss, j)
-        |
-          j
-        )
-    )
-  }
-
-  private Stmt getLabeledStmt(SwitchStmt ss, int i) {
-    result = ss.getChildStmt(i) and
-    not result = caseStmtGetBody(_)
-  }
-}
-
-private ControlFlowElement caseGetBody(Case c) {
-  result = c.getBody() or result = caseStmtGetBody(c)
-}
-
-private ControlFlowElement caseStmtGetBody(CaseStmt c) {
-  exists(int i, Stmt next |
-    c = c.getParent().getChild(i) and
-    next = c.getParent().getChild(i + 1)
-  |
-    result = next and
-    not result instanceof CaseStmt
-    or
-    result = caseStmtGetBody(next)
-  )
-}
-
-// Reorders default to be last if needed
-private Case switchGetCase(Switch s, int i) {
-  result = s.(SwitchExpr).getCase(i) or result = SwithStmtInternal::getCase(s, i)
-}
-
 abstract private class SwitchTree extends ControlFlowTree instanceof Switch {
   override predicate propagatesAbnormal(AstNode child) { child = super.getExpr() }
 
@@ -402,27 +305,27 @@ abstract private class SwitchTree extends ControlFlowTree instanceof Switch {
     // Flow from last element of switch expression to first element of first case
     last(super.getExpr(), pred, c) and
     c instanceof NormalCompletion and
-    first(switchGetCase(this, 0), succ)
+    first(super.getCase(0), succ)
     or
     // Flow from last element of case pattern to next case
-    exists(Case case, int i | case = switchGetCase(this, i) |
+    exists(Case case, int i | case = super.getCase(i) |
       last(case.getPattern(), pred, c) and
       c.(MatchingCompletion).isNonMatch() and
-      first(switchGetCase(this, i + 1), succ)
+      first(super.getCase(i + 1), succ)
     )
     or
     // Flow from last element of condition to next case
-    exists(Case case, int i | case = switchGetCase(this, i) |
+    exists(Case case, int i | case = super.getCase(i) |
       last(case.getCondition(), pred, c) and
       c instanceof FalseCompletion and
-      first(switchGetCase(this, i + 1), succ)
+      first(super.getCase(i + 1), succ)
     )
   }
 }
 
 abstract private class CaseTree extends ControlFlowTree instanceof Case {
   final override predicate propagatesAbnormal(AstNode child) {
-    child in [super.getPattern().(ControlFlowElement), super.getCondition(), caseGetBody(this)]
+    child in [super.getPattern().(ControlFlowElement), super.getCondition(), super.getBody()]
   }
 
   override predicate succ(AstNode pred, AstNode succ, Completion c) {
@@ -435,13 +338,13 @@ abstract private class CaseTree extends ControlFlowTree instanceof Case {
         first(super.getCondition(), succ)
       else
         // Flow from last element of pattern to first element of body
-        first(caseGetBody(this), succ)
+        first(super.getBody(), succ)
     )
     or
     // Flow from last element of condition to first element of body
     last(super.getCondition(), pred, c) and
     c instanceof TrueCompletion and
-    first(caseGetBody(this), succ)
+    first(super.getBody(), succ)
   }
 }
 
@@ -1313,11 +1216,10 @@ module Statements {
       c instanceof NormalCompletion
       or
       // A statement exits with a `break` completion
-      last(SwithStmtInternal::getStmt(this, _), last,
-        c.(NestedBreakCompletion).getAnInnerCompatibleCompletion())
+      last(super.getStmt(_), last, c.(NestedBreakCompletion).getAnInnerCompatibleCompletion())
       or
       // A statement exits abnormally
-      last(SwithStmtInternal::getStmt(this, _), last, c) and
+      last(super.getStmt(_), last, c) and
       not c instanceof BreakCompletion and
       not c instanceof NormalCompletion and
       not any(LabeledStmtTree t |
@@ -1326,8 +1228,8 @@ module Statements {
       or
       // Last case exits with a non-match
       exists(CaseStmt cs, int last_ |
-        last_ = max(int i | exists(SwithStmtInternal::getCase(this, i))) and
-        cs = SwithStmtInternal::getCase(this, last_)
+        last_ = max(int i | exists(super.getCase(i))) and
+        cs = super.getCase(last_)
       |
         last(cs.getPattern(), last, c) and
         not c.(MatchingCompletion).isMatch()
@@ -1346,22 +1248,22 @@ module Statements {
       c instanceof SimpleCompletion
       or
       // Flow from last element of non-`case` statement `i` to first element of statement `i+1`
-      exists(int i | last(SwithStmtInternal::getStmt(this, i), pred, c) |
-        not SwithStmtInternal::getStmt(this, i) instanceof CaseStmt and
+      exists(int i | last(super.getStmt(i), pred, c) |
+        not super.getStmt(i) instanceof CaseStmt and
         c instanceof NormalCompletion and
-        first(SwithStmtInternal::getStmt(this, i + 1), succ)
+        first(super.getStmt(i + 1), succ)
       )
       or
       // Flow from last element of `case` statement `i` to first element of statement `i+1`
       exists(int i, Stmt body |
-        body = caseStmtGetBody(SwithStmtInternal::getStmt(this, i)) and
+        body = super.getStmt(i).(CaseStmt).getBody() and
         // in case of fall-through cases, make sure to not jump from their shared body back
         // to one of the fall-through cases
-        not body = caseStmtGetBody(SwithStmtInternal::getStmt(this, i + 1)) and
+        not body = super.getStmt(i + 1).(CaseStmt).getBody() and
         last(body, pred, c)
       |
         c instanceof NormalCompletion and
-        first(SwithStmtInternal::getStmt(this, i + 1), succ)
+        first(super.getStmt(i + 1), succ)
       )
     }
   }
@@ -1377,7 +1279,7 @@ module Statements {
       not c.(MatchingCompletion).isMatch()
       or
       // Case body exits with any completion
-      last(caseStmtGetBody(this), last, c)
+      last(super.getBody(), last, c)
     }
 
     final override predicate succ(AstNode pred, AstNode succ, Completion c) {

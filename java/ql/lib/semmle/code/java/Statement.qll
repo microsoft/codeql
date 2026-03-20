@@ -61,7 +61,7 @@ class Stmt extends StmtParent, ExprParent, @stmt {
 }
 
 /** A statement parent is any element that can have a statement as its child. */
-class StmtParent extends @stmtparent, ExprParent { }
+class StmtParent extends @stmtparent, Top { }
 
 /**
  * An error statement.
@@ -960,9 +960,6 @@ class ThisConstructorInvocationStmt extends Stmt, ConstructorCall, @constructori
   /** Gets the immediately enclosing statement of this constructor invocation. */
   override Stmt getEnclosingStmt() { result = this }
 
-  /** Gets the `ControlFlowNode` corresponding to this call. */
-  override ControlFlowNode getControlFlowNode() { result = Stmt.super.getControlFlowNode() }
-
   override string pp() { result = "this(...)" }
 
   override string toString() { result = "this(...)" }
@@ -1003,9 +1000,6 @@ class SuperConstructorInvocationStmt extends Stmt, ConstructorCall, @superconstr
 
   /** Gets the immediately enclosing statement of this constructor invocation. */
   override Stmt getEnclosingStmt() { result = this }
-
-  /** Gets the `ControlFlowNode` corresponding to this call. */
-  override ControlFlowNode getControlFlowNode() { result = Stmt.super.getControlFlowNode() }
 
   override string pp() { result = "super(...)" }
 
