@@ -699,9 +699,13 @@ class PreTypeMention = PreTypeMention::TypeMention;
 /**
  * Holds if `path` accesses an associated type `alias` from `trait` on a
  * concrete type given by `tm`.
+ *
+ * `implOrTmTrait` is either the mention that resolves to `trait` when `path`
+ * is of the form `<Type as Trait>::AssocType`, or the enclosing `impl` block
+ * when `path` is of the form `Self::AssocType`.
  */
 private predicate pathConcreteTypeAssocType(
-  Path path, PreTypeMention tm, Trait trait, TypeAlias alias
+  Path path, PreTypeMention tm, TraitItemNode trait, AstNode implOrTmTrait, TypeAlias alias
 ) {
   exists(Path qualifier |
     qualifier = path.getQualifier() and
@@ -709,26 +713,26 @@ private predicate pathConcreteTypeAssocType(
   |
     // path of the form `<Type as Trait>::AssocType`
     //                    ^^^ tm          ^^^^^^^^^ name
-    exists(string name, Path traitPath |
-      pathTypeAsTraitAssoc(path, tm, traitPath, name) and
-      trait = resolvePath(traitPath) and
+    exists(string name |
+      pathTypeAsTraitAssoc(path, tm, implOrTmTrait, trait, name) and
       getTraitAssocType(trait, name) = alias
     )
     or
     // path of the form `Self::AssocType` within an `impl` block
     //                tm ^^^^  ^^^^^^^^^ name
-    exists(ImplItemNode impl |
-      alias = resolvePath(path) and
-      qualifier = impl.getASelfPath() and
-      tm = impl.(Impl).getSelfTy() and
-      trait.(TraitItemNode).getAnAssocItem() = alias
-    )
+    implOrTmTrait =
+      any(ImplItemNode impl |
+        alias = resolvePath(path) and
+        qualifier = impl.getASelfPath() and
+        tm = impl.(Impl).getSelfTy() and
+        trait.getAnAssocItem() = alias
+      )
   )
 }
 
 private module PathSatisfiesConstraintInput implements SatisfiesConstraintInputSig<PreTypeMention> {
   predicate relevantConstraint(PreTypeMention tm, Type constraint) {
-    pathConcreteTypeAssocType(_, tm, constraint.(TraitType).getTrait(), _)
+    pathConcreteTypeAssocType(_, tm, constraint.(TraitType).getTrait(), _, _)
   }
 }
 
@@ -740,10 +744,27 @@ private module PathSatisfiesConstraint =
  * on a concrete type.
  */
 private Type getPathConcreteAssocTypeAt(Path path, TypePath typePath) {
-  exists(PreTypeMention tm, TraitItemNode t, TypeAlias alias, TypePath path0 |
-    pathConcreteTypeAssocType(path, tm, t, alias) and
-    PathSatisfiesConstraint::satisfiesConstraintType(tm, TTrait(t), path0, result) and
-    path0.isCons(TAssociatedTypeTypeParameter(t, alias), typePath)
+  exists(
+    PreTypeMention tm, ImplItemNode impl, TraitItemNode trait, TraitType t, AstNode implOrTmTrait,
+    TypeAlias alias, TypePath path0
+  |
+    pathConcreteTypeAssocType(path, tm, trait, implOrTmTrait, alias) and
+    t = TTrait(trait) and
+    PathSatisfiesConstraint::satisfiesConstraintTypeThrough(tm, impl, t, path0, result) and
+    path0.isCons(TAssociatedTypeTypeParameter(trait, alias), typePath)
+  |
+    implOrTmTrait instanceof Impl
+    or
+    // When `path` is of the form `<Type as Trait>::AssocType` we need to check
+    // that `impl` is not more specific than the mentioned trait
+    implOrTmTrait =
+      any(PreTypeMention tmTrait |
+        not exists(TypePath path1, Type t1 |
+          t1 = impl.getTraitPath().(PreTypeMention).getTypeAt(path1) and
+          not t1 instanceof TypeParameter and
+          t1 != tmTrait.getTypeAt(path1)
+        )
+      )
   )
 }
 

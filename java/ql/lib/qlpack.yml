@@ -1,5 +1,5 @@
 name: codeql/java-all
-version: 8.1.1
+version: 9.0.0
 groups: java
 dbscheme: config/semmlecode.dbscheme
 extractor: java
@@ -8,7 +8,6 @@ upgrades: upgrades
 dependencies:
   codeql/controlflow: ${workspace}
   codeql/dataflow: ${workspace}
-  codeql/dataflowstack: ${workspace}
   codeql/mad: ${workspace}
   codeql/quantum: ${workspace}
   codeql/rangeanalysis: ${workspace}

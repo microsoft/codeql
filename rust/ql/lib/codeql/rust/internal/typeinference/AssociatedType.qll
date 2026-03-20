@@ -36,8 +36,8 @@ predicate pathTypeAsTraitAssoc(Path path, TypeRepr typeRepr, Path traitPath, str
 /**
  * Holds if `assoc` is accessed on `tp` in `path`.
  *
- * That is, this is the case when `path` is of the form `<tp as
- * Trait>::AssocType` or `tp::AssocType`; and `AssocType` resolves to `assoc`.
+ * That is, this is the case when `path` is of the form `<tp as Trait>::AssocType`
+ * or `tp::AssocType`; and `AssocType` resolves to `assoc`.
  */
 predicate tpAssociatedType(TypeParam tp, AssocType assoc, Path path) {
   resolvePath(path.getQualifier()) = tp and
