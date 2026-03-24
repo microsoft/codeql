@@ -304,6 +304,25 @@ predicate hasContextmanagerDecorator(Function func) {
   )
 }
 
+/**
+ * Holds if the function `func` has a `typing.overload` decorator.
+ * Such functions are type stubs that declare an overload signature but are
+ * not the actual implementation.
+ *
+ * Normally we would want to model this using API graphs for more precision, but since this
+ * predicate is used in the call graph computation, we have to use a more syntactic approach.
+ */
+overlay[local]
+private predicate hasOverloadDecorator(Function func) {
+  exists(ControlFlowNode overload |
+    overload.(NameNode).getId() = "overload" and overload.(NameNode).isGlobal()
+    or
+    overload.(AttrNode).getObject("overload").(NameNode).isGlobal()
+  |
+    func.getADecorator() = overload.getNode()
+  )
+}
+
 // =============================================================================
 // Callables
 // =============================================================================
@@ -849,7 +868,8 @@ private Class getNextClassInMro(Class cls) {
  */
 Function findFunctionAccordingToMro(Class cls, string name) {
   result = cls.getAMethod() and
-  result.getName() = name
+  result.getName() = name and
+  not hasOverloadDecorator(result)
   or
   not class_has_method(cls, name) and
   result = findFunctionAccordingToMro(getNextClassInMro(cls), name)
@@ -891,6 +911,7 @@ Class getNextClassInMroKnownStartingClass(Class cls, Class startingClass) {
 Function findFunctionAccordingToMroKnownStartingClass(Class cls, Class startingClass, string name) {
   result = cls.getAMethod() and
   result.getName() = name and
+  not hasOverloadDecorator(result) and
   cls = getADirectSuperclass*(startingClass)
   or
   not class_has_method(cls, name) and
