@@ -21,6 +21,12 @@ $o = [System.Security.Cryptography.CryptoConfig]::CreateFromName("SHA1")
 $o = [System.Security.Cryptography.CryptoConfig]::CreateFromName("System.Security.Cryptography.SHA1")
 
 
+# BAD: Using Get-FileHash with MD5
+Get-FileHash -Path "C:\file.txt" -Algorithm MD5
+
+# BAD: Using Get-FileHash with SHA1
+Get-FileHash -Path "C:\file.txt" -Algorithm SHA1
+
 # ---------------------------------------------------------
 # GOOD: Safe usage of cryptographically secure algorithms
 # ---------------------------------------------------------
@@ -44,3 +50,15 @@ $sha384Hash = $sha384.ComputeHash([System.Text.Encoding]::UTF8.GetBytes("passwor
 # GOOD: Using SHA512
 $sha512 = [System.Security.Cryptography.SHA512]::Create()
 $sha512Hash = $sha512.ComputeHash([System.Text.Encoding]::UTF8.GetBytes("password123"))
+
+# GOOD: Using Get-FileHash with SHA256
+Get-FileHash -Path "C:\file.txt" -Algorithm SHA256
+
+# GOOD: Using Get-FileHash with SHA384
+Get-FileHash -Path "C:\file.txt" -Algorithm SHA384
+
+# GOOD: Using Get-FileHash with SHA512
+Get-FileHash -Path "C:\file.txt" -Algorithm SHA512
+
+# GOOD: Using Get-FileHash without specifying algorithm (defaults to SHA256)
+Get-FileHash -Path "C:\file.txt"

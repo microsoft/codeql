@@ -100,6 +100,18 @@ class HashAlgorithmCreateFromNameCall extends HashAlgorithm, CryptoAlgorithmCrea
   override string getName() { result = algName }
 }
 
+class GetFileHashWeakAlgorithm extends HashAlgorithm, DataFlow::CallNode {
+  string algName;
+
+  GetFileHashWeakAlgorithm() {
+    this.matchesName("Get-FileHash") and
+    algName = this.getNamedArgument("algorithm").asExpr().getValue().asString().toLowerCase() and
+    isHashingAlgorithm(algName)
+  }
+
+  override string getName() { result = algName }
+}
+
 class SymmetricAlgorithmObjectCreation extends SymmetricAlgorithm, CryptoAlgorithmObjectCreation {
   string algName;
 
