@@ -7,6 +7,7 @@ import semmle.code.cpp.ir.dataflow.DataFlow
 private import semmle.code.cpp.ir.IR
 import semmle.code.cpp.models.interfaces.FlowSource
 private import semmle.code.cpp.ir.dataflow.internal.ModelUtil
+private import semmle.code.cpp.ir.dataflow.internal.DataFlowPrivate as Private
 
 /** A data flow source of user input, whether local or remote. */
 abstract class FlowSource extends DataFlow::Node {
@@ -132,4 +133,110 @@ private class RemoteFlowFromCsvSink extends RemoteFlowSink {
   RemoteFlowFromCsvSink() { sinkNode(this, "remote-sink") }
 
   override string getSinkType() { result = "remote flow sink" }
+}
+
+class DriverEntryFunction extends Function {
+  DriverEntryFunction() { this.hasGlobalName("DriverEntry") }
+}
+
+private predicate hasAMajorFunctionAssignment(
+  Parameter driverObject, int index, Function majorFunction
+) {
+  exists(ArrayExpr ae, AssignExpr assign, FieldAccess fa |
+    assign.getLValue() = ae and
+    ae.getArrayBase() = fa and
+    fa.getQualifier() = driverObject.getAnAccess() and
+    fa.getTarget().hasName("MajorFunction") and
+    ae.getArrayOffset().getValue().toInt() = index and
+    assign.getRValue().(FunctionAccess).getTarget() = majorFunction
+  )
+}
+
+private predicate hasUserControlledIrpParameter(Function f) {
+  exists(DriverEntryFunction entry, Parameter driverObject, int index |
+    entry.getParameter(0) = driverObject and
+    hasAMajorFunctionAssignment(driverObject, index, f) and
+    index =
+      [
+        14, // IRP_MJ_DEVICE_CONTROL
+        15 // IRP_MJ_INTERNAL_DEVICE_CONTROL
+      ]
+  )
+}
+
+class DRIVER_DISPATCH extends TypedefType {
+  DRIVER_DISPATCH() { this.getName() = "DRIVER_DISPATCH" }
+}
+
+class IRP extends Class {
+  IRP() { this.hasName("_IRP") }
+}
+
+private class IrpParameter extends DataFlow::IndirectParameterNode {
+  IrpParameter() {
+    exists(Function f |
+      hasUserControlledIrpParameter(f) and
+      f.getADeclarationEntry().getTypedefType() instanceof DRIVER_DISPATCH and
+      f.getAParameter() = this.getParameter() and
+      super.getIndirectionIndex() = 1 and
+      this.getType().stripType() instanceof IRP
+    )
+  }
+}
+
+private module Config implements DataFlow::StateConfigSig {
+  newtype FlowState =
+    Pre() or
+    PostAssociatedIrp()
+
+  additional predicate isSink(DataFlow::Node sink, FlowState state, DataFlow::Node node2) {
+    exists(DataFlow::ContentSet cs, DataFlow::FieldContent fc |
+      Private::readStep(sink, cs, node2) and
+      cs.isSingleton(fc) and
+      fc.getIndirectionIndex() = 1
+    |
+      state = PostAssociatedIrp() and
+      fc.getAField().hasName("SystemBuffer")
+      or
+      state = Pre() and
+      fc.getAField().hasName("UserBuffer")
+    )
+  }
+
+  predicate isSource(DataFlow::Node node, FlowState state) {
+    node instanceof IrpParameter and
+    state = Pre()
+  }
+
+  predicate isSink(DataFlow::Node node, FlowState state) { isSink(node, state, _) }
+
+  int fieldFlowBranchLimit() { result = 0 }
+
+  int accessPathLimit() { result = 0 }
+
+  predicate isAdditionalFlowStep(
+    DataFlow::Node node1, FlowState state1, DataFlow::Node node2, FlowState state2
+  ) {
+    exists(DataFlow::ContentSet cs, DataFlow::FieldContent fc |
+      Private::readStep(node1, cs, node2) and
+      cs.isSingleton(fc) and
+      fc.getIndirectionIndex() = 1 and
+      state1 = Pre() and
+      fc.getAField().hasName("AssociatedIrp") and
+      state2 = PostAssociatedIrp()
+    )
+  }
+}
+
+private module IrpFlow = DataFlow::GlobalWithState<Config>;
+
+class IrpFlowSource extends RemoteFlowSource {
+  IrpFlowSource() {
+    exists(IrpFlow::PathNode sink |
+      sink.isSink() and
+      Config::isSink(sink.getNode(), _, this)
+    )
+  }
+
+  override string getSourceType() { result = "an I/O Request Packet (IRP)" }
 }
