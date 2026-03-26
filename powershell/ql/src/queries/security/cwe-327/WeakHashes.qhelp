@@ -17,6 +17,11 @@
       or SHA-512. For password hashing, consider using a specialized password hashing function
       like PBKDF2, bcrypt, or Argon2.
     </p>
+    <p>
+      When using the <code>Get-FileHash</code> cmdlet, avoid specifying <code>-Algorithm MD5</code>
+      or <code>-Algorithm SHA1</code>. Instead, use <code>-Algorithm SHA256</code> (the default),
+      <code>-Algorithm SHA384</code>, or <code>-Algorithm SHA512</code>.
+    </p>
   </recommendation>
  
   <references>
