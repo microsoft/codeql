@@ -1,3 +1,11 @@
+## 8.0.3
+
+No user-facing changes.
+
+## 8.0.2
+
+No user-facing changes.
+
 ## 8.0.1
 
 ### Minor Analysis Improvements
