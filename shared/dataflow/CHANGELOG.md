@@ -1,3 +1,11 @@
+## 2.1.2
+
+No user-facing changes.
+
+## 2.1.1
+
+No user-facing changes.
+
 ## 2.1.0
 
 ### New Features

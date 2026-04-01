@@ -1,3 +1,11 @@
+## 5.1.14
+
+No user-facing changes.
+
+## 5.1.13
+
+No user-facing changes.
+
 ## 5.1.12
 
 ### Minor Analysis Improvements
