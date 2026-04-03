@@ -225,22 +225,47 @@ module CommandInjection {
     override string getSinkType() { result = "external command injection" }
   }
 
+  /**
+   * A sanitizer for parameters with types that structurally prevent
+   * command injection. Only non-string primitive types and value types
+   * are considered safe, since `[string]` parameters can still carry
+   * injection payloads.
+   */
   class TypedParameterSanitizer extends Sanitizer {
     TypedParameterSanitizer() {
       exists(Function f, Parameter p |
         p = f.getAParameter() and
-        p.getStaticType() != "object" and
+        p.getStaticType() =
+          [
+            // Integer types
+            "int", "int16", "int32", "int64", "long", "uint16", "uint32", "uint64",
+            // Floating point types
+            "float", "double", "decimal", "single",
+            // Boolean types
+            "bool", "boolean", "switch",
+            // Byte/char types
+            "byte", "sbyte", "char",
+            // Date/time types
+            "datetime", "timespan",
+            // Other non-injectable value types
+            "guid", "version", "ipaddress", "mailaddress", "uri", "regex"
+          ] and
         this.asParameter() = p
       )
     }
   }
 
-    class ValidateAttributeSanitizer extends Sanitizer {
+  /**
+   * A sanitizer for parameters with validation attributes that constrain
+   * the set of allowed values.
+   */
+  class ValidateAttributeSanitizer extends Sanitizer {
     ValidateAttributeSanitizer() {
       exists(Function f, Attribute a, Parameter p |
         p = f.getAParameter() and
-        p.getAnAttribute() = a and 
-        a.getAName() = ["ValidateScript", "ValidateSet", "ValidatePattern"] and
+        p.getAnAttribute() = a and
+        a.getAName() =
+          ["ValidateScript", "ValidateSet", "ValidatePattern", "ValidateRange"] and
         this.asParameter() = p
       )
     }
@@ -254,6 +279,120 @@ module CommandInjection {
             .toLowerCase()
             .matches("%'$" + v.getVariable().getLowerCaseName() + "'%") and
         e.getAnExpr() = v
+      )
+    }
+  }
+
+  /**
+   * A sanitizer for values that have been escaped using the PowerShell
+   * `CodeGeneration` escaping APIs, which neutralize special characters.
+   */
+  class EscapeApiSanitizer extends Sanitizer {
+    EscapeApiSanitizer() {
+      exists(InvokeMemberExpr escape |
+        (
+          escape.matchesName("EscapeSingleQuotedStringContent") or
+          escape.matchesName("EscapeFormatStringContent")
+        ) and
+        this.asExpr().getExpr() = escape
+      )
+    }
+  }
+
+  /**
+   * A sanitizer for parameters that are validated by an early-exit guard
+   * at the start of a function. Handles the common PowerShell pattern:
+   * ```
+   * param($Action)
+   * if ($Action -notin @("start", "stop")) { throw "Invalid" }
+   * ```
+   *
+   * Note: This is a limited structural check. Full guard-based barriers
+   * require the BarrierGuard module (currently unimplemented).
+   */
+  class EarlyExitGuardSanitizer extends Sanitizer {
+    EarlyExitGuardSanitizer() {
+      exists(Function f, Parameter p, If guard, BinaryExpr cond |
+        p = f.getAParameter() and
+        this.asParameter() = p and
+        // The guard is in this function (using getEnclosingFunction)
+        guard.getEnclosingFunction() = f and
+        cond = guard.getCondition(0) and
+        // The condition compares the parameter to constants
+        parameterComparedToConstants(p, cond) and
+        // The guard exits early (throw or return)
+        guardBodyExitsEarly(guard.getThen(0))
+      )
+    }
+  }
+
+  /**
+   * Holds if `cond` compares parameter `p` to constant values using
+   * `-notin`, `-notcontains`, `-eq`, `-ne`, or negated `-in`/`-contains`.
+   */
+  private predicate parameterComparedToConstants(Parameter p, BinaryExpr cond) {
+    // $param -notin @("a", "b", "c")
+    (
+      cond instanceof NotInExpr and
+      cond.getLeft().(VarReadAccess).getVariable() = p and
+      allElementsConstant(cond.getRight())
+    )
+    or
+    // $param -eq "constant"
+    (
+      cond instanceof EqExpr and
+      cond.getLeft().(VarReadAccess).getVariable() = p and
+      isConstantExpr(cond.getRight())
+    )
+  }
+
+  /** Holds if all elements of an array expression are constant. */
+  private predicate allElementsConstant(Expr e) {
+    // @("a", "b", "c") - array expression with constant elements
+    exists(ArrayExpr arr | arr = e |
+      forall(Expr elem | elem = arr.getAnExpr() | isConstantExpr(elem))
+    )
+    or
+    // "a", "b", "c" - array literal with constant elements
+    exists(ArrayLiteral arr | arr = e |
+      forall(Expr elem | elem = arr.getAnExpr() | isConstantExpr(elem))
+    )
+    or
+    isConstantExpr(e)
+  }
+
+  /** Holds if `e` is a constant expression (string, number, or boolean literal). */
+  private predicate isConstantExpr(Expr e) {
+    e instanceof ConstExpr or
+    e instanceof StringConstExpr or
+    e instanceof Literal
+  }
+
+  /** Holds if the guard body contains a throw or return statement. */
+  private predicate guardBodyExitsEarly(StmtBlock body) {
+    body.getAStmt() instanceof ThrowStmt or
+    body.getAStmt() instanceof ReturnStmt
+  }
+
+  /**
+   * A sanitizer for parameters of non-top-level functions where all
+   * call sites within the analyzed codebase pass constant expressions.
+   * If no caller passes tainted data, the parameter cannot be exploited.
+   */
+  class ConstantCallSiteSanitizer extends Sanitizer {
+    ConstantCallSiteSanitizer() {
+      exists(Function f, Parameter p |
+        p = f.getAParameter() and
+        this.asParameter() = p and
+        not f instanceof TopLevelFunction and
+        // There is at least one call to this function
+        exists(CmdCall call | call.getLowerCaseName() = f.getLowerCaseName()) and
+        // All call sites pass constant values for this parameter
+        forall(CmdCall call | call.getLowerCaseName() = f.getLowerCaseName() |
+          isConstantExpr(call.getNamedArgument(p.getLowerCaseName()))
+          or
+          isConstantExpr(call.getPositionalArgument(p.getIndex()))
+        )
       )
     }
   }

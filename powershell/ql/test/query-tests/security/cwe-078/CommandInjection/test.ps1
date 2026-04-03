@@ -268,3 +268,76 @@ function flow-through-env-var() {
     $y = $env:bar
     . "$y" # BAD # but we have flow through them
 }
+
+# [string] typed parameter - still injectable
+function Invoke-StringTypedInjection
+{
+    param([string] $UserInput)
+    Invoke-Expression "Get-Process -Name $UserInput" # BAD
+}
+
+# [bool] typed parameter - structurally prevents injection
+function Invoke-BoolTypedSafe
+{
+    param([bool] $UserInput)
+    Invoke-Expression "Get-Process -Name $UserInput"
+}
+
+# [datetime] typed parameter - structurally prevents injection
+function Invoke-DateTimeTypedSafe
+{
+    param([datetime] $UserInput)
+    Invoke-Expression "Get-Process -Name $UserInput"
+}
+
+# ValidateRange attribute - constrains to numeric range
+function Invoke-ValidateRangeSafe
+{
+    param([ValidateRange(1,100)] $UserInput)
+    Invoke-Expression "Get-Process -Id $UserInput"
+}
+
+# EscapeSingleQuotedStringContent API without type annotation
+function Invoke-EscapeApiSafe
+{
+    param($UserInput)
+    $clean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent($UserInput)
+    Invoke-Expression "Get-Process -Name '$clean'"
+}
+
+# EscapeFormatStringContent API
+function Invoke-EscapeFormatApiSafe
+{
+    param($UserInput)
+    $clean = [System.Management.Automation.Language.CodeGeneration]::EscapeFormatStringContent($UserInput)
+    Invoke-Expression "Get-Process -Name $clean"
+}
+
+# Early-exit guard with -notin validation
+function Invoke-EarlyExitGuardSafe
+{
+    param($Action)
+    if ($Action -notin @("start", "stop", "restart")) { throw "Invalid action: $Action" }
+    Invoke-Expression "$Action-Service"
+}
+
+# Early-exit guard with -eq validation
+function Invoke-EarlyExitEqGuardSafe
+{
+    param($Action)
+    if ($Action -eq "start") { throw "Cannot use start" }
+    Invoke-Expression "$Action-Service"
+}
+
+# All call sites pass constants - function is safe
+function Invoke-ConstantCallSiteSafe
+{
+    param($Action)
+    Invoke-Expression "Service-$Action"
+}
+Invoke-ConstantCallSiteSafe -Action "start"
+Invoke-ConstantCallSiteSafe -Action "stop"
+
+# String typed called with tainted input - BAD
+$input2 = Read-Host "enter input"
+Invoke-StringTypedInjection -UserInput $input2
