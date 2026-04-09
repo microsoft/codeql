@@ -1,4 +1,71 @@
-| test.ps1:6:10:6:51 | Call to get-random | Use of insecure random number generator 'Get-Random'. Use [System.Security.Cryptography.RandomNumberGenerator] instead. |
-| test.ps1:9:16:9:25 | Call to get-random | Use of insecure random number generator 'Get-Random'. Use [System.Security.Cryptography.RandomNumberGenerator] instead. |
-| test.ps1:12:8:12:31 | Call to new-object | Use of insecure random number generator 'System.Random'. Use [System.Security.Cryptography.RandomNumberGenerator] instead. |
-| test.ps1:15:9:15:32 | Call to new-object | Use of insecure random number generator 'System.Random'. Use [System.Security.Cryptography.RandomNumberGenerator] instead. |
+edges
+| test.ps1:6:1:6:5 | weak | test.ps1:9:1:9:5 | weak | provenance |  |
+| test.ps1:6:9:6:32 | Call to new-object | test.ps1:6:1:6:5 | weak | provenance |  |
+| test.ps1:9:1:9:5 | weak | test.ps1:9:17:9:25 | [post] keyBytes | provenance | Config |
+| test.ps1:9:1:9:5 | weak | test.ps1:10:1:10:5 | weak | provenance |  |
+| test.ps1:9:17:9:25 | [post] keyBytes | test.ps1:12:12:12:20 | keyBytes | provenance |  |
+| test.ps1:10:1:10:5 | weak | test.ps1:10:17:10:24 | [post] ivBytes | provenance | Config |
+| test.ps1:10:17:10:24 | [post] ivBytes | test.ps1:13:12:13:19 | ivBytes | provenance |  |
+| test.ps1:16:1:16:6 | weak2 | test.ps1:18:1:18:6 | weak2 | provenance |  |
+| test.ps1:16:10:16:33 | Call to new-object | test.ps1:16:1:16:6 | weak2 | provenance |  |
+| test.ps1:18:1:18:6 | weak2 | test.ps1:18:18:18:30 | [post] hmacKeyBytes | provenance | Config |
+| test.ps1:18:18:18:30 | [post] hmacKeyBytes | test.ps1:19:61:19:73 | hmacKeyBytes | provenance |  |
+| test.ps1:19:60:19:73 | ...,... [element 0] | test.ps1:19:59:19:74 | (...) | provenance |  |
+| test.ps1:19:61:19:73 | hmacKeyBytes | test.ps1:19:60:19:73 | ...,... [element 0] | provenance |  |
+| test.ps1:22:1:22:6 | weak3 | test.ps1:24:1:24:6 | weak3 | provenance |  |
+| test.ps1:22:10:22:33 | Call to new-object | test.ps1:22:1:22:6 | weak3 | provenance |  |
+| test.ps1:24:1:24:6 | weak3 | test.ps1:24:18:24:27 | [post] saltBytes | provenance | Config |
+| test.ps1:24:18:24:27 | [post] saltBytes | test.ps1:25:79:25:88 | saltBytes | provenance |  |
+| test.ps1:25:67:25:88 | ...,... [element 1] | test.ps1:25:66:25:89 | (...) | provenance |  |
+| test.ps1:25:79:25:88 | saltBytes | test.ps1:25:67:25:88 | ...,... [element 1] | provenance |  |
+| test.ps1:28:1:28:8 | tempPwd | test.ps1:29:37:29:44 | tempPwd | provenance |  |
+| test.ps1:28:13:28:41 | Call to get-random | test.ps1:28:1:28:8 | tempPwd | provenance |  |
+| test.ps1:33:1:33:11 | tokenValue | test.ps1:35:33:35:52 | Bearer $tokenValue | provenance |  |
+| test.ps1:33:15:33:43 | Call to get-random | test.ps1:33:1:33:11 | tokenValue | provenance |  |
+| test.ps1:38:1:38:5 | rng3 | test.ps1:40:1:40:5 | rng3 | provenance |  |
+| test.ps1:38:9:38:30 | Call to new | test.ps1:38:1:38:5 | rng3 | provenance |  |
+| test.ps1:40:1:40:5 | rng3 | test.ps1:40:17:40:24 | [post] aesKey2 | provenance | Config |
+| test.ps1:40:17:40:24 | [post] aesKey2 | test.ps1:42:13:42:20 | aesKey2 | provenance |  |
+nodes
+| test.ps1:6:1:6:5 | weak | semmle.label | weak |
+| test.ps1:6:9:6:32 | Call to new-object | semmle.label | Call to new-object |
+| test.ps1:9:1:9:5 | weak | semmle.label | weak |
+| test.ps1:9:17:9:25 | [post] keyBytes | semmle.label | [post] keyBytes |
+| test.ps1:10:1:10:5 | weak | semmle.label | weak |
+| test.ps1:10:17:10:24 | [post] ivBytes | semmle.label | [post] ivBytes |
+| test.ps1:12:12:12:20 | keyBytes | semmle.label | keyBytes |
+| test.ps1:13:12:13:19 | ivBytes | semmle.label | ivBytes |
+| test.ps1:16:1:16:6 | weak2 | semmle.label | weak2 |
+| test.ps1:16:10:16:33 | Call to new-object | semmle.label | Call to new-object |
+| test.ps1:18:1:18:6 | weak2 | semmle.label | weak2 |
+| test.ps1:18:18:18:30 | [post] hmacKeyBytes | semmle.label | [post] hmacKeyBytes |
+| test.ps1:19:59:19:74 | (...) | semmle.label | (...) |
+| test.ps1:19:60:19:73 | ...,... [element 0] | semmle.label | ...,... [element 0] |
+| test.ps1:19:61:19:73 | hmacKeyBytes | semmle.label | hmacKeyBytes |
+| test.ps1:22:1:22:6 | weak3 | semmle.label | weak3 |
+| test.ps1:22:10:22:33 | Call to new-object | semmle.label | Call to new-object |
+| test.ps1:24:1:24:6 | weak3 | semmle.label | weak3 |
+| test.ps1:24:18:24:27 | [post] saltBytes | semmle.label | [post] saltBytes |
+| test.ps1:25:66:25:89 | (...) | semmle.label | (...) |
+| test.ps1:25:67:25:88 | ...,... [element 1] | semmle.label | ...,... [element 1] |
+| test.ps1:25:79:25:88 | saltBytes | semmle.label | saltBytes |
+| test.ps1:28:1:28:8 | tempPwd | semmle.label | tempPwd |
+| test.ps1:28:13:28:41 | Call to get-random | semmle.label | Call to get-random |
+| test.ps1:29:37:29:44 | tempPwd | semmle.label | tempPwd |
+| test.ps1:33:1:33:11 | tokenValue | semmle.label | tokenValue |
+| test.ps1:33:15:33:43 | Call to get-random | semmle.label | Call to get-random |
+| test.ps1:35:33:35:52 | Bearer $tokenValue | semmle.label | Bearer $tokenValue |
+| test.ps1:38:1:38:5 | rng3 | semmle.label | rng3 |
+| test.ps1:38:9:38:30 | Call to new | semmle.label | Call to new |
+| test.ps1:40:1:40:5 | rng3 | semmle.label | rng3 |
+| test.ps1:40:17:40:24 | [post] aesKey2 | semmle.label | [post] aesKey2 |
+| test.ps1:42:13:42:20 | aesKey2 | semmle.label | aesKey2 |
+subpaths
+#select
+| test.ps1:12:12:12:20 | keyBytes | test.ps1:6:9:6:32 | Call to new-object | test.ps1:12:12:12:20 | keyBytes | Insecure random value flows to a cryptographic key or IV from $@. | test.ps1:6:9:6:32 | Call to new-object | this insecure random source |
+| test.ps1:13:12:13:19 | ivBytes | test.ps1:6:9:6:32 | Call to new-object | test.ps1:13:12:13:19 | ivBytes | Insecure random value flows to a cryptographic key or IV from $@. | test.ps1:6:9:6:32 | Call to new-object | this insecure random source |
+| test.ps1:19:59:19:74 | (...) | test.ps1:16:10:16:33 | Call to new-object | test.ps1:19:59:19:74 | (...) | Insecure random value flows to a cryptographic operation from $@. | test.ps1:16:10:16:33 | Call to new-object | this insecure random source |
+| test.ps1:25:66:25:89 | (...) | test.ps1:22:10:22:33 | Call to new-object | test.ps1:25:66:25:89 | (...) | Insecure random value flows to a cryptographic operation from $@. | test.ps1:22:10:22:33 | Call to new-object | this insecure random source |
+| test.ps1:29:37:29:44 | tempPwd | test.ps1:28:13:28:41 | Call to get-random | test.ps1:29:37:29:44 | tempPwd | Insecure random value flows to a secure string conversion from $@. | test.ps1:28:13:28:41 | Call to get-random | this insecure random source |
+| test.ps1:35:33:35:52 | Bearer $tokenValue | test.ps1:33:15:33:43 | Call to get-random | test.ps1:35:33:35:52 | Bearer $tokenValue | Insecure random value flows to an HTTP header from $@. | test.ps1:33:15:33:43 | Call to get-random | this insecure random source |
+| test.ps1:42:13:42:20 | aesKey2 | test.ps1:38:9:38:30 | Call to new | test.ps1:42:13:42:20 | aesKey2 | Insecure random value flows to a cryptographic key or IV from $@. | test.ps1:38:9:38:30 | Call to new | this insecure random source |
