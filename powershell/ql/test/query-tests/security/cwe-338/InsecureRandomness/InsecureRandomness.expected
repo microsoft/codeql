@@ -1,0 +1,4 @@
+| test.ps1:6:10:6:51 | Call to get-random | Use of insecure random number generator 'Get-Random'. Use [System.Security.Cryptography.RandomNumberGenerator] instead. |
+| test.ps1:9:16:9:25 | Call to get-random | Use of insecure random number generator 'Get-Random'. Use [System.Security.Cryptography.RandomNumberGenerator] instead. |
+| test.ps1:12:8:12:31 | Call to new-object | Use of insecure random number generator 'System.Random'. Use [System.Security.Cryptography.RandomNumberGenerator] instead. |
+| test.ps1:15:9:15:32 | Call to new-object | Use of insecure random number generator 'System.Random'. Use [System.Security.Cryptography.RandomNumberGenerator] instead. |
