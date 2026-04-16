@@ -9,37 +9,37 @@ $ivBytes  = New-Object byte[] 16
 $weak.NextBytes($keyBytes)
 $weak.NextBytes($ivBytes)
 $aes = [System.Security.Cryptography.Aes]::Create()
-$aes.Key = $keyBytes
-$aes.IV  = $ivBytes
+$aes.Key = $keyBytes # BAD
+$aes.IV  = $ivBytes # BAD
 
 # --- Case 2: Weak RNG bytes flow into HMAC constructor ---
 $weak2 = New-Object System.Random # BAD
 $hmacKeyBytes = New-Object byte[] 64
 $weak2.NextBytes($hmacKeyBytes)
-$hmac = New-Object System.Security.Cryptography.HMACSHA256(,$hmacKeyBytes)
+$hmac = New-Object System.Security.Cryptography.HMACSHA256(,$hmacKeyBytes) # BAD
 
 # --- Case 3: Weak RNG bytes used as KDF salt ---
 $weak3 = New-Object System.Random # BAD
 $saltBytes = New-Object byte[] 8
 $weak3.NextBytes($saltBytes)
-$kdf = New-Object System.Security.Cryptography.Rfc2898DeriveBytes("password", $saltBytes)
+$kdf = New-Object System.Security.Cryptography.Rfc2898DeriveBytes("password", $saltBytes) # BAD
 
 # --- Case 4: Get-Random flows into ConvertTo-SecureString → PSCredential ---
-$tempPwd = (Get-Random -Maximum 999999999).ToString() # BAD
-$securePwd = ConvertTo-SecureString $tempPwd -AsPlainText -Force
+$tempPwd = (Get-Random -Maximum 999999999).ToString()
+$securePwd = ConvertTo-SecureString $tempPwd -AsPlainText -Force # BAD
 $cred = New-Object System.Management.Automation.PSCredential("admin", $securePwd)
 
 # --- Case 5: Get-Random flows into HTTP Authorization header ---
-$tokenValue = Get-Random -Maximum 999999999 # BAD
+$tokenValue = Get-Random -Maximum 999999999
 Invoke-RestMethod -Uri "https://api.example.com/data" `
-    -Headers @{ Authorization = "Bearer $tokenValue" }
+    -Headers @{ Authorization = "Bearer $tokenValue" } # BAD
 
 # --- Case 6: [System.Random]::new() bytes flow into AES .Key ---
 $rng3 = [System.Random]::new()
 $aesKey2 = New-Object byte[] 32
 $rng3.NextBytes($aesKey2)
 $aes2 = [System.Security.Cryptography.Aes]::Create()
-$aes2.Key = $aesKey2
+$aes2.Key = $aesKey2 # BAD
 
 # ===================================================================
 # ========== TRUE NEGATIVES (should NOT trigger alert) ==============
