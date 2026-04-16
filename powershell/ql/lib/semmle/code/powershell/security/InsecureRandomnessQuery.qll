@@ -18,16 +18,6 @@ private module Config implements DataFlow::ConfigSig {
   predicate isSink(DataFlow::Node sink) { sink instanceof Sink }
 
   predicate isBarrier(DataFlow::Node node) { node instanceof Sanitizer }
-
-  predicate isAdditionalFlowStep(DataFlow::Node node1, DataFlow::Node node2) {
-    // When .NextBytes() is called on a System.Random instance,
-    // taint flows from the qualifier to the argument (the byte array is filled with random bytes).
-    exists(DataFlow::CallNode call |
-      call.matchesName("NextBytes") and
-      node1 = call.getQualifier() and
-      node2.(DataFlow::PostUpdateNode).getPreUpdateNode() = call.getArgument(0)
-    )
-  }
 }
 
 /**
