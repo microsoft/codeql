@@ -1,5 +1,5 @@
 name: codeql/javascript-all
-version: 2.6.10
+version: 2.6.26
 groups: javascript
 dbscheme: semmlecode.javascript.dbscheme
 extractor: javascript
@@ -24,3 +24,4 @@ dataExtensions:
   - semmle/javascript/security/domains/**/*.model.yml
   - ext/*.model.yml
 warnOnImplicitThis: true
+compileForOverlayEval: true

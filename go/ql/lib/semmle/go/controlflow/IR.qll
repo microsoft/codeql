@@ -9,6 +9,8 @@
  * Each instruction is also a control-flow node, but there are control-flow nodes that are not
  * instructions (synthetic entry and exit nodes, as well as no-op skip nodes).
  */
+overlay[local]
+module;
 
 import go
 private import semmle.go.controlflow.ControlFlowGraphImpl
@@ -294,7 +296,7 @@ module IR {
   /**
    * An IR instruction that reads the value of a field.
    *
-   * On snapshots with incomplete type information, method expressions may sometimes be
+   * On databases with incomplete type information, method expressions may sometimes be
    * misclassified as field reads.
    */
   class FieldReadInstruction extends ComponentReadInstruction {
@@ -430,17 +432,24 @@ module IR {
    */
   class WriteInstruction extends Instruction {
     WriteTarget lhs;
+    Boolean initialization;
 
     WriteInstruction() {
-      lhs = MkLhs(this, _)
+      (
+        lhs = MkLhs(this, _)
+        or
+        lhs = MkResultWriteTarget(this)
+      ) and
+      initialization = false
       or
-      lhs = MkLiteralElementTarget(this)
-      or
-      lhs = MkResultWriteTarget(this)
+      lhs = MkLiteralElementTarget(this) and initialization = true
     }
 
     /** Gets the target to which this instruction writes. */
     WriteTarget getLhs() { result = lhs }
+
+    /** Holds if this instruction initializes a literal. */
+    predicate isInitialization() { initialization = true }
 
     /** Gets the instruction computing the value this instruction writes. */
     Instruction getRhs() { none() }
@@ -1581,4 +1590,9 @@ module IR {
    * in a field/method access, element access, or slice expression.
    */
   EvalImplicitDerefInstruction implicitDerefInstruction(Expr e) { result = MkImplicitDeref(e) }
+
+  /** Gets the base of `insn`, if `insn` is an implicit field read. */
+  Instruction lookThroughImplicitFieldRead(Instruction insn) {
+    result = insn.(ImplicitFieldReadInstruction).getBaseInstruction()
+  }
 }

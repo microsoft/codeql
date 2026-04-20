@@ -10,7 +10,7 @@ namespace Semmle.Extraction.CSharp.Entities
 {
     internal class Field : CachedSymbol<IFieldSymbol>, IExpressionParentEntity
     {
-        private Field(Context cx, IFieldSymbol init)
+        protected Field(Context cx, IFieldSymbol init)
             : base(cx, init)
         {
             type = new Lazy<Type>(() => Entities.Type.Create(cx, Symbol.Type));
@@ -49,8 +49,15 @@ namespace Semmle.Extraction.CSharp.Entities
                 }
             }
 
-            foreach (var l in Locations)
-                trapFile.field_location(this, l);
+            if (Context.OnlyScaffold)
+            {
+                return;
+            }
+
+            if (Context.ExtractLocation(Symbol))
+            {
+                WriteLocationsToTrap(trapFile.field_location, this, Locations);
+            }
 
             if (!IsSourceDeclaration || !Symbol.FromSource())
                 return;

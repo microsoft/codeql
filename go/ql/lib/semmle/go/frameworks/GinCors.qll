@@ -1,6 +1,8 @@
 /**
  * Provides classes for modeling the `github.com/gin-contrib/cors` package.
  */
+overlay[local?]
+module;
 
 import go
 
@@ -27,7 +29,7 @@ module GinCors {
     AllowCredentialsWrite() {
       exists(Field f, Write w |
         f.hasQualifiedName(packagePath(), "Config", "AllowCredentials") and
-        w.writesField(base, f, this) and
+        w.writesFieldPreUpdate(base, f, this) and
         this.getType() instanceof BoolType
       )
     }
@@ -61,7 +63,7 @@ module GinCors {
     AllowOriginsWrite() {
       exists(Field f, Write w |
         f.hasQualifiedName(packagePath(), "Config", "AllowOrigins") and
-        w.writesField(base, f, this) and
+        w.writesFieldPreUpdate(base, f, this) and
         this.asExpr() instanceof SliceLit
       )
     }
@@ -95,7 +97,7 @@ module GinCors {
     AllowAllOriginsWrite() {
       exists(Field f, Write w |
         f.hasQualifiedName(packagePath(), "Config", "AllowAllOrigins") and
-        w.writesField(base, f, this) and
+        w.writesFieldPreUpdate(base, f, this) and
         this.getType() instanceof BoolType
       )
     }
@@ -109,14 +111,9 @@ module GinCors {
      * Get config variable holding header values
      */
     override GinConfig getConfig() {
-      exists(GinConfig gc |
-        (
-          gc.getV().getBaseVariable().getDefinition().(SsaExplicitDefinition).getRhs() =
-            base.asInstruction() or
-          gc.getV().getAUse() = base
-        ) and
-        result = gc
-      )
+      result.getV().getBaseVariable().getDefinition().(SsaExplicitDefinition).getRhs() =
+        base.asInstruction() or
+      result.getV().getAUse() = base
     }
   }
 

@@ -5,6 +5,7 @@ overlay[local?]
 module;
 
 import java
+private import internal.OverlayXml
 
 /**
  * A local predicate that always holds for the overlay variant and
@@ -73,40 +74,32 @@ private predicate discardReferableLocatable(@locatable el) {
   )
 }
 
+/** Gets the raw file for a configLocatable. */
 overlay[local]
-private predicate baseConfigLocatable(@configLocatable l) { not isOverlay() and exists(l) }
+private string getRawFileForConfig(@configLocatable el) {
+  exists(@location loc, @file file |
+    configLocations(el, loc) and
+    locations_default(loc, file, _, _, _, _) and
+    files(file, result)
+  )
+}
 
 overlay[local]
-private predicate overlayHasConfigLocatables() {
+private string baseConfigLocatable(@configLocatable el) {
+  not isOverlay() and result = getRawFileForConfig(el)
+}
+
+overlay[local]
+private predicate overlayConfigExtracted(string file) {
   isOverlay() and
-  exists(@configLocatable el)
+  exists(@configLocatable el | file = getRawFileForConfig(el))
 }
 
 overlay[discard_entity]
 private predicate discardBaseConfigLocatable(@configLocatable el) {
-  // The properties extractor is currently not incremental, so if
-  // the overlay contains any config locatables, the overlay should
-  // contain a full extraction and all config locatables from base
-  // should be discarded.
-  baseConfigLocatable(el) and overlayHasConfigLocatables()
-}
-
-overlay[local]
-private predicate baseXmlLocatable(@xmllocatable l) {
-  not isOverlay() and not files(l, _) and not xmlNs(l, _, _, _)
-}
-
-overlay[local]
-private predicate overlayHasXmlLocatable() {
-  isOverlay() and
-  exists(@xmllocatable l | not files(l, _) and not xmlNs(l, _, _, _))
-}
-
-overlay[discard_entity]
-private predicate discardBaseXmlLocatable(@xmllocatable el) {
-  // The XML extractor is currently not incremental, so if
-  // the overlay contains any XML locatables, the overlay should
-  // contain a full extraction and all XML locatables from base
-  // should be discarded.
-  baseXmlLocatable(el) and overlayHasXmlLocatable()
+  overlayChangedFiles(baseConfigLocatable(el))
+  or
+  // The config extractor is currently not incremental and may extract more
+  // property files than those included in overlayChangedFiles.
+  overlayConfigExtracted(baseConfigLocatable(el))
 }

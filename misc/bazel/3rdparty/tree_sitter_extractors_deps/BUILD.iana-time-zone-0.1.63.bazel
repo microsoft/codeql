@@ -73,12 +73,16 @@ rust_library(
         "@rules_rust//rust/platform:i686-unknown-linux-gnu": [],
         "@rules_rust//rust/platform:powerpc-unknown-linux-gnu": [],
         "@rules_rust//rust/platform:riscv32imc-unknown-none-elf": [],
+        "@rules_rust//rust/platform:riscv64gc-unknown-linux-gnu": [],
         "@rules_rust//rust/platform:riscv64gc-unknown-none-elf": [],
         "@rules_rust//rust/platform:s390x-unknown-linux-gnu": [],
         "@rules_rust//rust/platform:thumbv7em-none-eabi": [],
         "@rules_rust//rust/platform:thumbv8m.main-none-eabi": [],
+        "@rules_rust//rust/platform:wasm32-unknown-emscripten": [],
         "@rules_rust//rust/platform:wasm32-unknown-unknown": [],
         "@rules_rust//rust/platform:wasm32-wasip1": [],
+        "@rules_rust//rust/platform:wasm32-wasip1-threads": [],
+        "@rules_rust//rust/platform:wasm32-wasip2": [],
         "@rules_rust//rust/platform:x86_64-apple-darwin": [],
         "@rules_rust//rust/platform:x86_64-apple-ios": [],
         "@rules_rust//rust/platform:x86_64-linux-android": [],
@@ -121,9 +125,9 @@ rust_library(
             "@vendor_ts__windows-core-0.61.2//:windows_core",  # cfg(target_os = "windows")
         ],
         "@rules_rust//rust/platform:wasm32-unknown-unknown": [
-            "@vendor_ts__js-sys-0.3.77//:js_sys",  # cfg(all(target_arch = "wasm32", target_os = "unknown"))
-            "@vendor_ts__log-0.4.27//:log",  # cfg(all(target_arch = "wasm32", target_os = "unknown"))
-            "@vendor_ts__wasm-bindgen-0.2.100//:wasm_bindgen",  # cfg(all(target_arch = "wasm32", target_os = "unknown"))
+            "@vendor_ts__js-sys-0.3.78//:js_sys",  # cfg(all(target_arch = "wasm32", target_os = "unknown"))
+            "@vendor_ts__log-0.4.28//:log",  # cfg(all(target_arch = "wasm32", target_os = "unknown"))
+            "@vendor_ts__wasm-bindgen-0.2.101//:wasm_bindgen",  # cfg(all(target_arch = "wasm32", target_os = "unknown"))
         ],
         "@rules_rust//rust/platform:x86_64-apple-darwin": [
             "@vendor_ts__core-foundation-sys-0.8.7//:core_foundation_sys",  # cfg(target_vendor = "apple")

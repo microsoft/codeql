@@ -1,3 +1,97 @@
+## 6.3.2
+
+No user-facing changes.
+
+## 6.3.1
+
+No user-facing changes.
+
+## 6.3.0
+
+### Major Analysis Improvements
+
+* Upgraded to allow analysis of Swift 6.2.4.
+
+### Minor Analysis Improvements
+
+* Inline expectations test comments, which are of the form `// $ tag` or `// $ tag=value`, are now parsed more strictly and will not be recognized if there isn't a space after the `$` symbol.
+
+## 6.2.3
+
+No user-facing changes.
+
+## 6.2.2
+
+No user-facing changes.
+
+## 6.2.1
+
+### Minor Analysis Improvements
+
+* The predicate `SummarizedCallable.propagatesFlow` has been extended with the columns `Provenance p` and `boolean isExact`, and as a consequence the predicates `SummarizedCallable.hasProvenance` and `SummarizedCallable.hasExactModel` have been removed.
+
+## 6.2.0
+
+### Major Analysis Improvements
+
+* Upgraded to allow analysis of Swift 6.2.3.
+* Upgraded to allow analysis of Swift 6.2.2.
+
+## 6.1.4
+
+No user-facing changes.
+
+## 6.1.3
+
+No user-facing changes.
+
+## 6.1.2
+
+No user-facing changes.
+
+## 6.1.1
+
+No user-facing changes.
+
+## 6.1.0
+
+### Major Analysis Improvements
+
+* Upgraded to allow analysis of Swift 6.2.1.
+
+## 6.0.0
+
+### Breaking Changes
+
+* The `OpenedArchetypeType` class has been renamed as `ExistentialArchetypeType`.
+* The `OtherAvailabilitySpec` class has been removed. Use `AvailabilitySpec::isWildcard` instead.
+* The `PlatformVersionAvailabilitySpec` has been removed. Use `AvailabilitySpec::getPlatform` and `AvailabilitySpec::getVersion` instead.
+
+### New Features
+
+* Added AST nodes `UsingDecl`, `UnsafeExpr`, and `InlineArrayType` that correspond to new nodes in Swift 6.2.
+* Added new predicates `isDistributedGet`, `isRead2`, `isModify2`, and `isInit` to the `Accessor` class that correspond to new accessors in Swift 6.2.
+* Added a new predicate `isApply` to the `KeyPathComponent` class that corresponds to method and initializer key path components in Swift 6.2.
+
+### Major Analysis Improvements
+
+* Upgraded to allow analysis of Swift 6.2.
+* Support for experimental Embedded Swift has been dropped.
+
+## 5.0.9
+
+No user-facing changes.
+
+## 5.0.8
+
+No user-facing changes.
+
+## 5.0.7
+
+### Minor Analysis Improvements
+
+* Updated to allow analysis of Swift 6.1.3.
+
 ## 5.0.6
 
 No user-facing changes.

@@ -1,6 +1,8 @@
 /**
  * Provides classes and predicates for defining flow summaries.
  */
+overlay[local]
+module;
 
 private import python
 private import codeql.dataflow.internal.FlowSummaryImpl
@@ -17,6 +19,8 @@ module Input implements InputSig<Location, DataFlowImplSpecific::PythonDataFlow>
   class SourceBase = Void;
 
   class SinkBase = Void;
+
+  predicate callableFromSource(SummarizedCallableBase c) { none() }
 
   ArgumentPosition callbackSelfParameterPosition() { result.isLambdaSelf() }
 
@@ -97,6 +101,7 @@ module Input implements InputSig<Location, DataFlowImplSpecific::PythonDataFlow>
 private import Make<Location, DataFlowImplSpecific::PythonDataFlow, Input> as Impl
 
 private module StepsInput implements Impl::Private::StepsInputSig {
+  overlay[global]
   DataFlowCall getACall(Public::SummarizedCallable sc) {
     result =
       TPotentialLibraryCall([
@@ -105,7 +110,9 @@ private module StepsInput implements Impl::Private::StepsInputSig {
         ])
   }
 
-  Node getSourceNode(Input::SourceBase source, Impl::Private::SummaryComponent sc) { none() }
+  DataFlowCallable getSourceNodeEnclosingCallable(Input::SourceBase source) { none() }
+
+  Node getSourceNode(Input::SourceBase source, Impl::Private::SummaryComponentStack s) { none() }
 
   Node getSinkNode(Input::SinkBase sink, Impl::Private::SummaryComponent sc) { none() }
 }

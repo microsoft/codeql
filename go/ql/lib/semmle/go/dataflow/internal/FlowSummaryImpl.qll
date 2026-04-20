@@ -1,6 +1,8 @@
 /**
  * Provides classes and predicates for defining flow summaries.
  */
+overlay[local?]
+module;
 
 private import go
 private import codeql.dataflow.internal.FlowSummaryImpl
@@ -29,6 +31,8 @@ module Input implements InputSig<Location, DataFlowImplSpecific::GoDataFlow> {
 
   class SinkBase = Void;
 
+  predicate callableFromSource(SummarizedCallableBase c) { exists(c.getFuncDef()) }
+
   predicate neutralElement(
     Input::SummarizedCallableBase c, string kind, string provenance, boolean isExact
   ) {
@@ -36,8 +40,7 @@ module Input implements InputSig<Location, DataFlowImplSpecific::GoDataFlow> {
       neutralModel(namespace, type, name, signature, kind, provenance) and
       c.asFunction() = interpretElement(namespace, type, false, name, signature, "").asEntity()
     ) and
-    // isExact is not needed for Go.
-    isExact = false
+    isExact = true
   }
 
   ArgumentPosition callbackSelfParameterPosition() { result = -1 }
@@ -117,7 +120,9 @@ private module StepsInput implements Impl::Private::StepsInputSig {
     )
   }
 
-  Node getSourceNode(Input::SourceBase source, Impl::Private::SummaryComponent sc) { none() }
+  DataFlowCallable getSourceNodeEnclosingCallable(Input::SourceBase source) { none() }
+
+  Node getSourceNode(Input::SourceBase source, Impl::Private::SummaryComponentStack s) { none() }
 
   Node getSinkNode(Input::SinkBase sink, Impl::Private::SummaryComponent sc) { none() }
 }
@@ -135,11 +140,9 @@ module SourceSinkInterpretationInput implements
     SourceOrSinkElement e, string output, string kind, Public::Provenance provenance, string model
   ) {
     exists(
-      string package, string type, boolean subtypes, string name, string signature, string ext,
-      QlBuiltins::ExtensionId madId
+      string package, string type, boolean subtypes, string name, string signature, string ext
     |
-      sourceModel(package, type, subtypes, name, signature, ext, output, kind, provenance, madId) and
-      model = "MaD:" + madId.toString() and
+      sourceModel(package, type, subtypes, name, signature, ext, output, kind, provenance, model) and
       e = interpretElement(package, type, subtypes, name, signature, ext)
     )
   }
@@ -152,11 +155,33 @@ module SourceSinkInterpretationInput implements
     SourceOrSinkElement e, string input, string kind, Public::Provenance provenance, string model
   ) {
     exists(
-      string package, string type, boolean subtypes, string name, string signature, string ext,
-      QlBuiltins::ExtensionId madId
+      string package, string type, boolean subtypes, string name, string signature, string ext
     |
-      sinkModel(package, type, subtypes, name, signature, ext, input, kind, provenance, madId) and
-      model = "MaD:" + madId.toString() and
+      sinkModel(package, type, subtypes, name, signature, ext, input, kind, provenance, model) and
+      e = interpretElement(package, type, subtypes, name, signature, ext)
+    )
+  }
+
+  predicate barrierElement(
+    Element e, string output, string kind, Public::Provenance provenance, string model
+  ) {
+    exists(
+      string package, string type, boolean subtypes, string name, string signature, string ext
+    |
+      barrierModel(package, type, subtypes, name, signature, ext, output, kind, provenance, model) and
+      e = interpretElement(package, type, subtypes, name, signature, ext)
+    )
+  }
+
+  predicate barrierGuardElement(
+    Element e, string input, Public::AcceptingValue acceptingvalue, string kind,
+    Public::Provenance provenance, string model
+  ) {
+    exists(
+      string package, string type, boolean subtypes, string name, string signature, string ext
+    |
+      barrierGuardModel(package, type, subtypes, name, signature, ext, input, acceptingvalue, kind,
+        provenance, model) and
       e = interpretElement(package, type, subtypes, name, signature, ext)
     )
   }
@@ -382,17 +407,13 @@ module SourceSinkInterpretationInput implements
   }
 
   private DataFlow::Node skipImplicitFieldReads(DataFlow::Node n) {
-    not exists(lookThroughImplicitFieldRead(n)) and result = n
+    not exists(IR::lookThroughImplicitFieldRead(n.asInstruction())) and result = n
     or
-    result = skipImplicitFieldReads(lookThroughImplicitFieldRead(n))
-  }
-
-  private DataFlow::Node lookThroughImplicitFieldRead(DataFlow::Node n) {
-    result.asInstruction() =
-      n.(DataFlow::InstructionNode)
-          .asInstruction()
-          .(IR::ImplicitFieldReadInstruction)
-          .getBaseInstruction()
+    exists(DataFlow::Node mid |
+      mid.asInstruction() = IR::lookThroughImplicitFieldRead(n.asInstruction())
+    |
+      result = skipImplicitFieldReads(mid)
+    )
   }
 
   /** Provides additional sink specification logic. */
@@ -440,7 +461,7 @@ module SourceSinkInterpretationInput implements
       f = e.asFieldEntity()
     |
       c = "" and
-      fw.writesField(base, f, node.asNode()) and
+      fw.writesFieldPreUpdate(base, f, node.asNode()) and
       pragma[only_bind_into](e) = getElementWithQualifier(f, base)
     )
     or
@@ -489,12 +510,10 @@ module Private {
       string model
     ) {
       exists(
-        string namespace, string type, boolean subtypes, string name, string signature, string ext,
-        QlBuiltins::ExtensionId madId
+        string namespace, string type, boolean subtypes, string name, string signature, string ext
       |
         summaryModel(namespace, type, subtypes, name, signature, ext, input, output, kind,
-          provenance, madId) and
-        model = "MaD:" + madId.toString() and
+          provenance, model) and
         c.asFunction() =
           interpretElement(namespace, type, subtypes, name, signature, ext).asEntity()
       )

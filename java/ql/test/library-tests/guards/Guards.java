@@ -26,7 +26,7 @@ public class Guards {
     }
     int sz = a != null ? a.length : 0;
     for (int i = 0; i < sz; i++) {
-      chk(); // $ guarded='a != null:true' guarded='i < sz:true' guarded='sz:not 0' guarded='...?...:...:not 0' guarded='a.length:not 0' guarded='a:not null'
+      chk(); // $ guarded='a != null:true' guarded='i < sz:true' guarded='sz:Lower bound 1' guarded='...?...:...:Lower bound 1' guarded='a.length:Lower bound 1' guarded='a:not null'
       int e = a[i];
       if (e > 2) break;
     }
@@ -39,10 +39,10 @@ public class Guards {
         chk(); // $ guarded='s:match "bar"' guarded='s:bar'
         break;
       case "foo":
-        chk(); // $ guarded='s:match "foo"' guarded='s:foo' guarded=g(3):false
+        chk(); // $ guarded='s:non-match "bar"' guarded='s:not bar' guarded='s:match "foo"' guarded='s:foo' guarded=g(3):false
         break;
       default:
-        chk(); // $ guarded='s:non-match "bar"' guarded='s:non-match "foo"' guarded='s:not bar' guarded='s:not foo' guarded='s:match default' guarded=g(3):false
+        chk(); // $ guarded='s:non-match "bar"' guarded='s:non-match "foo"' guarded='s:not bar' guarded='s:not foo' guarded=g(3):false
         break;
     }
 
@@ -92,10 +92,10 @@ public class Guards {
         chk(); // $ guarded='x:match E1' guarded='x:E1' guarded=g(1):true guarded=g(2):false guarded=g(Alt2):false guarded=g(3):false
         break;
       case E2:
-        chk(); // $ guarded='x:match E2' guarded='x:E2' guarded=g(3):false
+        chk(); // $ guarded='x:non-match E1' guarded='x:not E1' guarded='x:match E2' guarded='x:E2' guarded=g(3):false
         break;
       case E3:
-        chk(); // $ guarded='x:match E3' guarded='x:E3' guarded=g(3):true
+        chk(); // $ guarded='x:non-match E1' guarded='x:non-match E2' guarded='x:not E1' guarded='x:not E2' guarded='x:match E3' guarded='x:E3' guarded=g(3):true
         break;
     }
     Object o = g(4) ? new Object() : null;
@@ -136,11 +136,11 @@ public class Guards {
         found = true;
       }
       if (found) {
-        chk(); // $ guarded=found:true guarded='i < a.length:true'
+        chk(); // $ guarded=found:true guarded='i < a.length:true' guarded='a.length:Lower bound 1'
       }
     }
     if (found) {
-      chk(); // $ guarded=found:true guarded='i < a.length:false'
+      chk(); // $ guarded=found:true guarded='i < a.length:false' guarded='i:Lower bound 0'
     }
   }
 
@@ -198,7 +198,7 @@ public class Guards {
         chk(); // $ guarded='testEnumWrapper(...):SUCCESS' guarded='testEnumWrapper(...):match SUCCESS' guarded=g(1):true
         break;
       case FAILURE:
-        chk(); // $ guarded='testEnumWrapper(...):FAILURE' guarded='testEnumWrapper(...):match FAILURE' guarded=g(1):false
+        chk(); // $ guarded='testEnumWrapper(...):not SUCCESS' guarded='testEnumWrapper(...):non-match SUCCESS' guarded='testEnumWrapper(...):FAILURE' guarded='testEnumWrapper(...):match FAILURE' guarded=g(1):false
         break;
     }
   }

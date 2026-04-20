@@ -50,7 +50,7 @@ CppType getEllipsisVariablePRValueType() {
 CppType getEllipsisVariableGLValueType() { result = getTypeForGLValue(any(UnknownType t)) }
 
 /**
- * Holds if the function returns a value, as opposed to returning `void`.
+ * Holds if the function `func` returns a value, as opposed to returning `void`.
  */
 predicate hasReturnValue(Function func) { not func.getUnspecifiedType() instanceof VoidType }
 
@@ -306,11 +306,11 @@ class TranslatedFunction extends TranslatedRootElement, TTranslatedFunction {
   final predicate hasReturnValue() { hasReturnValue(func) }
 
   /**
-   * Gets the single `InitializeThis` instruction for this function. Holds only
-   * if the function is an instance member function, constructor, or destructor.
+   * Gets the first load of `this` for this function. Holds only if the function
+   * is an instance member function, constructor, or destructor.
    */
-  final Instruction getInitializeThisInstruction() {
-    result = getTranslatedThisParameter(func).getInstruction(InitializerStoreTag())
+  final Instruction getLoadThisInstruction() {
+    result = getTranslatedThisParameter(func).getInstruction(InitializerIndirectAddressTag())
   }
 
   /**
@@ -639,7 +639,7 @@ class TranslatedConstructorInitList extends TranslatedElement, InitializationCon
   }
 
   override Instruction getTargetAddress() {
-    result = getTranslatedFunction(func).getInitializeThisInstruction()
+    result = getTranslatedFunction(func).getLoadThisInstruction()
   }
 
   override Type getTargetType() { result = getTranslatedFunction(func).getThisType() }

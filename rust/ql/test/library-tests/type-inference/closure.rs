@@ -5,7 +5,7 @@ mod simple_closures {
         // A simple closure without type annotations or invocations.
         let my_closure = |a, b| a && b;
 
-        let x: i64 = 1i64; // $ type=x:i64
+        let x: i64 = 1i64; // $ certainType=x:i64
         let add_one = |n| n + 1i64; // $ target=add
         let _y = add_one(x); // $ type=_y:i64
 
@@ -27,13 +27,17 @@ mod simple_closures {
         // The return type of `id2` is inferred from the type of the call expression.
         let id2 = |b| b;
         let arg = Default::default(); // $ target=default type=arg:bool
-        let _b2: bool = id2(arg); // $ type=_b2:bool
+        let _b2: bool = id2(arg); // $ certainType=_b2:bool
     }
 }
 
 mod fn_once_trait {
     fn return_type<F: FnOnce(bool) -> i64>(f: F) {
         let _return = f(true); // $ type=_return:i64
+    }
+
+    fn return_type_omitted<F: FnOnce(bool)>(f: F) {
+        let _return = f(true); // $ type=_return:()
     }
 
     fn argument_type<F: FnOnce(bool) -> i64>(f: F) {
@@ -60,7 +64,81 @@ mod fn_once_trait {
         let _r = apply(f, true); // $ target=apply type=_r:i64
 
         let f = |x| x + 1; // $ MISSING: type=x:i64 target=add
-        let _r2 = apply_two(f); // $ target=apply_two type=_r2:i64
+        let _r2 = apply_two(f); // $ target=apply_two certainType=_r2:i64
+    }
+}
+
+mod fn_mut_trait {
+    fn return_type<F: FnMut(bool) -> i64>(mut f: F) {
+        let _return = f(true); // $ type=_return:i64
+    }
+
+    fn return_type_omitted<F: FnMut(bool)>(mut f: F) {
+        let _return = f(true); // $ type=_return:()
+    }
+
+    fn argument_type<F: FnMut(bool) -> i64>(mut f: F) {
+        let arg = Default::default(); // $ target=default type=arg:bool
+        f(arg);
+    }
+
+    fn apply<A, B, F: FnMut(A) -> B>(mut f: F, a: A) -> B {
+        f(a)
+    }
+
+    fn apply_two(mut f: impl FnMut(i64) -> i64) -> i64 {
+        f(2)
+    }
+
+    fn test() {
+        let f = |x: bool| -> i64 {
+            if x {
+                1
+            } else {
+                0
+            }
+        };
+        let _r = apply(f, true); // $ target=apply type=_r:i64
+
+        let f = |x| x + 1; // $ MISSING: type=x:i64 target=add
+        let _r2 = apply_two(f); // $ target=apply_two certainType=_r2:i64
+    }
+}
+
+mod fn_trait {
+    fn return_type<F: Fn(bool) -> i64>(f: F) {
+        let _return = f(true); // $ type=_return:i64
+    }
+
+    fn return_type_omitted<F: Fn(bool)>(f: F) {
+        let _return = f(true); // $ type=_return:()
+    }
+
+    fn argument_type<F: Fn(bool) -> i64>(f: F) {
+        let arg = Default::default(); // $ target=default type=arg:bool
+        f(arg);
+    }
+
+    fn apply<A, B, F: Fn(A) -> B>(f: F, a: A) -> B {
+        f(a)
+    }
+
+    fn apply_two(f: impl Fn(i64) -> i64) -> i64 {
+        f(2)
+    }
+
+    fn test() {
+        let f = |x: bool| -> i64 {
+            if x {
+                1
+            } else {
+                0
+            }
+        };
+        let _r = apply(f, true); // $ target=apply type=_r:i64
+
+        let f = |x| x + 1; // $ MISSING: type=x:i64 target=add
+        let _r2 = apply_two(f); // $ target=apply_two certainType=_r2:i64
     }
 }
 

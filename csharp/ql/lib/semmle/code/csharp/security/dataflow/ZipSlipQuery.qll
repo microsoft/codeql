@@ -20,16 +20,17 @@ class PathCombinerViaMethodCall extends UnsanitizedPathCombiner {
   }
 }
 
-class PathCombinerViaStringInterpolation extends UnsanitizedPathCombiner instanceof InterpolatedStringExpr {}
+class PathCombinerViaStringInterpolation extends UnsanitizedPathCombiner instanceof InterpolatedStringExpr
+{ }
 
 class PathCombinerViaStringConcatenation extends UnsanitizedPathCombiner instanceof AddExpr {
-  PathCombinerViaStringConcatenation() {
-    this.getAnOperand() instanceof StringLiteral
-  }
+  PathCombinerViaStringConcatenation() { this.getAnOperand() instanceof StringLiteral }
 }
 
 class MethodCallGetFullPath extends MethodCall {
-  MethodCallGetFullPath() { this.getTarget().hasFullyQualifiedName("System.IO.Path", "GetFullPath") }
+  MethodCallGetFullPath() {
+    this.getTarget().hasFullyQualifiedName("System.IO.Path", "GetFullPath")
+  }
 }
 
 /**
@@ -51,19 +52,17 @@ private module GetFullPathToQualifierTaintTrackingConfiguration implements DataF
   }
 }
 
-class ZipArchiveEntryClass extends Class{
-  ZipArchiveEntryClass(){
-    this.hasFullyQualifiedName("System.IO.Compression", "ZipArchiveEntry")
-  }
+class ZipArchiveEntryClass extends Class {
+  ZipArchiveEntryClass() { this.hasFullyQualifiedName("System.IO.Compression", "ZipArchiveEntry") }
 }
 
 /**
  * The `FullName` property of `System.IO.Compression.ZipArchiveEntry`.
  */
-class ZipArchiveEntryFullNameAccess extends Property{
-  ZipArchiveEntryFullNameAccess(){
-      this.getDeclaringType() instanceof ZipArchiveEntryClass and
-      this.getName() = "FullName"
+class ZipArchiveEntryFullNameAccess extends Property {
+  ZipArchiveEntryFullNameAccess() {
+    this.getDeclaringType() instanceof ZipArchiveEntryClass and
+    this.getName() = "FullName"
   }
 }
 
@@ -185,18 +184,17 @@ module SanitizedGuardTT = TaintTracking::Global<SanitizedGuardTaintTrackingConfi
 private module SanitizedGuardTaintTrackingConfiguration implements DataFlow::ConfigSig {
   predicate isSource(DataFlow::Node source) {
     source instanceof DataFlow::ParameterNode and
-    exists(RootSanitizerMethodCall smc |
-      smc.getEnclosingCallable() = source.getEnclosingCallable()
-    )
+    exists(RootSanitizerMethodCall smc | smc.getEnclosingCallable() = source.getEnclosingCallable())
   }
 
   predicate isSink(DataFlow::Node sink) {
     exists(RootSanitizerMethodCall smc, Expr e |
       e = sink.asExpr() and
-      e = [
-        smc.getAnArgument(),
-        smc.getQualifier()
-      ]
+      e =
+        [
+          smc.getAnArgument(),
+          smc.getQualifier()
+        ]
     )
   }
 }
@@ -205,9 +203,10 @@ private module SanitizedGuardTaintTrackingConfiguration implements DataFlow::Con
  * A Callable that successfully validates a path will resolve under a given directory,
  * and if it does not, throws an exception.
  */
-private class ValidatingCallableThrowing extends Callable{
+private class ValidatingCallableThrowing extends Callable {
   Parameter paramFilename;
-  ValidatingCallableThrowing(){
+
+  ValidatingCallableThrowing() {
     paramFilename = this.getAParameter() and
     // It passes the guard, contraining the function argument to the Guard argument.
     exists(ZipSlipGuard g, DataFlow::ParameterNode source, DataFlow::Node sink |
@@ -215,15 +214,16 @@ private class ValidatingCallableThrowing extends Callable{
       source = DataFlow::parameterNode(paramFilename) and
       sink = DataFlow::exprNode(g.getFilePathArgument()) and
       SanitizedGuardTT::flow(source, sink) and
-      exists(AbstractValues::BooleanValue bv, ThrowStmt throw |
+      exists(GuardValue bv, ThrowStmt throw |
         throw.getEnclosingCallable() = this and
         forall(TryStmt try | try.getEnclosingCallable() = this | not throw.getParent+() = try) and
         // If there exists a control block that guards against misuse
-        bv.getValue() = false and
+        bv.asBooleanValue() = false and
         g.controlsNode(throw.getAControlFlowNode(), bv)
       )
     )
   }
+
   Parameter paramFilePath() { result = paramFilename }
 }
 
@@ -283,9 +283,9 @@ class DirectWrapperSantizierMethod extends AbstractWrapperSanitizerMethod {
         sink = DataFlow::exprNode(g.getFilePathArgument()) and
         SanitizedGuardTT::flow(source, sink) and
         (
-          exists(AbstractValues::BooleanValue bv |
+          exists(GuardValue bv |
             // If there exists a control block that guards against misuse
-            bv.getValue() = true and
+            bv.asBooleanValue() = true and
             g.controlsNode(ret.getAControlFlowNode(), bv)
           )
           or
@@ -353,7 +353,6 @@ class WrapperSanitizerMethodCall extends SanitizerMethodCall {
     index = wrapperMethod.paramFilePath().getIndex()
   }
 
-
   override Expr getFilePathArgument() {
     exists(int index |
       this.paramFilePathIndex(index) and
@@ -362,11 +361,11 @@ class WrapperSanitizerMethodCall extends SanitizerMethodCall {
   }
 }
 
-private predicate wrapperCheckGuard(Guard g, Expr e, AbstractValue v) {
+private predicate wrapperCheckGuard(Guard g, Expr e, GuardValue v) {
   // A given wrapper method call, with the filePathArgument as a sink, that returns 'true'
   g instanceof WrapperSanitizerMethodCall and
   g.(WrapperSanitizerMethodCall).getFilePathArgument() = e and
-  v.(AbstractValues::BooleanValue).getValue() = true
+  v.asBooleanValue() = true
 }
 
 /**
@@ -388,8 +387,10 @@ class WrapperCheckSanitizer extends Sanitizer {
  * A Call to `ValidatingCallableThrowing` which acts as a barrier in a DataFlow
  */
 class ValidatingCallableThrowingSanitizer extends Sanitizer {
-  ValidatingCallableThrowingSanitizer(){
-    exists(ValidatingCallableThrowing validator, Call validatorCall | validatorCall = validator.getACall() |
+  ValidatingCallableThrowingSanitizer() {
+    exists(ValidatingCallableThrowing validator, Call validatorCall |
+      validatorCall = validator.getACall()
+    |
       this = DataFlow::exprNode(validatorCall.getAnArgument())
     )
   }
@@ -418,7 +419,8 @@ class ArchiveEntryFullName extends Source {
 class SinkCompressionExtractToFileArgument extends Sink {
   SinkCompressionExtractToFileArgument() {
     exists(MethodCall mc |
-      mc.getTarget().hasFullyQualifiedName("System.IO.Compression.ZipFileExtensions", "ExtractToFile") and
+      mc.getTarget()
+          .hasFullyQualifiedName("System.IO.Compression.ZipFileExtensions", "ExtractToFile") and
       this.asExpr() = mc.getArgumentForName("destinationFileName")
     )
   }
@@ -510,3 +512,71 @@ private module ZipSlipConfig implements DataFlow::ConfigSig {
  * A taint tracking module for Zip Slip.
  */
 module ZipSlip = TaintTracking::Global<ZipSlipConfig>;
+
+/** A path argument to a `File.Open`, `File.OpenWrite`, or `File.Create` method call. */
+class FileOpenArgSink extends Sink {
+  FileOpenArgSink() {
+    exists(MethodCall mc |
+      mc.getTarget().hasFullyQualifiedName("System.IO", "File", "Open") or
+      mc.getTarget().hasFullyQualifiedName("System.IO", "File", "OpenWrite") or
+      mc.getTarget().hasFullyQualifiedName("System.IO", "File", "Create")
+    |
+      this.asExpr() = mc.getArgumentForName("path")
+    )
+  }
+}
+
+/** A path argument to a call to the `FileStream` constructor. */
+class FileStreamArgSink extends Sink {
+  FileStreamArgSink() {
+    exists(ObjectCreation oc |
+      oc.getTarget().getDeclaringType().hasFullyQualifiedName("System.IO", "FileStream")
+    |
+      this.asExpr() = oc.getArgumentForName("path")
+    )
+  }
+}
+
+/**
+ * A path argument to a call to the `FileStream` constructor.
+ *
+ * This constructor can accept a tainted file name and subsequently be used to open a file stream.
+ */
+class FileInfoArgSink extends Sink {
+  FileInfoArgSink() {
+    exists(ObjectCreation oc |
+      oc.getTarget().getDeclaringType().hasFullyQualifiedName("System.IO", "FileInfo")
+    |
+      this.asExpr() = oc.getArgumentForName("fileName")
+    )
+  }
+}
+
+/**
+ * A call to `GetFileName`.
+ *
+ * This is considered a sanitizer because it extracts just the file name, not the full path.
+ */
+class GetFileNameSanitizer extends Sanitizer {
+  GetFileNameSanitizer() {
+    exists(MethodCall mc |
+      mc.getTarget().hasFullyQualifiedName("System.IO", "Path", "GetFileName")
+    |
+      this.asExpr() = mc
+    )
+  }
+}
+
+/**
+ * A call to `Substring`.
+ *
+ * This is considered a sanitizer because `Substring` may be used to extract a single component
+ * of a path to avoid ZipSlip.
+ */
+class SubstringSanitizer extends Sanitizer {
+  SubstringSanitizer() {
+    exists(MethodCall mc | mc.getTarget().hasFullyQualifiedName("System", "String", "Substring") |
+      this.asExpr() = mc
+    )
+  }
+}

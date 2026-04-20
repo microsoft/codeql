@@ -15,52 +15,13 @@ private import AngularJS
 /**
  * Holds if `nd` is a reference to the `angular` variable.
  */
+overlay[local?]
 DataFlow::SourceNode angular() {
   // either as a global
   result = DataFlow::globalVarRef("angular")
   or
   // or imported from a module named `angular`
   result = DataFlow::moduleImport("angular")
-}
-
-/**
- * Holds if `tl` appears to be a top-level using the AngularJS library.
- *
- * Should not depend on the `SourceNode` class.
- */
-pragma[nomagic]
-private predicate isAngularTopLevel(TopLevel tl) {
-  exists(Import imprt |
-    imprt.getTopLevel() = tl and
-    imprt.getImportedPathString() = "angular"
-  )
-  or
-  exists(GlobalVarAccess global |
-    global.getName() = "angular" and
-    global.getTopLevel() = tl
-  )
-}
-
-/**
- * Holds if `s` is a string in a top-level using the AngularJS library.
- *
- * Should not depend on the `SourceNode` class.
- */
-pragma[nomagic]
-private predicate isAngularString(Expr s) {
-  isAngularTopLevel(s.getTopLevel()) and
-  (
-    s instanceof StringLiteral or
-    s instanceof TemplateLiteral
-  )
-}
-
-/**
- * String literals in Angular code are often used as identifiers or references, so we
- * want to track them.
- */
-private class TrackStringsInAngularCode extends DataFlow::SourceNode::Range, DataFlow::ValueNode {
-  TrackStringsInAngularCode() { isAngularString(astNode) }
 }
 
 /**

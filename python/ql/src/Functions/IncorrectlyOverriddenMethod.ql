@@ -1,4 +1,5 @@
 /**
+ * @deprecated
  * @name Mismatch between signature and use of an overriding method
  * @description Method has a different signature from the overridden method and, if it were called, would be likely to cause an error.
  * @kind problem
@@ -13,6 +14,7 @@
 
 import python
 import Expressions.CallArgs
+private import LegacyPointsTo
 
 from Call call, FunctionValue func, FunctionValue overridden, string problem
 where

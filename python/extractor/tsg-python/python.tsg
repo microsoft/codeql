@@ -6,23 +6,13 @@
 (module) @mod
 { let @mod.node = (ast-node @mod "Module") }
 
-(_) @anynode
-{
-    scan (node-type @anynode) {
-        "^(ERROR|MISSING)$" {
-            let @anynode.node = (ast-node @anynode "SyntaxErrorNode")
-            attr (@anynode.node) source = (source-text @anynode)
-        }
-    }
-}
-
 (parenthesized_expression) @nd
 { let @nd.node = (ast-node @nd "Expr") }
 
 (assignment !type) @assign
 { let @assign.node = (ast-node @assign "Assign") }
 
-[ (expression_list) (tuple) (tuple_pattern) (pattern_list) (index_expression_list) ] @tuple
+[ (expression_list) (tuple) (tuple_pattern) (pattern_list) (index_expression_list) (exception_list)] @tuple
 { let @tuple.node = (ast-node @tuple "Tuple") }
 
 (list_pattern) @list
@@ -127,6 +117,9 @@
 (string string_content: (_) @part)
 { let @part.node = (ast-node @part "StringPart") }
 
+(template_string string_content: (_) @part)
+{ let @part.node = (ast-node @part "TemplateStringPart") }
+
 ; A string concatenation that contains no interpolated expressions is just a `Str` (and its children
 ; will be `StringPart`s). A string concatenation that contains interpolated expressions is a
 ; `JoinedStr`, however.
@@ -152,6 +145,12 @@
     }
 }
 
+(template_string) @tstring
+{ let @tstring.node = (ast-node @tstring "TemplateString") }
+
+(concatenated_template_string) @tstrings
+{ let @tstrings.node = (ast-node @tstrings "JoinedTemplateString") }
+
 (pair) @kvpair
 { let @kvpair.node = (ast-node @kvpair "KeyValuePair") }
 
@@ -174,7 +173,7 @@
 { let @unaryop.node = (ast-node @unaryop "UnaryOp") }
 
 (exec_statement) @exec
-{ let @exec.node = (ast-node @exec "Exec") }
+{ let @exec.node = (ast-node @exec "Exec") }
 
 (print_statement) @print
 { let @print.node = (ast-node @print "Print") }
@@ -416,13 +415,13 @@
     attr (@if.node) _location_end = (location-end @expr)
 }
 
-(generator_expression . "(" . (comment)* . (expression) @start (for_in_clause) @child [(for_in_clause) (if_clause)] @end . (comment)* . ")" .) @genexpr
+(generator_expression . "(" . (comment)* . (expression) @start (for_in_clause) @child [(for_in_clause) (if_clause)] @end . (comment)* . ")" .) @_genexpr
 {
     attr (@child.node) _location_start = (location-start @start)
     attr (@child.node) _location_end = (location-end @end)
 }
 
-(generator_expression . "(" . (comment)* . (expression) @start (for_in_clause) @end . (comment)* . ")" .) @genexpr
+(generator_expression . "(" . (comment)* . (expression) @start (for_in_clause) @end . (comment)* . ")" .) @_genexpr
 {
     attr (@end.node) _location_start = (location-start @start)
     attr (@end.node) _location_end = (location-end @end)
@@ -524,7 +523,7 @@
     attr (@del.node -> @target.node) targets = (named-child-index @target)
 }
 
-(delete_statement target: (_) @target) @del
+(delete_statement target: (_) @target) @_del
 {
     attr (@target.node) ctx = "del"
 }
@@ -798,8 +797,8 @@
 
 (dictionary_comprehension
     body: (pair
-        key: (_) @key
-        value: (_) @value
+        key: (_) @_key
+        value: (_) @_value
     )
 ) @genexpr
 {
@@ -1299,7 +1298,7 @@
 ; the index of the left-hand side of the current assignment.
 
 ; Base case, for the outermost assignment we set the outermost node to this node, and the index to zero.
-(expression_statement (assignment !type) @assign) @expr
+(expression_statement (assignment !type) @assign) @_expr
 {
     let @assign.outermost_assignment = @assign.node
     let @assign.target_index = 0
@@ -1358,7 +1357,7 @@
 }
 
 (assignment
-    left: (_) @target
+    left: (_) @_target
     type: (_)
     right: (_) @value
 ) @assign
@@ -2062,6 +2061,44 @@
 
 ;;;;;; End of JoinedStr (`f"foo"`)
 
+;;;;;; JoinedTemplateString / TemplateString (`t"foo"`)
+
+; Record the prefix of the template string.
+(template_string) @tstring
+{
+    attr (@tstring.node) prefix = (string-prefix @tstring)
+}
+
+; Attach raw children (string parts and interpolations) to the template string node.
+(template_string (string_content) @part) @tmpl_any
+{
+    edge @tmpl_any.node -> @part.node
+    attr (@tmpl_any.node -> @part.node) values = (named-child-index @part)
+    attr (@part.node) ctx = "load"
+    let safe_string = (concatenate-strings (string-safe-prefix @tmpl_any) (source-text @part) (string-quotes @tmpl_any))
+    attr (@part.node) s = safe_string
+    attr (@part.node) text = safe_string
+}
+
+(template_string (interpolation expression: (_) @part) @interp) @tmpl_any
+{
+    edge @tmpl_any.node -> @part.node
+    attr (@tmpl_any.node -> @part.node) values = (named-child-index @interp)
+    attr (@part.node) ctx = "load"
+}
+
+
+; Concatenated template strings simply have a list-like field containing the template strings that
+; are concatenated together.
+(concatenated_template_string (template_string) @tstring) @tmpl_concat
+{
+    edge @tmpl_concat.node -> @tstring.node
+    attr (@tmpl_concat.node -> @tstring.node) strings = (named-child-index @tstring)
+    attr (@tstring.node) ctx = "load"
+}
+
+;;;;;; End of JoinedTemplateString / TemplateString (`t"foo"`)
+
 
 
 ;;;;;; List (`[...]`)
@@ -2330,7 +2367,7 @@
     attr (@operand.node) ctx = "load"
 }
 
-(unary_operator "~" @op) @unaryop
+(unary_operator "~" @_op) @unaryop
 {
     attr (@unaryop.node) op = "~"
 }
@@ -2614,7 +2651,7 @@
 ; Async status
 ; NOTE: We only set the `is_async` field on the _first_ clause of the `with` statement,
 ; as this is the behaviour of the old parser.
-(with_statement "async" "with" @with_keyword (with_clause . (with_item) @with))
+(with_statement "async" "with" @_with_keyword (with_clause . (with_item) @with))
 {
     attr (@with.node) is_async = #true
 }
@@ -2800,7 +2837,7 @@
     (identifier) @obj
     .
     (identifier) @attr
-) @match_value_pattern
+) @_match_value_pattern
 {
     let attribute = (ast-node @attr "Attribute")
     attr (@attr.node) _skip_to = attribute
@@ -2814,7 +2851,7 @@
 (match_value_pattern
     .
     (identifier) @id
-) @match_value_pattern
+) @_match_value_pattern
 {
     attr (@id.node) ctx = "load"
 }
@@ -3040,7 +3077,7 @@
     if some @is_kwarg {
         attr (@lambda.function -> @name.node) kwonlyargs = (named-child-index @param)
     }
-    else { 
+    else { 
         attr (@lambda.function -> @name.node) args = (named-child-index @param)
     }
 
@@ -3153,7 +3190,7 @@
     if some @is_kwarg {
         attr (@funcdef.function -> @name.node) kwonlyargs = (named-child-index @param)
     }
-    else { 
+    else { 
         attr (@funcdef.function -> @name.node) args = (named-child-index @param)
     }
 
@@ -3267,8 +3304,8 @@
 (decorated_definition
     (decorator (expression) @exp1) @dec1
     . (comment)* .
-    (decorator (expression) @exp2) @dec2
-) @decorator
+    (decorator (expression) @_exp2) @dec2
+) @_decorator
 {
     attr (@dec1.node) func = @exp1.node
     edge @dec1.node -> @dec2.node
@@ -3279,24 +3316,24 @@
     (decorator (expression) @exp) @last
     . (comment)* .
     definition: (function_definition) @funcdef
-) @decorator
+) @_decorator
 {
     attr (@last.node) func = @exp.node
     edge @last.node -> @funcdef.funcexpr
     attr (@last.node -> @funcdef.funcexpr) positional_args = 0
-    attr (@last.node) _location_end = (location-end @exp)
+    attr (@last.node) _location_end = (location-end @exp)
 }
 
 (decorated_definition
     (decorator (expression) @exp) @last
     . (comment)* .
     definition: (class_definition) @class
-) @decorator
+) @_decorator
 {
     attr (@last.node) func = @exp.node
     edge @last.node -> @class.class_expr
     attr (@last.node -> @class.class_expr) positional_args = 0
-    attr (@last.node) _location_end = (location-end @exp)
+    attr (@last.node) _location_end = (location-end @exp)
 }
 
 ;;; Type parameters
@@ -3408,6 +3445,9 @@
     (tuple element: (_) @elt) @parent
 
     (tuple_pattern element: (_) @elt) @parent
+
+    ; An exception list, as in `except A, B, C: ...`
+    (exception_list element: (_) @elt) @parent
 ]
 {
     edge @parent.node -> @elt.node
@@ -3443,6 +3483,7 @@
     (parenthesized_expression inner: (_) @elt)
     (set element: (_) @elt)
     (match_sequence_pattern (_) @elt)
+    (exception_list element: (_) @elt)
 ] @seq
 {
     attr (@elt.node) _inherited_ctx = @seq.node

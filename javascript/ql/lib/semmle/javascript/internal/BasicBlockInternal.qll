@@ -2,6 +2,8 @@
  * Provides classes for working with basic blocks, and predicates for computing
  * liveness information for local variables.
  */
+overlay[local?]
+module;
 
 import javascript
 private import semmle.javascript.internal.StmtContainers
@@ -318,6 +320,7 @@ module Public {
     /**
      * Holds if this basic block strictly dominates `bb`.
      */
+    overlay[caller?]
     pragma[inline]
     predicate strictlyDominates(ReachableBasicBlock bb) { this = immediateDominator+(bb) }
 
@@ -326,12 +329,14 @@ module Public {
      *
      * This predicate is reflexive: each reachable basic block dominates itself.
      */
+    overlay[caller?]
     pragma[inline]
     predicate dominates(ReachableBasicBlock bb) { this = immediateDominator*(bb) }
 
     /**
      * Holds if this basic block strictly post-dominates `bb`.
      */
+    overlay[caller?]
     pragma[inline]
     predicate strictlyPostDominates(ReachableBasicBlock bb) { this = immediatePostDominator+(bb) }
 
@@ -340,6 +345,7 @@ module Public {
      *
      * This predicate is reflexive: each reachable basic block post-dominates itself.
      */
+    overlay[caller?]
     pragma[inline]
     predicate postDominates(ReachableBasicBlock bb) { this = immediatePostDominator*(bb) }
   }
@@ -372,16 +378,28 @@ module Public {
 
   module Cfg implements BB::CfgSig<Location> {
     private import javascript as Js
-    private import codeql.util.Unit
+    private import codeql.controlflow.SuccessorType
 
     class ControlFlowNode = Js::ControlFlowNode;
 
-    class SuccessorType = Unit;
+    private predicate conditionSucc(BasicBlock bb1, BasicBlock bb2, boolean branch) {
+      exists(ConditionGuardNode g |
+        bb1 = g.getTest().getBasicBlock() and
+        bb2 = g.getBasicBlock() and
+        branch = g.getOutcome()
+      )
+    }
 
     class BasicBlock extends FinalBasicBlock {
       BasicBlock getASuccessor() { result = super.getASuccessor() }
 
-      BasicBlock getASuccessor(SuccessorType t) { result = super.getASuccessor() and exists(t) }
+      BasicBlock getASuccessor(SuccessorType t) {
+        conditionSucc(this, result, t.(BooleanSuccessor).getValue())
+        or
+        result = super.getASuccessor() and
+        t instanceof DirectSuccessor and
+        not conditionSucc(this, result, _)
+      }
 
       predicate strictlyDominates(BasicBlock bb) {
         this.(ReachableBasicBlock).strictlyDominates(bb)

@@ -39,14 +39,16 @@ module KindValidation<KindValidationConfigSig Config> {
           "response-splitting", "trust-boundary-violation", "template-injection", "url-forward",
           "xslt-injection",
           // JavaScript-only currently, but may be shared in the future
-          "mongodb.sink",
+          "cors-origin", "mongodb.sink",
           // Swift-only currently, but may be shared in the future
           "database-store", "format-string", "hash-iteration-count", "predicate-injection",
           "preferences-store", "tls-protocol-version", "transmission", "webview-fetch", "xxe",
           // Go-only currently, but may be shared in the future
           "jwt",
           // CPP-only currently
-          "remote-sink"
+          "remote-sink",
+          // Python-only currently, but may be shared in the future
+          "prompt-injection"
         ]
       or
       this.matches([
@@ -173,7 +175,7 @@ module KindValidation<KindValidationConfigSig Config> {
     or
     exists(string kind, string msg | Config::sinkKind(kind) |
       not kind instanceof ValidSinkKind and
-      msg = "Invalid kind \"" + kind + "\" in sink model." and
+      msg = "Invalid kind \"" + kind + "\" in sink or barrier model." and
       // The part of this message that refers to outdated sink kinds can be deleted after June 1st, 2024.
       if kind instanceof OutdatedSinkKind
       then result = msg + " " + kind.(OutdatedSinkKind).outdatedMessage()

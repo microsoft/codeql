@@ -36,11 +36,22 @@ class Folder = Impl::Folder;
 
 module Folder = Impl::Folder;
 
+/**
+ * Holds if the file identified by `relativePath` should be treated as though it is external
+ * to the target project, even though it is within the source code directory. This is used for
+ * testing.
+ */
+extensible predicate additionalExternalFile(string relativePath);
+
 /** A file. */
 class File extends Container, Impl::File {
-  /** Holds if this file was extracted from ordinary source code. */
+  /**
+   * Holds if this file was extracted from the source code of the target project
+   * (rather than another location such as inside a dependency).
+   */
   predicate fromSource() {
-    exists(ExtractorStep s | s.getAction() = "Extract" and s.getFile() = this)
+    exists(ExtractorStep s | s.getAction() = "Extract" and s.getFile() = this) and
+    not additionalExternalFile(this.getRelativePath())
   }
 
   /**
@@ -71,6 +82,25 @@ class File extends Container, Impl::File {
  */
 class ExtractedFile extends File {
   ExtractedFile() { this.fromSource() }
+
+  private Diagnostic getNoSemanticsDiagnostic() {
+    result.getTag() = "semantics" and result.getLocation().getFile() = this
+  }
+
+  /**
+   * Holds if we have semantical information about this file, which means
+   * we should be able to
+   * * expand any macros
+   * * skip any blocks that are conditionally compiled out
+   */
+  predicate hasSemantics() { not exists(this.getNoSemanticsDiagnostic()) }
+
+  /**
+   * Holds if we know this file was skipped by conditional compilation.
+   * This is not the same as `not this.hasSemantics()`, as a file
+   * might not have semantics because of some error.
+   */
+  predicate isSkippedByCompilation() { this.getNoSemanticsDiagnostic().getSeverityText() = "Info" }
 }
 
 /**

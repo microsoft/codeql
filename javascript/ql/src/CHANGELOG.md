@@ -1,3 +1,95 @@
+## 2.3.6
+
+No user-facing changes.
+
+## 2.3.5
+
+No user-facing changes.
+
+## 2.3.4
+
+No user-facing changes.
+
+## 2.3.3
+
+No user-facing changes.
+
+## 2.3.2
+
+No user-facing changes.
+
+## 2.3.1
+
+No user-facing changes.
+
+## 2.3.0
+
+### Major Analysis Improvements
+
+* JavaScript files with an average line length greater than 200 are now considered minified and will no longer be analyzed.
+  For use-cases where minified files should be analyzed, the original behavior can be restored by setting the environment variable
+  `CODEQL_EXTRACTOR_JAVASCRIPT_ALLOW_MINIFIED_FILES=true`.
+
+### Minor Analysis Improvements
+
+* The model of `vue-router` now properly detects taint sources in cases where
+  the `props` property is a callback.
+* Fixed a bug in the Next.js model that would cause the analysis to miss server-side taint sources in files
+  named `route` or `page` appearing outside `api` and `pages` folders.
+* `new Response(x)` is no longer seen as a reflected XSS sink when no `content-type` header
+  is set, since the content type defaults to `text/plain`.
+
+## 2.2.4
+
+No user-facing changes.
+
+## 2.2.3
+
+No user-facing changes.
+
+## 2.2.2
+
+No user-facing changes.
+
+## 2.2.1
+
+### Minor Analysis Improvements
+
+* Fixed a bug in the Next.js model that would cause the analysis to miss server-side taint sources in the `app/pages` folder.
+
+## 2.2.0
+
+### Query Metadata Changes
+
+* Increased the `security-severity` score of the `js/xss-through-dom` query from 6.1 to 7.8 to align with other XSS queries.
+* Reduced the `security-severity` score of the `js/overly-large-range` query from 5.0 to 4.0 to better reflect its impact.
+
+## 2.1.3
+
+No user-facing changes.
+
+## 2.1.2
+
+No user-facing changes.
+
+## 2.1.1
+
+No user-facing changes.
+
+## 2.1.0
+
+### Major Analysis Improvements
+
+* Added support for TypeScript 5.9
+* Added support for `import defer` syntax in JavaScript and TypeScript.
+
+### Minor Analysis Improvements
+
+* Data flow is now tracked through the `Promise.try` and `Array.prototype.with` functions.
+* Query `js/index-out-of-bounds` no longer produces a false-positive when a strictly-less-than check overrides a previous less-than-or-equal test.
+* The query `js/remote-property-injection` now detects property injection vulnerabilities through object enumeration patterns such as `Object.keys()`. 
+* The query "Permissive CORS configuration" (`js/cors-permissive-configuration`) has been promoted from experimental and is now part of the default security suite. Thank you to @maikypedia who [submitted the original experimental query](https://github.com/github/codeql/pull/14342)!
+
 ## 2.0.3
 
 No user-facing changes.

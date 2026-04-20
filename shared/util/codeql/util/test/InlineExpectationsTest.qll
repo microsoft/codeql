@@ -1,7 +1,8 @@
 /**
  * Provides a library for writing QL tests whose success or failure is based on expected results
  * embedded in the test source code as comments, rather than the contents of an `.expected` file
- * (in that the `.expected` file should always be empty).
+ * (in that the `.expected` file should always be empty, except when used via the post-processing
+ * query).
  *
  * To add this framework to a new language, add a new file
  * (usually called `InlineExpectationsTest.qll`) with:
@@ -520,7 +521,7 @@ module Make<InlineExpectationsTestSig Impl> {
  * is treated as part of the expected results, except that the comment may contain a `//` sequence
  * to treat the remainder of the line as a regular (non-interpreted) comment.
  */
-private string expectationCommentPattern() { result = "\\s*\\$((?:[^/]|/[^/])*)(?://.*)?" }
+private string expectationCommentPattern() { result = "\\s*\\$ ((?:[^/]|/[^/])*)(?://.*)?" }
 
 /**
  * The possible columns in an expectation comment. The `TDefaultColumn` branch represents the first

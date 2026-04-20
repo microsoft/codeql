@@ -2,6 +2,8 @@
  * Provides classes modeling security-relevant aspects of the standard libraries.
  * Note: some modeling is done internally in the dataflow/taint tracking implementation.
  */
+overlay[local?]
+module;
 
 private import python
 private import semmle.python.dataflow.new.DataFlow
@@ -242,6 +244,67 @@ module Stdlib {
         // TODO
         none()
       }
+    }
+  }
+
+  /**
+   * Provides models for the `urllib.parse.ParseResult` class
+   *
+   * See https://docs.python.org/3.9/library/urllib.parse.html#urllib.parse.ParseResult.
+   */
+  module ParseResult {
+    /** Gets a reference to the `urllib.parse.ParseResult` class. */
+    API::Node classRef() {
+      result = API::moduleImport("urllib").getMember("parse").getMember("ParseResult")
+      or
+      result = ModelOutput::getATypeNode("urllib.parse.ParseResult~Subclass").getASubclass*()
+    }
+
+    /**
+     * A source of instances of `urllib.parse.ParseResult`, extend this class to model new instances.
+     *
+     * This can include instantiations of the class, return values from function
+     * calls, or a special parameter that will be set when functions are called by an external
+     * library.
+     *
+     * Use the predicate `ParseResult::instance()` to get references to instances of `urllib.parse.ParseResult`.
+     */
+    abstract class InstanceSource extends DataFlow::LocalSourceNode { }
+
+    /** A direct instantiation of `urllib.parse.ParseResult`. */
+    private class ClassInstantiation extends InstanceSource, DataFlow::CallCfgNode {
+      ClassInstantiation() { this = classRef().getACall() }
+    }
+
+    /** Gets a reference to an instance of `urllib.parse.ParseResult`. */
+    private DataFlow::TypeTrackingNode instance(DataFlow::TypeTracker t) {
+      t.start() and
+      result instanceof InstanceSource
+      or
+      exists(DataFlow::TypeTracker t2 | result = instance(t2).track(t2, t))
+    }
+
+    /** Gets a reference to an instance of `urllib.parse.ParseResult`. */
+    DataFlow::Node instance() { instance(DataFlow::TypeTracker::end()).flowsTo(result) }
+
+    /**
+     * Taint propagation for `urllib.parse.ParseResult`.
+     */
+    private class InstanceTaintSteps extends InstanceTaintStepsHelper {
+      InstanceTaintSteps() { this = "urllib.parse.ParseResult" }
+
+      override DataFlow::Node getInstance() { result = instance() }
+
+      override string getAttributeName() {
+        result in [
+            "netloc", "path", "params", "query", "fragment", "username", "password", "hostname",
+            "port"
+          ]
+      }
+
+      override string getMethodName() { none() }
+
+      override string getAsyncMethodName() { none() }
     }
   }
 
@@ -3126,7 +3189,7 @@ module StdlibPrivate {
    *
    * See https://docs.python.org/3.11/library/re.html#re-objects
    */
-  class RePatternSummary extends SummarizedCallable {
+  class RePatternSummary extends SummarizedCallable::Range {
     RePatternSummary() { this = "re.Pattern" }
 
     override DataFlow::CallCfgNode getACall() {
@@ -3166,7 +3229,7 @@ module StdlibPrivate {
    *
    * See https://docs.python.org/3/library/re.html#re.Match
    */
-  class ReMatchSummary extends SummarizedCallable {
+  class ReMatchSummary extends SummarizedCallable::Range {
     ReMatchSummary() { this = ["re.Match", "compiled re.Match"] }
 
     override DataFlow::CallCfgNode getACall() {
@@ -3230,7 +3293,7 @@ module StdlibPrivate {
    *
    * See https://docs.python.org/3/library/re.html#re.Match
    */
-  class ReMatchMethodsSummary extends SummarizedCallable {
+  class ReMatchMethodsSummary extends SummarizedCallable::Range {
     string methodName;
 
     ReMatchMethodsSummary() {
@@ -3274,7 +3337,7 @@ module StdlibPrivate {
    *
    * See https://docs.python.org/3/library/re.html#functions
    */
-  class ReFunctionsSummary extends SummarizedCallable {
+  class ReFunctionsSummary extends SummarizedCallable::Range {
     string methodName;
 
     ReFunctionsSummary() {
@@ -3702,11 +3765,8 @@ module StdlibPrivate {
    * A call to a find method on a tree or an element will execute an XPath expression.
    */
   private class ElementTreeFindCall extends XML::XPathExecution::Range, DataFlow::CallCfgNode {
-    string methodName;
-
     ElementTreeFindCall() {
-      methodName in ["find", "findall", "findtext"] and
-      (
+      exists(string methodName | methodName in ["find", "findall", "findtext"] |
         this = elementTreeInstance().getMember(methodName).getACall()
         or
         this = elementInstance().getMember(methodName).getACall()
@@ -4125,7 +4185,7 @@ module StdlibPrivate {
    *
    * see https://docs.python.org/3/library/stdtypes.html#dict
    */
-  class DictSummary extends SummarizedCallable {
+  class DictSummary extends SummarizedCallable::Range {
     DictSummary() { this = "builtins.dict" }
 
     override DataFlow::CallCfgNode getACall() { result = API::builtin("dict").getACall() }
@@ -4164,7 +4224,7 @@ module StdlibPrivate {
   }
 
   /** A flow summary for `list`. */
-  class ListSummary extends SummarizedCallable {
+  class ListSummary extends SummarizedCallable::Range {
     ListSummary() { this = "builtins.list" }
 
     override DataFlow::CallCfgNode getACall() { result = API::builtin("list").getACall() }
@@ -4194,7 +4254,7 @@ module StdlibPrivate {
   }
 
   /** A flow summary for tuple */
-  class TupleSummary extends SummarizedCallable {
+  class TupleSummary extends SummarizedCallable::Range {
     TupleSummary() { this = "builtins.tuple" }
 
     override DataFlow::CallCfgNode getACall() { result = API::builtin("tuple").getACall() }
@@ -4219,7 +4279,7 @@ module StdlibPrivate {
   }
 
   /** A flow summary for set */
-  class SetSummary extends SummarizedCallable {
+  class SetSummary extends SummarizedCallable::Range {
     SetSummary() { this = "builtins.set" }
 
     override DataFlow::CallCfgNode getACall() { result = API::builtin("set").getACall() }
@@ -4249,7 +4309,7 @@ module StdlibPrivate {
   }
 
   /** A flow summary for frozenset */
-  class FrozensetSummary extends SummarizedCallable {
+  class FrozensetSummary extends SummarizedCallable::Range {
     FrozensetSummary() { this = "builtins.frozenset" }
 
     override DataFlow::CallCfgNode getACall() { result = API::builtin("frozenset").getACall() }
@@ -4267,7 +4327,7 @@ module StdlibPrivate {
   // Flow summaries for functions operating on containers
   // ---------------------------------------------------------------------------
   /** A flow summary for `reversed`. */
-  class ReversedSummary extends SummarizedCallable {
+  class ReversedSummary extends SummarizedCallable::Range {
     ReversedSummary() { this = "builtins.reversed" }
 
     override DataFlow::CallCfgNode getACall() { result = API::builtin("reversed").getACall() }
@@ -4297,7 +4357,7 @@ module StdlibPrivate {
   }
 
   /** A flow summary for `sorted`. */
-  class SortedSummary extends SummarizedCallable {
+  class SortedSummary extends SummarizedCallable::Range {
     SortedSummary() { this = "builtins.sorted" }
 
     override DataFlow::CallCfgNode getACall() { result = API::builtin("sorted").getACall() }
@@ -4329,7 +4389,7 @@ module StdlibPrivate {
   }
 
   /** A flow summary for `iter`. */
-  class IterSummary extends SummarizedCallable {
+  class IterSummary extends SummarizedCallable::Range {
     IterSummary() { this = "builtins.iter" }
 
     override DataFlow::CallCfgNode getACall() { result = API::builtin("iter").getACall() }
@@ -4359,7 +4419,7 @@ module StdlibPrivate {
   }
 
   /** A flow summary for `next`. */
-  class NextSummary extends SummarizedCallable {
+  class NextSummary extends SummarizedCallable::Range {
     NextSummary() { this = "builtins.next" }
 
     override DataFlow::CallCfgNode getACall() { result = API::builtin("next").getACall() }
@@ -4389,7 +4449,7 @@ module StdlibPrivate {
   }
 
   /** A flow summary for `map`. */
-  class MapSummary extends SummarizedCallable {
+  class MapSummary extends SummarizedCallable::Range {
     MapSummary() { this = "builtins.map" }
 
     override DataFlow::CallCfgNode getACall() { result = API::builtin("map").getACall() }
@@ -4424,7 +4484,7 @@ module StdlibPrivate {
   }
 
   /** A flow summary for `filter`. */
-  class FilterSummary extends SummarizedCallable {
+  class FilterSummary extends SummarizedCallable::Range {
     FilterSummary() { this = "builtins.filter" }
 
     override DataFlow::CallCfgNode getACall() { result = API::builtin("filter").getACall() }
@@ -4450,7 +4510,7 @@ module StdlibPrivate {
   }
 
   /**A summary for `enumerate`. */
-  class EnumerateSummary extends SummarizedCallable {
+  class EnumerateSummary extends SummarizedCallable::Range {
     EnumerateSummary() { this = "builtins.enumerate" }
 
     override DataFlow::CallCfgNode getACall() { result = API::builtin("enumerate").getACall() }
@@ -4476,7 +4536,7 @@ module StdlibPrivate {
   }
 
   /** A flow summary for `zip`. */
-  class ZipSummary extends SummarizedCallable {
+  class ZipSummary extends SummarizedCallable::Range {
     ZipSummary() { this = "builtins.zip" }
 
     override DataFlow::CallCfgNode getACall() { result = API::builtin("zip").getACall() }
@@ -4510,7 +4570,7 @@ module StdlibPrivate {
   // Flow summaries for container methods
   // ---------------------------------------------------------------------------
   /** A flow summary for `copy`. */
-  class CopySummary extends SummarizedCallable {
+  class CopySummary extends SummarizedCallable::Range {
     CopySummary() { this = "collection.copy" }
 
     override DataFlow::CallCfgNode getACall() {
@@ -4533,7 +4593,7 @@ module StdlibPrivate {
   }
 
   /** A flow summary for `copy.replace`. */
-  class ReplaceSummary extends SummarizedCallable {
+  class ReplaceSummary extends SummarizedCallable::Range {
     ReplaceSummary() { this = "copy.replace" }
 
     override DataFlow::CallCfgNode getACall() {
@@ -4566,7 +4626,7 @@ module StdlibPrivate {
    * I also handles the default value when `pop` is called
    * on a dictionary, since that also does not depend on the key.
    */
-  class PopSummary extends SummarizedCallable {
+  class PopSummary extends SummarizedCallable::Range {
     PopSummary() { this = "collection.pop" }
 
     override DataFlow::CallCfgNode getACall() {
@@ -4597,7 +4657,7 @@ module StdlibPrivate {
   }
 
   /** A flow summary for `dict.pop` */
-  class DictPopSummary extends SummarizedCallable {
+  class DictPopSummary extends SummarizedCallable::Range {
     string key;
 
     DictPopSummary() {
@@ -4620,7 +4680,7 @@ module StdlibPrivate {
   }
 
   /** A flow summary for `dict.get` at specific content. */
-  class DictGetSummary extends SummarizedCallable {
+  class DictGetSummary extends SummarizedCallable::Range {
     string key;
 
     DictGetSummary() {
@@ -4648,7 +4708,7 @@ module StdlibPrivate {
   }
 
   /** A flow summary for `dict.get` disregarding content. */
-  class DictGetAnySummary extends SummarizedCallable {
+  class DictGetAnySummary extends SummarizedCallable::Range {
     DictGetAnySummary() { this = "dict.get" }
 
     override DataFlow::CallCfgNode getACall() {
@@ -4671,7 +4731,7 @@ module StdlibPrivate {
   }
 
   /** A flow summary for `dict.popitem` */
-  class DictPopitemSummary extends SummarizedCallable {
+  class DictPopitemSummary extends SummarizedCallable::Range {
     DictPopitemSummary() { this = "dict.popitem" }
 
     override DataFlow::CallCfgNode getACall() {
@@ -4695,7 +4755,7 @@ module StdlibPrivate {
    *
    * See https://docs.python.org/3.10/library/stdtypes.html#dict.setdefault
    */
-  class DictSetdefaultSummary extends SummarizedCallable {
+  class DictSetdefaultSummary extends SummarizedCallable::Range {
     DictSetdefaultSummary() { this = "dict.setdefault" }
 
     override DataFlow::CallCfgNode getACall() {
@@ -4720,7 +4780,7 @@ module StdlibPrivate {
    * This summary handles read and store steps. See `DictSetdefaultSummary`
    * for the dataflow steps.
    */
-  class DictSetdefaultKeySummary extends SummarizedCallable {
+  class DictSetdefaultKeySummary extends SummarizedCallable::Range {
     string key;
 
     DictSetdefaultKeySummary() {
@@ -4753,7 +4813,7 @@ module StdlibPrivate {
    *
    * See https://docs.python.org/3.10/library/stdtypes.html#dict.values
    */
-  class DictValues extends SummarizedCallable {
+  class DictValues extends SummarizedCallable::Range {
     DictValues() { this = "dict.values" }
 
     override DataFlow::CallCfgNode getACall() {
@@ -4782,7 +4842,7 @@ module StdlibPrivate {
    *
    * See https://docs.python.org/3.10/library/stdtypes.html#dict.keys
    */
-  class DictKeys extends SummarizedCallable {
+  class DictKeys extends SummarizedCallable::Range {
     DictKeys() { this = "dict.keys" }
 
     override DataFlow::CallCfgNode getACall() { result.(DataFlow::MethodCallNode).calls(_, "keys") }
@@ -4804,7 +4864,7 @@ module StdlibPrivate {
    *
    * See https://docs.python.org/3.10/library/stdtypes.html#dict.items
    */
-  class DictItems extends SummarizedCallable {
+  class DictItems extends SummarizedCallable::Range {
     DictItems() { this = "dict.items" }
 
     override DataFlow::CallCfgNode getACall() {
@@ -4834,7 +4894,7 @@ module StdlibPrivate {
    *
    * See https://docs.python.org/3.10/library/stdtypes.html#typesseq-mutable
    */
-  class ListAppend extends SummarizedCallable {
+  class ListAppend extends SummarizedCallable::Range {
     ListAppend() { this = "list.append" }
 
     override DataFlow::CallCfgNode getACall() {
@@ -4863,7 +4923,7 @@ module StdlibPrivate {
    *
    * See https://docs.python.org/3.10/library/stdtypes.html#frozenset.add
    */
-  class SetAdd extends SummarizedCallable {
+  class SetAdd extends SummarizedCallable::Range {
     SetAdd() { this = "set.add" }
 
     override DataFlow::CallCfgNode getACall() { result.(DataFlow::MethodCallNode).calls(_, "add") }
@@ -4890,7 +4950,7 @@ module StdlibPrivate {
    *
    * See https://devdocs.io/python~3.11/library/os#os.getenv
    */
-  class OsGetEnv extends SummarizedCallable {
+  class OsGetEnv extends SummarizedCallable::Range {
     OsGetEnv() { this = "os.getenv" }
 
     override DataFlow::CallCfgNode getACall() {

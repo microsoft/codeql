@@ -1,3 +1,87 @@
+## 2.6.26
+
+No user-facing changes.
+
+## 2.6.25
+
+No user-facing changes.
+
+## 2.6.24
+
+### Minor Analysis Improvements
+
+* Added support for browser-specific source kinds (`browser`, `browser-url-query`, `browser-url-fragment`, `browser-url-path`, `browser-url`, `browser-window-name`, `browser-message-event`) that can be used in data extensions to model sources in browser environments.
+* Inline expectations test comments, which are of the form `// $ tag` or `// $ tag=value`, are now parsed more strictly and will not be recognized if there isn't a space after the `$` symbol.
+
+## 2.6.23
+
+### Minor Analysis Improvements
+
+* Added support for React components wrapped by `observer` from `mobx-react` and `mobx-react-lite`.
+
+## 2.6.22
+
+No user-facing changes.
+
+## 2.6.21
+
+### Minor Analysis Improvements
+
+* The predicate `SummarizedCallable.propagatesFlow` has been extended with the columns `Provenance p` and `boolean isExact`, and as a consequence the predicates `SummarizedCallable.hasProvenance` and `SummarizedCallable.hasExactModel` have been removed.
+
+## 2.6.20
+
+### Minor Analysis Improvements
+
+* Support `use cache` directives for Next.js 16.
+* Added `PreCallGraphStep` flow model for React's `useRef` hook.
+* Added a `DomValueSource` that uses the `current` property off the object returned by React's `useRef` hook.
+
+## 2.6.19
+
+No user-facing changes.
+
+## 2.6.18
+
+No user-facing changes.
+
+## 2.6.17
+
+No user-facing changes.
+
+## 2.6.16
+
+### Minor Analysis Improvements
+
+- JavaScript `DataFlow::globalVarRef` now recognizes `document.defaultView` as an alias of `window`, allowing flows such as `document.defaultView.history.pushState(...)` to be modeled and found by queries relying on `globalVarRef("history")`.
+
+## 2.6.15
+
+No user-facing changes.
+
+## 2.6.14
+
+No user-facing changes.
+
+## 2.6.13
+
+No user-facing changes.
+
+## 2.6.12
+
+### Minor Analysis Improvements
+
+* Added modeling of `GraphQLObjectType` resolver function parameters as remote sources.
+* Support for the [graphql](https://www.npmjs.com/package/graphql) library has been improved. Data flow from GraphQL query sources and variables to resolver function parameters is now tracked.
+* Added support for the `aws-sdk` and `@aws-sdk/client-dynamodb`, `@aws-sdk/client-athena`, `@aws-sdk/client-s3`, and `@aws-sdk/client-rds-data` packages.
+
+## 2.6.11
+
+### Minor Analysis Improvements
+
+* Added modeling for promisification libraries `@gar/promisify`, `es6-promisify`, `util.promisify`, `thenify-all`, `call-me-maybe`, `@google-cloud/promisify`, and `util-promisify`.
+* Data flow is now tracked through promisified user-defined functions. 
+
 ## 2.6.10
 
 ### Minor Analysis Improvements

@@ -4,7 +4,6 @@
  */
 
 private import rust
-private import codeql.rust.elements.Call
 private import ControlFlowGraph
 private import internal.ControlFlowGraphImpl as CfgImpl
 private import internal.CfgNodes
@@ -16,6 +15,36 @@ class ExitCfgNode = CfgImpl::ExitNode;
 
 class AnnotatedExitCfgNode = CfgImpl::AnnotatedExitNode;
 
+/** A variable access. */
+final class VariableAccessCfgNode extends PathExprBaseCfgNode {
+  private VariableAccess a;
+
+  VariableAccessCfgNode() { a = this.getAstNode() }
+
+  /** Gets the underlying `VariableAccess`. */
+  VariableAccess getAccess() { result = a }
+}
+
+/** A variable write. */
+final class VariableWriteAccessCfgNode extends VariableAccessCfgNode {
+  private VariableWriteAccess a;
+
+  VariableWriteAccessCfgNode() { a = this.getAstNode() }
+
+  /** Gets the underlying `VariableWriteAccess`. */
+  VariableWriteAccess getAccess() { result = a }
+}
+
+/** A variable read. */
+final class VariableReadAccessCfgNode extends VariableAccessCfgNode {
+  private VariableReadAccess a;
+
+  VariableReadAccessCfgNode() { a = this.getAstNode() }
+
+  /** Gets the underlying `VariableReadAccess`. */
+  VariableReadAccess getAccess() { result = a }
+}
+
 /**
  * An assignment expression, for example
  *
@@ -24,12 +53,42 @@ class AnnotatedExitCfgNode = CfgImpl::AnnotatedExitNode;
  * ```
  */
 final class AssignmentExprCfgNode extends BinaryExprCfgNode {
-  AssignmentExpr a;
+  AssignmentExprChildMapping a;
 
   AssignmentExprCfgNode() { a = this.getBinaryExpr() }
 
   /** Gets the underlying `AssignmentExpr`. */
   AssignmentExpr getAssignmentExpr() { result = a }
+
+  /**
+   * Gets a write access that occurs in the left-hand side of this assignment expression.
+   */
+  VariableWriteAccessCfgNode getAWriteAccess() {
+    a = result.getAccess().getAssignmentExpr() and
+    any(ChildMapping mapping).hasCfgChild(a, result.getAccess(), this, result)
+  }
+}
+
+/**
+ * A compound assignment expression, for example:
+ * ```rust
+ * x += y;
+ * ```
+ *
+ * Note that compound assignment expressions are syntatic sugar for
+ * trait invocations, i.e., the above actually means
+ *
+ * ```rust
+ * (&mut x).add_assign(y);
+ * ```
+ */
+final class CompoundAssignmentExprCfgNode extends BinaryExprCfgNode {
+  CompoundAssignmentExpr a;
+
+  CompoundAssignmentExprCfgNode() { a = this.getBinaryExpr() }
+
+  /** Gets the underlying `CompoundAssignmentExpr`. */
+  CompoundAssignmentExpr getCompoundAssignmentExpr() { result = a }
 }
 
 /**
@@ -141,27 +200,22 @@ final class BreakExprCfgNode extends Nodes::BreakExprCfgNode {
 }
 
 /**
- * A function or method call expression. See `CallExpr` and `MethodCallExpr` for further details.
- */
-final class CallExprBaseCfgNode extends Nodes::CallExprBaseCfgNode {
-  private CallExprBaseChildMapping node;
-
-  CallExprBaseCfgNode() { node = this.getAstNode() }
-
-  /** Gets the `i`th argument of this call. */
-  ExprCfgNode getArgument(int i) {
-    any(ChildMapping mapping).hasCfgChild(node, node.getArgList().getArg(i), this, result)
-  }
-}
-
-/**
  * A method call expression. For example:
  * ```rust
  * x.foo(42);
  * x.foo::<u32, u64>(42);
  * ```
  */
-final class MethodCallExprCfgNode extends CallExprBaseCfgNode, Nodes::MethodCallExprCfgNode { }
+final class MethodCallExprCfgNode extends Nodes::MethodCallExprCfgNode {
+  private MethodCallExprChildMapping node;
+
+  MethodCallExprCfgNode() { node = this.getAstNode() }
+
+  /** Gets the `i`th argument of this call. */
+  ExprCfgNode getPositionalArgument(int i) {
+    any(ChildMapping mapping).hasCfgChild(node, node.getPositionalArgument(i), this, result)
+  }
+}
 
 /**
  * A CFG node that calls a function.
@@ -178,7 +232,7 @@ final class CallCfgNode extends ExprCfgNode {
 
   /** Gets the receiver of this call if it is a method call. */
   ExprCfgNode getReceiver() {
-    any(ChildMapping mapping).hasCfgChild(node, node.getReceiver(), this, result)
+    any(ChildMapping mapping).hasCfgChild(node, node.(MethodCall).getReceiver(), this, result)
   }
 
   /** Gets the `i`th argument of this call, if any. */
@@ -188,15 +242,26 @@ final class CallCfgNode extends ExprCfgNode {
 }
 
 /**
- * A function call expression. For example:
+ * An expression with parenthesized arguments. For example:
  * ```rust
  * foo(42);
  * foo::<u32, u64>(42);
  * foo[0](42);
  * foo(1) = 4;
+ * Option::Some(42);
  * ```
  */
-final class CallExprCfgNode extends CallExprBaseCfgNode, Nodes::CallExprCfgNode { }
+final class CallExprCfgNode extends Nodes::CallExprCfgNode {
+  private CallExprChildMapping node;
+
+  CallExprCfgNode() { node = this.getAstNode() }
+
+  /** Gets the `i`th argument of this call. */
+  ExprCfgNode getSyntacticArgument(int i) {
+    any(ChildMapping mapping)
+        .hasCfgChild(node, node.getSyntacticPositionalArgument(i), this, result)
+  }
+}
 
 /**
  * A FormatArgsExpr. For example:

@@ -20,6 +20,8 @@ module Input implements InputSig<Location, DataFlowImplSpecific::SwiftDataFlow> 
 
   class SinkBase = Void;
 
+  predicate callableFromSource(SummarizedCallableBase c) { c.hasBody() }
+
   ArgumentPosition callbackSelfParameterPosition() { result instanceof ThisArgumentPosition }
 
   ReturnKind getStandardReturnValueKind() { result instanceof NormalReturnKind }
@@ -113,7 +115,9 @@ private import Make<Location, DataFlowImplSpecific::SwiftDataFlow, Input> as Imp
 private module StepsInput implements Impl::Private::StepsInputSig {
   DataFlowCall getACall(Public::SummarizedCallable sc) { result.asCall().getStaticTarget() = sc }
 
-  Node getSourceNode(Input::SourceBase source, Impl::Private::SummaryComponent sc) { none() }
+  DataFlowCallable getSourceNodeEnclosingCallable(Input::SourceBase source) { none() }
+
+  Node getSourceNode(Input::SourceBase source, Impl::Private::SummaryComponentStack s) { none() }
 
   Node getSinkNode(Input::SinkBase sink, Impl::Private::SummaryComponent sc) { none() }
 }
@@ -155,6 +159,19 @@ module SourceSinkInterpretationInput implements
       model = "" and // TODO: Insert MaD provenance from sinkModel
       e = interpretElement(package, type, subtypes, name, signature, ext)
     )
+  }
+
+  predicate barrierElement(
+    Element n, string output, string kind, Public::Provenance provenance, string model
+  ) {
+    none()
+  }
+
+  predicate barrierGuardElement(
+    Element n, string input, Public::AcceptingValue acceptingvalue, string kind,
+    Public::Provenance provenance, string model
+  ) {
+    none()
   }
 
   private newtype TInterpretNode =

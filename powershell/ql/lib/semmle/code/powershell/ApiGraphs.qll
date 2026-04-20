@@ -250,6 +250,15 @@ module API {
     }
 
     /**
+     * Gets a representative for the instanceof field of the given `name`.
+     */
+    pragma[inline]
+    Node getField(string name) {
+      // This predicate is currently not 'inline_late' because 'name' can be an input or output
+      Impl::fieldEdge(this.getAnEpsilonSuccessor(), name, result)
+    }
+
+    /**
      * Gets a representative for an arbitrary element of this collection.
      */
     bindingset[this]
@@ -358,9 +367,11 @@ module API {
 
     Node methodEdge(string name) { none() }
 
+    Node instanceEdge() { none() }
+
     final predicate isImplicit() { not this.isExplicit(_) }
 
-    predicate isExplicit(DataFlow::TypeNameNode typeName) { none() }
+    predicate isExplicit(DataFlow::Node node) { none() }
   }
 
   final class TypeNameNode = AbstractTypeNameNode;
@@ -383,8 +394,8 @@ module API {
       )
     }
 
-    final override predicate isExplicit(DataFlow::TypeNameNode typeName) {
-      Specific::needsExplicitTypeNameNode(typeName, prefix)
+    final override predicate isExplicit(DataFlow::Node node) {
+      Specific::needsExplicitTypeNameNode(node, prefix)
     }
   }
 
@@ -412,6 +423,26 @@ module API {
         name = call.getLowerCaseName() and
         implicitCmdlet(prefix, name)
       )
+    }
+  }
+
+  class NewObjectTypeNameNode extends AbstractTypeNameNode, Impl::MkNewObjectTypeNameNode {
+    NewObjectTypeNameNode() { this = Impl::MkNewObjectTypeNameNode(prefix) }
+
+    final override Node getSuccessor(string name) {
+      result = Impl::MkNewObjectTypeNameNode(prefix + "." + name)
+    }
+
+    final override Node instanceEdge() {
+      exists(DataFlow::ObjectCreationNode creation |
+        prefix = creation.getLowerCaseConstructedTypeName() and
+        Specific::needsNewObjectTypeNameNode(creation, prefix) and
+        result = getForwardStartNode(creation)
+      )
+    }
+
+    final override predicate isExplicit(DataFlow::Node node) {
+      Specific::needsNewObjectTypeNameNode(node, prefix)
     }
   }
 
@@ -508,6 +539,7 @@ module API {
       MkMethodAccessNode(DataFlow::CallNode call) or
       MkExplicitTypeNameNode(string prefix) { Specific::needsExplicitTypeNameNode(_, prefix) } or
       MkImplicitTypeNameNode(string prefix) { Specific::needsImplicitTypeNameNode(prefix) } or
+      MkNewObjectTypeNameNode(string prefix) { Specific::needsNewObjectTypeNameNode(_, prefix) } or
       MkForwardNode(DataFlow::LocalSourceNode node, TypeTracker t) { isReachable(node, t) } or
       /** Intermediate node for following backward data flow. */
       MkBackwardNode(DataFlow::LocalSourceNode node, TypeTracker t) { isReachable(node, t) } or
@@ -556,7 +588,7 @@ module API {
       )
       or
       exists(DataFlow::Node qualifier | pred = getForwardEndNode(getALocalSourceStrict(qualifier)) |
-        exists(CfgNodes::ExprNodes::MemberExprReadAccessCfgNode read |
+        exists(CfgNodes::ExprNodes::MemberExprCfgNode read |
           read.getQualifier() = qualifier.asExpr() and
           read.getLowerCaseMemberName() = name and
           succ = getForwardStartNode(DataFlow::exprNode(read))
@@ -616,6 +648,15 @@ module API {
     }
 
     cached
+    predicate fieldEdge(Node pred, string name, Node succ) {
+      exists(DataFlow::ContentSet set, DataFlow::Content::FieldContent fc |
+        fc.getLowerCaseName() = name and
+        set.isSingleton(fc) and
+        contentEdge(pred, set.getAReadContent(), succ)
+      )
+    }
+
+    cached
     predicate parameterEdge(Node pred, DataFlowDispatch::ParameterPosition paramPos, Node succ) {
       exists(DataFlowPrivate::ParameterNodeImpl parameter, DataFlow::CallableNode callable |
         parameter.isSourceParameterOf(callable.asCallableAstNode(), paramPos) and
@@ -660,6 +701,13 @@ module API {
       positionalParameterEdge(pred, n, succ)
     }
 
+    pragma[nomagic]
+    private DataFlow::CallNode getStaticConstructorLikeCall() {
+      exists(string type |
+        typeModel(type, type + "!", "Method[" + result.getLowerCaseName() + "].ReturnValue")
+      )
+    }
+
     cached
     predicate instanceEdge(Node pred, Node succ) {
       // TODO: Also model parameters with a given type here
@@ -667,6 +715,14 @@ module API {
         pred = getForwardEndNode(objCreation.getConstructedTypeNode()) and
         succ = getForwardStartNode(objCreation)
       )
+      or
+      exists(DataFlow::CallNode call |
+        call = getStaticConstructorLikeCall() and
+        pred = getForwardEndNode(call.getQualifier()) and
+        succ = getForwardStartNode(call)
+      )
+      or
+      pred.(TypeNameNode).instanceEdge() = succ
     }
 
     cached

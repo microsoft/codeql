@@ -35,12 +35,13 @@ class Location = JS::Location;
  * Type names have form `package.type` or just `package` if referring to the package export
  * object. If `package` contains a `.` character it must be enclosed in single quotes, such as `'package'.type`.
  *
- * A type name of form `(package)` may also be used when refering to the package export object.
+ * A type name of form `(package)` may also be used when referring to the package export object.
  * We allow this syntax as an alternative to the above, so models generated based on `EndpointNaming` look more consistent.
  * However, access paths are deliberately not parsed here, as we can not handle aliasing at this stage.
  * The model generator must explicitly generate the step between `(package)` and `(package).foo`, for example.
  */
 bindingset[rawType]
+overlay[caller?]
 predicate parseTypeString(string rawType, string package, string qualifiedName) {
   exists(string regexp |
     regexp = "('[^']+'|[^.]+)(.*)" and
@@ -55,6 +56,7 @@ predicate parseTypeString(string rawType, string package, string qualifiedName) 
 /**
  * Holds if models describing `package` may be relevant for the analysis of this database.
  */
+overlay[local?]
 predicate isPackageUsed(string package) {
   package = "global"
   or
@@ -68,6 +70,7 @@ predicate isPackageUsed(string package) {
 }
 
 bindingset[type]
+overlay[local?]
 predicate isTypeUsed(string type) {
   exists(string package |
     parseTypeString(type, package, _) and
@@ -79,8 +82,10 @@ predicate isTypeUsed(string type) {
  * Holds if `type` can be obtained from an instance of `otherType` due to
  * language semantics modeled by `getExtraNodeFromType`.
  */
+overlay[local?]
 predicate hasImplicitTypeModel(string type, string otherType) { none() }
 
+overlay[local?]
 pragma[nomagic]
 private predicate parseRelevantTypeString(string rawType, string package, string qualifiedName) {
   isRelevantFullPath(rawType, _) and
@@ -88,6 +93,7 @@ private predicate parseRelevantTypeString(string rawType, string package, string
 }
 
 /** Holds if `global` is a global variable referenced via a the `global` package in a CSV row. */
+overlay[local]
 private predicate isRelevantGlobal(string global) {
   exists(AccessPath path, AccessPathToken token |
     isRelevantFullPath("global", path) and
@@ -98,6 +104,7 @@ private predicate isRelevantGlobal(string global) {
 }
 
 /** An API graph entry point for global variables mentioned in a model. */
+overlay[local?]
 private class GlobalApiEntryPoint extends API::EntryPoint {
   string global;
 
@@ -190,6 +197,7 @@ API::Node getExtraSuccessorFromNode(API::Node node, AccessPathTokenBase token) {
 }
 
 bindingset[node]
+overlay[caller?]
 pragma[inline_late]
 private API::Node getAGuardedRouteHandlerApprox(API::Node node) {
   // For now just get any routing node with the same root (i.e. the same web app), as
@@ -230,6 +238,7 @@ private predicate blockFuzzyCall(DataFlow::CallNode call) {
   isCommonBuiltinMethodName(call.getCalleeName())
 }
 
+overlay[caller?]
 pragma[inline]
 API::Node getAFuzzySuccessor(API::Node node) {
   result = node.getAMember() and

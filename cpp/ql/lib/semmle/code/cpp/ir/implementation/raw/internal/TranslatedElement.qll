@@ -12,6 +12,7 @@ private import TranslatedFunction
 private import TranslatedStmt
 private import TranslatedExpr
 private import IRConstruction
+private import TranslatedAssertion
 private import semmle.code.cpp.models.interfaces.SideEffect
 private import SideEffects
 
@@ -123,18 +124,29 @@ private predicate ignoreExprAndDescendants(Expr expr) {
   //  or
   ignoreExprAndDescendants(getRealParent(expr)) // recursive case
   or
-  // va_start doesn't evaluate its argument, so we don't need to translate it.
+  // va_start does not evaluate its argument, so we do not need to translate it.
   exists(BuiltInVarArgsStart vaStartExpr |
     vaStartExpr.getLastNamedParameter().getFullyConverted() = expr
   )
   or
+  // sizeof does not evaluate its argument, so we do not need to translate it.
+  exists(SizeofExprOperator sizeofExpr | sizeofExpr.getExprOperand().getFullyConverted() = expr)
+  or
   // The children of C11 _Generic expressions are just surface syntax.
-  exists(C11GenericExpr generic | generic.getAChild() = expr)
+  exists(C11GenericExpr generic | generic.getAChild().getFullyConverted() = expr)
   or
   // Do not translate implicit destructor calls for unnamed temporary variables that are
   // conditionally constructed (until we have a mechanism for calling these only when the
   // temporary's constructor was run)
   isConditionalTemporaryDestructorCall(expr)
+  or
+  // An assertion in a release build is often defined as `#define assert(x) ((void)0)`.
+  // We generate a synthetic assertion in release builds, and when we do that the
+  // expression `((void)0)` should not be translated.
+  exists(MacroInvocation mi |
+    assertion(mi, _) and
+    expr = mi.getExpr().getFullyConverted()
+  )
 }
 
 /**
@@ -906,7 +918,8 @@ newtype TTranslatedElement =
   } or
   // The side effect that initializes newly-allocated memory.
   TTranslatedAllocationSideEffect(AllocationExpr expr) { not ignoreSideEffects(expr) } or
-  TTranslatedStaticStorageDurationVarInit(Variable var) { Raw::varHasIRFunc(var) }
+  TTranslatedStaticStorageDurationVarInit(Variable var) { Raw::varHasIRFunc(var) } or
+  TTranslatedAssertionOperand(MacroInvocation mi, int index) { hasAssertionOperand(mi, index) }
 
 /**
  * Gets the index of the first explicitly initialized element in `initList`

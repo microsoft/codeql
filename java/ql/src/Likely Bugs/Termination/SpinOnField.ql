@@ -6,9 +6,11 @@
  * @problem.severity warning
  * @precision medium
  * @id java/spin-on-field
- * @tags efficiency
+ * @tags quality
+ *       reliability
  *       correctness
  *       concurrency
+ *       performance
  */
 
 import java
@@ -35,12 +37,12 @@ class EmptyLoop extends Stmt {
     exists(ForStmt stmt | stmt = this |
       not exists(stmt.getAnInit()) and
       not exists(stmt.getAnUpdate()) and
-      stmt.getStmt() instanceof Empty
+      stmt.getBody() instanceof Empty
     )
     or
-    this.(WhileStmt).getStmt() instanceof Empty
+    this.(WhileStmt).getBody() instanceof Empty
     or
-    this.(DoStmt).getStmt() instanceof Empty
+    this.(DoStmt).getBody() instanceof Empty
   }
 
   Expr getCondition() {

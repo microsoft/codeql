@@ -8,6 +8,7 @@ module;
 private import codeql.util.Location
 private import codeql.util.FileSystem
 private import codeql.util.Void
+private import SuccessorType
 
 /** Provides the language-specific input specification. */
 signature module InputSig<LocationSig Location> {
@@ -59,26 +60,11 @@ signature module InputSig<LocationSig Location> {
   /** Holds if `scope` is exited when `last` finishes with completion `c`. */
   predicate scopeLast(CfgScope scope, AstNode last, Completion c);
 
-  /** A type of a control flow successor. */
-  class SuccessorType {
-    /** Gets a textual representation of this successor type. */
-    string toString();
-  }
-
   /** Gets a successor type that matches completion `c`. */
   SuccessorType getAMatchingSuccessorType(Completion c);
 
-  /**
-   * Hold if `t` represents simple (normal) evaluation of a statement or an
-   * expression.
-   */
-  predicate successorTypeIsSimple(SuccessorType t);
-
   /** Hold if `t` represents a conditional successor type. */
-  predicate successorTypeIsCondition(SuccessorType t);
-
-  /** Holds if `t` is an abnormal exit type out of a CFG scope. */
-  predicate isAbnormalExitType(SuccessorType t);
+  default predicate successorTypeIsCondition(SuccessorType t) { t instanceof ConditionalSuccessor }
 
   /**
    * Gets an `id` of `node`. This is used to order the predecessors of a join
@@ -522,7 +508,7 @@ module MakeWithSplitting<
   private predicate succEntrySplits(CfgScope pred, AstNode succ, Splits succSplits, SuccessorType t) {
     exists(int rnk |
       scopeFirst(pred, succ) and
-      successorTypeIsSimple(t) and
+      t instanceof DirectSuccessor and
       succEntrySplitsFromRank(pred, succ, succSplits, rnk)
     |
       rnk = 0 and
@@ -959,6 +945,12 @@ module MakeWithSplitting<
         )
     }
 
+    /** Holds if `t` is an abnormal exit type out of a CFG scope. */
+    private predicate isAbnormalExitType(SuccessorType t) {
+      t instanceof ExceptionSuccessor or
+      t instanceof ExitSuccessor
+    }
+
     /**
      * Internal representation of control flow nodes in the control flow graph.
      * The control flow graph is pruned for unreachable nodes.
@@ -1016,7 +1008,7 @@ module MakeWithSplitting<
       exists(CfgScope scope |
         pred = TAnnotatedExitNode(scope, _) and
         result = TExitNode(scope) and
-        successorTypeIsSimple(t)
+        t instanceof DirectSuccessor
       )
     }
 
@@ -1028,6 +1020,12 @@ module MakeWithSplitting<
         not jbp instanceof BasicBlocks::EntryBasicBlock and
         id = idOfAstNode(jbp.getFirstNode().(AstCfgNode).getAstNode()) and
         kind = 1
+        or
+        exists(AnnotatedExitNode aen |
+          jbp.getFirstNode() = aen and
+          id = idOfCfgScope(aen.getScope()) and
+          if aen.isNormal() then kind = 2 else kind = 3
+        )
       }
 
       string getSplitString(BasicBlocks::JoinPredecessorBasicBlock jbp) {
@@ -1124,6 +1122,9 @@ module MakeWithSplitting<
     /** Gets the scope of this node. */
     CfgScope getScope() { result = getNodeCfgScope(this) }
 
+    /** Gets the enclosing callable of this node. */
+    CfgScope getEnclosingCallable() { result = this.getScope() }
+
     /** Gets a successor node of a given type, if any. */
     Node getASuccessor(SuccessorType t) { result = getASuccessor(this, t) }
 
@@ -1186,6 +1187,11 @@ module MakeWithSplitting<
   }
 
   final class AnnotatedExitNode = AnnotatedExitNodeImpl;
+
+  /** A control flow node indicating normal termination of a callable. */
+  final class NormalExitNode extends AnnotatedExitNodeImpl {
+    NormalExitNode() { this = TAnnotatedExitNode(_, true) }
+  }
 
   /** An exit node for a given scope. */
   private class ExitNodeImpl extends NodeImpl, TExitNode {
@@ -1307,160 +1313,19 @@ module MakeWithSplitting<
     }
   }
 
-  /** A node to be included in the output of `TestOutput`. */
-  signature class RelevantNodeSig extends Node;
+  private import PrintGraph as Pp
 
-  /**
-   * Import this module into a `.ql` file to output a CFG. The
-   * graph is restricted to nodes from `RelevantNode`.
-   */
-  module TestOutput<RelevantNodeSig RelevantNode> {
-    /** Holds if `pred -> succ` is an edge in the CFG. */
-    query predicate edges(RelevantNode pred, RelevantNode succ, string label) {
-      label =
-        strictconcat(SuccessorType t, string s |
-          succ = getASuccessor(pred, t) and
-          if successorTypeIsSimple(t) then s = "" else s = t.toString()
-        |
-          s, ", " order by s
-        )
-    }
+  private module PrintGraphInput implements Pp::InputSig<Location> {
+    class Callable = CfgScope;
 
-    /**
-     * Provides logic for representing a CFG as a [Mermaid diagram](https://mermaid.js.org/).
-     */
-    module Mermaid {
-      private string nodeId(RelevantNode n) {
-        result =
-          any(int i |
-            n =
-              rank[i](RelevantNode p, string filePath, int startLine, int startColumn, int endLine,
-                int endColumn |
-                p.getLocation()
-                    .hasLocationInfo(filePath, startLine, startColumn, endLine, endColumn)
-              |
-                p order by filePath, startLine, startColumn, endLine, endColumn, p.toString()
-              )
-          ).toString()
-      }
+    class ControlFlowNode = Node;
 
-      private string nodes() {
-        result =
-          concat(RelevantNode n, string id, string text |
-            id = nodeId(n) and
-            text = n.toString()
-          |
-            id + "[\"" + text + "\"]", "\n" order by id
-          )
-      }
-
-      private string edge(RelevantNode pred, RelevantNode succ) {
-        edges(pred, succ, _) and
-        exists(string label |
-          edges(pred, succ, label) and
-          if label = ""
-          then result = nodeId(pred) + " --> " + nodeId(succ)
-          else result = nodeId(pred) + " -- " + label + " --> " + nodeId(succ)
-        )
-      }
-
-      private string edges() {
-        result =
-          concat(RelevantNode pred, RelevantNode succ, string edge, string filePath, int startLine,
-            int startColumn, int endLine, int endColumn |
-            edge = edge(pred, succ) and
-            pred.getLocation().hasLocationInfo(filePath, startLine, startColumn, endLine, endColumn)
-          |
-            edge, "\n"
-            order by
-              filePath, startLine, startColumn, endLine, endColumn, pred.toString()
-          )
-      }
-
-      /** Holds if the Mermaid representation is `s`. */
-      query predicate mermaid(string s) { s = "flowchart TD\n" + nodes() + "\n\n" + edges() }
+    ControlFlowNode getASuccessor(ControlFlowNode n, SuccessorType t) {
+      result = n.getASuccessor(t)
     }
   }
 
-  /** Provides the input to `ViewCfgQuery`. */
-  signature module ViewCfgQueryInputSig<FileSig File> {
-    /** The source file selected in the IDE. Should be an `external` predicate. */
-    string selectedSourceFile();
-
-    /** The source line selected in the IDE. Should be an `external` predicate. */
-    int selectedSourceLine();
-
-    /** The source column selected in the IDE. Should be an `external` predicate. */
-    int selectedSourceColumn();
-
-    /**
-     * Holds if CFG scope `scope` spans column `startColumn` of line `startLine` to
-     * column `endColumn` of line `endLine` in `file`.
-     */
-    predicate cfgScopeSpan(
-      CfgScope scope, File file, int startLine, int startColumn, int endLine, int endColumn
-    );
-  }
-
-  /**
-   * Provides an implementation for a `View CFG` query.
-   *
-   * Import this module into a `.ql` that looks like
-   *
-   * ```ql
-   * @name Print CFG
-   * @description Produces a representation of a file's Control Flow Graph.
-   *              This query is used by the VS Code extension.
-   * @id <lang>/print-cfg
-   * @kind graph
-   * @tags ide-contextual-queries/print-cfg
-   * ```
-   */
-  module ViewCfgQuery<FileSig File, ViewCfgQueryInputSig<File> ViewCfgQueryInput> {
-    private import ViewCfgQueryInput
-
-    bindingset[file, line, column]
-    private CfgScope smallestEnclosingScope(File file, int line, int column) {
-      result =
-        min(CfgScope scope, int startLine, int startColumn, int endLine, int endColumn |
-          cfgScopeSpan(scope, file, startLine, startColumn, endLine, endColumn) and
-          (
-            startLine < line
-            or
-            startLine = line and startColumn <= column
-          ) and
-          (
-            endLine > line
-            or
-            endLine = line and endColumn >= column
-          )
-        |
-          scope order by startLine desc, startColumn desc, endLine, endColumn
-        )
-    }
-
-    private import IdeContextual<File>
-
-    private class RelevantNode extends Node {
-      RelevantNode() {
-        this.getScope() =
-          smallestEnclosingScope(getFileBySourceArchiveName(selectedSourceFile()),
-            selectedSourceLine(), selectedSourceColumn())
-      }
-
-      string getOrderDisambiguation() { result = "" }
-    }
-
-    private module Output = TestOutput<RelevantNode>;
-
-    import Output::Mermaid
-
-    /** Holds if `pred` -> `succ` is an edge in the CFG. */
-    query predicate edges(RelevantNode pred, RelevantNode succ, string attr, string val) {
-      attr = "semmle.label" and
-      Output::edges(pred, succ, val)
-    }
-  }
+  import Pp::PrintGraph<Location, PrintGraphInput>
 
   /** Provides a set of consistency queries. */
   module Consistency {
@@ -1535,6 +1400,8 @@ module MakeWithSplitting<
     query predicate multipleSuccessors(Node node, SuccessorType t, Node successor) {
       strictcount(getASuccessor(node, t)) > 1 and
       successor = getASuccessor(node, t) and
+      // allow for multiple exception successors
+      not t instanceof ExceptionSuccessor and
       // allow for functions with multiple bodies
       not (t instanceof SimpleSuccessorType and node instanceof EntryNode)
     }
@@ -1590,8 +1457,6 @@ module MakeWithSplitting<
     private class NodeAlias = Node;
 
     private module BasicBlockInputSig implements BB::InputSig<Location> {
-      class SuccessorType = Input::SuccessorType;
-
       predicate successorTypeIsCondition = Input::successorTypeIsCondition/1;
 
       class CfgScope = CfgScopeAlias;

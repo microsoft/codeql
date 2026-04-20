@@ -20,6 +20,8 @@ namespace Semmle.Extraction.CSharp.Entities
         public static NamedType Create(Context cx, INamedTypeSymbol type) =>
             NamedTypeFactory.Instance.CreateEntityFromSymbol(cx, type);
 
+        public NamedType OriginalDefinition => Create(Context, Symbol.OriginalDefinition);
+
         /// <summary>
         /// Creates a named type entity from a tuple type. Unlike <see cref="Create"/>, this
         /// will create an entity for the underlying `System.ValueTuple` struct.
@@ -81,15 +83,33 @@ namespace Semmle.Extraction.CSharp.Entities
             }
 
             // Class location
-            if (!Symbol.IsGenericType || Symbol.IsReallyUnbound())
+            if ((!Symbol.IsGenericType || Symbol.IsReallyUnbound()) && !Context.OnlyScaffold)
             {
-                foreach (var l in Locations)
-                    trapFile.type_location(this, l);
+                WriteLocationsToTrap(trapFile.type_location, this, Locations);
             }
 
             if (Symbol.IsAnonymousType)
             {
                 trapFile.anonymous_types(this);
+            }
+
+            if (Symbol.IsExtension && Symbol.ExtensionParameter is IParameterSymbol parameter)
+            {
+                // For some reason an extension type has a receiver parameter with an empty name
+                // even when there is no parameter.
+                if (!string.IsNullOrEmpty(parameter.Name))
+                {
+                    var originalType = OriginalDefinition;
+                    // In case this is a constructed generic, we also need to create the unbound parameter.
+                    var originalParameter = SymbolEqualityComparer.Default.Equals(Symbol, originalType.Symbol.ExtensionParameter) || originalType.Symbol.ExtensionParameter is null
+                        ? null
+                        : Parameter.Create(Context, originalType.Symbol.ExtensionParameter, originalType);
+                    Parameter.Create(Context, parameter, this, originalParameter);
+                }
+
+                // Use the parameter type as the receiver type.
+                var receiverType = Type.Create(Context, parameter.Type).TypeRef;
+                trapFile.extension_receiver_type(this, receiverType);
             }
         }
 
@@ -112,15 +132,18 @@ namespace Semmle.Extraction.CSharp.Entities
             }
         }
 
-        private static IEnumerable<Microsoft.CodeAnalysis.Location> GetLocations(INamedTypeSymbol type)
+        private IEnumerable<Microsoft.CodeAnalysis.Location> GetLocations(INamedTypeSymbol type)
         {
-            return type.Locations
-                .Where(l => l.IsInMetadata)
-                .Concat(type.DeclaringSyntaxReferences
+            var metadataLocations = type.Locations
+                .Where(l => l.IsInMetadata);
+            var sourceLocations = type.DeclaringSyntaxReferences
                     .Select(loc => loc.GetSyntax())
                     .OfType<CSharpSyntaxNode>()
                     .Select(l => l.FixedLocation())
-                );
+                    .Where(Context.IsLocationInContext);
+
+            return metadataLocations
+                .Concat(sourceLocations);
         }
 
         public override Microsoft.CodeAnalysis.Location? ReportingLocation => GetLocations(Symbol).BestOrDefault();

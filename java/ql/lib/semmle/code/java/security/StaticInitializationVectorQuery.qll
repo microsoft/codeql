@@ -33,6 +33,7 @@ private class StaticByteArrayCreation extends ArrayCreationExpr {
 }
 
 /** An expression that updates `array`. */
+overlay[local?]
 private class ArrayUpdate extends Expr {
   Expr array;
 
@@ -106,7 +107,7 @@ private class StaticInitializationVectorSource extends DataFlow::Node {
       // Reduce FPs from utility methods that return an empty array in an exceptional case
       not exists(ReturnStmt ret |
         array.getADimension().(CompileTimeConstantExpr).getIntValue() = 0 and
-        DataFlow::localExprFlow(array, ret.getResult())
+        DataFlow::localExprFlow(array, ret.getExpr())
       )
     )
   }

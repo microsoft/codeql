@@ -158,7 +158,7 @@ func simpleflow() {
 	ch := make(chan string)
 	ch <- a.Src1().(string)
 	taint16 := test.StepArgCollectionContentRes(ch)
-	b.Sink1(taint16) // $ MISSING: hasValueFlow="taint16" // currently fails due to lack of post-update nodes after send statements
+	b.Sink1(taint16) // $ hasValueFlow="taint16"
 
 	c1 := test.C{""}
 	c1.Set(a.Src1().(string))
@@ -208,6 +208,9 @@ func simpleflow() {
 
 	temp := test.SourceVariable
 	test.SinkVariable = temp // $ hasValueFlow="temp"
+
+	b.Sink1(new(src))
+	b.Sink1(*new(src)) // $ hasValueFlow="star expression"
 }
 
 func srcParam(src string, b test.B) {

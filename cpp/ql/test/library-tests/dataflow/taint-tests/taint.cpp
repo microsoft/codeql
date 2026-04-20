@@ -450,7 +450,7 @@ void test_qualifiers()
 	b.member = source();
 	sink(b); // $ ir MISSING: ast
 	sink(b.member); // $ ast,ir
-	sink(b.getMember()); // $  MISSING: ir ast
+	sink(b.getMember()); // $ MISSING: ir ast
 
 	c = new MyClass2(0);
 
@@ -842,4 +842,27 @@ int f7(void)
   fprintf(fp, "");
 	indirect_sink(fp); // $ ir MISSING: ast
   return 0;
+}
+
+int toupper(int);
+int tolower(int);
+
+void test_toupper_and_tolower() {
+	int s = source();
+	int u = toupper(s);
+	sink(u); // $ ir MISSING: ast
+	int l = tolower(s);
+	sink(l); // $ ir MISSING: ast
+}
+
+typedef int iconv_t;
+size_t iconv(iconv_t cd, char **, size_t *, char **, size_t *);
+
+void test_iconv(size_t size) {
+	char* s = indirect_source();
+	char out[10];
+	char* p = out;
+	size_t size_out;
+	iconv(0, &s, &size, &p, &size_out);
+	sink(*p); // $ ast,ir
 }

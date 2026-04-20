@@ -18,6 +18,8 @@ module Input implements InputSig<Location, DataFlowImplSpecific::PowershellDataF
 
   class SinkBase = Void;
 
+  predicate callableFromSource(SummarizedCallableBase c) { none() }
+
   ArgumentPosition callbackSelfParameterPosition() { none() }
 
   ReturnKind getStandardReturnValueKind() { result instanceof NormalReturnKind }
@@ -128,7 +130,9 @@ private module StepsInput implements Impl::Private::StepsInputSig {
     result.asCall().getAstNode() = sc.(LibraryCallable).getACallSimple()
   }
 
-  Node getSourceNode(Input::SourceBase source, Impl::Private::SummaryComponent sc) { none() }
+  Node getSourceNode(Input::SourceBase source, Impl::Private::SummaryComponentStack sc) { none() }
+
+  DataFlowCallable getSourceNodeEnclosingCallable(Input::SourceBase source) { none() }
 
   Node getSinkNode(Input::SinkBase source, Impl::Private::SummaryComponent sc) { none() }
 }

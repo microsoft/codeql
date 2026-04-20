@@ -1,4 +1,6 @@
 /** Provides classes for modeling the `github.com/rs/cors` package. */
+overlay[local?]
+module;
 
 import go
 
@@ -54,7 +56,7 @@ module RsCors {
     AllowCredentialsWrite() {
       exists(Field f, Write w |
         f.hasQualifiedName(packagePath(), "Options", "AllowCredentials") and
-        w.writesField(base, f, this) and
+        w.writesFieldPreUpdate(base, f, this) and
         this.getType() instanceof BoolType
       )
     }
@@ -82,7 +84,7 @@ module RsCors {
     AllowOriginsWrite() {
       exists(Field f, Write w |
         f.hasQualifiedName(packagePath(), "Options", "AllowedOrigins") and
-        w.writesField(base, f, this) and
+        w.writesFieldPreUpdate(base, f, this) and
         this.asExpr() instanceof SliceLit
       )
     }
@@ -113,7 +115,7 @@ module RsCors {
     AllowAllOriginsWrite() {
       exists(Field f, Write w |
         f.hasQualifiedName(packagePath(), "Options", "AllowAllOrigins") and
-        w.writesField(base, f, this) and
+        w.writesFieldPreUpdate(base, f, this) and
         this.getType() instanceof BoolType
       )
     }

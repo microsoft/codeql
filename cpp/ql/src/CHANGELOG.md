@@ -1,3 +1,77 @@
+## 1.5.15
+
+No user-facing changes.
+
+## 1.5.14
+
+No user-facing changes.
+
+## 1.5.13
+
+No user-facing changes.
+
+## 1.5.12
+
+No user-facing changes.
+
+## 1.5.11
+
+No user-facing changes.
+
+## 1.5.10
+
+No user-facing changes.
+
+## 1.5.9
+
+### Minor Analysis Improvements
+
+* The `cpp/constant-comparison` query has been updated to not produce false positives for constants that are now represented by their unfolded expression trees.
+
+## 1.5.8
+
+No user-facing changes.
+
+## 1.5.7
+
+No user-facing changes.
+
+## 1.5.6
+
+No user-facing changes.
+
+## 1.5.5
+
+No user-facing changes.
+
+## 1.5.4
+
+No user-facing changes.
+
+## 1.5.3
+
+No user-facing changes.
+
+## 1.5.2
+
+No user-facing changes.
+
+## 1.5.1
+
+No user-facing changes.
+
+## 1.5.0
+
+### Major Analysis Improvements
+
+* The queries `cpp/wrong-type-format-argument`, `cpp/comparison-with-wider-type`, `cpp/integer-multiplication-cast-to-long`, `cpp/implicit-function-declaration` and `cpp/suspicious-add-sizeof` have had their precisions reduced from `high` to `medium`. They will also now give alerts for projects built with `build-mode: none`.
+* The queries `cpp/wrong-type-format-argument`, `cpp/comparison-with-wider-type`, `cpp/integer-multiplication-cast-to-long` and `cpp/suspicious-add-sizeof` are no longer included in the `code-scanning` suite.
+
+### Bug Fixes
+
+* The predicate `occurenceCount` in the file module `MagicConstants` has been deprecated. Use `occurrenceCount` instead.
+* The predicate `additionalAdditionOrSubstractionCheckForLeapYear` in the file module `LeapYear` has been deprecated. Use `additionalAdditionOrSubtractionCheckForLeapYear` instead.
+
 ## 1.4.7
 
 ### Bug Fixes

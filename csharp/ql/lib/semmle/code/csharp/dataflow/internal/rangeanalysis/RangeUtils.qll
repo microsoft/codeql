@@ -8,28 +8,14 @@ private module Impl {
   private import ConstantUtils
   private import SsaReadPositionCommon
   private import semmle.code.csharp.controlflow.Guards as G
-  private import ControlFlowReachability
-
-  private class BooleanValue = G::AbstractValues::BooleanValue;
 
   private class ExprNode = ControlFlow::Nodes::ExprNode;
 
-  private class ExprChildReachability extends ControlFlowReachabilityConfiguration {
-    ExprChildReachability() { this = "ExprChildReachability" }
-
-    override predicate candidate(
-      Expr e1, Expr e2, ControlFlowElement scope, boolean exactScope, boolean isSuccessor
-    ) {
-      e2 = e1.getAChild() and
-      scope = e1 and
-      exactScope = false and
-      isSuccessor in [false, true]
-    }
-  }
-
   /** Holds if `parent` having child `child` implies `parentNode` having child `childNode`. */
   predicate hasChild(Expr parent, Expr child, ExprNode parentNode, ExprNode childNode) {
-    any(ExprChildReachability x).hasExprPath(parent, parentNode, child, childNode)
+    parent.getAChild() = child and
+    parentNode = parent.getControlFlowNode() and
+    childNode = child.getControlFlowNode()
   }
 
   /** Holds if SSA definition `def` equals `e + delta`. */
@@ -93,7 +79,7 @@ private module Impl {
     /**
      * Holds if basic block `bb` is guarded by this guard having value `v`.
      */
-    predicate controlsBasicBlock(ControlFlow::BasicBlock bb, G::AbstractValue v) {
+    predicate controlsBasicBlock(ControlFlow::BasicBlock bb, G::GuardValue v) {
       super.controlsBasicBlock(bb, v)
     }
 
@@ -111,19 +97,6 @@ private module Impl {
     }
   }
 
-  private Guard eqFlowCondAbs(
-    Definition def, ExprNode e, int delta, boolean isEq, G::AbstractValue v
-  ) {
-    exists(boolean eqpolarity |
-      result.isEquality(ssaRead(def, delta), e, eqpolarity) and
-      eqpolarity.booleanXor(v.(BooleanValue).getValue()).booleanNot() = isEq
-    )
-    or
-    exists(G::AbstractValue v0 |
-      G::Internal::impliesStep(result, v, eqFlowCondAbs(def, e, delta, isEq, v0), v0)
-    )
-  }
-
   /**
    * Gets a condition that tests whether `def` equals `e + delta`.
    *
@@ -132,9 +105,10 @@ private module Impl {
    * - `isEq = false` : `def != e + delta`
    */
   Guard eqFlowCond(Definition def, ExprNode e, int delta, boolean isEq, boolean testIsTrue) {
-    exists(BooleanValue v |
-      result = eqFlowCondAbs(def, e, delta, isEq, v) and
-      testIsTrue = v.getValue()
+    exists(boolean eqpolarity |
+      result.isEquality(ssaRead(def, delta), e, eqpolarity) and
+      testIsTrue = [false, true] and
+      eqpolarity.booleanXor(testIsTrue).booleanNot() = isEq
     )
   }
 
@@ -142,7 +116,7 @@ private module Impl {
    * Holds if `guard` controls the position `controlled` with the value `testIsTrue`.
    */
   predicate guardControlsSsaRead(Guard guard, SsaReadPosition controlled, boolean testIsTrue) {
-    exists(BooleanValue b | b.getValue() = testIsTrue |
+    exists(G::GuardValue b | b.asBooleanValue() = testIsTrue |
       guard.controlsBasicBlock(controlled.(SsaReadPositionBlock).getBlock(), b)
     )
   }

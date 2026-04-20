@@ -1,3 +1,69 @@
+## 0.6.24
+
+No user-facing changes.
+
+## 0.6.23
+
+No user-facing changes.
+
+## 0.6.22
+
+No user-facing changes.
+
+## 0.6.21
+
+No user-facing changes.
+
+## 0.6.20
+
+No user-facing changes.
+
+## 0.6.19
+
+No user-facing changes.
+
+## 0.6.18
+
+No user-facing changes.
+
+## 0.6.17
+
+No user-facing changes.
+
+## 0.6.16
+
+No user-facing changes.
+
+## 0.6.15
+
+No user-facing changes.
+
+## 0.6.14
+
+No user-facing changes.
+
+## 0.6.13
+
+No user-facing changes.
+
+## 0.6.12
+
+No user-facing changes.
+
+## 0.6.11
+
+No user-facing changes.
+
+## 0.6.10
+
+No user-facing changes.
+
+## 0.6.9
+
+### Minor Analysis Improvements
+
+* Actions analysis now reports file coverage information on the CodeQL status page.
+
 ## 0.6.8
 
 No user-facing changes.

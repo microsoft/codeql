@@ -63,12 +63,14 @@ namespace Semmle.Extraction.CSharp.Entities
 
             trapFile.accessors(this, kind, Symbol.Name, parent, unboundAccessor);
 
-            foreach (var l in Locations)
-                trapFile.accessor_location(this, l);
+            if (Context.ExtractLocation(Symbol))
+            {
+                WriteLocationsToTrap(trapFile.accessor_location, this, Locations);
+            }
 
             Overrides(trapFile);
 
-            if (Symbol.FromSource() && Block is null)
+            if (Symbol.FromSource() && !HasBody)
             {
                 trapFile.compiler_generated(this);
             }

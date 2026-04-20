@@ -186,11 +186,13 @@ module Promises {
   /**
    * Gets the pseudo-field used to describe resolved values in a promise.
    */
+  overlay[local?]
   string valueProp() { result = "$PromiseResolveField$" }
 
   /**
    * Gets the pseudo-field used to describe rejected values in a promise.
    */
+  overlay[local?]
   string errorProp() { result = "$PromiseRejectField$" }
 
   /** A property set containing the pseudo-properites of a promise object. */
@@ -236,6 +238,7 @@ module PromiseTypeTracking {
    *
    * These type-tracking steps are already included in the default type-tracking steps (through `PreCallGraphStep`).
    */
+  overlay[caller?]
   pragma[inline]
   DataFlow::Node promiseStep(DataFlow::Node pred, StepSummary summary) {
     exists(string field | field = Promises::valueProp() |
@@ -254,6 +257,7 @@ module PromiseTypeTracking {
    * Gets the result from a single step through a promise, from `pred` with tracker `t2` to `result` with tracker `t`.
    * This can be loading a resolved value from a promise, storing a value in a promise, or copying a resolved value from one promise to another.
    */
+  overlay[caller?]
   pragma[inline]
   DataFlow::SourceNode promiseStep(
     DataFlow::SourceNode pred, DataFlow::TypeTracker t, DataFlow::TypeTracker t2
@@ -727,8 +731,12 @@ module Promisify {
     PromisifyAllCall() {
       this =
         [
-          DataFlow::moduleMember("bluebird", "promisifyAll"),
-          DataFlow::moduleImport(["util-promisifyall", "pify"])
+          DataFlow::moduleMember(["bluebird", "@google-cloud/promisify", "es6-promisify"],
+            "promisifyAll"),
+          DataFlow::moduleMember("thenify-all", "withCallback"),
+          DataFlow::moduleImport([
+              "util-promisifyall", "pify", "thenify-all", "@gar/promisify", "util.promisify-all"
+            ])
         ].getACall()
     }
   }
@@ -741,11 +749,13 @@ module Promisify {
     PromisifyCall() {
       this = DataFlow::moduleImport(["util", "bluebird"]).getAMemberCall("promisify")
       or
-      this = DataFlow::moduleImport(["pify", "util.promisify"]).getACall()
+      this = DataFlow::moduleImport(["pify", "util.promisify", "util-promisify"]).getACall()
       or
-      this = DataFlow::moduleImport("thenify").getACall()
+      this = DataFlow::moduleImport(["thenify", "@gar/promisify", "es6-promisify"]).getACall()
       or
       this = DataFlow::moduleMember("thenify", "withCallback").getACall()
+      or
+      this = DataFlow::moduleMember("@google-cloud/promisify", "promisify").getACall()
     }
   }
 }

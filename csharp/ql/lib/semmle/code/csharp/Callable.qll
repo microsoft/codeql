@@ -10,6 +10,7 @@ import exprs.Call
 private import commons.QualifiedName
 private import commons.Collections
 private import semmle.code.csharp.ExprOrStmtParent
+private import semmle.code.csharp.internal.Callable
 private import semmle.code.csharp.metrics.Complexity
 private import TypeRef
 
@@ -223,6 +224,8 @@ class Callable extends Parameterizable, ExprOrStmtParent, @callable {
   Call getACall() { this = result.getTarget() }
 }
 
+final class ExtensionCallable = ExtensionCallableImpl;
+
 /**
  * A method, for example
  *
@@ -265,10 +268,13 @@ class Method extends Callable, Virtualizable, Attributable, @method {
     result = Virtualizable.super.getAnUltimateImplementor()
   }
 
-  override Location getALocation() { method_location(this, result) }
+  override Location getALocation() { method_location(this.getUnboundDeclaration(), result) }
+
+  /** Holds if this method is a classic extension method. */
+  predicate isClassicExtensionMethod() { this.getParameter(0).hasExtensionMethodModifier() }
 
   /** Holds if this method is an extension method. */
-  predicate isExtensionMethod() { this.getParameter(0).hasExtensionMethodModifier() }
+  predicate isExtensionMethod() { this.isClassicExtensionMethod() or this.isInExtension() }
 
   /** Gets the type of the `params` parameter of this method, if any. */
   Type getParamsType() {
@@ -281,7 +287,6 @@ class Method extends Callable, Virtualizable, Attributable, @method {
   /** Holds if this method has a `params` parameter. */
   predicate hasParams() { exists(this.getParamsType()) }
 
-  // Remove when `Callable.isOverridden()` is removed
   override predicate fromSource() {
     Callable.super.fromSource() and
     not this.isCompilerGenerated()
@@ -296,8 +301,10 @@ class Method extends Callable, Virtualizable, Attributable, @method {
   override string getAPrimaryQlClass() { result = "Method" }
 }
 
+final class ExtensionMethod = ExtensionMethodImpl;
+
 /**
- * An extension method, for example
+ *  An extension method, for example
  *
  * ```csharp
  * static bool IsDefined(this Widget w) {
@@ -305,16 +312,41 @@ class Method extends Callable, Virtualizable, Attributable, @method {
  * }
  * ```
  */
-class ExtensionMethod extends Method {
-  ExtensionMethod() { this.isExtensionMethod() }
+class ClassicExtensionMethod extends ExtensionMethodImpl {
+  ClassicExtensionMethod() { this.isClassicExtensionMethod() }
+
+  pragma[noinline]
+  override Type getExtendedType() { result = this.getParameter(0).getType() }
 
   override predicate isStatic() { any() }
+}
 
-  /** Gets the type being extended by this method. */
-  pragma[noinline]
-  Type getExtendedType() { result = this.getParameter(0).getType() }
+/**
+ * An extension method declared in an extension type, for example `IsNullOrEmpty` in
+ *
+ * ```csharp
+ * static class MyExtensions {
+ *   extension(string s) {
+ *     public bool IsNullOrEmpty() { ... }
+ *   }
+ * }
+ * ```
+ */
+class ExtensionTypeExtensionMethod extends ExtensionMethodImpl {
+  ExtensionTypeExtensionMethod() { this.isInExtension() }
+}
 
-  override string getAPrimaryQlClass() { result = "ExtensionMethod" }
+/**
+ * An object initializer method.
+ *
+ * This is an extractor-synthesized method that executes the field
+ * initializers. Note that the AST nodes for the field initializers are nested
+ * directly under the class, and therefore this method has no body in the AST.
+ * On the other hand, this provides the unique enclosing callable for the field
+ * initializers and their control flow graph.
+ */
+class ObjectInitMethod extends Method {
+  ObjectInitMethod() { this.getName() = "<object initializer>" }
 }
 
 /**
@@ -350,6 +382,9 @@ class Constructor extends Callable, Member, Attributable, @constructor {
    */
   ConstructorInitializer getInitializer() { result = this.getChildExpr(-1) }
 
+  /** Gets the object initializer call of this constructor, if any. */
+  MethodCall getObjectInitializerCall() { result = this.getChildExpr(-2) }
+
   /** Holds if this constructor has an initializer. */
   predicate hasInitializer() { exists(this.getInitializer()) }
 
@@ -357,7 +392,7 @@ class Constructor extends Callable, Member, Attributable, @constructor {
 
   override Constructor getUnboundDeclaration() { constructors(this, _, _, result) }
 
-  override Location getALocation() { constructor_location(this, result) }
+  override Location getALocation() { constructor_location(this.getUnboundDeclaration(), result) }
 
   override predicate fromSource() { Member.super.fromSource() and not this.isCompilerGenerated() }
 
@@ -450,7 +485,7 @@ class Destructor extends Callable, Member, Attributable, @destructor {
 
   override Destructor getUnboundDeclaration() { destructors(this, _, _, result) }
 
-  override Location getALocation() { destructor_location(this, result) }
+  override Location getALocation() { destructor_location(this.getUnboundDeclaration(), result) }
 
   override string toString() { result = Callable.super.toString() }
 
@@ -484,7 +519,7 @@ class Operator extends Callable, Member, Attributable, Overridable, @operator {
 
   override Operator getUnboundDeclaration() { operators(this, _, _, _, _, result) }
 
-  override Location getALocation() { operator_location(this, result) }
+  override Location getALocation() { operator_location(this.getUnboundDeclaration(), result) }
 
   override string toString() { result = Callable.super.toString() }
 
@@ -519,6 +554,21 @@ class RecordCloneMethod extends Method {
     result.getNumberOfParameters() = 1 and
     result.getParameter(0).getType() = this.getDeclaringType()
   }
+}
+
+/**
+ * An extension operator, for example `*` in
+ *
+ * ```csharp
+ * static class MyExtensions {
+ *   extension(string s) {
+ *     public static string operator *(int s1, string s2) { ... }
+ *   }
+ * }
+ * ```
+ */
+class ExtensionOperator extends ExtensionCallableImpl, Operator {
+  ExtensionOperator() { this.isInExtension() }
 }
 
 /**

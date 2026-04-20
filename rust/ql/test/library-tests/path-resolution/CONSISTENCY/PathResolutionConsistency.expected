@@ -1,3 +1,2 @@
-multipleCallTargets
-| main.rs:118:9:118:11 | f(...) |
-| proc_macro.rs:9:5:9:10 | ...::new(...) |
+multipleResolvedTargets
+| main.rs:126:9:126:11 | f(...) |

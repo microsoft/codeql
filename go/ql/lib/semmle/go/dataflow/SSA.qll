@@ -1,6 +1,8 @@
 /**
  * Provides classes for working with static single assignment form (SSA).
  */
+overlay[local]
+module;
 
 import go
 private import SsaImpl
@@ -144,7 +146,7 @@ class SsaDefinition extends TSsaDefinition {
   abstract string prettyPrintRef();
 
   /** Gets the innermost function or file to which this SSA definition belongs. */
-  ControlFlow::Root getRoot() { result = this.getBasicBlock().getRoot() }
+  ControlFlow::Root getRoot() { result = this.getBasicBlock().getScope() }
 
   /** Gets a textual representation of this element. */
   string toString() { result = this.prettyPrintDef() }
@@ -166,6 +168,13 @@ class SsaDefinition extends TSsaDefinition {
   ) {
     this.getLocation().hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
   }
+
+  /**
+   * Gets the first instruction that the value of this `SsaDefinition` can
+   * reach without passing through any other instructions, but possibly through
+   * phi nodes.
+   */
+  IR::Instruction getAFirstUse() { firstUse(this, result) }
 }
 
 /**
@@ -278,7 +287,7 @@ abstract class SsaPseudoDefinition extends SsaImplicitDefinition {
  */
 class SsaPhiNode extends SsaPseudoDefinition, TPhi {
   override SsaVariable getAnInput() {
-    result = getDefReachingEndOf(this.getBasicBlock().getAPredecessor(), this.getSourceVariable())
+    result = getDefReachingEndOf(this.getBasicBlock().getAPredecessor(_), this.getSourceVariable())
   }
 
   override predicate definesAt(ReachableBasicBlock bb, int i, SsaSourceVariable v) {
@@ -410,3 +419,12 @@ DataFlow::Node getASimilarReadNode(DataFlow::Node node) {
     result = readFields.similar().getAUse()
   )
 }
+
+/**
+ * Gets an instruction such that  `pred` and `result` form an adjacent
+ * use-use-pair of the same`SsaSourceVariable`, that is, the value read in
+ * `pred` can reach `result` without passing through any other use or any SSA
+ * definition of the variable except for phi nodes and uncertain implicit
+ * updates.
+ */
+IR::Instruction getAnAdjacentUse(IR::Instruction pred) { adjacentUseUse(pred, result) }

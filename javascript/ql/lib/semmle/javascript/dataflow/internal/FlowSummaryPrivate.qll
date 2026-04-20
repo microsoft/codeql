@@ -1,6 +1,8 @@
 /**
  * Provides JS specific classes and predicates for defining flow summaries.
  */
+overlay[local?]
+module;
 
 private import javascript
 private import semmle.javascript.dataflow.internal.DataFlowPrivate
@@ -94,6 +96,8 @@ private string encodeContentAux(ContentSet cs, string arg) {
     cs = ContentSet::iteratorElement() and result = "IteratorElement"
     or
     cs = ContentSet::iteratorError() and result = "IteratorError"
+    or
+    cs = ContentSet::anyProperty() and result = "AnyMember"
   )
   or
   cs = getPromiseContent(arg) and
@@ -138,6 +142,7 @@ string encodeArgumentPosition(ArgumentPosition pos) {
 ReturnKind getStandardReturnValueKind() { result = MkNormalReturnKind() and Stage::ref() }
 
 private module FlowSummaryStepInput implements Private::StepsInputSig {
+  overlay[global]
   DataFlowCall getACall(SummarizedCallable sc) {
     exists(LibraryCallable callable | callable = sc |
       result.asOrdinaryCall() =
@@ -148,7 +153,9 @@ private module FlowSummaryStepInput implements Private::StepsInputSig {
     )
   }
 
-  DataFlow::Node getSourceNode(SourceBase source, Private::SummaryComponent sc) { none() }
+  DataFlowCallable getSourceNodeEnclosingCallable(SourceBase source) { none() }
+
+  DataFlow::Node getSourceNode(SourceBase source, Private::SummaryComponentStack s) { none() }
 
   DataFlow::Node getSinkNode(SinkBase sink, Private::SummaryComponent sc) { none() }
 }

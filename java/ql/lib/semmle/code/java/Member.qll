@@ -680,13 +680,13 @@ class GetterMethod extends Method {
   GetterMethod() {
     this.hasNoParameters() and
     exists(ReturnStmt s, Field f | s = this.getBody().(SingletonBlock).getStmt() |
-      s.getResult() = f.getAnAccess()
+      s.getExpr() = f.getAnAccess()
     )
   }
 
   /** Gets the field whose value is returned by this getter method. */
   Field getField() {
-    exists(ReturnStmt r | r.getEnclosingCallable() = this | r.getResult() = result.getAnAccess())
+    exists(ReturnStmt r | r.getEnclosingCallable() = this | r.getExpr() = result.getAnAccess())
   }
 }
 
@@ -847,6 +847,9 @@ class Field extends Member, ExprParent, @field, Variable {
 
   override string getAPrimaryQlClass() { result = "Field" }
 }
+
+overlay[local]
+private class DiscardableField extends DiscardableReferableLocatable, @field { }
 
 /** An instance field. */
 class InstanceField extends Field {
