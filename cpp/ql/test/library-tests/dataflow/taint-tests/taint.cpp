@@ -887,8 +887,6 @@ long StringCbPrintfA(char *, size_t, const char *, ...);
 long StringCchPrintfExA(char *, size_t, char **, size_t *, unsigned long, const char *, ...);
 long StringCchVPrintfA(char *, size_t, const char *, va_list);
 long StringCchVPrintfExA(char *, size_t, char **, size_t *, unsigned long, const char *, va_list);
-long StringCchGetsA(char *, size_t);
-long StringCchGetsExA(char *, size_t, char **, size_t *, unsigned long);
 
 void test_strsafe() {
 	char *source = indirect_source();
@@ -897,98 +895,98 @@ void test_strsafe() {
 	{
 		char dest[256] = {0};
 		StringCchCopyA(dest, sizeof(dest), source);
-		sink(*dest); // $ MISSING: ir,ast
+		sink(*dest); // $ ir MISSING: ast
 	}
 	{
 		wchar_t dest[256] = {0};
 		StringCchCopyW(dest, sizeof(dest), wsource);
-		sink(*dest); // $ MISSING: ir,ast
+		sink(*dest); // $ ir MISSING: ast
 	}
 	{
 		char dest[256] = {0};
 		StringCbCopyA(dest, sizeof(dest), source);
-		sink(*dest); // $ MISSING: ir,ast
+		sink(*dest); // $ ir MISSING: ast
 	}
 	{
 		char dest[256] = {0};
 		char *end;
 		size_t remaining;
 		StringCchCopyExA(dest, sizeof(dest), source, &end, &remaining, 0);
-		sink(*dest); // $ MISSING: ir,ast
+		sink(*dest); // $ ir MISSING: ast
 	}
 	{
 		char dest[256] = {0};
 		StringCchCopyNA(dest, sizeof(dest), source, 128);
-		sink(*dest); // $ MISSING: ir,ast
+		sink(*dest); // $ ir MISSING: ast
 	}
 	{
 		char dest[256] = {0};
 		char *end;
 		size_t remaining;
 		StringCchCopyNExA(dest, sizeof(dest), source, 128, &end, &remaining, 0);
-		sink(dest); // $ MISSING: ir,ast
+		sink(dest); // $ ir MISSING: ast
 	}
 	{
 		char dest[256] = "prefix";
 		StringCchCatA(dest, sizeof(dest), source);
-		sink(*dest); // $ MISSING: ir,ast
+		sink(*dest); // $ ir MISSING: ast
 	}
 	{
 		wchar_t dest[256] = L"prefix";
 		StringCchCatW(dest, sizeof(dest), wsource);
-		sink(*dest); // $ MISSING: ir,ast
+		sink(*dest); // $ ir MISSING: ast
 	}
 	{
 		char dest[256] = "prefix";
 		StringCbCatA(dest, sizeof(dest), source);
-		sink(*dest); // $ MISSING: ir,ast
+		sink(*dest); // $ ir MISSING: ast
 	}
 	{
 		char dest[256] = "prefix";
 		char *end;
 		size_t remaining;
 		StringCchCatExA(dest, sizeof(dest), source, &end, &remaining, 0);
-		sink(*dest); // $ MISSING: ir,ast
+		sink(*dest); // $ ir MISSING: ast
 	}
 	{
 		char dest[256] = "prefix";
 		StringCchCatNA(dest, sizeof(dest), source, 128);
-		sink(*dest); // $ MISSING: ir,ast
+		sink(*dest); // $ ir MISSING: ast
 	}
 	{
 		char dest[256] = "prefix";
 		char *end;
 		size_t remaining;
 		StringCchCatNExA(dest, sizeof(dest), source, 128, &end, &remaining, 0);
-		sink(*dest); // $ MISSING: ir,ast
+		sink(*dest); // $ ir MISSING: ast
 	}
 	{
 		char dest[256] = {0};
 		StringCchPrintfA(dest, sizeof(dest), "%s", source);
-		sink(*dest); // $ MISSING: ir,ast
+		sink(*dest); // $ ir MISSING: ast
 	}
 	{
 		wchar_t dest[256] = {0};
 		StringCchPrintfW(dest, sizeof(dest), L"%s", wsource);
-		sink(*dest); // $ MISSING: ir,ast
+		sink(*dest); // $ ir MISSING: ast
 	}
 	{
 		char dest[256] = {0};
 		StringCbPrintfA(dest, sizeof(dest), "%s", source);
-		sink(*dest); // $ MISSING: ir,ast
+		sink(*dest); // $ ir MISSING: ast
 	}
 	{
 		char dest[256] = {0};
 		char *end;
 		size_t remaining;
 		StringCchPrintfExA(dest, sizeof(dest), &end, &remaining, 0, "%s", source);
-		sink(*dest); // $ MISSING: ir,ast
+		sink(*dest); // $ ir MISSING: ast
 	}
 	{
 		char dest[256] = {0};
 		char *fmt = indirect_source();
 		StringCchPrintfA(dest, sizeof(dest), fmt);
-		sink(*dest); // $ MISSING: ir,ast
+		sink(*dest); // $ ir MISSING: ast
 	}
 	{
 		char dest[256] = {0};
