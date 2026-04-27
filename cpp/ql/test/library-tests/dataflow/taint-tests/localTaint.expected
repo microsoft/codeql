@@ -8008,6 +8008,198 @@ WARNING: module 'TaintTracking' has been deprecated and may be removed in future
 | taint.cpp:866:26:866:34 | ref arg & ... | taint.cpp:866:27:866:34 | size_out [inner post update] |  |
 | taint.cpp:866:27:866:34 | size_out | taint.cpp:866:26:866:34 | & ... |  |
 | taint.cpp:867:8:867:8 | p | taint.cpp:867:7:867:8 | * ... | TAINT |
+| taint.cpp:894:17:894:31 | call to indirect_source | taint.cpp:899:38:899:43 | source |  |
+| taint.cpp:894:17:894:31 | call to indirect_source | taint.cpp:909:37:909:42 | source |  |
+| taint.cpp:894:17:894:31 | call to indirect_source | taint.cpp:916:40:916:45 | source |  |
+| taint.cpp:894:17:894:31 | call to indirect_source | taint.cpp:921:39:921:44 | source |  |
+| taint.cpp:894:17:894:31 | call to indirect_source | taint.cpp:928:41:928:46 | source |  |
+| taint.cpp:894:17:894:31 | call to indirect_source | taint.cpp:933:37:933:42 | source |  |
+| taint.cpp:894:17:894:31 | call to indirect_source | taint.cpp:943:36:943:41 | source |  |
+| taint.cpp:894:17:894:31 | call to indirect_source | taint.cpp:950:39:950:44 | source |  |
+| taint.cpp:894:17:894:31 | call to indirect_source | taint.cpp:955:38:955:43 | source |  |
+| taint.cpp:894:17:894:31 | call to indirect_source | taint.cpp:962:40:962:45 | source |  |
+| taint.cpp:894:17:894:31 | call to indirect_source | taint.cpp:967:46:967:51 | source |  |
+| taint.cpp:894:17:894:31 | call to indirect_source | taint.cpp:977:45:977:50 | source |  |
+| taint.cpp:894:17:894:31 | call to indirect_source | taint.cpp:984:69:984:74 | source |  |
+| taint.cpp:895:32:895:46 | call to indirect_source | taint.cpp:904:38:904:44 | wsource |  |
+| taint.cpp:895:32:895:46 | call to indirect_source | taint.cpp:938:37:938:43 | wsource |  |
+| taint.cpp:895:32:895:46 | call to indirect_source | taint.cpp:972:47:972:53 | wsource |  |
+| taint.cpp:898:19:898:22 | {...} | taint.cpp:899:18:899:21 | dest |  |
+| taint.cpp:898:19:898:22 | {...} | taint.cpp:899:31:899:34 | dest |  |
+| taint.cpp:898:19:898:22 | {...} | taint.cpp:900:9:900:12 | dest |  |
+| taint.cpp:898:21:898:21 | 0 | taint.cpp:898:19:898:22 | {...} | TAINT |
+| taint.cpp:899:18:899:21 | ref arg dest | taint.cpp:900:9:900:12 | dest |  |
+| taint.cpp:900:9:900:12 | dest | taint.cpp:900:8:900:12 | * ... |  |
+| taint.cpp:903:22:903:25 | {...} | taint.cpp:904:18:904:21 | dest |  |
+| taint.cpp:903:22:903:25 | {...} | taint.cpp:904:31:904:34 | dest |  |
+| taint.cpp:903:22:903:25 | {...} | taint.cpp:905:9:905:12 | dest |  |
+| taint.cpp:903:24:903:24 | 0 | taint.cpp:903:22:903:25 | {...} | TAINT |
+| taint.cpp:904:18:904:21 | ref arg dest | taint.cpp:905:9:905:12 | dest |  |
+| taint.cpp:905:9:905:12 | dest | taint.cpp:905:8:905:12 | * ... |  |
+| taint.cpp:908:19:908:22 | {...} | taint.cpp:909:17:909:20 | dest |  |
+| taint.cpp:908:19:908:22 | {...} | taint.cpp:909:30:909:33 | dest |  |
+| taint.cpp:908:19:908:22 | {...} | taint.cpp:910:9:910:12 | dest |  |
+| taint.cpp:908:21:908:21 | 0 | taint.cpp:908:19:908:22 | {...} | TAINT |
+| taint.cpp:909:17:909:20 | ref arg dest | taint.cpp:910:9:910:12 | dest |  |
+| taint.cpp:910:9:910:12 | dest | taint.cpp:910:8:910:12 | * ... |  |
+| taint.cpp:913:19:913:22 | {...} | taint.cpp:916:20:916:23 | dest |  |
+| taint.cpp:913:19:913:22 | {...} | taint.cpp:916:33:916:36 | dest |  |
+| taint.cpp:913:19:913:22 | {...} | taint.cpp:917:9:917:12 | dest |  |
+| taint.cpp:913:21:913:21 | 0 | taint.cpp:913:19:913:22 | {...} | TAINT |
+| taint.cpp:914:9:914:11 | end | taint.cpp:916:49:916:51 | end |  |
+| taint.cpp:915:10:915:18 | remaining | taint.cpp:916:55:916:63 | remaining |  |
+| taint.cpp:916:20:916:23 | ref arg dest | taint.cpp:917:9:917:12 | dest |  |
+| taint.cpp:916:48:916:51 | ref arg & ... | taint.cpp:916:49:916:51 | end [inner post update] |  |
+| taint.cpp:916:49:916:51 | end | taint.cpp:916:48:916:51 | & ... |  |
+| taint.cpp:916:54:916:63 | ref arg & ... | taint.cpp:916:55:916:63 | remaining [inner post update] |  |
+| taint.cpp:916:55:916:63 | remaining | taint.cpp:916:54:916:63 | & ... |  |
+| taint.cpp:917:9:917:12 | dest | taint.cpp:917:8:917:12 | * ... |  |
+| taint.cpp:920:19:920:22 | {...} | taint.cpp:921:19:921:22 | dest |  |
+| taint.cpp:920:19:920:22 | {...} | taint.cpp:921:32:921:35 | dest |  |
+| taint.cpp:920:19:920:22 | {...} | taint.cpp:922:9:922:12 | dest |  |
+| taint.cpp:920:21:920:21 | 0 | taint.cpp:920:19:920:22 | {...} | TAINT |
+| taint.cpp:921:19:921:22 | ref arg dest | taint.cpp:922:9:922:12 | dest |  |
+| taint.cpp:922:9:922:12 | dest | taint.cpp:922:8:922:12 | * ... |  |
+| taint.cpp:925:19:925:22 | {...} | taint.cpp:928:21:928:24 | dest |  |
+| taint.cpp:925:19:925:22 | {...} | taint.cpp:928:34:928:37 | dest |  |
+| taint.cpp:925:19:925:22 | {...} | taint.cpp:929:8:929:11 | dest |  |
+| taint.cpp:925:21:925:21 | 0 | taint.cpp:925:19:925:22 | {...} | TAINT |
+| taint.cpp:926:9:926:11 | end | taint.cpp:928:55:928:57 | end |  |
+| taint.cpp:927:10:927:18 | remaining | taint.cpp:928:61:928:69 | remaining |  |
+| taint.cpp:928:21:928:24 | ref arg dest | taint.cpp:929:8:929:11 | dest |  |
+| taint.cpp:928:54:928:57 | ref arg & ... | taint.cpp:928:55:928:57 | end [inner post update] |  |
+| taint.cpp:928:55:928:57 | end | taint.cpp:928:54:928:57 | & ... |  |
+| taint.cpp:928:60:928:69 | ref arg & ... | taint.cpp:928:61:928:69 | remaining [inner post update] |  |
+| taint.cpp:928:61:928:69 | remaining | taint.cpp:928:60:928:69 | & ... |  |
+| taint.cpp:932:20:932:27 | prefix | taint.cpp:933:17:933:20 | dest |  |
+| taint.cpp:932:20:932:27 | prefix | taint.cpp:933:30:933:33 | dest |  |
+| taint.cpp:932:20:932:27 | prefix | taint.cpp:934:9:934:12 | dest |  |
+| taint.cpp:933:17:933:20 | ref arg dest | taint.cpp:934:9:934:12 | dest |  |
+| taint.cpp:934:9:934:12 | dest | taint.cpp:934:8:934:12 | * ... |  |
+| taint.cpp:937:23:937:31 | prefix | taint.cpp:938:17:938:20 | dest |  |
+| taint.cpp:937:23:937:31 | prefix | taint.cpp:938:30:938:33 | dest |  |
+| taint.cpp:937:23:937:31 | prefix | taint.cpp:939:9:939:12 | dest |  |
+| taint.cpp:938:17:938:20 | ref arg dest | taint.cpp:939:9:939:12 | dest |  |
+| taint.cpp:939:9:939:12 | dest | taint.cpp:939:8:939:12 | * ... |  |
+| taint.cpp:942:20:942:27 | prefix | taint.cpp:943:16:943:19 | dest |  |
+| taint.cpp:942:20:942:27 | prefix | taint.cpp:943:29:943:32 | dest |  |
+| taint.cpp:942:20:942:27 | prefix | taint.cpp:944:9:944:12 | dest |  |
+| taint.cpp:943:16:943:19 | ref arg dest | taint.cpp:944:9:944:12 | dest |  |
+| taint.cpp:944:9:944:12 | dest | taint.cpp:944:8:944:12 | * ... |  |
+| taint.cpp:947:20:947:27 | prefix | taint.cpp:950:19:950:22 | dest |  |
+| taint.cpp:947:20:947:27 | prefix | taint.cpp:950:32:950:35 | dest |  |
+| taint.cpp:947:20:947:27 | prefix | taint.cpp:951:9:951:12 | dest |  |
+| taint.cpp:948:9:948:11 | end | taint.cpp:950:48:950:50 | end |  |
+| taint.cpp:949:10:949:18 | remaining | taint.cpp:950:54:950:62 | remaining |  |
+| taint.cpp:950:19:950:22 | ref arg dest | taint.cpp:951:9:951:12 | dest |  |
+| taint.cpp:950:47:950:50 | ref arg & ... | taint.cpp:950:48:950:50 | end [inner post update] |  |
+| taint.cpp:950:48:950:50 | end | taint.cpp:950:47:950:50 | & ... |  |
+| taint.cpp:950:53:950:62 | ref arg & ... | taint.cpp:950:54:950:62 | remaining [inner post update] |  |
+| taint.cpp:950:54:950:62 | remaining | taint.cpp:950:53:950:62 | & ... |  |
+| taint.cpp:951:9:951:12 | dest | taint.cpp:951:8:951:12 | * ... |  |
+| taint.cpp:954:20:954:27 | prefix | taint.cpp:955:18:955:21 | dest |  |
+| taint.cpp:954:20:954:27 | prefix | taint.cpp:955:31:955:34 | dest |  |
+| taint.cpp:954:20:954:27 | prefix | taint.cpp:956:9:956:12 | dest |  |
+| taint.cpp:955:18:955:21 | ref arg dest | taint.cpp:956:9:956:12 | dest |  |
+| taint.cpp:956:9:956:12 | dest | taint.cpp:956:8:956:12 | * ... |  |
+| taint.cpp:959:20:959:27 | prefix | taint.cpp:962:20:962:23 | dest |  |
+| taint.cpp:959:20:959:27 | prefix | taint.cpp:962:33:962:36 | dest |  |
+| taint.cpp:959:20:959:27 | prefix | taint.cpp:963:9:963:12 | dest |  |
+| taint.cpp:960:9:960:11 | end | taint.cpp:962:54:962:56 | end |  |
+| taint.cpp:961:10:961:18 | remaining | taint.cpp:962:60:962:68 | remaining |  |
+| taint.cpp:962:20:962:23 | ref arg dest | taint.cpp:963:9:963:12 | dest |  |
+| taint.cpp:962:53:962:56 | ref arg & ... | taint.cpp:962:54:962:56 | end [inner post update] |  |
+| taint.cpp:962:54:962:56 | end | taint.cpp:962:53:962:56 | & ... |  |
+| taint.cpp:962:59:962:68 | ref arg & ... | taint.cpp:962:60:962:68 | remaining [inner post update] |  |
+| taint.cpp:962:60:962:68 | remaining | taint.cpp:962:59:962:68 | & ... |  |
+| taint.cpp:963:9:963:12 | dest | taint.cpp:963:8:963:12 | * ... |  |
+| taint.cpp:966:19:966:22 | {...} | taint.cpp:967:20:967:23 | dest |  |
+| taint.cpp:966:19:966:22 | {...} | taint.cpp:967:33:967:36 | dest |  |
+| taint.cpp:966:19:966:22 | {...} | taint.cpp:968:9:968:12 | dest |  |
+| taint.cpp:966:21:966:21 | 0 | taint.cpp:966:19:966:22 | {...} | TAINT |
+| taint.cpp:967:20:967:23 | ref arg dest | taint.cpp:968:9:968:12 | dest |  |
+| taint.cpp:967:40:967:43 | %s | taint.cpp:967:20:967:23 | ref arg dest | TAINT |
+| taint.cpp:967:46:967:51 | ref arg source | taint.cpp:977:45:977:50 | source |  |
+| taint.cpp:967:46:967:51 | ref arg source | taint.cpp:984:69:984:74 | source |  |
+| taint.cpp:967:46:967:51 | source | taint.cpp:967:20:967:23 | ref arg dest | TAINT |
+| taint.cpp:968:9:968:12 | dest | taint.cpp:968:8:968:12 | * ... |  |
+| taint.cpp:971:22:971:25 | {...} | taint.cpp:972:20:972:23 | dest |  |
+| taint.cpp:971:22:971:25 | {...} | taint.cpp:972:33:972:36 | dest |  |
+| taint.cpp:971:22:971:25 | {...} | taint.cpp:973:9:973:12 | dest |  |
+| taint.cpp:971:24:971:24 | 0 | taint.cpp:971:22:971:25 | {...} | TAINT |
+| taint.cpp:972:20:972:23 | ref arg dest | taint.cpp:973:9:973:12 | dest |  |
+| taint.cpp:972:40:972:44 | %s | taint.cpp:972:20:972:23 | ref arg dest | TAINT |
+| taint.cpp:972:47:972:53 | wsource | taint.cpp:972:20:972:23 | ref arg dest | TAINT |
+| taint.cpp:973:9:973:12 | dest | taint.cpp:973:8:973:12 | * ... |  |
+| taint.cpp:976:19:976:22 | {...} | taint.cpp:977:19:977:22 | dest |  |
+| taint.cpp:976:19:976:22 | {...} | taint.cpp:977:32:977:35 | dest |  |
+| taint.cpp:976:19:976:22 | {...} | taint.cpp:978:9:978:12 | dest |  |
+| taint.cpp:976:21:976:21 | 0 | taint.cpp:976:19:976:22 | {...} | TAINT |
+| taint.cpp:977:19:977:22 | ref arg dest | taint.cpp:978:9:978:12 | dest |  |
+| taint.cpp:977:39:977:42 | %s | taint.cpp:977:19:977:22 | ref arg dest | TAINT |
+| taint.cpp:977:45:977:50 | ref arg source | taint.cpp:984:69:984:74 | source |  |
+| taint.cpp:977:45:977:50 | source | taint.cpp:977:19:977:22 | ref arg dest | TAINT |
+| taint.cpp:978:9:978:12 | dest | taint.cpp:978:8:978:12 | * ... |  |
+| taint.cpp:981:19:981:22 | {...} | taint.cpp:984:22:984:25 | dest |  |
+| taint.cpp:981:19:981:22 | {...} | taint.cpp:984:35:984:38 | dest |  |
+| taint.cpp:981:19:981:22 | {...} | taint.cpp:985:9:985:12 | dest |  |
+| taint.cpp:981:21:981:21 | 0 | taint.cpp:981:19:981:22 | {...} | TAINT |
+| taint.cpp:982:9:982:11 | end | taint.cpp:984:43:984:45 | end |  |
+| taint.cpp:983:10:983:18 | remaining | taint.cpp:984:49:984:57 | remaining |  |
+| taint.cpp:984:22:984:25 | ref arg dest | taint.cpp:985:9:985:12 | dest |  |
+| taint.cpp:984:42:984:45 | ref arg & ... | taint.cpp:984:43:984:45 | end [inner post update] |  |
+| taint.cpp:984:43:984:45 | end | taint.cpp:984:42:984:45 | & ... |  |
+| taint.cpp:984:48:984:57 | ref arg & ... | taint.cpp:984:49:984:57 | remaining [inner post update] |  |
+| taint.cpp:984:49:984:57 | remaining | taint.cpp:984:48:984:57 | & ... |  |
+| taint.cpp:984:63:984:66 | %s | taint.cpp:984:22:984:25 | ref arg dest | TAINT |
+| taint.cpp:984:69:984:74 | source | taint.cpp:984:22:984:25 | ref arg dest | TAINT |
+| taint.cpp:985:9:985:12 | dest | taint.cpp:985:8:985:12 | * ... |  |
+| taint.cpp:988:19:988:22 | {...} | taint.cpp:990:20:990:23 | dest |  |
+| taint.cpp:988:19:988:22 | {...} | taint.cpp:990:33:990:36 | dest |  |
+| taint.cpp:988:19:988:22 | {...} | taint.cpp:991:9:991:12 | dest |  |
+| taint.cpp:988:21:988:21 | 0 | taint.cpp:988:19:988:22 | {...} | TAINT |
+| taint.cpp:989:15:989:29 | call to indirect_source | taint.cpp:990:40:990:42 | fmt |  |
+| taint.cpp:990:20:990:23 | ref arg dest | taint.cpp:991:9:991:12 | dest |  |
+| taint.cpp:990:40:990:42 | fmt | taint.cpp:990:20:990:23 | ref arg dest | TAINT |
+| taint.cpp:991:9:991:12 | dest | taint.cpp:991:8:991:12 | * ... |  |
+| taint.cpp:994:19:994:22 | {...} | taint.cpp:995:20:995:23 | dest |  |
+| taint.cpp:994:19:994:22 | {...} | taint.cpp:995:33:995:36 | dest |  |
+| taint.cpp:994:19:994:22 | {...} | taint.cpp:996:9:996:12 | dest |  |
+| taint.cpp:994:21:994:21 | 0 | taint.cpp:994:19:994:22 | {...} | TAINT |
+| taint.cpp:995:20:995:23 | ref arg dest | taint.cpp:996:9:996:12 | dest |  |
+| taint.cpp:995:40:995:43 | %d | taint.cpp:995:20:995:23 | ref arg dest | TAINT |
+| taint.cpp:995:46:995:47 | 42 | taint.cpp:995:20:995:23 | ref arg dest | TAINT |
+| taint.cpp:996:9:996:12 | dest | taint.cpp:996:8:996:12 | * ... |  |
+| taint.cpp:999:19:999:22 | {...} | taint.cpp:1000:18:1000:21 | dest |  |
+| taint.cpp:999:19:999:22 | {...} | taint.cpp:1000:31:1000:34 | dest |  |
+| taint.cpp:999:19:999:22 | {...} | taint.cpp:1001:9:1001:12 | dest |  |
+| taint.cpp:999:21:999:21 | 0 | taint.cpp:999:19:999:22 | {...} | TAINT |
+| taint.cpp:1000:18:1000:21 | ref arg dest | taint.cpp:1001:9:1001:12 | dest |  |
+| taint.cpp:1001:9:1001:12 | dest | taint.cpp:1001:8:1001:12 | * ... |  |
+| taint.cpp:1004:19:1004:22 | {...} | taint.cpp:1005:18:1005:21 | dest |  |
+| taint.cpp:1004:19:1004:22 | {...} | taint.cpp:1005:31:1005:34 | dest |  |
+| taint.cpp:1004:19:1004:22 | {...} | taint.cpp:1006:8:1006:11 | dest |  |
+| taint.cpp:1004:19:1004:22 | {...} | taint.cpp:1007:9:1007:12 | dest |  |
+| taint.cpp:1004:21:1004:21 | 0 | taint.cpp:1004:19:1004:22 | {...} | TAINT |
+| taint.cpp:1005:18:1005:21 | ref arg dest | taint.cpp:1006:8:1006:11 | dest |  |
+| taint.cpp:1005:18:1005:21 | ref arg dest | taint.cpp:1007:9:1007:12 | dest |  |
+| taint.cpp:1006:8:1006:11 | ref arg dest | taint.cpp:1007:9:1007:12 | dest |  |
+| taint.cpp:1007:9:1007:12 | dest | taint.cpp:1007:8:1007:12 | * ... |  |
+| taint.cpp:1010:19:1010:22 | {...} | taint.cpp:1013:20:1013:23 | dest |  |
+| taint.cpp:1010:19:1010:22 | {...} | taint.cpp:1013:33:1013:36 | dest |  |
+| taint.cpp:1010:19:1010:22 | {...} | taint.cpp:1014:8:1014:11 | dest |  |
+| taint.cpp:1010:19:1010:22 | {...} | taint.cpp:1015:9:1015:12 | dest |  |
+| taint.cpp:1010:21:1010:21 | 0 | taint.cpp:1010:19:1010:22 | {...} | TAINT |
+| taint.cpp:1011:9:1011:11 | end | taint.cpp:1013:41:1013:43 | end |  |
+| taint.cpp:1012:10:1012:18 | remaining | taint.cpp:1013:47:1013:55 | remaining |  |
+| taint.cpp:1013:20:1013:23 | ref arg dest | taint.cpp:1014:8:1014:11 | dest |  |
+| taint.cpp:1013:20:1013:23 | ref arg dest | taint.cpp:1015:9:1015:12 | dest |  |
+| taint.cpp:1013:40:1013:43 | ref arg & ... | taint.cpp:1013:41:1013:43 | end [inner post update] |  |
+| taint.cpp:1013:41:1013:43 | end | taint.cpp:1013:40:1013:43 | & ... |  |
+| taint.cpp:1013:46:1013:55 | ref arg & ... | taint.cpp:1013:47:1013:55 | remaining [inner post update] |  |
+| taint.cpp:1013:47:1013:55 | remaining | taint.cpp:1013:46:1013:55 | & ... |  |
+| taint.cpp:1014:8:1014:11 | ref arg dest | taint.cpp:1015:9:1015:12 | dest |  |
+| taint.cpp:1015:9:1015:12 | dest | taint.cpp:1015:8:1015:12 | * ... |  |
 | thread.cpp:10:27:10:27 | s | thread.cpp:10:27:10:27 | s |  |
 | thread.cpp:10:27:10:27 | s | thread.cpp:11:8:11:8 | s |  |
 | thread.cpp:14:26:14:26 | s | thread.cpp:15:8:15:8 | s |  |
