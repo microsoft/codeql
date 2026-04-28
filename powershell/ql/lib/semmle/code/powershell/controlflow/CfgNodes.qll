@@ -75,25 +75,8 @@ abstract private class ChildMapping extends Ast {
    */
   abstract predicate relevantChild(Ast child);
 
-  /**
-   * Holds if `child` appears before its parent in the control-flow graph.
-   * This always holds for expressions, and _almost_ never for statements.
-   */
-  abstract predicate precedesParent(Ast child);
-
   pragma[nomagic]
-  final predicate reachesBasicBlock(Ast child, CfgNode cfn, BasicBlock bb) {
-    this.relevantChild(child) and
-    cfn.getAstNode() = this and
-    bb.getANode() = cfn
-    or
-    exists(BasicBlock mid |
-      this.reachesBasicBlock(child, cfn, mid) and
-      not mid = getARelevantBasicBlock(child)
-    |
-      if this.precedesParent(child) then bb = mid.getAPredecessor() else bb = mid.getASuccessor()
-    )
-  }
+  abstract predicate reachesBasicBlock(Ast child, CfgNode cfn, BasicBlock bb);
 
   /**
    * Holds if there is a control-flow path from `cfn` to `cfnChild`, where `cfn`
@@ -113,7 +96,18 @@ abstract private class ChildMapping extends Ast {
  * A class for mapping parent-child AST nodes to parent-child CFG nodes.
  */
 abstract private class ExprChildMapping extends Expr, ChildMapping {
-  final override predicate precedesParent(Ast child) { this.relevantChild(child) }
+  pragma[nomagic]
+  override predicate reachesBasicBlock(Ast child, CfgNode cfn, BasicBlock bb) {
+    this.relevantChild(child) and
+    cfn.getAstNode() = this and
+    bb.getANode() = cfn
+    or
+    exists(BasicBlock mid |
+      this.reachesBasicBlock(child, cfn, mid) and
+      bb = mid.getAPredecessor() and
+      not mid = getARelevantBasicBlock(child)
+    )
+  }
 }
 
 /**
@@ -122,7 +116,18 @@ abstract private class ExprChildMapping extends Expr, ChildMapping {
 abstract private class NonExprChildMapping extends ChildMapping {
   NonExprChildMapping() { not this instanceof Expr }
 
-  override predicate precedesParent(Ast child) { none() } // this is not final because it is overriden by ForEachStmt
+  pragma[nomagic]
+  override predicate reachesBasicBlock(Ast child, CfgNode cfn, BasicBlock bb) {
+    this.relevantChild(child) and
+    cfn.getAstNode() = this and
+    bb.getANode() = cfn
+    or
+    exists(BasicBlock mid |
+      this.reachesBasicBlock(child, cfn, mid) and
+      bb = mid.getASuccessor() and
+      not mid = getARelevantBasicBlock(child)
+    )
+  }
 }
 
 private class AttributeBaseChildMapping extends NonExprChildMapping, AttributeBase {
@@ -1312,7 +1317,21 @@ module StmtNodes {
       child = this.getVarAccess() or child = this.getIterableExpr() or super.relevantChild(child)
     }
 
-    override predicate precedesParent(Ast child) { child = this.getIterableExpr() }
+    private predicate precedesParent(Ast child) { child = this.getIterableExpr() }
+
+    pragma[nomagic]
+    override predicate reachesBasicBlock(Ast child, CfgNode cfn, BasicBlock bb) {
+      this.relevantChild(child) and
+      cfn.getAstNode() = this and
+      bb.getANode() = cfn
+      or
+      exists(BasicBlock mid |
+        this.reachesBasicBlock(child, cfn, mid) and
+        not mid = getARelevantBasicBlock(child)
+      |
+        if this.precedesParent(child) then bb = mid.getAPredecessor() else bb = mid.getASuccessor()
+      )
+    }
   }
 
   class ForEachStmtCfgNode extends LoopStmtCfgNode {
