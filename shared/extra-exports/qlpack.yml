@@ -1,4 +1,4 @@
-name: codeql/codesuggestions
+name: codeql/extra-exports
 version: 0.0.1
 groups: shared
 library: true
