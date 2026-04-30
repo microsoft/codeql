@@ -461,6 +461,14 @@ module Configs<LocationSig Location, InputSig<Location> Lang> {
     default predicate observeDiffInformedIncrementalMode() { none() }
 
     /**
+     * Holds if the Stage 1 pruning should start with a reverse flow pass from
+     * sinks before the forward flow pass from sources. This can improve
+     * performance when the number of sinks is small relative to the number of
+     * sources.
+     */
+    default predicate startWithReversePruning() { none() }
+
+    /**
      * Gets a location that will be associated with the given `source` in a
      * diff-informed query that uses this configuration (see
      * `observeDiffInformedIncrementalMode`). By default, this is the location
@@ -612,6 +620,14 @@ module Configs<LocationSig Location, InputSig<Location> Lang> {
      * are used directly in a query result.
      */
     default predicate observeDiffInformedIncrementalMode() { none() }
+
+    /**
+     * Holds if the Stage 1 pruning should start with a reverse flow pass from
+     * sinks before the forward flow pass from sources. This can improve
+     * performance when the number of sinks is small relative to the number of
+     * sources.
+     */
+    default predicate startWithReversePruning() { none() }
 
     /**
      * Gets a location that will be associated with the given `source` in a

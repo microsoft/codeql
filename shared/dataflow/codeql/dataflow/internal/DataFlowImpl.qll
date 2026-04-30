@@ -152,6 +152,12 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
      */
     predicate observeOverlayInformedIncrementalMode();
 
+    /**
+     * Holds if the Stage 1 pruning should start with a reverse flow pass from
+     * sinks before the forward flow pass from sources.
+     */
+    predicate startWithReversePruning();
+
     Location getASelectedSourceLocation(Node source);
 
     Location getASelectedSinkLocation(Node sink);

@@ -510,18 +510,211 @@ module MakeImplStage1<LocationSig Location, InputSig<Location> Lang> {
       )
     }
 
+    /**
+     * Input signature for the parameterized reverse flow module `RevFlowImpl`.
+     * This allows the reverse flow logic to be shared between the ungated
+     * pre-filter (`RevPreFilter`) and the fwdFlow-gated pass in `Stage1`.
+     */
+    private signature module RevFlowInputSig {
+      /** Holds if `node` is a sink that starts reverse flow. */
+      predicate sinkNode(NodeEx node);
+
+      /** Holds if `node` survives an additional (e.g., fwdFlow) filter. */
+      predicate additionalFilter(NodeEx node);
+
+      /** Holds if sinks have an existing call context. */
+      predicate hasSinkCallCtx();
+
+      /** Holds if content `c` is a valid candidate during reverse store steps. */
+      predicate storeCand(Content c);
+
+      /** Holds if content set `cs` is a valid candidate during reverse read steps. */
+      predicate readCandSet(ContentSet cs);
+
+      /** Restriction on return-position out-nodes. */
+      predicate revReturnPosOut(Call call, ReturnPosition pos, NodeEx out);
+
+      /** Restriction on param-arg edges. */
+      predicate revParamArg(Call call, ParamNodeEx p, ArgNodeEx arg);
+
+      /** Provides the return kind for through-flow. */
+      predicate revReturnOut(Call call, ReturnKindExt kind, NodeEx out);
+    }
+
+    /**
+     * Parameterized reverse flow computation. Given a `RevFlowInputSig`, this
+     * computes reverse reachability from sinks through the data flow graph.
+     */
+    private module RevFlowImpl<RevFlowInputSig Input> {
+      pragma[nomagic]
+      predicate revFlow(NodeEx node, boolean toReturn) {
+        Input::additionalFilter(node) and
+        revFlow0(node, toReturn)
+      }
+
+      predicate revFlow(NodeEx node) { revFlow(node, _) }
+
+      pragma[nomagic]
+      private predicate revFlow0(NodeEx node, boolean toReturn) {
+        Input::sinkNode(node) and
+        (if Input::hasSinkCallCtx() then toReturn = true else toReturn = false)
+        or
+        exists(NodeEx mid | revFlow(mid, toReturn) |
+          localFlowStepEx(node, mid, _) or
+          additionalLocalFlowStep(node, mid, _) or
+          additionalLocalStateStep(node, _, mid, _, _)
+        )
+        or
+        exists(NodeEx mid | revFlow(mid, _) and toReturn = false |
+          jumpStepEx1(node, mid) or
+          additionalJumpStep1(node, mid, _) or
+          additionalJumpStateStep(node, _, mid, _, _)
+        )
+        or
+        // store
+        exists(Content c |
+          revFlowStoreImpl(c, node, toReturn) and
+          Input::storeCand(c)
+        )
+        or
+        // read
+        exists(NodeEx mid, ContentSet c |
+          readSetEx(node, c, mid) and
+          Input::readCandSet(c) and
+          revFlow(mid, toReturn)
+        )
+        or
+        // flow into a callable
+        revFlowIn(_, _, node, false) and
+        toReturn = false
+        or
+        // flow out of a callable
+        exists(ReturnPosition pos |
+          revFlowOut(pos) and
+          node.(RetNodeEx).getReturnPosition() = pos and
+          toReturn = true
+        )
+        or
+        // flow through a callable
+        exists(Call call, ParamNodeEx p, ReturnKindExt kind |
+          revFlowIsReturned(call, kind, toReturn) and
+          revFlowIn(call, p, node, true) and
+          parameterFlowThroughAllowedEx(p, kind)
+        )
+      }
+
+      pragma[nomagic]
+      private predicate revFlowOut(ReturnPosition pos) {
+        exists(NodeEx out |
+          revFlow(out, _) and
+          Input::revReturnPosOut(_, pos, out)
+        )
+      }
+
+      pragma[nomagic]
+      predicate revFlowIn(Call call, ParamNodeEx p, ArgNodeEx arg, boolean toReturn) {
+        revFlow(p, toReturn) and
+        Input::revParamArg(call, p, arg)
+      }
+
+      pragma[nomagic]
+      predicate revFlowIsReturned(Call call, ReturnKindExt kind, boolean toReturn) {
+        exists(NodeEx out |
+          revFlow(out, toReturn) and
+          Input::revReturnOut(call, kind, out)
+        )
+      }
+
+      pragma[nomagic]
+      private predicate revFlowStoreImpl(Content c, NodeEx node, boolean toReturn) {
+        exists(NodeEx mid |
+          revFlow(mid, toReturn) and
+          store(node, c, mid, _, _)
+        )
+      }
+    }
+
+    /**
+     * An optional reverse pre-filter pass. When `Config::startWithReversePruning()`
+     * holds, this module computes an ungated reverse reachability from sinks,
+     * which is then used to restrict the forward flow in `Stage1`.
+     */
+    private module RevPreFilter {
+      private module Input implements RevFlowInputSig {
+        predicate sinkNode(NodeEx node) {
+          (
+            isRelevantSink(node.asNodeOrImplicitRead(), _) or
+            isRelevantSink(node.asNodeOrImplicitRead())
+          ) and
+          not fullBarrier(node)
+        }
+
+        predicate additionalFilter(NodeEx node) {
+          Config::startWithReversePruning() and
+          exists(node)
+        }
+
+        predicate hasSinkCallCtx() {
+          exists(FlowFeature feature | feature = Config::getAFeature() |
+            feature instanceof FeatureHasSinkCallContext or
+            feature instanceof FeatureEqualSourceSinkCallContext
+          )
+        }
+
+        predicate storeCand(Content c) { any() }
+
+        predicate readCandSet(ContentSet cs) { any() }
+
+        predicate revReturnPosOut(Call call, ReturnPosition pos, NodeEx out) {
+          viableReturnPosOutEx(call, pos, out)
+        }
+
+        predicate revParamArg(Call call, ParamNodeEx p, ArgNodeEx arg) {
+          viableParamArgEx(call, p, arg)
+        }
+
+        predicate revReturnOut(Call call, ReturnKindExt kind, NodeEx out) {
+          exists(ReturnPosition pos |
+            viableReturnPosOutEx(call, pos, out) and
+            kind = pos.getKind()
+          )
+        }
+      }
+
+      private module Impl = RevFlowImpl<Input>;
+
+      /** Holds if `node` is reverse-reachable from a sink. */
+      predicate revFlowFirst(NodeEx node) { Impl::revFlow(node) }
+    }
+
     private module Stage1 {
       private import Stage1Common
 
       private class Cc = boolean;
 
       /**
+       * Holds if `node` survives the reverse pre-filter (if active), or if
+       * the reverse pre-filter is not active.
+       */
+      bindingset[node]
+      private predicate revPreFilterCheck(NodeEx node) {
+        not Config::startWithReversePruning()
+        or
+        RevPreFilter::revFlowFirst(node)
+      }
+
+      /**
        * Holds if `node` is reachable from a source.
        *
        * The Boolean `cc` records whether the node is reached through an
        * argument in a call.
+       *
+       * When `Config::startWithReversePruning()` holds, `node` is additionally
+       * restricted to nodes that are reverse-reachable from a sink (computed by
+       * `RevPreFilter`).
        */
       private predicate fwdFlow(NodeEx node, Cc cc) {
+        revPreFilterCheck(node) and
         sourceNode(node, _) and
         if hasSourceCallCtx() then cc = true else cc = false
         or
@@ -728,59 +921,38 @@ module MakeImplStage1<LocationSig Location, InputSig<Location> Lang> {
        * the enclosing callable in order to reach a sink.
        */
       pragma[nomagic]
-      predicate revFlow(NodeEx node, boolean toReturn) {
-        revFlow0(node, toReturn) and
-        fwdFlow(node)
+      predicate revFlow(NodeEx node, boolean toReturn) { RevFlowStage1::revFlow(node, toReturn) }
+
+      private module RevFlowStage1Input implements RevFlowInputSig {
+        predicate sinkNode(NodeEx node) { Stage1::sinkNode(node, _) }
+
+        predicate additionalFilter(NodeEx node) { fwdFlow(node) }
+
+        predicate hasSinkCallCtx() {
+          exists(FlowFeature feature | feature = Config::getAFeature() |
+            feature instanceof FeatureHasSinkCallContext or
+            feature instanceof FeatureEqualSourceSinkCallContext
+          )
+        }
+
+        predicate storeCand(Content c) { fwdFlowConsCand(c) }
+
+        predicate readCandSet(ContentSet cs) { fwdFlowConsCandSet(cs, _) }
+
+        predicate revReturnPosOut(Call call, ReturnPosition pos, NodeEx out) {
+          viableReturnPosOutNodeCandFwd1(call, pos, out)
+        }
+
+        predicate revParamArg(Call call, ParamNodeEx p, ArgNodeEx arg) {
+          viableParamArgNodeCandFwd1(call, p, arg)
+        }
+
+        predicate revReturnOut(Call call, ReturnKindExt kind, NodeEx out) {
+          fwdFlowOut(call, kind, out, true)
+        }
       }
 
-      pragma[nomagic]
-      private predicate revFlow0(NodeEx node, boolean toReturn) {
-        sinkNode(node, _) and
-        if hasSinkCallCtx() then toReturn = true else toReturn = false
-        or
-        exists(NodeEx mid | revFlow(mid, toReturn) |
-          localFlowStepEx(node, mid, _) or
-          additionalLocalFlowStep(node, mid, _) or
-          additionalLocalStateStep(node, _, mid, _, _)
-        )
-        or
-        exists(NodeEx mid | revFlow(mid, _) and toReturn = false |
-          jumpStepEx1(node, mid) or
-          additionalJumpStep1(node, mid, _) or
-          additionalJumpStateStep(node, _, mid, _, _)
-        )
-        or
-        // store
-        exists(Content c |
-          revFlowStore(c, node, toReturn) and
-          revFlowConsCand(c)
-        )
-        or
-        // read
-        exists(NodeEx mid, ContentSet c |
-          readSetEx(node, c, mid) and
-          fwdFlowConsCandSet(c, _) and
-          revFlow(mid, toReturn)
-        )
-        or
-        // flow into a callable
-        revFlowIn(_, _, node, false) and
-        toReturn = false
-        or
-        // flow out of a callable
-        exists(ReturnPosition pos |
-          revFlowOut(pos) and
-          node.(RetNodeEx).getReturnPosition() = pos and
-          toReturn = true
-        )
-        or
-        // flow through a callable
-        exists(Call call, ReturnKindExtOption kind, ReturnKindExtOption disallowReturnKind |
-          revFlowIsReturned(call, kind, toReturn) and
-          revFlowInToReturn(call, disallowReturnKind, node) and
-          kind != disallowReturnKind
-        )
-      }
+      private module RevFlowStage1 = RevFlowImpl<RevFlowStage1Input>;
 
       /**
        * Holds if `c` is the target of a read in the flow covered by `revFlow`.
@@ -821,46 +993,8 @@ module MakeImplStage1<LocationSig Location, InputSig<Location> Lang> {
       }
 
       pragma[nomagic]
-      private predicate revFlowOut(ReturnPosition pos) {
-        exists(NodeEx out |
-          revFlow(out, _) and
-          viableReturnPosOutNodeCandFwd1(_, pos, out)
-        )
-      }
-
-      pragma[nomagic]
       predicate viableParamArgNodeCandFwd1(Call call, ParamNodeEx p, ArgNodeEx arg) {
         fwdFlowIn(call, arg, _, p)
-      }
-
-      // inline to reduce the number of iterations
-      pragma[inline]
-      private predicate revFlowIn(Call call, ParamNodeEx p, ArgNodeEx arg, boolean toReturn) {
-        revFlow(p, toReturn) and
-        viableParamArgNodeCandFwd1(call, p, arg)
-      }
-
-      pragma[nomagic]
-      private predicate revFlowInToReturn(
-        Call call, ReturnKindExtOption disallowReturnKind, ArgNodeEx arg
-      ) {
-        exists(ParamNodeEx p |
-          revFlowIn(call, p, arg, true) and
-          disallowReturnKind = getDisallowedReturnKind(p)
-        )
-      }
-
-      /**
-       * Holds if an output from `call` is reached in the flow covered by `revFlow`
-       * and data might flow through the target callable resulting in reverse flow
-       * reaching an argument of `call`.
-       */
-      pragma[nomagic]
-      private predicate revFlowIsReturned(Call call, ReturnKindExtOption kind, boolean toReturn) {
-        exists(NodeEx out |
-          revFlow(out, toReturn) and
-          fwdFlowOutFromArg(call, kind, out)
-        )
       }
 
       private predicate stateStepRev(FlowState state1, FlowState state2) {
@@ -948,14 +1082,11 @@ module MakeImplStage1<LocationSig Location, InputSig<Location> Lang> {
 
       pragma[nomagic]
       predicate callMayFlowThroughRev(Call call) {
-        exists(
-          ArgNodeEx arg, ReturnKindExtOption kind, ReturnKindExtOption disallowReturnKind,
-          boolean toReturn
-        |
+        exists(ArgNodeEx arg, ParamNodeEx p, ReturnKindExt kind, boolean toReturn |
           revFlow(arg, pragma[only_bind_into](toReturn)) and
-          revFlowIsReturned(call, kind, pragma[only_bind_into](toReturn)) and
-          revFlowInToReturn(call, disallowReturnKind, arg) and
-          kind != disallowReturnKind
+          RevFlowStage1::revFlowIsReturned(call, kind, pragma[only_bind_into](toReturn)) and
+          RevFlowStage1::revFlowIn(call, p, arg, true) and
+          parameterFlowThroughAllowedEx(p, kind)
         )
       }
 
