@@ -155,6 +155,7 @@
 | tst2.js:8:27:8:84 | "select ... d + "'" | tst2.js:8:66:8:78 | req.params.id | tst2.js:8:27:8:84 | "select ... d + "'" | This query string depends on a $@. | tst2.js:8:66:8:78 | req.params.id | user-provided value |
 | tst3.js:9:14:9:19 | query1 | tst3.js:8:16:8:34 | req.params.category | tst3.js:9:14:9:19 | query1 | This query string depends on a $@. | tst3.js:8:16:8:34 | req.params.category | user-provided value |
 | tst4.js:8:10:8:66 | 'SELECT ... d + '"' | tst4.js:8:46:8:60 | $routeParams.id | tst4.js:8:10:8:66 | 'SELECT ... d + '"' | This query string depends on a $@. | tst4.js:8:46:8:60 | $routeParams.id | user-provided value |
+| tst5.js:7:9:7:64 | "SELECT ... d + "'" | tst5.js:7:46:7:58 | req.params.id | tst5.js:7:9:7:64 | "SELECT ... d + "'" | This query string depends on a $@. | tst5.js:7:46:7:58 | req.params.id | user-provided value |
 | tst.js:10:10:10:64 | 'SELECT ... d + '"' | tst.js:10:46:10:58 | req.params.id | tst.js:10:10:10:64 | 'SELECT ... d + '"' | This query string depends on a $@. | tst.js:10:46:10:58 | req.params.id | user-provided value |
 edges
 | athena.js:9:11:9:19 | userQuery | athena.js:14:30:14:38 | userQuery | provenance |  |
@@ -619,6 +620,7 @@ edges
 | tst3.js:7:7:7:12 | query1 | tst3.js:9:14:9:19 | query1 | provenance |  |
 | tst3.js:8:16:8:34 | req.params.category | tst3.js:7:7:7:12 | query1 | provenance |  |
 | tst4.js:8:46:8:60 | $routeParams.id | tst4.js:8:10:8:66 | 'SELECT ... d + '"' | provenance |  |
+| tst5.js:7:46:7:58 | req.params.id | tst5.js:7:9:7:64 | "SELECT ... d + "'" | provenance |  |
 | tst.js:10:46:10:58 | req.params.id | tst.js:10:10:10:64 | 'SELECT ... d + '"' | provenance |  |
 nodes
 | athena.js:9:11:9:19 | userQuery | semmle.label | userQuery |
@@ -1027,6 +1029,8 @@ nodes
 | tst3.js:9:14:9:19 | query1 | semmle.label | query1 |
 | tst4.js:8:10:8:66 | 'SELECT ... d + '"' | semmle.label | 'SELECT ... d + '"' |
 | tst4.js:8:46:8:60 | $routeParams.id | semmle.label | $routeParams.id |
+| tst5.js:7:9:7:64 | "SELECT ... d + "'" | semmle.label | "SELECT ... d + "'" |
+| tst5.js:7:46:7:58 | req.params.id | semmle.label | req.params.id |
 | tst.js:10:10:10:64 | 'SELECT ... d + '"' | semmle.label | 'SELECT ... d + '"' |
 | tst.js:10:46:10:58 | req.params.id | semmle.label | req.params.id |
 subpaths
