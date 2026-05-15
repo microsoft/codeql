@@ -44,6 +44,7 @@
  */
 
 private import rust
+private import codeql.rust.dataflow.FlowBarrier
 private import codeql.rust.dataflow.FlowSummary
 private import codeql.rust.dataflow.FlowSource
 private import codeql.rust.dataflow.FlowSink
@@ -90,6 +91,38 @@ extensible predicate summaryModel(
 );
 
 /**
+ * Holds if a neutral model exists for the function with canonical path `path`.  The only
+ * effect of a neutral model is to prevent generated and inherited models of the corresponding
+ * `kind` (`source`, `sink` or `summary`) from being applied to that function.
+ */
+extensible predicate neutralModel(
+  string path, string kind, string provenance, QlBuiltins::ExtensionId madId
+);
+
+/**
+ * Holds if in a call to the function with canonical path `path`, the value referred
+ * to by `output` is a barrier of the given `kind` and `madId` is the data
+ * extension row number.
+ */
+extensible predicate barrierModel(
+  string path, string output, string kind, string provenance, QlBuiltins::ExtensionId madId
+);
+
+/**
+ * Holds if in a call to the function with canonical path `path`, the value referred
+ * to by `input` is a barrier guard of the given `kind` and `madId` is the data
+ * extension row number.
+ *
+ * The value referred to by `input` is assumed to lead to an argument of a call
+ * (possibly `self`), and the call is guarding the argument. `branch` is either `true`
+ * or `false`, indicating which branch of the guard is protecting the argument.
+ */
+extensible predicate barrierGuardModel(
+  string path, string input, string branch, string kind, string provenance,
+  QlBuiltins::ExtensionId madId
+);
+
+/**
  * Holds if the given extension tuple `madId` should pretty-print as `model`.
  *
  * This predicate should only be used in tests.
@@ -109,62 +142,57 @@ predicate interpretModelForTest(QlBuiltins::ExtensionId madId, string model) {
     summaryModel(path, input, output, kind, _, madId) and
     model = "Summary: " + path + "; " + input + "; " + output + "; " + kind
   )
-}
-
-private predicate summaryModel(
-  Function f, string input, string output, string kind, Provenance provenance, boolean isInherited,
-  QlBuiltins::ExtensionId madId
-) {
-  exists(string path, Function f0 |
-    summaryModel(path, input, output, kind, provenance, madId) and
-    f0.getCanonicalPath() = path
-  |
-    f = f0 and
-    isInherited = false
-    or
-    f.implements(f0) and
-    isInherited = true
+  or
+  exists(string path, string kind |
+    neutralModel(path, kind, _, madId) and
+    model = "Neutral: " + path + "; " + kind
+  )
+  or
+  exists(string path, string output, string kind |
+    barrierModel(path, output, kind, _, madId) and
+    model = "Barrier: " + path + "; " + output + "; " + kind
+  )
+  or
+  exists(string path, string input, string branch, string kind |
+    barrierGuardModel(path, input, branch, kind, _, madId) and
+    model = "Barrier guard: " + path + "; " + input + "; " + branch + "; " + kind
   )
 }
 
-private predicate summaryModelRelevant(
-  Function f, string input, string output, string kind, Provenance provenance, boolean isInherited,
-  QlBuiltins::ExtensionId madId
-) {
-  summaryModel(f, input, output, kind, provenance, isInherited, madId) and
-  // Only apply generated or inherited models to functions in library code and
-  // when no strictly better model exists
-  if provenance.isGenerated() or isInherited = true
-  then
-    not f.fromSource() and
-    not exists(Provenance other | summaryModel(f, _, _, _, other, false, _) |
-      provenance.isGenerated() and other.isManual()
-      or
-      provenance = other and isInherited = true
-    )
-  else any()
-}
-
 private class SummarizedCallableFromModel extends SummarizedCallable::Range {
-  SummarizedCallableFromModel() { summaryModelRelevant(this, _, _, _, _, _, _) }
+  string input_;
+  string output_;
+  string kind;
+  Provenance p_;
+  boolean isExact_;
+  QlBuiltins::ExtensionId madId;
 
-  override predicate hasProvenance(Provenance provenance) {
-    summaryModelRelevant(this, _, _, _, provenance, _, _)
+  SummarizedCallableFromModel() {
+    exists(string path, Function f, Provenance p |
+      summaryModel(path, input_, output_, kind, p, madId) and
+      f.getCanonicalPath() = path
+    |
+      this = f and
+      isExact_ = true and
+      p_ = p
+      or
+      this.implements(f) and
+      isExact_ = false and
+      // making inherited models generated means that source code definitions and
+      // exact generated models take precedence
+      p_ = "hq-generated"
+    )
   }
 
   override predicate propagatesFlow(
-    string input, string output, boolean preservesValue, string model
+    string input, string output, boolean preservesValue, Provenance p, boolean isExact, string model
   ) {
-    exists(string kind, QlBuiltins::ExtensionId madId |
-      summaryModelRelevant(this, input, output, kind, _, _, madId) and
-      model = "MaD:" + madId.toString()
-    |
-      kind = "value" and
-      preservesValue = true
-      or
-      kind = "taint" and
-      preservesValue = false
-    )
+    input = input_ and
+    output = output_ and
+    (if kind = "value" then preservesValue = true else preservesValue = false) and
+    p = p_ and
+    isExact = isExact_ and
+    model = "MaD:" + madId.toString()
   }
 }
 
@@ -180,6 +208,12 @@ private class FlowSourceFromModel extends FlowSource::Range {
     exists(QlBuiltins::ExtensionId madId |
       sourceModel(path, output, kind, provenance, madId) and
       model = "MaD:" + madId.toString()
+    ) and
+    // Only apply generated models when no neutral model exists
+    // (the shared code only applies neutral models to summaries at present)
+    not (
+      provenance.isGenerated() and
+      neutralModel(path, "source", _, _)
     )
   }
 }
@@ -196,6 +230,46 @@ private class FlowSinkFromModel extends FlowSink::Range {
     exists(QlBuiltins::ExtensionId madId |
       sinkModel(path, input, kind, provenance, madId) and
       model = "MaD:" + madId.toString()
+    ) and
+    // Only apply generated models when no neutral model exists
+    // (the shared code only applies neutral models to summaries at present)
+    not (
+      provenance.isGenerated() and
+      neutralModel(path, "sink", _, _)
+    )
+  }
+}
+
+private class FlowBarrierFromModel extends FlowBarrier::Range {
+  private string path;
+
+  FlowBarrierFromModel() {
+    barrierModel(path, _, _, _, _) and
+    this.callResolvesTo(path)
+  }
+
+  override predicate isBarrier(string output, string kind, Provenance provenance, string model) {
+    exists(QlBuiltins::ExtensionId madId |
+      barrierModel(path, output, kind, provenance, madId) and
+      model = "MaD:" + madId.toString()
+    )
+  }
+}
+
+private class FlowBarrierGuardFromModel extends FlowBarrierGuard::Range {
+  private string path;
+
+  FlowBarrierGuardFromModel() {
+    barrierGuardModel(path, _, _, _, _, _) and
+    this.callResolvesTo(path)
+  }
+
+  override predicate isBarrierGuard(
+    string input, string branch, string kind, Provenance provenance, string model
+  ) {
+    exists(QlBuiltins::ExtensionId madId |
+      barrierGuardModel(path, input, branch, kind, provenance, madId) and
+      model = "MaD:" + madId.toString()
     )
   }
 }
@@ -211,7 +285,7 @@ private module Debug {
   private predicate relevantManualModel(SummarizedCallableImpl sc, string can) {
     exists(Provenance manual |
       can = sc.getCanonicalPath() and
-      summaryModelRelevant(sc, _, _, _, manual, false, _) and
+      sc.(SummarizedCallableFromModel).propagatesFlow(_, _, _, manual, true, _) and
       manual.isManual()
     )
   }
@@ -221,10 +295,10 @@ private module Debug {
   ) {
     exists(RustDataFlow::ParameterPosition pos, TypeMention tm |
       relevantManualModel(sc, can) and
-      sc.propagatesFlow(input, _, _, _) and
+      sc.propagatesFlow(input, _, _, _, _, _) and
       input.head() = SummaryComponent::argument(pos) and
       p = pos.getParameterIn(sc.getParamList()) and
-      tm.resolveType() instanceof RefType and
+      tm.getType() instanceof RefType and
       not input.tail().head() = SummaryComponent::content(TSingletonContentSet(TReferenceContent()))
     |
       tm = p.getTypeRepr()
@@ -238,8 +312,8 @@ private module Debug {
   ) {
     exists(TypeMention tm |
       relevantManualModel(sc, can) and
-      sc.propagatesFlow(_, output, _, _) and
-      tm.resolveType() instanceof RefType and
+      sc.propagatesFlow(_, output, _, _, _, _) and
+      tm.getType() instanceof RefType and
       output.head() = SummaryComponent::return(_) and
       not output.tail().head() =
         SummaryComponent::content(TSingletonContentSet(TReferenceContent())) and

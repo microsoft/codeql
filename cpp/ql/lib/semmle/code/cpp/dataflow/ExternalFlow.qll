@@ -1,9 +1,10 @@
 /**
  * INTERNAL use only. This is an experimental API subject to change without notice.
  *
- * Provides classes and predicates for dealing with flow models specified in CSV format.
+ * Provides classes and predicates for dealing with flow models specified
+ * in data extension files.
  *
- * The CSV specification has the following columns:
+ * The extensible relations have the following columns:
  * - Sources:
  *   `namespace; type; subtypes; name; signature; ext; output; kind`
  * - Sinks:
@@ -95,6 +96,7 @@
 
 import cpp
 private import new.DataFlow
+private import semmle.code.cpp.controlflow.IRGuards
 private import semmle.code.cpp.ir.dataflow.internal.DataFlowPrivate as Private
 private import semmle.code.cpp.ir.dataflow.internal.DataFlowUtil
 private import internal.FlowSummaryImpl
@@ -103,117 +105,9 @@ private import internal.FlowSummaryImpl::Private
 private import internal.FlowSummaryImpl::Private::External
 private import internal.ExternalFlowExtensions::Extensions as Extensions
 private import codeql.mad.ModelValidation as SharedModelVal
-private import codeql.util.Unit
 private import codeql.mad.static.ModelsAsData as SharedMaD
 
-/**
- * A unit class for adding additional source model rows.
- *
- * Extend this class to add additional source definitions.
- */
-class SourceModelCsv extends Unit {
-  /** Holds if `row` specifies a source definition. */
-  abstract predicate row(string row);
-}
-
-/**
- * A unit class for adding additional sink model rows.
- *
- * Extend this class to add additional sink definitions.
- */
-class SinkModelCsv extends Unit {
-  /** Holds if `row` specifies a sink definition. */
-  abstract predicate row(string row);
-}
-
-/**
- * A unit class for adding additional summary model rows.
- *
- * Extend this class to add additional flow summary definitions.
- */
-class SummaryModelCsv extends Unit {
-  /** Holds if `row` specifies a summary definition. */
-  abstract predicate row(string row);
-}
-
-/** Holds if `row` is a source model. */
-predicate sourceModel(string row) { any(SourceModelCsv s).row(row) }
-
-/** Holds if `row` is a sink model. */
-predicate sinkModel(string row) { any(SinkModelCsv s).row(row) }
-
-/** Holds if `row` is a summary model. */
-predicate summaryModel(string row) { any(SummaryModelCsv s).row(row) }
-
 private module MadInput implements SharedMaD::InputSig {
-  /** Holds if a source model exists for the given parameters. */
-  predicate additionalSourceModel(
-    string namespace, string type, boolean subtypes, string name, string signature, string ext,
-    string output, string kind, string provenance, string model
-  ) {
-    exists(string row |
-      sourceModel(row) and
-      row.splitAt(";", 0) = namespace and
-      row.splitAt(";", 1) = type and
-      row.splitAt(";", 2) = subtypes.toString() and
-      subtypes = [true, false] and
-      row.splitAt(";", 3) = name and
-      row.splitAt(";", 4) = signature and
-      row.splitAt(";", 5) = ext and
-      row.splitAt(";", 6) = output and
-      row.splitAt(";", 7) = kind
-    ) and
-    provenance = "manual" and
-    model = ""
-  }
-
-  /** Holds if a sink model exists for the given parameters. */
-  predicate additionalSinkModel(
-    string namespace, string type, boolean subtypes, string name, string signature, string ext,
-    string input, string kind, string provenance, string model
-  ) {
-    exists(string row |
-      sinkModel(row) and
-      row.splitAt(";", 0) = namespace and
-      row.splitAt(";", 1) = type and
-      row.splitAt(";", 2) = subtypes.toString() and
-      subtypes = [true, false] and
-      row.splitAt(";", 3) = name and
-      row.splitAt(";", 4) = signature and
-      row.splitAt(";", 5) = ext and
-      row.splitAt(";", 6) = input and
-      row.splitAt(";", 7) = kind
-    ) and
-    provenance = "manual" and
-    model = ""
-  }
-
-  /**
-   * Holds if a summary model exists for the given parameters.
-   *
-   * This predicate does not expand `@` to `*`s.
-   */
-  predicate additionalSummaryModel(
-    string namespace, string type, boolean subtypes, string name, string signature, string ext,
-    string input, string output, string kind, string provenance, string model
-  ) {
-    exists(string row |
-      summaryModel(row) and
-      row.splitAt(";", 0) = namespace and
-      row.splitAt(";", 1) = type and
-      row.splitAt(";", 2) = subtypes.toString() and
-      subtypes = [true, false] and
-      row.splitAt(";", 3) = name and
-      row.splitAt(";", 4) = signature and
-      row.splitAt(";", 5) = ext and
-      row.splitAt(";", 6) = input and
-      row.splitAt(";", 7) = output and
-      row.splitAt(";", 8) = kind
-    ) and
-    provenance = "manual" and
-    model = ""
-  }
-
   string namespaceSegmentSeparator() { result = "::" }
 }
 
@@ -249,8 +143,8 @@ predicate summaryModel(
   )
 }
 
-/** Provides a query predicate to check the CSV data for validation errors. */
-module CsvValidation {
+/** Provides a query predicate to check the data for validation errors. */
+module ModelValidation {
   private string getInvalidModelInput() {
     exists(string pred, AccessPath input, string part |
       sinkModel(_, _, _, _, _, _, input, _, _, _) and pred = "sink"
@@ -293,40 +187,6 @@ module CsvValidation {
 
   private module KindVal = SharedModelVal::KindValidation<KindValConfig>;
 
-  private string getInvalidModelSubtype() {
-    exists(string pred, string row |
-      sourceModel(row) and pred = "source"
-      or
-      sinkModel(row) and pred = "sink"
-      or
-      summaryModel(row) and pred = "summary"
-    |
-      exists(string b |
-        b = row.splitAt(";", 2) and
-        not b = ["true", "false"] and
-        result = "Invalid boolean \"" + b + "\" in " + pred + " model."
-      )
-    )
-  }
-
-  private string getInvalidModelColumnCount() {
-    exists(string pred, string row, int expect |
-      sourceModel(row) and expect = 8 and pred = "source"
-      or
-      sinkModel(row) and expect = 8 and pred = "sink"
-      or
-      summaryModel(row) and expect = 9 and pred = "summary"
-    |
-      exists(int cols |
-        cols = 1 + max(int n | exists(row.splitAt(";", n))) and
-        cols != expect and
-        result =
-          "Wrong number of columns in " + pred + " model row, expected " + expect + ", got " + cols +
-            "."
-      )
-    )
-  }
-
   private string getInvalidModelSignature() {
     exists(string pred, string namespace, string type, string name, string signature, string ext |
       sourceModel(namespace, type, _, name, signature, ext, _, _, _, _) and pred = "source"
@@ -352,12 +212,25 @@ module CsvValidation {
     )
   }
 
-  /** Holds if some row in a CSV-based flow model appears to contain typos. */
+  private string getIncorrectConstructorSummaryOutput() {
+    exists(string namespace, string type, string name, string output |
+      type = name or
+      type = name + "<" + any(string s)
+    |
+      summaryModel(namespace, type, _, name, _, _, _, output, _, _, _) and
+      output.matches("ReturnValue%") and
+      result =
+        "Constructor model for " + namespace + "." + type +
+          " should use `Argument[this]` in the output, not `ReturnValue`."
+    )
+  }
+
+  /** Holds if some row in a MaD flow model appears to contain typos. */
   query predicate invalidModelRow(string msg) {
     msg =
       [
         getInvalidModelSignature(), getInvalidModelInput(), getInvalidModelOutput(),
-        getInvalidModelSubtype(), getInvalidModelColumnCount(), KindVal::getInvalidModelKind()
+        KindVal::getInvalidModelKind(), getIncorrectConstructorSummaryOutput()
       ]
   }
 }
@@ -367,6 +240,8 @@ private predicate elementSpec(
 ) {
   sourceModel(namespace, type, subtypes, name, signature, ext, _, _, _, _) or
   sinkModel(namespace, type, subtypes, name, signature, ext, _, _, _, _) or
+  barrierModel(namespace, type, subtypes, name, signature, ext, _, _, _, _) or
+  barrierGuardModel(namespace, type, subtypes, name, signature, ext, _, _, _, _, _) or
   summaryModel(namespace, type, subtypes, name, signature, ext, _, _, _, _, _)
 }
 
@@ -552,6 +427,7 @@ private Locatable getSupportedFunctionTemplateArgument(Function templateFunction
  * Normalize the `n`'th parameter of `f` by replacing template names
  * with `func:N` (where `N` is the index of the template).
  */
+pragma[nomagic]
 private string getTypeNameWithoutFunctionTemplates(Function f, int n, int remaining) {
   exists(Function templateFunction |
     templateFunction = getFullyTemplatedFunction(f) and
@@ -1008,7 +884,7 @@ private module Cached {
   }
 
   /**
-   * Holds if `node` is specified as a source with the given kind in a CSV flow
+   * Holds if `node` is specified as a source with the given kind in a MaD flow
    * model.
    */
   cached
@@ -1019,7 +895,7 @@ private module Cached {
   }
 
   /**
-   * Holds if `node` is specified as a sink with the given kind in a CSV flow
+   * Holds if `node` is specified as a sink with the given kind in a MaD flow
    * model.
    */
   cached
@@ -1027,6 +903,84 @@ private module Cached {
     exists(SourceSinkInterpretationInput::InterpretNode n |
       isSinkNode(n, kind, model) and n.asNode() = node
     )
+  }
+
+  private newtype TKindModelPair =
+    TMkPair(string kind, string model) { isBarrierGuardNode(_, _, kind, model) }
+
+  private GuardValue convertAcceptingValue(Public::AcceptingValue av) {
+    av.isTrue() and result.asBooleanValue() = true
+    or
+    av.isFalse() and result.asBooleanValue() = false
+    or
+    // NOTE: The below cases don't contribute anything currently since the
+    // callers immediately use `.asBooleanValue()` to convert the `GuardValue`
+    // to a boolean. Once we're willing to accept the breaking change of
+    // converting the barrier guard API to use `GuardValue`s instead `Boolean`s
+    // we can remove this restriction.
+    av.isNoException() and result.getDualValue().isThrowsException()
+    or
+    av.isZero() and result.asIntValue() = 0
+    or
+    av.isNotZero() and result.getDualValue().asIntValue() = 0
+    or
+    av.isNull() and result.isNullValue()
+    or
+    av.isNotNull() and result.isNonNullValue()
+  }
+
+  private predicate barrierGuardChecks(IRGuardCondition g, Expr e, boolean gv, TKindModelPair kmp) {
+    exists(
+      SourceSinkInterpretationInput::InterpretNode n, Public::AcceptingValue acceptingvalue,
+      string kind, string model
+    |
+      isBarrierGuardNode(n, acceptingvalue, kind, model) and
+      n.asNode().asExpr() = e and
+      kmp = TMkPair(kind, model) and
+      gv = convertAcceptingValue(acceptingvalue).asBooleanValue() and
+      n.asNode().(Private::ArgumentNode).getCall().asCallInstruction() = g
+    )
+  }
+
+  private newtype TKindModelPairIntPair =
+    MkKindModelPairIntPair(TKindModelPair pair, int indirectionIndex) {
+      indirectionIndex > 0 and
+      Private::nodeHasInstruction(_, _, indirectionIndex) and
+      exists(pair)
+    }
+
+  private predicate indirectBarrierGuardChecks(
+    IRGuardCondition g, Expr e, boolean gv, TKindModelPairIntPair kmp
+  ) {
+    exists(
+      SourceSinkInterpretationInput::InterpretNode interpretNode,
+      Public::AcceptingValue acceptingvalue, string kind, string model, int indirectionIndex,
+      Private::ArgumentNode arg
+    |
+      isBarrierGuardNode(interpretNode, acceptingvalue, kind, model) and
+      arg = interpretNode.asNode() and
+      arg.asIndirectExpr(indirectionIndex) = e and
+      kmp = MkKindModelPairIntPair(TMkPair(kind, model), indirectionIndex) and
+      gv = convertAcceptingValue(acceptingvalue).asBooleanValue() and
+      arg.getCall().asCallInstruction() = g
+    )
+  }
+
+  /**
+   * Holds if `node` is specified as a barrier with the given kind in a MaD flow
+   * model.
+   */
+  cached
+  predicate barrierNode(DataFlow::Node node, string kind, string model) {
+    exists(SourceSinkInterpretationInput::InterpretNode n |
+      isBarrierNode(n, kind, model) and n.asNode() = node
+    )
+    or
+    DataFlow::ParameterizedBarrierGuard<TKindModelPair, barrierGuardChecks/4>::getABarrierNode(TMkPair(kind,
+        model)) = node
+    or
+    DataFlow::ParameterizedBarrierGuard<TKindModelPairIntPair, indirectBarrierGuardChecks/4>::getAnIndirectBarrierNode(MkKindModelPairIntPair(TMkPair(kind,
+          model), _)) = node
   }
 }
 
@@ -1044,6 +998,12 @@ predicate sourceNode(DataFlow::Node node, string kind) { sourceNode(node, kind, 
  */
 predicate sinkNode(DataFlow::Node node, string kind) { sinkNode(node, kind, _) }
 
+/**
+ * Holds if `node` is specified as a barrier with the given kind in a MaD flow
+ * model.
+ */
+predicate barrierNode(DataFlow::Node node, string kind) { barrierNode(node, kind, _) }
+
 private predicate interpretSummary(
   Function f, string input, string output, string kind, string provenance, string model
 ) {
@@ -1058,40 +1018,22 @@ private predicate interpretSummary(
 
 // adapter class for converting Mad summaries to `SummarizedCallable`s
 private class SummarizedCallableAdapter extends SummarizedCallable {
-  SummarizedCallableAdapter() { interpretSummary(this, _, _, _, _, _) }
+  string input_;
+  string output_;
+  string kind;
+  Provenance p_;
+  string model_;
 
-  private predicate relevantSummaryElementManual(
-    string input, string output, string kind, string model
-  ) {
-    exists(Provenance provenance |
-      interpretSummary(this, input, output, kind, provenance, model) and
-      provenance.isManual()
-    )
-  }
-
-  private predicate relevantSummaryElementGenerated(
-    string input, string output, string kind, string model
-  ) {
-    exists(Provenance provenance |
-      interpretSummary(this, input, output, kind, provenance, model) and
-      provenance.isGenerated()
-    )
-  }
+  SummarizedCallableAdapter() { interpretSummary(this, input_, output_, kind, p_, model_) }
 
   override predicate propagatesFlow(
-    string input, string output, boolean preservesValue, string model
+    string input, string output, boolean preservesValue, Provenance p, boolean isExact, string model
   ) {
-    exists(string kind |
-      this.relevantSummaryElementManual(input, output, kind, model)
-      or
-      not this.relevantSummaryElementManual(_, _, _, _) and
-      this.relevantSummaryElementGenerated(input, output, kind, model)
-    |
-      if kind = "value" then preservesValue = true else preservesValue = false
-    )
-  }
-
-  override predicate hasProvenance(Provenance provenance) {
-    interpretSummary(this, _, _, _, provenance, _)
+    input = input_ and
+    output = output_ and
+    (if kind = "value" then preservesValue = true else preservesValue = false) and
+    p = p_ and
+    isExact = true and
+    model = model_
   }
 }

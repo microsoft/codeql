@@ -1,6 +1,8 @@
 /**
  * Provides classes and predicates for defining flow summaries.
  */
+overlay[local?]
+module;
 
 private import go
 private import codeql.dataflow.internal.FlowSummaryImpl
@@ -29,6 +31,8 @@ module Input implements InputSig<Location, DataFlowImplSpecific::GoDataFlow> {
 
   class SinkBase = Void;
 
+  predicate callableFromSource(SummarizedCallableBase c) { exists(c.getFuncDef()) }
+
   predicate neutralElement(
     Input::SummarizedCallableBase c, string kind, string provenance, boolean isExact
   ) {
@@ -36,8 +40,7 @@ module Input implements InputSig<Location, DataFlowImplSpecific::GoDataFlow> {
       neutralModel(namespace, type, name, signature, kind, provenance) and
       c.asFunction() = interpretElement(namespace, type, false, name, signature, "").asEntity()
     ) and
-    // isExact is not needed for Go.
-    isExact = false
+    isExact = true
   }
 
   ArgumentPosition callbackSelfParameterPosition() { result = -1 }
