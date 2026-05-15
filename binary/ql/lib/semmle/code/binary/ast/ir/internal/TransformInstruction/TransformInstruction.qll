@@ -98,7 +98,7 @@ module Transform<InstructionSig Input> {
 
       Input::Function getStaticTarget(InstructionTag tag);
 
-      predicate hasJumpCondition(InstructionTag tag, Opcode::ConditionKind kind);
+      predicate hasJumpCondition(InstructionTag tag, Opcode::BinaryConditionKind kind);
 
       string toString();
 
@@ -586,7 +586,7 @@ module Transform<InstructionSig Input> {
     class CJumpInstruction extends Instruction {
       CJumpInstruction() { this.getOpcode() instanceof Opcode::CJump }
 
-      Opcode::ConditionKind getKind() {
+      Opcode::BinaryConditionKind getKind() {
         exists(Input::CJumpInstruction cjump |
           this = TOldInstruction(cjump) and
           result = cjump.getKind()
@@ -598,7 +598,7 @@ module Transform<InstructionSig Input> {
         )
       }
 
-      override string getImmediateValue() { result = Opcode::stringOfConditionKind(this.getKind()) }
+      override string getImmediateValue() { result = Opcode::stringOfBinaryConditionKind(this.getKind()) }
 
       ConditionOperand getConditionOperand() { result = this.getAnOperand() }
 

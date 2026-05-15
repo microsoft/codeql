@@ -231,7 +231,7 @@ signature module InstructionSig {
   class FunEntryInstruction extends Instruction;
 
   class CJumpInstruction extends Instruction {
-    ConditionKind getKind();
+    BinaryConditionKind getKind();
 
     ConditionOperand getConditionOperand();
 
