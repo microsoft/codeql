@@ -1,8 +1,22 @@
 edges
 | test.ps1:153:11:153:20 | userinput | test.ps1:154:23:154:52 | Get-Process -Name $UserInput | provenance |  |
+| test.ps1:282:11:282:21 | scriptpath | test.ps1:283:7:283:17 | ScriptPath | provenance |  |
+| test.ps1:290:11:290:21 | scriptpath | test.ps1:291:5:291:9 | path | provenance |  |
+| test.ps1:291:5:291:9 | path | test.ps1:292:7:292:11 | path | provenance |  |
+| test.ps1:300:11:300:20 | userinput | test.ps1:301:23:301:52 | Get-Process -Name $UserInput | provenance |  |
 nodes
 | test.ps1:153:11:153:20 | userinput | semmle.label | userinput |
 | test.ps1:154:23:154:52 | Get-Process -Name $UserInput | semmle.label | Get-Process -Name $UserInput |
+| test.ps1:282:11:282:21 | scriptpath | semmle.label | scriptpath |
+| test.ps1:283:7:283:17 | ScriptPath | semmle.label | ScriptPath |
+| test.ps1:290:11:290:21 | scriptpath | semmle.label | scriptpath |
+| test.ps1:291:5:291:9 | path | semmle.label | path |
+| test.ps1:292:7:292:11 | path | semmle.label | path |
+| test.ps1:300:11:300:20 | userinput | semmle.label | userinput |
+| test.ps1:301:23:301:52 | Get-Process -Name $UserInput | semmle.label | Get-Process -Name $UserInput |
 subpaths
 #select
 | test.ps1:154:23:154:52 | Get-Process -Name $UserInput | test.ps1:153:11:153:20 | userinput | test.ps1:154:23:154:52 | Get-Process -Name $UserInput | This command depends on a $@. | test.ps1:153:11:153:20 | userinput | param to CmdletBinding function |
+| test.ps1:283:7:283:17 | ScriptPath | test.ps1:282:11:282:21 | scriptpath | test.ps1:283:7:283:17 | ScriptPath | This command depends on a $@. | test.ps1:282:11:282:21 | scriptpath | param to CmdletBinding function |
+| test.ps1:292:7:292:11 | path | test.ps1:290:11:290:21 | scriptpath | test.ps1:292:7:292:11 | path | This command depends on a $@. | test.ps1:290:11:290:21 | scriptpath | param to CmdletBinding function |
+| test.ps1:301:23:301:52 | Get-Process -Name $UserInput | test.ps1:300:11:300:20 | userinput | test.ps1:301:23:301:52 | Get-Process -Name $UserInput | This command depends on a $@. | test.ps1:300:11:300:20 | userinput | param to CmdletBinding function |

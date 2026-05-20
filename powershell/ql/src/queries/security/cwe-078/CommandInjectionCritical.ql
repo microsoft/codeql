@@ -23,6 +23,13 @@ abstract class CriticalSource extends DataFlow::Node {
     abstract string getSourceType();
 }
 
+/**
+ * Holds if `sink` is a dot-source operator command sink.
+ */
+private predicate isDotSourceSink(DataFlow::Node sink) {
+  any(DataFlow::DotSourcingOperatorNode call).getCommand() = sink
+}
+
 class CmdletBindingParam extends CriticalSource {
     CmdletBindingParam(){
         exists(Attribute a, Function f | 
@@ -54,6 +61,12 @@ import CommandInjectionCriticalFlow::PathGraph
 from CommandInjectionCriticalFlow::PathNode source, CommandInjectionCriticalFlow::PathNode sink, CriticalSource sourceNode
 where
   CommandInjectionCriticalFlow::flowPath(source, sink) and
-  sourceNode = source.getNode()
+  sourceNode = source.getNode() and
+  // For dot-source sinks, verify the parameter actually reaches the command
+  // via intra-procedural taint flow. This eliminates FPs where the parameter
+  // is in scope but doesn't flow to the dot-sourced expression.
+  (isDotSourceSink(sink.getNode()) implies
+    TaintTracking::localTaint(sourceNode, sink.getNode())
+  )
 select sink.getNode(), source, sink, "This command depends on a $@.", sourceNode,
   sourceNode.getSourceType()

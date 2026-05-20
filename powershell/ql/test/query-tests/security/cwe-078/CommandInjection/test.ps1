@@ -268,3 +268,46 @@ function flow-through-env-var() {
     $y = $env:bar
     . "$y" # $ Alert # but we have flow through them
 }
+
+# isDotSourceSink test cases for CommandInjectionCritical
+
+# isDotSourceSink test cases for CommandInjectionCritical
+# (These use CmdletBinding params as sources, not Read-Host, so they only
+# apply to the CommandInjectionCritical query, not the general CommandInjection query.)
+
+# TP: CmdletBinding param flows directly to dot-source operator
+function Invoke-DotSourceDirect
+{
+    [CmdletBinding()]
+    param($ScriptPath)
+    . $ScriptPath # CriticalAlert
+}
+
+# TP: CmdletBinding param flows through a variable to dot-source operator
+function Invoke-DotSourceIndirect
+{
+    [CmdletBinding()]
+    param($ScriptPath)
+    $path = $ScriptPath
+    . $path # CriticalAlert
+}
+
+# FP filtered: CmdletBinding param does NOT flow to the dot-sourced expression.
+# The param is in scope but a hardcoded path is dot-sourced instead.
+function Invoke-DotSourceNoFlow
+{
+    [CmdletBinding()]
+    param($UserInput)
+    Invoke-Expression "Get-Process -Name $UserInput" # CriticalAlert (Invoke-Expression, not dot-source)
+    . "C:\safe\script.ps1" # GOOD - hardcoded, param doesn't flow here
+}
+
+# FP filtered: CmdletBinding param used elsewhere, unrelated dot-source of different variable
+function Invoke-DotSourceUnrelatedParam
+{
+    [CmdletBinding()]
+    param($UserInput)
+    Write-Host $UserInput
+    $safePath = "C:\scripts\helper.ps1"
+    . $safePath # GOOD - param doesn't flow to dot-source
+}
