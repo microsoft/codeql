@@ -8,6 +8,7 @@ private import semmle.code.powershell.dataflow.DataFlow
 import semmle.code.powershell.ApiGraphs
 private import semmle.code.powershell.dataflow.flowsources.FlowSources
 private import semmle.code.powershell.Cfg
+private import semmle.code.powershell.security.Sanitizers
 
 module CommandInjection {
   /**
@@ -34,15 +35,16 @@ module CommandInjection {
   class FlowSourceAsSource extends Source {
     FlowSourceAsSource() {
       this instanceof SourceNode and
-      not this instanceof EnvironmentVariableSource and 
-      not this instanceof InvokeWebRequest
+      not this instanceof EnvironmentVariableSource and
+      not this instanceof InvokeWebRequest and
+      not this instanceof Sanitizer
     }
 
     override string getSourceType() { result = "user-provided value" }
   }
 
-  class InvokeWebRequest extends DataFlow::CallNode {
-    InvokeWebRequest(){
+  private class InvokeWebRequest extends DataFlow::CallNode {
+    InvokeWebRequest() {
       this.matchesName("Invoke-WebRequest")
     }
   }
@@ -68,13 +70,19 @@ module CommandInjection {
   }
 
   class StartProcessSink extends Sink {
-    StartProcessSink(){
-      exists(DataFlow::CallNode call | 
-        call.matchesName("Start-Process") and 
-        call.getAnArgument() = this
+    StartProcessSink() {
+      exists(DataFlow::CallNode call |
+        call.matchesName("Start-Process") and
+        (
+          this = call.getNamedArgument("filepath")
+          or
+          not call.hasNamedArgument("filepath") and
+          this = call.getPositionalArgument(0)
+        )
       )
     }
-    override string getSinkType(){ result = "call to Start-Process"}
+
+    override string getSinkType() { result = "call to Start-Process" }
   }
 
   class AddTypeSink extends Sink {
@@ -225,21 +233,20 @@ module CommandInjection {
     override string getSinkType() { result = "external command injection" }
   }
 
-  class TypedParameterSanitizer extends Sanitizer {
-    TypedParameterSanitizer() {
-      exists(Function f, Parameter p |
-        p = f.getAParameter() and
-        p.getStaticType() != "object" and
-        this.asParameter() = p
-      )
+  class TypeSanitizer extends Sanitizer instanceof SimpleTypeSanitizer { }
+
+  class ScriptBlockParameterSanitizer extends Sanitizer {
+    ScriptBlockParameterSanitizer() {
+      this.asParameter().getStaticType() =
+        ["scriptblock", "system.management.automation.scriptblock"]
     }
   }
 
-    class ValidateAttributeSanitizer extends Sanitizer {
+  class ValidateAttributeSanitizer extends Sanitizer {
     ValidateAttributeSanitizer() {
       exists(Function f, Attribute a, Parameter p |
         p = f.getAParameter() and
-        p.getAnAttribute() = a and 
+        p.getAnAttribute() = a and
         a.getAName() = ["ValidateScript", "ValidateSet", "ValidatePattern"] and
         this.asParameter() = p
       )

