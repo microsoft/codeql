@@ -4,13 +4,21 @@
 <qhelp>
 <overview>
 
-<p>Deserializing an object from untrusted input may result in security problems, such
-as denial of service or remote code execution.</p>
+<p>Deserializing attacker-controlled data with an unsafe deserializer may result in
+security problems, such as denial of service or remote code execution. This query tracks
+untrusted data flow into unsafe deserialization APIs.</p>
+
+<p>Local, self-produced serialized data without any untrusted source is not reported by
+this query. The separate <code>powershell/microsoft/public/binary-formatter-deserialization</code>
+query reports <code>BinaryFormatter</code> API use even when no attacker-controlled data flow is
+known.</p>
 
 </overview>
 <recommendation>
 
-<p>Avoid using an unsafe deserialization framework.</p>
+<p>Avoid using unsafe deserialization frameworks for attacker-controlled data. Prefer safe
+serializers, and validate, authenticate, or otherwise constrain serialized data before
+deserializing it.</p>
 
 </recommendation>
 <example>
