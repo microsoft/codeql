@@ -4,20 +4,35 @@
 <qhelp>
 <overview>
 <p>
-<code>Invoke-Expression</code> cmdlet should only be used as a last resort. In most scenarios, safer and more robust alternatives are available. Using <code>Invoke-Expression</code> can lead to arbitrary commands being executed</p>
+The <code>Invoke-Expression</code> cmdlet evaluates a string as PowerShell code. This
+can make scripts harder to understand, harder to analyze, and more fragile than
+using normal command invocation. This query treats uses of
+<code>Invoke-Expression</code> as code-quality backlog items rather than as
+high-severity security vulnerabilities.
+</p>
 
 </overview>
 <recommendation>
 
-<p>Avoid using <code>Invoke-Expression</code> in your powershell code.</p>
+<p>
+Avoid using <code>Invoke-Expression</code> in PowerShell code. Prefer direct command
+calls, splatting, or the command invocation operator <code>&amp;</code> for command paths
+stored in variables. If <code>Invoke-Expression</code> is unavoidable, keep the
+dynamically generated command text small, explicit, and easy to review.
+</p>
 
-<p>If you’re running some command and the command path has spaces in it, then you need the command invocation operator <code>&amp;</code></p>
+<p>
+Security-critical cases where attacker-controlled data reaches command execution
+are covered by the command-injection queries. This query reports all uses of
+<code>Invoke-Expression</code>, including constant or otherwise trusted command text, as
+best-practice warnings for safer and more maintainable command execution.
+</p>
 </recommendation>
 
 <references>
 
 <li>
-Powershell:
+PowerShell:
 <a href="https://devblogs.microsoft.com/powershell/invoke-expression-considered-harmful/">Invoke-Expression considered harmful</a>.
 </li>
 <li>
