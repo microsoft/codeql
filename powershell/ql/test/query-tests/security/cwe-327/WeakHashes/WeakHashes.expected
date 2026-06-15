@@ -8,3 +8,8 @@
 | test.ps1:21:6:21:101 | Call to createfromname | Use of weak cryptographic hash algorithm: sha1. |
 | test.ps1:25:1:25:47 | Call to get-filehash | Use of weak cryptographic hash algorithm: md5. |
 | test.ps1:28:1:28:48 | Call to get-filehash | Use of weak cryptographic hash algorithm: sha1. |
+| test.ps1:71:16:71:59 | Call to create | Use of weak cryptographic hash algorithm: md5. |
+| test.ps1:75:24:75:88 | Call to new-object | Use of weak cryptographic hash algorithm: sha1. |
+| test.ps1:80:1:80:52 | Call to get-filehash | Use of weak cryptographic hash algorithm: md5. |
+| test.ps1:81:1:81:49 | Call to get-filehash | Use of weak cryptographic hash algorithm: sha1. |
+| test.ps1:99:18:99:61 | Call to create | Use of weak cryptographic hash algorithm: md5. |

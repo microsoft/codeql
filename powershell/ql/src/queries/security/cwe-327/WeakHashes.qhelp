@@ -10,6 +10,13 @@
       be used for security-sensitive purposes. MD5 has known collision vulnerabilities, and
       SHA-1 has been demonstrated to be vulnerable to practical collision attacks.
     </p>
+    <p>
+      The query focuses on security-sensitive uses, such as integrity or authenticity checks,
+      package, update, SBOM, or artifact verification, and weak-hash values that are compared.
+      It conservatively suppresses obvious non-security uses such as cache keys, deduplication,
+      telemetry or correlation identifiers, and pseudo-random bucketing when no verification
+      context is visible.
+    </p>
   </overview>
   <recommendation>
     <p>

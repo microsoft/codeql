@@ -62,3 +62,40 @@ Get-FileHash -Path "C:\file.txt" -Algorithm SHA512
 
 # GOOD: Using Get-FileHash without specifying algorithm (defaults to SHA256)
 Get-FileHash -Path "C:\file.txt"
+
+# ---------------------------------------------------------
+# Precision regression tests
+# ---------------------------------------------------------
+
+# BAD: Security-sensitive artifact integrity check using MD5
+$artifactMd5 = [System.Security.Cryptography.MD5]::Create() # $ Alert
+$artifactHash = $artifactMd5.ComputeHash([System.Text.Encoding]::UTF8.GetBytes("artifact payload"))
+
+# BAD: Package/update verification using SHA1
+$expectedPackageSha1 = New-Object System.Security.Cryptography.SHA1CryptoServiceProvider # $ Alert
+$actualPackageSha1 = $expectedPackageSha1.ComputeHash([System.Text.Encoding]::UTF8.GetBytes("package payload"))
+if ($actualPackageSha1 -eq $expectedPackageSha1Bytes) { "verified" }
+
+# BAD: File hashes used for package/SBOM integrity
+Get-FileHash -Path "C:\package.nupkg" -Algorithm MD5 # $ Alert
+Get-FileHash -Path "C:\sbom.json" -Algorithm SHA1 # $ Alert
+
+# GOOD: Non-security cache key hashing
+$cacheMd5 = [System.Security.Cryptography.MD5]::Create()
+$cacheKey = $cacheMd5.ComputeHash([System.Text.Encoding]::UTF8.GetBytes("rendered view"))
+
+# GOOD: Non-security deduplication hashing
+$dedupSha1 = New-Object System.Security.Cryptography.SHA1CryptoServiceProvider
+$dedupKey = $dedupSha1.ComputeHash([System.Text.Encoding]::UTF8.GetBytes("row payload"))
+
+# GOOD: Telemetry/correlation identifier hashing
+$telemetryCorrelationId = (Get-FileHash -Path "C:\event.json" -Algorithm MD5).Hash
+
+# GOOD: Pseudo-random bucketing hashing
+$bucketSha1 = [System.Security.Cryptography.SHA1]::Create()
+$randomBucket = $bucketSha1.ComputeHash([System.Text.Encoding]::UTF8.GetBytes("account id"))
+
+# BAD: A comparison/verification should still be reported even with cache-like names
+$cacheVerifier = [System.Security.Cryptography.MD5]::Create() # $ Alert
+$computedCacheHash = $cacheVerifier.ComputeHash([System.Text.Encoding]::UTF8.GetBytes("cached payload"))
+if ($computedCacheHash -eq $expectedCacheHash) { "verified" }
