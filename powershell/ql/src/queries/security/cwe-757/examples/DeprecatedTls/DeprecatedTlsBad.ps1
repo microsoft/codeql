@@ -6,3 +6,6 @@
 
 # BAD: Using deprecated TLS 1.1
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls11
+
+# BAD: Adding deprecated TLS 1.0 to otherwise modern protocols
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls
