@@ -34,6 +34,8 @@ Event getRelevantCachePoisoningEventForSink(DataFlow::Node sink) {
     // excluding privileged workflows since they can be exploited in easier circumstances
     // which is covered by `actions/code-injection/critical`
     not job.isPrivilegedExternallyTriggerable(result) and
+    // the job must actually use caching for cache poisoning to be possible
+    jobHasCacheWritingStep(job) and
     (
       // the workflow runs in the context of the default branch
       runsOnDefaultBranch(result)
