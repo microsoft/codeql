@@ -70,3 +70,38 @@ class SetupRubyUsesStep extends CacheWritingStep, UsesStep {
 
   override string getPath() { result = normalizePath("vendor/bundle") }
 }
+
+/**
+ * Setup actions that implicitly enable caching.
+ * These use the built-in cache mechanism when their `cache` input is set (or defaults to true).
+ */
+class SetupActionWithCacheStep extends CacheWritingStep, UsesStep {
+  SetupActionWithCacheStep() {
+    // actions/setup-go defaults cache to true since v4
+    this.getCallee() = "actions/setup-go" and
+    not this.getArgument("cache") = "false"
+    or
+    // actions/setup-python with explicit cache input
+    this.getCallee() = "actions/setup-python" and
+    exists(this.getArgument("cache"))
+    or
+    // actions/setup-java with explicit cache input
+    this.getCallee() = "actions/setup-java" and
+    exists(this.getArgument("cache"))
+    or
+    // actions/setup-node with explicit cache input
+    this.getCallee() = "actions/setup-node" and
+    exists(this.getArgument("cache"))
+    or
+    // actions/setup-dotnet with explicit cache input
+    this.getCallee() = "actions/setup-dotnet" and
+    this.getArgument("cache") = "true"
+  }
+
+  override string getPath() { result = "?" }
+}
+
+/**
+ * Holds if the job contains a cache-writing step (explicit or implicit via setup actions).
+ */
+predicate jobHasCacheWritingStep(LocalJob job) { job.getAStep() instanceof CacheWritingStep }

@@ -65,7 +65,13 @@ where
     // the cache writing step reads from a path the attacker can control
     not path = "?" and isSubpath(step.(CacheWritingStep).getPath(), path)
   ) and
-  not step instanceof PoisonableStep
+  not step instanceof PoisonableStep and
+  // exclude cache steps gated by workflow input conditions (e.g., inputs.useArtifactCache)
+  // as these are typically disabled in the untrusted PR context
+  not exists(If cond |
+    cond = step.getIf() and
+    cond.getCondition().matches("%inputs.%")
+  )
 select step, source, step,
   "Potential cache poisoning in the context of the default branch " + message + " ($@).", event,
   event.getName()
