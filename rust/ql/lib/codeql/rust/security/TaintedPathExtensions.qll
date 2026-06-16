@@ -52,6 +52,21 @@ module TaintedPath {
   private class ModelsAsDataBarriers extends Barrier {
     ModelsAsDataBarriers() { barrierNode(this, "path-injection") }
   }
+
+  /**
+   * A barrier for struct field accesses whose names suggest they hold
+   * application-managed directory paths derived from configuration rather
+   * than per-request user input (e.g., `self.data_dir`, `config.base_path`).
+   */
+  private class ConfigDerivedPathBarrier extends Barrier {
+    ConfigDerivedPathBarrier() {
+      exists(FieldExpr fe |
+        this.asExpr() = fe and
+        fe.getIdentifier().getText()
+            .regexpMatch("(?i).*(dir|directory|root|base_path|home|prefix|store_path|screenpipe_dir)$")
+      )
+    }
+  }
 }
 
 private predicate sanitizerGuard(AstNode g, Expr e, boolean branch) {
