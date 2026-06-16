@@ -11,7 +11,11 @@ string sanitizerCommand() {
     [
       "tr\\s+(-d\\s*)?('|\")?.n('|\")?", // tr -d '\n' ' ', tr '\n' ' '
       "tr\\s+-cd\\s+.*:al(pha|num):", // tr -cd '[:alpha:_]'
-      "(head|tail)\\s+-n\\s+1" // head -n 1, tail -n 1
+      "tr\\s+-dc\\s+.*(:al(pha|num):|'0-9'|'\\[:digit:\\]')", // tr -dc '[:alnum:]', tr -dc '0-9'
+      "tr\\s+-d\\s+('|\")\\[:space:\\]('|\")", // tr -d '[:space:]'
+      "(head|tail)\\s+-n\\s+1", // head -n 1, tail -n 1
+      "cut\\s+(-d.?)?\\s*-f\\s*1", // cut -f1 (first field only)
+      "sed\\s+.*s/\\[\\^[0-9a-z]" // sed substitution removing non-alphanumeric chars
     ]
 }
 
