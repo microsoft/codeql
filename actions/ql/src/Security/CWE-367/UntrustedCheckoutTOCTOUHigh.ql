@@ -18,6 +18,8 @@ import codeql.actions.security.ControlChecks
 
 from MutableRefCheckoutStep checkout, Event event
 where
+  // exclude checkouts that are also classified as SHA-based (pinned to immutable commit)
+  not checkout instanceof SHACheckoutStep and
   // there are no evidences that the checked-out gets executed
   not checkout.getAFollowingStep() instanceof PoisonableStep and
   // the checkout occurs in a privileged context
