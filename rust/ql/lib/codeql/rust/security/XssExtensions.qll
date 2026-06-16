@@ -68,6 +68,22 @@ module Xss {
     }
   }
 
+  /**
+   * A barrier for struct field accesses whose names suggest they hold
+   * deployment configuration values (hostnames, domains, URLs) rather than
+   * per-request user input. These are typically set from environment variables
+   * or CLI options at startup.
+   */
+  private class ConfigDerivedHostBarrier extends Barrier {
+    ConfigDerivedHostBarrier() {
+      exists(FieldExpr fe |
+        this.asExpr() = fe and
+        fe.getIdentifier().getText()
+            .regexpMatch("(?i).*(domain|host_name|hostname|base_url|server_url|external_domain|listen_addr|bind_addr)$")
+      )
+    }
+  }
+
   // TODO: Convert this to MaD once MaD supports sink for tuple struct expressions.
   private class AxumHtmlSink extends Sink {
     AxumHtmlSink() {
