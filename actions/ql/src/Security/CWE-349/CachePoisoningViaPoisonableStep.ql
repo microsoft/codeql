@@ -56,7 +56,9 @@ where
   source.getAFollowingStep() = step and
   step instanceof PoisonableStep and
   // excluding privileged workflows since they can be exploited in easier circumstances
-  not job.isPrivileged()
+  not job.isPrivileged() and
+  // the job must actually have a cache-writing step for cache poisoning to be possible
+  jobHasCacheWritingStep(job)
 select step, untrustedInput, step,
   "Potential cache poisoning in the context of the default branch " + message + " $@. ($@).",
   untrustedInput, untrustedInputText, event, event.getName()
