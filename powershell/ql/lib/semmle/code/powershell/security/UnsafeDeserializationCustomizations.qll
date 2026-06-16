@@ -27,11 +27,6 @@ module UnsafeDeserialization {
     abstract string getSinkType();
   }
 
-  /**
-   * A sanitizer for Unsafe Deserialization vulnerabilities.
-   */
-  abstract class Sanitizer extends DataFlow::Node { }
-
   /** A source of user input, considered as a flow source for unsafe deserialization. */
   class FlowSourceAsSource extends Source instanceof SourceNode {
     override string getSourceType() { result = SourceNode.super.getSourceType() }
