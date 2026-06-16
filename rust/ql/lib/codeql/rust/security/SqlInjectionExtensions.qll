@@ -77,4 +77,22 @@ module SqlInjection {
 
   private class FieldlessEnumTypeBarrier extends Barrier instanceof Barriers::FieldlessEnumTypeBarrier
   { }
+
+  /**
+   * A barrier for struct field accesses whose names suggest they hold table or
+   * column identifiers derived from application configuration rather than user input.
+   *
+   * Patterns like `self.events_table`, `self.table_name`, `self.view_table` are
+   * typically initialized at service startup from hardcoded strings or configuration,
+   * not from per-request user data.
+   */
+  private class ConfigDerivedTableNameBarrier extends Barrier {
+    ConfigDerivedTableNameBarrier() {
+      exists(FieldExpr fe |
+        this.asExpr() = fe and
+        fe.getIdentifier().getText()
+            .regexpMatch("(?i).*(table|collection|schema|bucket|index|view)(_name)?$")
+      )
+    }
+  }
 }
