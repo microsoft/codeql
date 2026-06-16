@@ -17,13 +17,15 @@ import codeql.actions.security.ControlChecks
 from If i
 where
   not i instanceof ControlCheck and
-  (
-    i.getCondition().matches("%${{%") and
+  // exclude escaped template expressions ($${{ }}) used in composite actions/templates
+  not i.getCondition().matches("%$${{%") and
+  exists(string cond | cond = i.getCondition().trim() |
+    cond.matches("%${{%") and
     (
-      not i.getCondition().matches("${{%") or
-      not i.getCondition().matches("%}}")
+      not cond.matches("${{%") or
+      not cond.matches("%}}")
     )
     or
-    count(i.getCondition().splitAt("${{")) > 2
+    count(cond.splitAt("${{")) > 2
   )
 select i, "Expression always evaluates to true"
