@@ -18,33 +18,9 @@ module Config implements DataFlow::ConfigSig {
 
   predicate isSink(DataFlow::Node sink) { sink instanceof Sink }
 
-  private predicate isConvertType(TypeNameExpr type) {
-    type.getPossiblyQualifiedName() = ["system.convert", "convert"]
-  }
-
-  private predicate isReaderOrStreamType(TypeNameExpr type) {
-    type.getPossiblyQualifiedName() =
-      ["system.io.memorystream", "memorystream", "system.io.stringreader", "stringreader"]
-  }
-
-  private predicate isDeserializationInputTransform(InvokeMemberExpr ime) {
-    exists(TypeNameExpr type |
-      ime.getQualifier() = type and
-      (
-        isConvertType(type) and
-        ime.getLowerCaseName() = "frombase64string"
-        or
-        isReaderOrStreamType(type) and
-        ime.getLowerCaseName() = "new"
-      )
-    )
-    or
-    ime.getLowerCaseName() = "getbytes"
-  }
-
   predicate isAdditionalFlowStep(DataFlow::Node nodeFrom, DataFlow::Node nodeTo) {
     exists(InvokeMemberExpr ime |
-      isDeserializationInputTransform(ime) and
+      ime.getLowerCaseName() = "getbytes" and
       nodeTo.asExpr().getExpr() = ime and
       nodeFrom.asExpr().getExpr() = ime.getAnArgument()
     )
