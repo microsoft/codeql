@@ -1,4 +1,4 @@
-name: microsoft-sdl/powershell-queries
+name: microsoft/powershell-queries
 version: 0.0.1
 groups:
   - powershell
