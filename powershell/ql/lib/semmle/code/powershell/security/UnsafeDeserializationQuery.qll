@@ -17,12 +17,14 @@ module Config implements DataFlow::ConfigSig {
   predicate isSource(DataFlow::Node source) { source instanceof Source }
 
   predicate isSink(DataFlow::Node sink) { sink instanceof Sink }
-  predicate isAdditionalFlowStep(DataFlow::Node nodeFrom, DataFlow::Node nodeTo){
-    exists(InvokeMemberExpr ime | 
-        nodeTo.asExpr().getExpr() = ime and 
-        nodeFrom.asExpr().getExpr() = ime.getAnArgument()
+
+  predicate isAdditionalFlowStep(DataFlow::Node nodeFrom, DataFlow::Node nodeTo) {
+    exists(InvokeMemberExpr ime |
+      ime.getLowerCaseName() = "getbytes" and
+      nodeTo.asExpr().getExpr() = ime and
+      nodeFrom.asExpr().getExpr() = ime.getAnArgument()
     )
   }
 }
 
-module UnsafeDeserializationFlow = TaintTracking::Global<Config>; 
+module UnsafeDeserializationFlow = TaintTracking::Global<Config>;

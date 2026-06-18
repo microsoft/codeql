@@ -84,3 +84,20 @@ $obj16 = $yamlDeserializer.Deserialize($input16) # $ Alert
 $input17 = Read-Host "Enter packed data" # $ Source
 $bytes17 = [Convert]::FromBase64String($input17)
 [MemoryPack.MemoryPackSerializer]::Deserialize($bytes17) # $ Alert
+
+# Test 18: self-serialized BinaryFormatter data should not be reported by the taint-based query
+$safeFormatter = New-Object System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+$safeStream = [System.IO.MemoryStream]::new()
+$safeFormatter.Serialize($safeStream, [PSCustomObject]@{ Name = "local" })
+$safeStream.Position = 0
+$safeObj = $safeFormatter.Deserialize($safeStream)
+
+# Test 19: file-controlled bytes deserialized with BinaryFormatter
+$fileBytes = [System.IO.File]::ReadAllBytes("payload.bin") # $ Source
+$fileStream = [System.IO.MemoryStream]::new($fileBytes)
+$fileObj = $safeFormatter.Deserialize($fileStream) # $ Alert
+
+# Test 20: remote-controlled bytes deserialized with BinaryFormatter
+$remoteBytes = [System.Net.WebClient]::new().DownloadData("https://example.com/payload.bin") # $ Source
+$remoteStream = [System.IO.MemoryStream]::new($remoteBytes)
+$remoteObj = $safeFormatter.Deserialize($remoteStream) # $ Alert

@@ -37,3 +37,5 @@ extensions:
       extensible: summaryModel
     data:
       - ["system.io.path!", "Method[getfullpath]", "Argument[0]", "ReturnValue", "taint"]
+      - ["system.io.memorystream!", "Method[new]", "Argument[0]", "ReturnValue", "taint"]
+      - ["system.io.stringreader!", "Method[new]", "Argument[0]", "ReturnValue", "taint"]
