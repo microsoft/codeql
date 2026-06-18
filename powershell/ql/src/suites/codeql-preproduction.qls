@@ -1,8 +1,0 @@
-- description: codeql-preproduction suite
-- queries: '.'
-  from: microsoft-sdl/powershell-queries
-- include:
-    tags contain: codeql-preproduction
-- include:
-    kind:
-      - alert-suppression
