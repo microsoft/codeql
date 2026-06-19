@@ -126,9 +126,20 @@ API::Node getExtraNodeFromType(string rawType) {
   or
   exists(string name, API::TypeNameNode typeName |
     parseRelevantType(rawType, name, _) and
-    typeName = API::getTopLevelMember(name) and
-    typeName.isImplicit() and
-    result = typeName
+    (
+      (
+        typeName.getTypeName() = name and
+        not typeName.isImplicit() and
+        result = typeName.getInstance()
+      )
+      or 
+      (
+        typeName = API::getTopLevelMember(name) and
+        typeName.isImplicit() and
+        result = typeName
+      )
+    )
+    
   )
 }
 
