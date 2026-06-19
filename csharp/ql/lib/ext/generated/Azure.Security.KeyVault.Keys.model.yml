@@ -1,0 +1,13 @@
+# THIS FILE IS AN AUTO-GENERATED MODELS AS DATA FILE. DO NOT EDIT.
+extensions:
+  - addsTo:
+      pack: codeql/csharp-all
+      extensible: summaryModel
+    data:
+      - ["Azure.Security.KeyVault.Keys", "KeyClient", False, "KeyClient", "(System.Uri,Azure.Core.TokenCredential,Azure.Security.KeyVault.Keys.KeyClientOptions)", "", "Argument[0]", "Argument[this].SyntheticField[Azure.Security.KeyVault.Keys.KeyClient._pipeline].SyntheticField[Azure.Security.KeyVault.KeyVaultPipeline.VaultUri]", "value", "dfc-generated"]
+      - ["Azure.Security.KeyVault.Keys", "KeyClient", True, "GetCryptographyClient", "(System.String,System.String)", "", "Argument[this]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Security.KeyVault.Keys", "KeyClient", True, "StartDeleteKey", "(System.String,System.Threading.CancellationToken)", "", "Argument[this]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Security.KeyVault.Keys", "KeyClient", True, "StartDeleteKeyAsync", "(System.String,System.Threading.CancellationToken)", "", "Argument[this]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Security.KeyVault.Keys", "KeyClient", True, "StartRecoverDeletedKey", "(System.String,System.Threading.CancellationToken)", "", "Argument[this]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Security.KeyVault.Keys", "KeyClient", True, "StartRecoverDeletedKeyAsync", "(System.String,System.Threading.CancellationToken)", "", "Argument[this]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Security.KeyVault.Keys", "KeyClient", True, "get_VaultUri", "()", "", "Argument[this].SyntheticField[Azure.Security.KeyVault.Keys.KeyClient._pipeline].SyntheticField[Azure.Security.KeyVault.KeyVaultPipeline.VaultUri]", "ReturnValue", "value", "dfc-generated"]

@@ -1,0 +1,46 @@
+extensions:
+  - addsTo:
+      pack: codeql/csharp-all
+      extensible: sinkModel
+    data:
+      - ["Azure.Storage.Queues", "QueueClient", False, "QueueClient", "(System.String,System.String)", "", "Argument[0]", "azure-ssrf-storage", "manual"]
+      - ["Azure.Storage.Queues", "QueueClient", False, "QueueClient", "(System.String,System.String)", "", "Argument[1]", "azure-ssrf-storage", "manual"]
+      - ["Azure.Storage.Queues", "QueueClient", False, "QueueClient", "(System.Uri,Azure.Storage.Queues.QueueClientOptions)", "", "Argument[0]", "azure-ssrf-storage", "manual"]
+      - ["Azure.Storage.Queues", "QueueClient", False, "QueueClient", "(System.String,System.String,Azure.Storage.Queues.QueueClientOptions)", "", "Argument[0]", "azure-ssrf-storage", "manual"]
+      - ["Azure.Storage.Queues", "QueueClient", False, "QueueClient", "(System.String,System.String,Azure.Storage.Queues.QueueClientOptions)", "", "Argument[1]", "azure-ssrf-storage", "manual"]
+      - ["Azure.Storage.Queues", "QueueClient", False, "QueueClient", "(System.Uri,Azure.AzureSasCredential,Azure.Storage.Queues.QueueClientOptions)", "", "Argument[0]", "azure-ssrf-storage", "manual"]
+      - ["Azure.Storage.Queues", "QueueClient", False, "QueueClient", "(System.Uri,Azure.Core.TokenCredential,Azure.Storage.Queues.QueueClientOptions)", "", "Argument[0]", "azure-ssrf-storage", "manual"]
+      - ["Azure.Storage.Queues", "QueueClient", False, "QueueClient", "(System.Uri,Azure.Storage.StorageSharedKeyCredential,Azure.Storage.Queues.QueueClientOptions)", "", "Argument[0]", "azure-ssrf-storage", "manual"]
+      - ["Azure.Storage.Queues", "QueueServiceClient", False, "QueueServiceClient", "(System.String,Azure.Storage.Queues.QueueClientOptions)", "", "Argument[0]", "azure-ssrf-storage", "manual"]
+      - ["Azure.Storage.Queues", "QueueServiceClient", False, "QueueServiceClient", "(System.Uri,Azure.Storage.Queues.QueueClientOptions)", "", "Argument[0]", "azure-ssrf-storage", "manual"]
+      - ["Azure.Storage.Queues", "QueueServiceClient", False, "QueueServiceClient", "(System.Uri,Azure.AzureSasCredential,Azure.Storage.Queues.QueueClientOptions)", "", "Argument[0]", "azure-ssrf-storage", "manual"]
+      - ["Azure.Storage.Queues", "QueueServiceClient", False, "QueueServiceClient", "(System.Uri,Azure.Core.TokenCredential,Azure.Storage.Queues.QueueClientOptions)", "", "Argument[0]", "azure-ssrf-storage", "manual"]
+      - ["Azure.Storage.Queues", "QueueServiceClient", False, "QueueServiceClient", "(System.Uri,Azure.Storage.StorageSharedKeyCredential,Azure.Storage.Queues.QueueClientOptions)", "", "Argument[0]", "azure-ssrf-storage", "manual"]
+  - addsTo:
+      pack: codeql/csharp-all
+      extensible: summaryModel
+    data:     
+      - ["Azure.Storage.Queues", "QueueClient", False, "QueueClient", "(System.String,System.String)", "", "Argument[0]", "Argument[this]", "taint", "manual"]
+      - ["Azure.Storage.Queues", "QueueClient", False, "QueueClient", "(System.String,System.String)", "", "Argument[1]", "Argument[this]", "taint", "manual"]
+      - ["Azure.Storage.Queues", "QueueClient", False, "QueueClient", "(System.Uri,Azure.Storage.Queues.QueueClientOptions)", "", "Argument[0]", "Argument[this]", "taint", "manual"]
+      - ["Azure.Storage.Queues", "QueueClient", False, "QueueClient", "(System.String,System.String,Azure.Storage.Queues.QueueClientOptions)", "", "Argument[0]", "Argument[this]", "taint", "manual"]
+      - ["Azure.Storage.Queues", "QueueClient", False, "QueueClient", "(System.String,System.String,Azure.Storage.Queues.QueueClientOptions)", "", "Argument[1]", "Argument[this]", "taint", "manual"]
+      - ["Azure.Storage.Queues", "QueueClient", False, "QueueClient", "(System.Uri,Azure.AzureSasCredential,Azure.Storage.Queues.QueueClientOptions)", "", "Argument[0]", "Argument[this]", "taint", "manual"]
+      - ["Azure.Storage.Queues", "QueueClient", False, "QueueClient", "(System.Uri,Azure.Core.TokenCredential,Azure.Storage.Queues.QueueClientOptions)", "", "Argument[0]", "Argument[this]", "taint", "manual"]
+      - ["Azure.Storage.Queues", "QueueClient", False, "QueueClient", "(System.Uri,Azure.Storage.StorageSharedKeyCredential,Azure.Storage.Queues.QueueClientOptions)", "", "Argument[0]", "Argument[this]", "taint", "manual"]
+      - ["Azure.Storage.Queues", "QueueClient", True, "get_AccountName", "()", "", "Argument[this]", "ReturnValue", "value", "manual"]
+      - ["Azure.Storage.Queues", "QueueClient", True, "get_MessagesUri", "()", "", "Argument[this]", "ReturnValue", "taint", "manual"]
+      - ["Azure.Storage.Queues", "QueueClient", True, "get_Name", "()", "", "Argument[this]", "ReturnValue", "value", "manual"]    
+      - ["Azure.Storage.Queues", "QueueServiceClient", False, "QueueServiceClient", "(System.String,Azure.Storage.Queues.QueueClientOptions)", "", "Argument[0]", "Argument[this]", "value", "manual"]
+      - ["Azure.Storage.Queues", "QueueServiceClient", False, "QueueServiceClient", "(System.Uri,Azure.Storage.Queues.QueueClientOptions)", "", "Argument[0]", "Argument[this]", "value", "manual"]
+      - ["Azure.Storage.Queues", "QueueServiceClient", False, "QueueServiceClient", "(System.Uri,Azure.AzureSasCredential,Azure.Storage.Queues.QueueClientOptions)", "", "Argument[0]", "Argument[this]", "value", "manual"]
+      - ["Azure.Storage.Queues", "QueueServiceClient", False, "QueueServiceClient", "(System.Uri,Azure.Core.TokenCredential,Azure.Storage.Queues.QueueClientOptions)", "", "Argument[0]", "Argument[this]", "value", "manual"]     
+      - ["Azure.Storage.Queues", "QueueServiceClient", False, "QueueServiceClient", "(System.Uri,Azure.Storage.StorageSharedKeyCredential,Azure.Storage.Queues.QueueClientOptions)", "", "Argument[0]", "Argument[this]", "value", "manual"]
+      - ["Azure.Storage.Queues", "QueueServiceClient", True, "CreateQueue", "(System.String,System.Collections.Generic.IDictionary<System.String,System.String>,System.Threading.CancellationToken)", "", "Argument[0]", "ReturnValue", "taint", "manual"]
+      - ["Azure.Storage.Queues", "QueueServiceClient", True, "CreateQueueAsync", "(System.String,System.Collections.Generic.IDictionary<System.String,System.String>,System.Threading.CancellationToken)", "", "Argument[0]", "ReturnValue", "taint", "manual"]
+      - ["Azure.Storage.Queues", "QueueServiceClient", True, "DeleteQueue", "(System.String,System.Threading.CancellationToken)", "", "Argument[0]", "ReturnValue", "taint", "manual"]
+      - ["Azure.Storage.Queues", "QueueServiceClient", True, "QueueServiceClient", "(System.String,System.Threading.CancellationToken)", "", "Argument[0]", "ReturnValue", "taint", "manual"]     
+      - ["Azure.Storage.Queues", "QueueServiceClient", True, "get_AccountName", "()", "", "Argument[this]", "ReturnValue", "taint", "manual"]
+      - ["Azure.Storage.Queues", "QueueUriBuilder", False, "QueueUriBuilder", "(System.Uri)", "", "Argument[0]", "Argument[this].Property[Azure.Storage.Queues.QueueUriBuilder.AccountName,Azure.Storage.Queues.QueueUriBuilder.Host,Azure.Storage.Queues.QueueUriBuilder.MessageId,Azure.Storage.Queues.QueueUriBuilder.Port,Azure.Storage.Queues.QueueUriBuilder.Query,Azure.Storage.Queues.QueueUriBuilder.QueueName,Azure.Storage.Queues.QueueUriBuilder.Sas,Azure.Storage.Queues.QueueUriBuilder.Scheme]", "taint", "manual"]
+      - ["Azure.Storage.Queues", "QueueUriBuilder", False, "ToString", "()", "", "Argument[this].Property[Azure.Storage.Queues.QueueUriBuilder.AccountName,Azure.Storage.Queues.QueueUriBuilder.Host,Azure.Storage.Queues.QueueUriBuilder.MessageId,Azure.Storage.Queues.QueueUriBuilder.Port,Azure.Storage.Queues.QueueUriBuilder.Query,Azure.Storage.Queues.QueueUriBuilder.QueueName,Azure.Storage.Queues.QueueUriBuilder.Sas,Azure.Storage.Queues.QueueUriBuilder.Scheme]", "ReturnValue", "taint", "manual"]    
+      - ["Azure.Storage.Queues", "QueueUriBuilder", False, "ToUri", "()", "", "Argument[this].Property[Azure.Storage.Queues.QueueUriBuilder.AccountName,Azure.Storage.Queues.QueueUriBuilder.Host,Azure.Storage.Queues.QueueUriBuilder.MessageId,Azure.Storage.Queues.QueueUriBuilder.Port,Azure.Storage.Queues.QueueUriBuilder.Query,Azure.Storage.Queues.QueueUriBuilder.QueueName,Azure.Storage.Queues.QueueUriBuilder.Sas,Azure.Storage.Queues.QueueUriBuilder.Scheme]", "ReturnValue", "taint", "manual"]
