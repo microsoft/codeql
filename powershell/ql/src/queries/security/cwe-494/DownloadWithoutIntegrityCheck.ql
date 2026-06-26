@@ -125,26 +125,9 @@ module Conf implements DataFlow::ConfigSig {
   predicate isSource(DataFlow::Node source) { source = any(DownloadCall c).getOutFileArg() }
 
   predicate isSink(DataFlow::Node sink) { sink = any(IntegrityCheck c).getFile() }
-
-  /**
-   * Bridges a file path to the bytes/text read from it, so that hashing the
-   * *contents* of the downloaded file (e.g. `ComputeHash([IO.File]::ReadAllBytes($f))`)
-   * is recognised as verifying `$f`.
-   */
-  predicate isAdditionalFlowStep(DataFlow::Node node1, DataFlow::Node node2) {
-    exists(DataFlow::CallNode read |
-      read.getAName() =
-        [
-          "ReadAllBytes", "ReadAllText", "ReadAllLines", "OpenRead", "ReadAsByteArrayAsync",
-          "Get-Content", "gc", "cat", "type"
-        ] and
-      node1 = read.getAnArgument() and
-      node2 = read
-    )
-  }
 }
 
-module Flow = DataFlow::Global<Conf>;
+module Flow = TaintTracking::Global<Conf>;
 
 /** Holds if the downloaded file `out` flows to an integrity check. */
 predicate isVerified(DataFlow::Node out) {
