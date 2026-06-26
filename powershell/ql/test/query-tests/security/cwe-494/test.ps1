@@ -108,3 +108,52 @@ function Verified_With_CertUtil($outFile) {
   $h = certutil -hashfile $outFile SHA256
   if ($h -notmatch "ABC123") { throw "hash mismatch" }
 }
+
+# ---------------------------------------------------------------------------
+# TRUE NEGATIVES: these must NOT be flagged. Either the download is verified,
+# or it is not a trusted-host artifact download at all. No inline expectation
+# means "no alert expected here".
+# ---------------------------------------------------------------------------
+
+function Verified_With_ComputeHash($outFile) {
+  # GOOD - hash computed via [SHA256]::Create().ComputeHash over the bytes read
+  # from the downloaded file, then compared.
+  $uri = "https://github.com/example/project/releases/download/v1/app.exe"
+  Invoke-WebRequest -Uri $uri -OutFile $outFile
+  $sha = [System.Security.Cryptography.SHA256]::Create()
+  $bytes = [System.IO.File]::ReadAllBytes($outFile)
+  $hash = [System.BitConverter]::ToString($sha.ComputeHash($bytes)).Replace("-", "")
+  if ($hash -ne "ABC123") { throw "hash mismatch" }
+}
+
+function Verified_With_Signature($outFile) {
+  # GOOD - Authenticode signature check on the downloaded file.
+  $uri = "https://github.com/example/project/releases/download/v1/app.exe"
+  Invoke-WebRequest -Uri $uri -OutFile $outFile
+  $sig = Get-AuthenticodeSignature -FilePath $outFile
+  if ($sig.Status -ne "Valid") { throw "bad signature" }
+}
+
+function Verified_With_Cosign($outFile) {
+  # GOOD - external signature verification via cosign.
+  $uri = "https://github.com/example/project/releases/download/v1/app.tar.gz"
+  Invoke-WebRequest -Uri $uri -OutFile $outFile
+  cosign verify-blob --signature "$outFile.sig" $outFile
+}
+
+function NonArtifact_Host($outFile) {
+  # GOOD - download from a host that is not a recognised artifact host.
+  Invoke-WebRequest -Uri "https://example.com/data/report.json" -OutFile $outFile
+}
+
+function GitHub_Api_DataOnly() {
+  # GOOD - a GitHub API metadata call, not an artifact download. The response is
+  # only inspected, never written to disk or executed.
+  $r = Invoke-RestMethod -Uri "https://api.github.com/repos/example/project/releases/latest"
+  return $r.tag_name
+}
+
+function Local_Copy($outFile) {
+  # GOOD - copying a local file; no network download, no trusted-host URL.
+  Copy-Item -Path "C:\artifacts\app.exe" -Destination $outFile
+}

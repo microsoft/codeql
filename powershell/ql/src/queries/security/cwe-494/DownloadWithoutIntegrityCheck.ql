@@ -40,22 +40,26 @@ predicate isTrustedArtifactHost(string s) {
         ])
 }
 
-/** Holds if `node` is tainted by a string constant that looks like an artifact URL. */
-predicate isArtifactUrl(DataFlow::Node node) {
-  exists(DataFlow::Node source, string s |
-    TaintTracking::localTaint(source, node) and
-    s =
-      [
-        source.asExpr().getValue().asString(),
-        source.asExpr().getExpr().(ExpandableStringExpr).getUnexpandedValue()
-      ] and
-    isTrustedArtifactHost(s)
-  )
+/** A data-flow node that is tainted by a string constant looking like an artifact URL. */
+class ArtifactUrl extends DataFlow::Node {
+  ArtifactUrl() {
+    exists(DataFlow::Node source, string s |
+      TaintTracking::localTaint(source, this) and
+      s =
+        [
+          source.asExpr().getValue().asString(),
+          source.asExpr().getExpr().(ExpandableStringExpr).getUnexpandedValue()
+        ] and
+      isTrustedArtifactHost(s) and
+      // Exclude API metadata endpoints (e.g. api.github.com/.../releases/latest),
+      // which return JSON metadata rather than a downloadable artifact.
+      not s.toLowerCase().matches(["%api.github.com%", "%api.bitbucket.org%"])
+    )
+  }
 }
 
 /**
- * Holds if `call` downloads an artifact, where `url` is the argument that
- * carries the (trusted-host) download URL.
+ * A call that downloads an artifact from a trusted host.
  *
  * This covers cmdlets and their aliases (`Invoke-WebRequest`/`iwr`,
  * `Invoke-RestMethod`/`irm`, `Start-BitsTransfer`), native download tools
@@ -63,61 +67,82 @@ predicate isArtifactUrl(DataFlow::Node node) {
  * download methods. The URL may be passed as a named argument (e.g. `-Uri`,
  * `-Source`), positionally, or as a method argument.
  */
-predicate downloadCall(DataFlow::CallNode call, DataFlow::Node url) {
-  call.getAName() =
-    [
-      // cmdlets and aliases
-      "Invoke-WebRequest", "iwr", "Invoke-RestMethod", "irm", "Start-BitsTransfer",
-      // native command-line download tools
-      "curl", "curl.exe", "wget", "wget.exe", "azcopy", "azcopy.exe", "aria2c", "aria2c.exe",
-      // .NET WebClient / HttpClient download methods
-      "DownloadFile", "DownloadFileAsync", "DownloadFileTaskAsync", "DownloadData",
-      "DownloadDataAsync", "DownloadDataTaskAsync", "DownloadString", "DownloadStringAsync",
-      "GetByteArrayAsync", "GetStreamAsync"
-    ] and
-  url = call.getAnArgument() and
-  isArtifactUrl(url)
-}
+class DownloadCall extends DataFlow::CallNode {
+  ArtifactUrl url;
 
-/**
- * Gets the argument of `call` that names the file the artifact is written to,
- * if any. Downloads that consume the response inline (e.g. `irm ... | iex`)
- * have no such argument.
- */
-DataFlow::Node getOutFileArg(DataFlow::CallNode call) {
-  downloadCall(call, _) and
-  (
+  DownloadCall() {
+    this.getAName() =
+      [
+        // cmdlets and aliases
+        "Invoke-WebRequest", "iwr", "Invoke-RestMethod", "irm", "Start-BitsTransfer",
+        // native command-line download tools
+        "curl", "curl.exe", "wget", "wget.exe", "azcopy", "azcopy.exe", "aria2c", "aria2c.exe",
+        // .NET WebClient / HttpClient download methods
+        "DownloadFile", "DownloadFileAsync", "DownloadFileTaskAsync", "DownloadData",
+        "DownloadDataAsync", "DownloadDataTaskAsync", "DownloadString", "DownloadStringAsync",
+        "GetByteArrayAsync", "GetStreamAsync"
+      ] and
+    url = this.getAnArgument()
+  }
+
+  /**
+   * Gets the argument that names the file the artifact is written to, if any.
+   * Downloads that consume the response inline (e.g. `irm ... | iex`) have no
+   * such argument.
+   */
+  DataFlow::Node getOutFileArg() {
     result =
-      call.getNamedArgument([
+      this.getNamedArgument([
             "outfile", "destination", "outputfile", "outpath", "literalpath", "path", "o"
           ])
     or
     // WebClient.DownloadFile(url, destinationFile): the destination is the 2nd argument.
-    call.getAName() = ["DownloadFile", "DownloadFileAsync", "DownloadFileTaskAsync"] and
-    result = call.getArgument(1)
-  )
+    this.getAName() = ["DownloadFile", "DownloadFileAsync", "DownloadFileTaskAsync"] and
+    result = this.getArgument(1)
+  }
 }
 
 /**
- * Holds if `check` verifies the integrity of the file referred to by `file`,
- * by computing/comparing a hash or by checking a signature.
+ * A call that verifies the integrity of a file, by computing/comparing a hash
+ * or by checking a signature.
  */
-predicate integrityCheck(DataFlow::CallNode check, DataFlow::Node file) {
-  check.getAName() =
-    [
-      "Get-FileHash", "gfh", // hash a file
-      "certutil", "certutil.exe", // certutil -hashfile <file> SHA256
-      "ComputeHash", // [SHA256]::Create().ComputeHash(...)
-      "Get-AuthenticodeSignature", "Test-FileCatalog", // signature / catalog checks
-      "cosign", "cosign.exe", "gpg", "gpg.exe" // external signature verification
-    ] and
-  file = check.getAnArgument()
+class IntegrityCheck extends DataFlow::CallNode {
+  IntegrityCheck() {
+    this.getAName() =
+      [
+        "Get-FileHash", "gfh", // hash a file
+        "certutil", "certutil.exe", // certutil -hashfile <file> SHA256
+        "ComputeHash", // [SHA256]::Create().ComputeHash(...)
+        "Get-AuthenticodeSignature", "Test-FileCatalog", // signature / catalog checks
+        "cosign", "cosign.exe", "gpg", "gpg.exe" // external signature verification
+      ]
+  }
+
+  /** Gets an argument referring to the file whose integrity is being checked. */
+  DataFlow::Node getFile() { result = this.getAnArgument() }
 }
 
 module Conf implements DataFlow::ConfigSig {
-  predicate isSource(DataFlow::Node source) { source = getOutFileArg(_) }
+  predicate isSource(DataFlow::Node source) { source = any(DownloadCall c).getOutFileArg() }
 
-  predicate isSink(DataFlow::Node sink) { integrityCheck(_, sink) }
+  predicate isSink(DataFlow::Node sink) { sink = any(IntegrityCheck c).getFile() }
+
+  /**
+   * Bridges a file path to the bytes/text read from it, so that hashing the
+   * *contents* of the downloaded file (e.g. `ComputeHash([IO.File]::ReadAllBytes($f))`)
+   * is recognised as verifying `$f`.
+   */
+  predicate isAdditionalFlowStep(DataFlow::Node node1, DataFlow::Node node2) {
+    exists(DataFlow::CallNode read |
+      read.getAName() =
+        [
+          "ReadAllBytes", "ReadAllText", "ReadAllLines", "OpenRead", "ReadAsByteArrayAsync",
+          "Get-Content", "gc", "cat", "type"
+        ] and
+      node1 = read.getAnArgument() and
+      node2 = read
+    )
+  }
 }
 
 module Flow = DataFlow::Global<Conf>;
@@ -130,11 +155,10 @@ predicate isVerified(DataFlow::Node out) {
   )
 }
 
-from DataFlow::CallNode call
+from DownloadCall call
 where
-  downloadCall(call, _) and
   // Report unless the file that was downloaded is later verified. A download
   // with no output-file argument cannot be hash-verified, so it is reported.
-  not exists(DataFlow::Node out | out = getOutFileArg(call) and isVerified(out))
+  not exists(DataFlow::Node out | out = call.getOutFileArg() and isVerified(out))
 select call,
   "This downloads an artifact without verifying its integrity (e.g. a hash or signature check)."
