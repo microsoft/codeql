@@ -18,26 +18,25 @@ import semmle.code.powershell.dataflow.TaintTracking
 /** Holds if `s` looks like a URL pointing at a trusted artifact host. */
 bindingset[s]
 predicate isTrustedArtifactHost(string s) {
-  s.toLowerCase()
-      .matches([
-          "%github%",
-          "%gitlab%",
-          "%bitbucket%",
-          "%sourceforge%",
-          "%powershellgallery%",
-          "%nuget%",
-          "%npmjs%",
-          "%pypi%",
-          "%repo1.maven%",
-          "%repo.maven.apache%",
-          "%blob.core.windows%",
-          "%amazonaws%",
-          "%googleapis%",
-          "%azure%",
-          "%visualstudio%",
-          "%jfrog%",
-          "%artifactory%"
-        ])
+  s.matches([
+      "%github%",
+      "%gitlab%",
+      "%bitbucket%",
+      "%sourceforge%",
+      "%powershellgallery%",
+      "%nuget%",
+      "%npmjs%",
+      "%pypi%",
+      "%repo1.maven%",
+      "%repo.maven.apache%",
+      "%blob.core.windows%",
+      "%amazonaws%",
+      "%googleapis%",
+      "%azure%",
+      "%visualstudio%",
+      "%jfrog%",
+      "%artifactory%"
+    ])
 }
 
 /** A data-flow node that is tainted by a string constant looking like an artifact URL. */
@@ -49,11 +48,11 @@ class ArtifactUrl extends DataFlow::Node {
         [
           source.asExpr().getValue().asString(),
           source.asExpr().getExpr().(ExpandableStringExpr).getUnexpandedValue()
-        ] and
+        ].toLowerCase() and
       isTrustedArtifactHost(s) and
       // Exclude API metadata endpoints (e.g. api.github.com/.../releases/latest),
       // which return JSON metadata rather than a downloadable artifact.
-      not s.toLowerCase().matches(["%api.github.com%", "%api.bitbucket.org%"])
+      not s.matches(["%api.github.com%", "%api.bitbucket.org%"])
     )
   }
 }
@@ -93,8 +92,8 @@ class DownloadCall extends DataFlow::CallNode {
   DataFlow::Node getOutFileArg() {
     result =
       this.getNamedArgument([
-            "outfile", "destination", "outputfile", "outpath", "literalpath", "path", "o"
-          ])
+          "outfile", "destination", "outputfile", "outpath", "literalpath", "path", "o"
+        ])
     or
     // WebClient.DownloadFile(url, destinationFile): the destination is the 2nd argument.
     this.getAName() = ["DownloadFile", "DownloadFileAsync", "DownloadFileTaskAsync"] and
