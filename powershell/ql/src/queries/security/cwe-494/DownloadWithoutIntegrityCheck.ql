@@ -137,10 +137,9 @@ predicate isVerified(DataFlow::Node out) {
   )
 }
 
-from DownloadCall call
+from DownloadCall call, DataFlow::Node out
 where
-  // Report unless the file that was downloaded is later verified. A download
-  // with no output-file argument cannot be hash-verified, so it is reported.
-  not exists(DataFlow::Node out | out = call.getOutFileArg() and isVerified(out))
+  out = call.getOutFileArg() and
+  not isVerified(out)
 select call,
   "This downloads an artifact without verifying its integrity (e.g. a hash or signature check)."
