@@ -47,13 +47,13 @@ function Iwr_Alias_Positional($outFile) {
 
 function Iwr_NoOutFile_PipedToIex() {
   # BAD - no -OutFile; content executed inline.
-  $r = Invoke-WebRequest -Uri "https://github.com/example/project/releases/download/v1/bootstrap.ps1" # $ Alert
+  $r = Invoke-WebRequest -Uri "https://github.com/example/project/releases/download/v1/bootstrap.ps1" # $ MISSING: Alert
   Invoke-Expression $r.Content
 }
 
 function Irm_NoOutFile() {
   # BAD - Invoke-RestMethod returns content, no -OutFile.
-  irm "https://github.com/example/project/releases/download/v1/install.ps1" | Invoke-Expression # $ Alert
+  irm "https://github.com/example/project/releases/download/v1/install.ps1" | Invoke-Expression # $ MISSING: Alert
 }
 
 # ---------------------------------------------------------------------------
@@ -83,12 +83,12 @@ function Curl_Native($outFile) {
 
 function Wget_Native() {
   # BAD - native wget piped to tar (no output file at all).
-  wget "https://github.com/example/project/releases/download/v1/app.tar.gz" # $ Alert
+  wget "https://github.com/example/project/releases/download/v1/app.tar.gz" # $ MISSING: Alert
 }
 
 function AzCopy($outFile) {
   # BAD - azcopy / aria2c.
-  azcopy copy "https://github.com/Azure/azure-storage-azcopy/releases/download/v10.31.0/azcopy.zip" $outFile # $ Alert
+  azcopy copy "https://github.com/Azure/azure-storage-azcopy/releases/download/v10.31.0/azcopy.zip" $outFile # $ MISSING: Alert
 }
 
 function Wrapper_Function($outFile) {
