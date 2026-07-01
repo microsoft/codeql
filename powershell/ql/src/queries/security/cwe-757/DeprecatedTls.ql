@@ -81,10 +81,47 @@ class DeprecatedSslProtocols extends SecurityProtocol {
   override string getProtocolName() { result = protocolName }
 }
 
+/**
+ * Holds if `outer` uses `inner` as part of an expression that enables protocols.
+ * This intentionally follows only transparent wrappers and `-bor`, so values used under
+ * masking expressions such as `-band (-bnot ...)` are not treated as enabling use.
+ */
+predicate enablingExpr(Expr outer, SecurityProtocol inner) {
+  outer = inner
+  or
+  exists(ParenExpr p |
+    outer = p and
+    enablingExpr(p.getExpr(), inner)
+  )
+  or
+  exists(AttributedExprBase attributed |
+    outer = attributed and
+    enablingExpr(attributed.getExpr(), inner)
+  )
+  or
+  exists(BitwiseOrExpr bitwiseOr |
+    outer = bitwiseOr and
+    (
+      enablingExpr(bitwiseOr.getLeft(), inner)
+      or
+      enablingExpr(bitwiseOr.getRight(), inner)
+    )
+  )
+}
+
+/**
+ * Holds if the deprecated protocol is assigned or bitwise-ORed into a value, rather than
+ * negated or masked out of an existing protocol set.
+ */
+predicate isEnablingUse(SecurityProtocol sp) {
+  exists(AssignStmt assign | enablingExpr(assign.getRightHandSide(), sp))
+}
+
 from SecurityProtocol sp, string protocolName
 where
-  protocolName = sp.getProtocolName() and 
-  protocolName = ["ssl3", "tls", "tls11"]
+  protocolName = sp.getProtocolName() and
+  protocolName = ["ssl3", "tls", "tls11"] and
+  isEnablingUse(sp)
 select sp,
   "Use of deprecated protocol " + getProtocolDisplayName(protocolName) +
     ". Use TLS 1.2 or TLS 1.3 instead."
