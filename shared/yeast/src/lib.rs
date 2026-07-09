@@ -23,11 +23,102 @@ pub use cursor::Cursor;
 use query::QueryNode;
 
 /// Node ids are indexes into the arena
-type Id = usize;
+pub type Id = usize;
 
 /// Field and Kind ids are provided by tree-sitter
 type FieldId = u16;
 type KindId = u16;
+
+/// A typed reference to a node in an [`Ast`] arena. Wraps an [`Id`] but
+/// deliberately does not implement [`std::fmt::Display`]: rendering a node
+/// requires the [`Ast`] it lives in (to resolve [`NodeContent::Range`] back
+/// to source text). Use [`YeastDisplay::yeast_to_string`] to format it.
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
+pub struct NodeRef(pub Id);
+
+impl NodeRef {
+    pub fn id(self) -> Id {
+        self.0
+    }
+}
+
+impl From<NodeRef> for Id {
+    fn from(value: NodeRef) -> Self {
+        value.0
+    }
+}
+
+/// Like [`std::fmt::Display`], but the formatting routine is given access to
+/// the [`Ast`] so that node references can resolve to their source text.
+///
+/// All standard primitive and string types implement [`YeastDisplay`] via
+/// the [`impl_yeast_display_via_display`] macro below. Coherence prevents a
+/// blanket `impl<T: Display>`, so additional types must be added explicitly.
+pub trait YeastDisplay {
+    fn yeast_to_string(&self, ast: &Ast) -> String;
+}
+
+/// Optional source range for values used in `#{expr}` interpolations.
+///
+/// By default this returns `None`, so synthesized leaves inherit the matched
+/// rule's source range. `NodeRef` returns the referenced node's range, letting
+/// `(kind #{capture})` carry the captured node's location.
+pub trait YeastSourceRange {
+    fn yeast_source_range(&self, ast: &Ast) -> Option<tree_sitter::Range>;
+}
+
+impl YeastDisplay for NodeRef {
+    fn yeast_to_string(&self, ast: &Ast) -> String {
+        ast.source_text(self.0)
+    }
+}
+
+impl YeastSourceRange for NodeRef {
+    fn yeast_source_range(&self, ast: &Ast) -> Option<tree_sitter::Range> {
+        ast.get_node(self.0).and_then(|n| match &n.content {
+            NodeContent::Range(r) => Some(r.clone()),
+            _ => n.source_range,
+        })
+    }
+}
+
+macro_rules! impl_yeast_display_via_display {
+    ($($t:ty),* $(,)?) => {
+        $(
+            impl YeastDisplay for $t {
+                fn yeast_to_string(&self, _ast: &Ast) -> String {
+                    ::std::string::ToString::to_string(self)
+                }
+            }
+
+            impl YeastSourceRange for $t {
+                fn yeast_source_range(&self, _ast: &Ast) -> Option<tree_sitter::Range> {
+                    None
+                }
+            }
+        )*
+    };
+}
+
+impl_yeast_display_via_display! {
+    i8, i16, i32, i64, i128, isize,
+    u8, u16, u32, u64, u128, usize,
+    f32, f64,
+    bool, char,
+    str, String,
+}
+
+impl<T: YeastDisplay + ?Sized> YeastDisplay for &T {
+    fn yeast_to_string(&self, ast: &Ast) -> String {
+        (**self).yeast_to_string(ast)
+    }
+}
+
+impl<T: YeastSourceRange + ?Sized> YeastSourceRange for &T {
+    fn yeast_source_range(&self, ast: &Ast) -> Option<tree_sitter::Range> {
+        (**self).yeast_source_range(ast)
+    }
+}
 
 pub const CHILD_FIELD: u16 = u16::MAX;
 
@@ -160,6 +251,9 @@ pub struct Ast {
     root: Id,
     nodes: Vec<Node>,
     schema: schema::Schema,
+    /// Original source bytes the tree was parsed from. Used to resolve
+    /// `NodeContent::Range` to text for synthesized literal nodes.
+    source: Vec<u8>,
 }
 
 impl std::fmt::Debug for Ast {
@@ -183,18 +277,90 @@ impl Ast {
         tree: &tree_sitter::Tree,
         language: &tree_sitter::Language,
     ) -> Self {
+        Self::from_tree_with_schema_and_source(schema, tree, language, Vec::new())
+    }
+
+    pub fn from_tree_with_schema_and_source(
+        schema: schema::Schema,
+        tree: &tree_sitter::Tree,
+        language: &tree_sitter::Language,
+        source: Vec<u8>,
+    ) -> Self {
         let mut visitor = visitor::Visitor::new(language.clone());
         visitor.visit(tree);
 
-        visitor.build_with_schema(schema)
+        let mut ast = visitor.build_with_schema(schema);
+        ast.source = source;
+        ast
+    }
+
+    /// Returns the source text for `id`, resolving `NodeContent::Range`
+    /// against the stored source bytes when available.
+    pub fn source_text(&self, id: Id) -> String {
+        let Some(node) = self.get_node(id) else { return String::new(); };
+        let read_range = |range: &tree_sitter::Range| {
+            let start = range.start_byte;
+            let end = range.end_byte;
+            if end <= self.source.len() && start <= end {
+                String::from_utf8_lossy(&self.source[start..end]).into_owned()
+            } else {
+                String::new()
+            }
+        };
+        match &node.content {
+            NodeContent::Range(range) => read_range(range),
+            NodeContent::String(s) => s.to_string(),
+            NodeContent::DynamicString(s) if !s.is_empty() => s.clone(),
+            // Synthesized nodes (from rule transforms) carry an empty
+            // `DynamicString`; resolve them against the inherited source
+            // range so `#{capture}` after a translation still yields the
+            // original source text.
+            NodeContent::DynamicString(_) => match node.source_range {
+                Some(range) => read_range(&range),
+                None => String::new(),
+            },
+        }
     }
 
     pub fn walk(&self) -> AstCursor {
         AstCursor::new(self)
     }
 
+    /// Return all nodes currently allocated in the AST arena.
+    ///
+    /// This includes nodes that are no longer reachable from `get_root()`
+    /// after desugaring rewrites. Use `reachable_node_ids()` for output-level
+    /// validation/traversal semantics.
     pub fn nodes(&self) -> &[Node] {
         &self.nodes
+    }
+
+    /// Return node ids reachable from `get_root()` by following child edges.
+    ///
+    /// This reflects the effective AST after desugaring and excludes orphaned
+    /// arena nodes left behind by rewrite operations.
+    pub fn reachable_node_ids(&self) -> Vec<usize> {
+        let mut reachable = Vec::new();
+        let mut stack = vec![self.root];
+        let mut seen = vec![false; self.nodes.len()];
+
+        while let Some(id) = stack.pop() {
+            if id >= self.nodes.len() || seen[id] {
+                continue;
+            }
+            seen[id] = true;
+            reachable.push(id);
+
+            if let Some(node) = self.get_node(id) {
+                for children in node.fields.values() {
+                    for &child in children {
+                        stack.push(child);
+                    }
+                }
+            }
+        }
+
+        reachable
     }
 
     pub fn get_root(&self) -> Id {
@@ -232,6 +398,15 @@ impl Ast {
         is_named: bool,
         source_range: Option<tree_sitter::Range>,
     ) -> Id {
+        let source_range = match &content {
+            // Parsed nodes already carry an exact source range in their content.
+            NodeContent::Range(_) => source_range,
+            // Synthesized nodes derive location from children when possible,
+            // and fall back to the inherited rule-match range otherwise.
+            _ => self
+                .union_source_range_of_children(&fields)
+                .or(source_range),
+        };
         let id = self.nodes.len();
         self.nodes.push(Node {
             kind,
@@ -247,8 +422,74 @@ impl Ast {
         id
     }
 
+    fn union_source_range_of_children(
+        &self,
+        fields: &BTreeMap<FieldId, Vec<Id>>,
+    ) -> Option<tree_sitter::Range> {
+        let mut start_byte: Option<usize> = None;
+        let mut end_byte: Option<usize> = None;
+        let mut start_point = tree_sitter::Point { row: 0, column: 0 };
+        let mut end_point = tree_sitter::Point { row: 0, column: 0 };
+
+        for child_ids in fields.values() {
+            for &child_id in child_ids {
+                let Some(child) = self.get_node(child_id) else {
+                    continue;
+                };
+
+                let child_start_byte = child.start_byte();
+                let child_end_byte = child.end_byte();
+
+                // Skip children that carry no usable location.
+                if child_start_byte == 0 && child_end_byte == 0 {
+                    continue;
+                }
+
+                match start_byte {
+                    None => {
+                        start_byte = Some(child_start_byte);
+                        start_point = child.start_position();
+                    }
+                    Some(current_start) if child_start_byte < current_start => {
+                        start_byte = Some(child_start_byte);
+                        start_point = child.start_position();
+                    }
+                    _ => {}
+                }
+
+                match end_byte {
+                    None => {
+                        end_byte = Some(child_end_byte);
+                        end_point = child.end_position();
+                    }
+                    Some(current_end) if child_end_byte > current_end => {
+                        end_byte = Some(child_end_byte);
+                        end_point = child.end_position();
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        match (start_byte, end_byte) {
+            (Some(start_byte), Some(end_byte)) => Some(tree_sitter::Range {
+                start_byte,
+                end_byte,
+                start_point,
+                end_point,
+            }),
+            _ => None,
+        }
+    }
+
     pub fn create_named_token(&mut self, kind: &'static str, content: String) -> Id {
         self.create_named_token_with_range(kind, content, None)
+    }
+
+    /// Prepend a child id to the given field of the given node.
+    pub fn prepend_field_child(&mut self, node_id: Id, field_id: FieldId, value_id: Id) {
+        let node = self.nodes.get_mut(node_id).expect("prepend_field_child: invalid node id");
+        node.fields.entry(field_id).or_default().insert(0, value_id);
     }
 
     pub fn create_named_token_with_range(
@@ -427,6 +668,15 @@ impl Node {
             NodeContent::DynamicString(s) => Some(s.to_string()),
         }
     }
+
+    /// Read the child ids stored under a given field, or an empty slice if
+    /// no such field is present on this node.
+    pub fn field_children(&self, field_id: FieldId) -> &[Id] {
+        self.fields
+            .get(&field_id)
+            .map(|v| v.as_slice())
+            .unwrap_or(&[])
+    }
 }
 
 /// The contents of a node is either a range in the original source file,
@@ -493,17 +743,38 @@ impl Rule {
         node: Id,
         fresh: &tree_builder::FreshScope,
     ) -> Result<Option<Vec<Id>>, String> {
+        match self.try_match(ast, node)? {
+            Some(captures) => Ok(Some(self.run_transform(ast, captures, node, fresh))),
+            None => Ok(None),
+        }
+    }
+
+    /// Attempt to match this rule's query against `node`, returning the
+    /// resulting captures on success. Does not invoke the transform.
+    fn try_match(&self, ast: &Ast, node: Id) -> Result<Option<Captures>, String> {
         let mut captures = Captures::new();
         if self.query.do_match(ast, node, &mut captures)? {
-            fresh.next_scope();
-            let source_range = ast.get_node(node).and_then(|n| match n.content {
-                NodeContent::Range(r) => Some(r),
-                _ => n.source_range,
-            });
-            Ok(Some((self.transform)(ast, captures, fresh, source_range)))
+            Ok(Some(captures))
         } else {
             Ok(None)
         }
+    }
+
+    /// Run this rule's transform with the given captures, using `node`'s
+    /// source range as the source range of the produced nodes.
+    fn run_transform(
+        &self,
+        ast: &mut Ast,
+        captures: Captures,
+        node: Id,
+        fresh: &tree_builder::FreshScope,
+    ) -> Vec<Id> {
+        fresh.next_scope();
+        let source_range = ast.get_node(node).and_then(|n| match n.content {
+            NodeContent::Range(r) => Some(r),
+            _ => n.source_range,
+        });
+        (self.transform)(ast, captures, fresh, source_range)
     }
 }
 
@@ -539,17 +810,17 @@ impl<'a> RuleIndex<'a> {
     }
 }
 
-fn apply_rules(
+fn apply_repeating_rules(
     rules: &[Rule],
     ast: &mut Ast,
     id: Id,
     fresh: &tree_builder::FreshScope,
 ) -> Result<Vec<Id>, String> {
     let index = RuleIndex::new(rules);
-    apply_rules_inner(&index, ast, id, fresh, 0, None)
+    apply_repeating_rules_inner(&index, ast, id, fresh, 0, None)
 }
 
-fn apply_rules_inner(
+fn apply_repeating_rules_inner(
     index: &RuleIndex,
     ast: &mut Ast,
     id: Id,
@@ -578,7 +849,7 @@ fn apply_rules_inner(
             let next_skip = if rule.repeated { None } else { Some(rule_ptr) };
             let mut results = Vec::new();
             for node in result_node {
-                results.extend(apply_rules_inner(
+                results.extend(apply_repeating_rules_inner(
                     index,
                     ast,
                     node,
@@ -603,7 +874,7 @@ fn apply_rules_inner(
     for children in fields.values_mut() {
         let mut new_children: Option<Vec<Id>> = None;
         for (i, &child_id) in children.iter().enumerate() {
-            let result = apply_rules_inner(index, ast, child_id, fresh, rewrite_depth, None)?;
+            let result = apply_repeating_rules_inner(index, ast, child_id, fresh, rewrite_depth, None)?;
             let unchanged = result.len() == 1 && result[0] == child_id;
             match (&mut new_children, unchanged) {
                 (None, true) => {} // unchanged so far, no allocation needed
@@ -628,6 +899,76 @@ fn apply_rules_inner(
     Ok(vec![id])
 }
 
+/// Apply rules using `OneShot` semantics: the first matching rule fires on
+/// each visited node, recursion proceeds only through captured nodes (not
+/// through the input node's children directly), and an error is returned if
+/// no rule matches a visited node.
+fn apply_one_shot_rules(
+    rules: &[Rule],
+    ast: &mut Ast,
+    id: Id,
+    fresh: &tree_builder::FreshScope,
+) -> Result<Vec<Id>, String> {
+    let index = RuleIndex::new(rules);
+    apply_one_shot_rules_inner(&index, ast, id, fresh, 0)
+}
+
+fn apply_one_shot_rules_inner(
+    index: &RuleIndex,
+    ast: &mut Ast,
+    id: Id,
+    fresh: &tree_builder::FreshScope,
+    rewrite_depth: usize,
+) -> Result<Vec<Id>, String> {
+
+    if rewrite_depth > MAX_REWRITE_DEPTH {
+        return Err(format!(
+            "Desugaring exceeded maximum rewrite depth ({MAX_REWRITE_DEPTH}). \
+             This likely indicates a non-terminating rule cycle."
+        ));
+    }
+
+    let node_kind = ast.get_node(id).map(|n| n.kind()).unwrap_or("");
+
+    for rule in index.rules_for_kind(node_kind) {
+        if let Some(mut captures) = rule.try_match(ast, id)? {
+            // Recursively translate every captured node before invoking the
+            // transform. The transform's output uses output-schema kinds, so
+            // we must translate captured input-schema nodes to their
+            // output-schema equivalents first.
+            captures.try_map_all_captures(|captured_id| {
+                // Avoid infinite recursion when a capture refers to the root
+                // node of the matched tree (e.g. an `@_` capture on the
+                // pattern root): re-analyzing it would match the same rule
+                // again indefinitely.
+                if captured_id == id {
+                    return Ok(vec![captured_id]);
+                }
+                apply_one_shot_rules_inner(index, ast, captured_id, fresh, rewrite_depth + 1)
+            })?;
+            return Ok(rule.run_transform(ast, captures, id, fresh));
+        }
+    }
+
+    Err(format!(
+        "OneShot: no rule matched node of kind '{node_kind}'"
+    ))
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PhaseKind {
+    /// A node is re-processed until none of the rules in the phase matches,
+    /// albeit a single rule cannot be applied twice in a row unless that rule is also marked as repeating.
+    /// When a node no longer matches any rules, its children are recursively processed (top down).
+    Repeating,
+
+    /// A node is processed by the first matching rule, and the engine panics if no rule matches.
+    /// Rules are then recursively applied to every captured node.
+    /// In practice this is used when translating from one AST schema to another, where every node must be rewritten,
+    /// and it would be a type error to match the rule patterns (based on the input schema) against the output nodes (which conform to the output schema).
+    OneShot,
+}
+
 /// One phase of a desugaring pass: a named bundle of rules that runs to
 /// completion (a full traversal applying its rules) before the next phase
 /// starts. Rules within a phase compete for matches as usual; rules in
@@ -637,13 +978,15 @@ pub struct Phase {
     /// Name used in error messages.
     pub name: String,
     pub rules: Vec<Rule>,
+    pub kind: PhaseKind,
 }
 
 impl Phase {
-    pub fn new(name: impl Into<String>, rules: Vec<Rule>) -> Self {
+    pub fn new(name: impl Into<String>, kind: PhaseKind, rules: Vec<Rule>) -> Self {
         Self {
             name: name.into(),
             rules,
+            kind,
         }
     }
 }
@@ -661,8 +1004,8 @@ impl Phase {
 ///
 /// ```ignore
 /// let config = yeast::DesugaringConfig::new()
-///     .add_phase("cleanup", cleanup_rules)
-///     .add_phase("desugar", desugar_rules)
+///     .add_phase("cleanup", PhaseKind::Repeating, cleanup_rules)
+///     .add_phase("desugar", PhaseKind::Repeating, desugar_rules)
 ///     .with_output_node_types_yaml(yaml);
 /// ```
 #[derive(Default)]
@@ -682,9 +1025,14 @@ impl DesugaringConfig {
         Self::default()
     }
 
-    /// Append a new phase with the given name and rules.
-    pub fn add_phase(mut self, name: impl Into<String>, rules: Vec<Rule>) -> Self {
-        self.phases.push(Phase::new(name, rules));
+    /// Append a new phase with the given name, kind, and rules.
+    pub fn add_phase(
+        mut self,
+        name: impl Into<String>,
+        kind: PhaseKind,
+        rules: Vec<Rule>,
+    ) -> Self {
+        self.phases.push(Phase::new(name, kind, rules));
         self
     }
 
@@ -747,8 +1095,17 @@ impl<'a> Runner<'a> {
         })
     }
 
-    pub fn run_from_tree(&self, tree: &tree_sitter::Tree) -> Result<Ast, String> {
-        let mut ast = Ast::from_tree_with_schema(self.schema.clone(), tree, &self.language);
+    pub fn run_from_tree(
+        &self,
+        tree: &tree_sitter::Tree,
+        source: &[u8],
+    ) -> Result<Ast, String> {
+        let mut ast = Ast::from_tree_with_schema_and_source(
+            self.schema.clone(),
+            tree,
+            &self.language,
+            source.to_vec(),
+        );
         self.run_phases(&mut ast)?;
         Ok(ast)
     }
@@ -761,7 +1118,12 @@ impl<'a> Runner<'a> {
         let tree = parser
             .parse(input, None)
             .ok_or_else(|| "Failed to parse input".to_string())?;
-        let mut ast = Ast::from_tree_with_schema(self.schema.clone(), &tree, &self.language);
+        let mut ast = Ast::from_tree_with_schema_and_source(
+            self.schema.clone(),
+            &tree,
+            &self.language,
+            input.as_bytes().to_vec(),
+        );
         self.run_phases(&mut ast)?;
         Ok(ast)
     }
@@ -773,8 +1135,11 @@ impl<'a> Runner<'a> {
         let fresh = tree_builder::FreshScope::new();
         let mut root = ast.get_root();
         for phase in self.phases {
-            let res = apply_rules(&phase.rules, ast, root, &fresh)
-                .map_err(|e| format!("Phase `{}`: {e}", phase.name))?;
+            let res = match phase.kind {
+                PhaseKind::Repeating => apply_repeating_rules(&phase.rules, ast, root, &fresh),
+                PhaseKind::OneShot => apply_one_shot_rules(&phase.rules, ast, root, &fresh),
+            }
+            .map_err(|e| format!("Phase `{}`: {e}", phase.name))?;
             if res.len() != 1 {
                 return Err(format!(
                     "Phase `{}`: expected exactly one result node, got {}",
