@@ -610,7 +610,7 @@ class InstanceMutatorOperatorCall extends MutatorOperatorCall {
  * }
  * ```
  */
-class CompoundAssignmentOperatorCall extends AssignCallOperation {
+class CompoundAssignmentOperatorCall extends AssignCallExpr {
   CompoundAssignmentOperatorCall() { this.getTarget() instanceof CompoundAssignmentOperator }
 
   override Expr getArgument(int i) { result = this.getChildExpr(i + 1) and i >= 0 }
@@ -763,11 +763,12 @@ class AccessorCall extends Call, QualifiableExpr, @call_access_expr {
  */
 class PropertyCall extends AccessorCall, PropertyAccessExpr {
   override Accessor getReadTarget() {
-    this instanceof AssignableRead and result = this.getProperty().getGetter()
+    this instanceof AssignableRead and result = this.getProperty().getReadTarget()
   }
 
   override Accessor getWriteTarget() {
-    this instanceof AssignableWrite and result = this.getProperty().getSetter()
+    this instanceof AssignableWrite and
+    result = this.getProperty().getWriteTarget()
   }
 
   override Expr getArgument(int i) {
@@ -798,11 +799,12 @@ class PropertyCall extends AccessorCall, PropertyAccessExpr {
  */
 class IndexerCall extends AccessorCall, IndexerAccessExpr {
   override Accessor getReadTarget() {
-    this instanceof AssignableRead and result = this.getIndexer().getGetter()
+    this instanceof AssignableRead and result = this.getIndexer().getReadTarget()
   }
 
   override Accessor getWriteTarget() {
-    this instanceof AssignableWrite and result = this.getIndexer().getSetter()
+    this instanceof AssignableWrite and
+    result = this.getIndexer().getWriteTarget()
   }
 
   override Expr getArgument(int i) {
