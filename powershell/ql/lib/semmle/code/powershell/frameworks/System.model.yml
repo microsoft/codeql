@@ -10,3 +10,9 @@ extensions:
       - ["system.environment!", "Method[getcommandlineargs].ReturnValue", "command-line"]
       - ["system.environment!", "Method[getenvironmentvariable].ReturnValue", "environment"]
       - ["system.environment!", "Method[getenvironmentvariables].ReturnValue", "environment"]
+
+  - addsTo:
+      pack: microsoft/powershell-all
+      extensible: summaryModel
+    data:
+      - ["system.convert!", "Method[frombase64string]", "Argument[0]", "ReturnValue", "taint"]

@@ -1,9 +1,9 @@
 /**
- * @name Use of Binary Formatter deserialization
- * @description Use of Binary Formatter is unsafe
+ * @name Use of BinaryFormatter deserialization API
+ * @description BinaryFormatter deserialization is unsafe even when the input is trusted.
  * @kind problem
- * @problem.severity error
- * @security-severity 8.8
+ * @problem.severity warning
+ * @security-severity 7.5
  * @precision high
  * @id powershell/microsoft/public/binary-formatter-deserialization
  * @tags correctness
@@ -14,5 +14,6 @@
 import powershell
 import semmle.code.powershell.security.UnsafeDeserializationCustomizations::UnsafeDeserialization
 
-from BinaryFormatterDeserializeSink sink
-select sink, "Call to BinaryFormatter.Deserialize"
+from BinaryFormatterDeserializeCall call
+select call,
+  "This call uses BinaryFormatter deserialization. BinaryFormatter is unsafe; if this data can be attacker-controlled, the unsafe-deserialization query reports the data flow."
