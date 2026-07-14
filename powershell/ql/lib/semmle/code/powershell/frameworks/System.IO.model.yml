@@ -39,3 +39,13 @@ extensions:
       - ["system.io.path!", "Method[getfullpath]", "Argument[0]", "ReturnValue", "taint"]
       - ["system.io.memorystream!", "Method[new]", "Argument[0]", "ReturnValue", "taint"]
       - ["system.io.stringreader!", "Method[new]", "Argument[0]", "ReturnValue", "taint"]
+      - ["system.io.file!", "Method[readallbytes]", "Argument[0]", "ReturnValue", "taint"]
+      - ["system.io.file!", "Method[readallbytesasync]", "Argument[0]", "ReturnValue", "taint"]
+      - ["system.io.file!", "Method[appendtext]", "Argument[0]", "ReturnValue", "taint"]
+      - ["system.io.file!", "Method[createtext]", "Argument[0]", "ReturnValue", "taint"]
+      - ["system.io.file!", "Method[readalllines]", "Argument[0]", "ReturnValue", "taint"]
+      - ["system.io.file!", "Method[readalllinesasync]", "Argument[0]", "ReturnValue", "taint"]
+      - ["system.io.file!", "Method[readalltext]", "Argument[0]", "ReturnValue", "taint"]
+      - ["system.io.file!", "Method[readalltextasync]", "Argument[0]", "ReturnValue", "taint"]
+      - ["system.io.fileinfo", "Method[createtext]", "Argument[0]", "ReturnValue", "taint"]
+
