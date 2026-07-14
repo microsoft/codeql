@@ -743,6 +743,8 @@ class FlowSummaryNode extends NodeImpl, TFlowSummaryNode {
 
   override EmptyLocation getLocationImpl() { any() }
 
+  override predicate nodeIsHidden() { any() }
+
   override string toStringImpl() { result = this.getSummaryNode().toString() }
 }
 
