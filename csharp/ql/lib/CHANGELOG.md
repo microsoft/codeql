@@ -1,3 +1,26 @@
+## 7.0.0
+
+### Breaking Changes
+
+* Renamed types related to *operation* expressions. The QL classes `BinaryArithmeticOperation`, `BinaryBitwiseOperation`, and `BinaryLogicalOperation` now include compound assignments; for example, `BinaryArithmeticOperation` now includes `a += b`.
+
+### Major Analysis Improvements
+
+* Added Razor Page handler method parameters (e.g., `OnGet`, `OnPost`, `OnPostAsync`) as remote flow sources, enabling security queries such as `cs/sql-injection` to detect vulnerabilities in `PageModel` subclasses.
+
+### Minor Analysis Improvements
+
+* Improved property and indexer call target resolution for partially overridden properties and indexers.
+* Improved extraction of range-access expressions on spans and strings (for example, `a[0..3]`). These expressions are now extracted as `Slice` (span) or `Substring` (string) calls.
+* Improved call target resolution for ref-return properties and indexers.
+
+## 6.0.2
+
+### Minor Analysis Improvements
+
+* Full support for C# 14 / .NET 10. All new language features are now supported by the extractor. The QL library and data flow analysis now support the new C# 14 language constructs and include generated Models as Data (MaD) models for the .NET 10 runtime.
+* C# 14: Added support for user-defined instance increment/decrement operators.
+
 ## 6.0.1
 
 No user-facing changes.
