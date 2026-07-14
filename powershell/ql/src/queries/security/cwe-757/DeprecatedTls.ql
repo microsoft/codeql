@@ -99,14 +99,7 @@ predicate enablingExpr(Expr outer, SecurityProtocol inner) {
     enablingExpr(attributed.getExpr(), inner)
   )
   or
-  exists(BitwiseOrExpr bitwiseOr |
-    outer = bitwiseOr and
-    (
-      enablingExpr(bitwiseOr.getLeft(), inner)
-      or
-      enablingExpr(bitwiseOr.getRight(), inner)
-    )
-  )
+  enablingExpr(outer.(BitwiseOrExpr).getAnOperand(), inner)
 }
 
 /**
