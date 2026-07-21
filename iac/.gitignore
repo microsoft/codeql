@@ -1,0 +1,19 @@
+target
+extractor-pack
+.vscode/launch.json
+.cache
+.codeql
+/codeql
+ql/test/**/*.testproj
+ql/test/**/*.actual
+ql/test/**/CONSISTENCY
+work
+testing/
+
+*.sarif
+*.tar.gz
+
+coverage.csv
+
+# Ignore MacOS files
+.DS_Store

@@ -1,0 +1,13 @@
+---
+library: true
+warnOnImplicitThis: false
+name: advanced-security/iac-all
+version: 0.5.1
+dependencies:
+  codeql/util: ^1.0.12
+  codeql/yaml: ^1.0.25
+dbscheme: iac.dbscheme
+extractor: iac
+upgrades: upgrades
+groups:
+ - iac

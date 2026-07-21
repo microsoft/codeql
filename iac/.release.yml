@@ -1,0 +1,35 @@
+name: codeql-extractor-iac
+repository: advanced-security/codeql-extractor-iac
+version: 0.5.1
+
+ecosystems:
+  - "Docs"
+  - "CodeQL"
+
+exclude:
+  - "target/"
+  - "extractor-pack/"
+
+locations:
+  - name: "CodeQL Extractor"
+    paths:
+      - "codeql-extractor.yml"
+    exclude:
+      - ".codeql"
+    patterns:
+      - '\nversion:\s*{version}'
+  - name: "Cargo"
+    exclude:
+      - "/target/"
+      - "/action-template/"
+      - "/examples/"
+    paths:
+      - "*/Cargo.toml"
+    patterns:
+      - '\nversion\s*=\s*"{version}"'
+  - name: "Extractor Action"
+    paths:
+      - "action.yml"
+    patterns:
+      - "{repository}@v{version}"
+      - "advanced-security/iac-queries@{version}"

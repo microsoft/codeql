@@ -1,0 +1,17 @@
+name: QL-for-QL
+
+on:
+  push:
+    branches: ["main", "develop"]
+  pull_request:
+    branches: ["main", "develop"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  ql:
+    uses: advanced-security/reusable-workflows/.github/workflows/codeql-ql.yml@main
+    secrets: inherit
