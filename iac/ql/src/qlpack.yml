@@ -6,4 +6,5 @@ groups:
 dependencies:
   advanced-security/iac-all: ${workspace}
 extractor: iac
+warnOnImplicitThis: true
 defaultSuiteFile: codeql-suites/iac-code-scanning.qls

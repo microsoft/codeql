@@ -1,6 +1,6 @@
 ---
 library: true
-warnOnImplicitThis: false
+warnOnImplicitThis: true
 name: advanced-security/iac-all
 version: 0.5.1
 dependencies:
