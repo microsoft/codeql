@@ -85,19 +85,34 @@ $input17 = Read-Host "Enter packed data" # $ Source
 $bytes17 = [Convert]::FromBase64String($input17)
 [MemoryPack.MemoryPackSerializer]::Deserialize($bytes17) # $ Alert
 
-# Test 18: self-serialized BinaryFormatter data should not be reported by the taint-based query
+# Test 18: Import-Clixml with untrusted path
+$input18 = Read-Host "Enter file path" # $ Source
+$obj18 = Import-Clixml -Path $input18 # $ Alert
+
+# Test 19: Import-Clixml with untrusted LiteralPath
+$input19 = Read-Host "Enter literal path" # $ Source
+$obj19 = Import-Clixml -LiteralPath $input19 # $ Alert
+
+# Test 20: ConvertFrom-CliXml with untrusted input (pipeline)
+$input20 = Read-Host "Enter CLIXML string" # $ Source
+$obj20 = $input20 | ConvertFrom-CliXml # $ Alert
+
+# Test 21: Import-Clixml with safe (hardcoded) path should not be flagged
+$safeObj = Import-Clixml -Path "C:\safe\config.xml"
+
+# Test 22: self-serialized BinaryFormatter data should not be reported by the taint-based query
 $safeFormatter = New-Object System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
 $safeStream = [System.IO.MemoryStream]::new()
 $safeFormatter.Serialize($safeStream, [PSCustomObject]@{ Name = "local" })
 $safeStream.Position = 0
 $safeObj = $safeFormatter.Deserialize($safeStream)
 
-# Test 19: file-controlled bytes deserialized with BinaryFormatter
+# Test 23: file-controlled bytes deserialized with BinaryFormatter
 $fileBytes = [System.IO.File]::ReadAllBytes("payload.bin") # $ Source
 $fileStream = [System.IO.MemoryStream]::new($fileBytes)
 $fileObj = $safeFormatter.Deserialize($fileStream) # $ Alert
 
-# Test 20: remote-controlled bytes deserialized with BinaryFormatter
+# Test 24: remote-controlled bytes deserialized with BinaryFormatter
 $remoteBytes = [System.Net.WebClient]::new().DownloadData("https://example.com/payload.bin") # $ Source
 $remoteStream = [System.IO.MemoryStream]::new($remoteBytes)
 $remoteObj = $safeFormatter.Deserialize($remoteStream) # $ Alert
