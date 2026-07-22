@@ -1,3 +1,36 @@
+## 11.0.0
+
+### Breaking Changes
+
+* Removed the deprecated `overrideReturnsNull` predicate from `Options.qll`. Use `CustomOptions.overrideReturnsNull` instead.
+* Removed the deprecated `returnsNull` predicate from `Options.qll`. Use `CustomOptions.returnsNull` instead.
+* Removed the deprecated `exits` predicate from `Options.qll`. Use `CustomOptions.exits` instead.
+* Removed the deprecated `exprExits` predicate from `Options.qll`. Use `CustomOptions.exprExits` instead.
+* Removed the deprecated `alwaysCheckReturnValue` predicate from `Options.qll`. Use `CustomOptions.alwaysCheckReturnValue` instead.
+* Removed the deprecated `okToIgnoreReturnValue` predicate from `Options.qll`. Use `CustomOptions.okToIgnoreReturnValue` instead.
+* Removed the deprecated `semmle.code.cpp.Member`. Import `semmle.code.cpp.Element` and/or `semmle.code.cpp.Type` directly.
+* Removed the deprecated `UnknownDefaultLocation` class. Use `UnknownLocation` instead.
+* Removed the deprecated `UnknownExprLocation` class. Use `UnknownLocation` instead.
+* Removed the deprecated `UnknownStmtLocation` class. Use `UnknownLocation` instead.
+* Removed the deprecated `TemplateParameter` class. Use `TypeTemplateParameter` instead.
+* Support for class resolution across link targets has been removed for databases which were created with CodeQL versions before 1.23.0.
+
+## 10.2.0
+
+### Deprecated APIs
+
+* The `UsingAliasTypedefType` class has been deprecated. Use `TypeAliasType` instead.
+
+### New Features
+
+* Added a `getOriginalTemplate` predicate to `TemplateClass`, `TemplateFunction`, `TemplateVariable`, and `AliasTemplateType`, which yields the class member template the template was generated from. The predicates only have results for templates that are members of class template instantiations.
+* Added `AliasTemplateType` and `AliasTemplateInstantiationType` classes, representing C++ alias templates and their instantiations.
+
+### Minor Analysis Improvements
+
+* Added flow source models for `scanf_s` and related functions.
+* Added a `Call` column to `LocalFlowSourceFunction::hasLocalFlowSource` and `RemoteFlowSourceFunction::hasRemoteFlowSource`. The old predicates without a `Call` column continue to be supported.
+
 ## 10.1.1
 
 ### Minor Analysis Improvements

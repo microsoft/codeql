@@ -1,0 +1,26 @@
+name: "iac"
+display_name: "IAC"
+version: 0.5.1
+column_kind: "utf8"
+legacy_qltest_extraction: true
+github_api_languages:
+  - HCL
+  - Docker
+scc_languages:
+  - HCL
+  - Docker
+
+# File types
+file_types:
+  - name: hcl
+    display_name: HCL
+    extensions:
+      - .tf
+      - .tfvars
+      - .hcl
+
+  - name: dockerfile
+    display_name: Dockerfile
+    extensions:
+      - .Dockerfile
+      - .Containerfile

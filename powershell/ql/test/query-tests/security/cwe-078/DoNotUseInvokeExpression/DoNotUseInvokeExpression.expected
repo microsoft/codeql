@@ -1,1 +1,2 @@
-| test.ps1:2:1:2:26 | Call to invoke-expression | Do not use Invoke-Expression. It is a command injection risk. |
+| test.ps1:2:1:2:26 | Call to invoke-expression | Prefer direct command invocation, splatting, or the call operator over Invoke-Expression. |
+| test.ps1:4:1:4:28 | Call to invoke-expression | Prefer direct command invocation, splatting, or the call operator over Invoke-Expression. |
