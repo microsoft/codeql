@@ -1,16 +1,18 @@
 /**
  * @name Use of Invoke-Expression
- * @description Do not use Invoke-Expression
+ * @description Avoid using Invoke-Expression when safer command invocation is possible.
  * @kind problem
- * @problem.severity error
- * @security-severity 9.8
- * @precision high
+ * @problem.severity recommendation
+ * @precision medium
  * @id powershell/microsoft/public/do-not-use-invoke-expression
- * @tags security
+ * @tags quality
+ *       maintainability
+ *       correctness
  */
-import powershell
-import semmle.code.powershell.dataflow.DataFlow
 
-from CmdCall call 
+import powershell
+
+from CmdCall call
 where call.matchesName("Invoke-Expression")
-select call, "Do not use Invoke-Expression. It is a command injection risk."
+select call,
+  "Prefer direct command invocation, splatting, or the call operator over Invoke-Expression."

@@ -743,6 +743,8 @@ class FlowSummaryNode extends NodeImpl, TFlowSummaryNode {
 
   override EmptyLocation getLocationImpl() { any() }
 
+  override predicate nodeIsHidden() { any() }
+
   override string toStringImpl() { result = this.getSummaryNode().toString() }
 }
 
@@ -1083,11 +1085,8 @@ predicate readStep(Node node1, ContentSet c, Node node2) {
   )
   or
   // Read from a collection into a `foreach` loop
-  exists(
-    CfgNodes::StmtNodes::ForEachStmtCfgNode forEach, Content::KnownElementContent ec, BasicBlock bb,
-    int i
-  |
-    c.isKnownOrUnknownElement(ec) and
+  c.isAnyPositional() and
+  exists(CfgNodes::StmtNodes::ForEachStmtCfgNode forEach, BasicBlock bb, int i |
     node1.asExpr() = forEach.getIterableExpr() and
     bb.getNode(i) = forEach.getVarAccess() and
     node2.asDefinition().definesAt(_, bb, i)

@@ -1,0 +1,120 @@
+/**
+ * @name Use of deprecated TLS/SSL version
+ * @description Using deprecated TLS/SSL versions (SSL3, TLS 1.0, TLS 1.1) weakens transport security.
+ * @kind problem
+ * @problem.severity error
+ * @security-severity 7.5
+ * @precision high
+ * @id powershell/deprecated-tls
+ * @tags security
+ *       external/cwe/cwe-327
+ *       external/cwe/cwe-757
+ */
+
+import powershell
+import semmle.code.powershell.ApiGraphs
+import semmle.code.powershell.dataflow.DataFlow
+
+/**
+ * Gets the human-readable name for a deprecated protocol.
+ */
+bindingset[protocolName]
+string getProtocolDisplayName(string protocolName) {
+  protocolName = "ssl3" and result = "SSL 3.0"
+  or
+  protocolName = "tls" and result = "TLS 1.0"
+  or
+  protocolName = "tls11" and result = "TLS 1.1"
+}
+
+abstract class SecurityProtocol extends Expr {
+  abstract string getProtocolName();
+}
+
+/**
+ * A reference to a deprecated SecurityProtocolType enum value, e.g.
+ * [Net.SecurityProtocolType]::Ssl3
+ */
+class DeprecatedSecurityProtocolType extends SecurityProtocol {
+  string protocolName;
+
+  DeprecatedSecurityProtocolType() {
+    exists(API::Node node |
+      (
+        node =
+          API::getTopLevelMember("system")
+              .getMember("net")
+              .getMember("securityprotocoltype")
+              .getMember(protocolName)
+        or
+        node =
+          API::getTopLevelMember("net")
+              .getMember("securityprotocoltype")
+              .getMember(protocolName)
+      ) and
+      this = node.asSource().asExpr().getExpr()
+    )
+  }
+
+  override string getProtocolName() { result = protocolName }
+}
+
+/**
+ * A reference to a deprecated SslProtocols enum value, e.g.
+ * [System.Security.Authentication.SslProtocols]::Tls
+ */
+class DeprecatedSslProtocols extends SecurityProtocol {
+  string protocolName;
+
+  DeprecatedSslProtocols() {
+    exists(API::Node node |
+      node =
+        API::getTopLevelMember("system")
+            .getMember("security")
+            .getMember("authentication")
+            .getMember("sslprotocols")
+            .getMember(protocolName) and
+      this = node.asSource().asExpr().getExpr()
+    )
+  }
+
+  override string getProtocolName() { result = protocolName }
+}
+
+/**
+ * Holds if `outer` uses `inner` as part of an expression that enables protocols.
+ * This intentionally follows only transparent wrappers and `-bor`, so values used under
+ * masking expressions such as `-band (-bnot ...)` are not treated as enabling use.
+ */
+predicate enablingExpr(Expr outer, SecurityProtocol inner) {
+  outer = inner
+  or
+  exists(ParenExpr p |
+    outer = p and
+    enablingExpr(p.getExpr(), inner)
+  )
+  or
+  exists(AttributedExprBase attributed |
+    outer = attributed and
+    enablingExpr(attributed.getExpr(), inner)
+  )
+  or
+  enablingExpr(outer.(BitwiseOrExpr).getAnOperand(), inner)
+}
+
+/**
+ * Holds if the deprecated protocol is assigned or bitwise-ORed into a value, rather than
+ * negated or masked out of an existing protocol set.
+ */
+predicate isEnablingUse(SecurityProtocol sp) {
+  exists(AssignStmt assign | enablingExpr(assign.getRightHandSide(), sp))
+}
+
+from SecurityProtocol sp, string protocolName
+where
+  protocolName = sp.getProtocolName() and
+  protocolName = ["ssl3", "tls", "tls11"] and
+  isEnablingUse(sp)
+select sp,
+  "Use of deprecated protocol " + getProtocolDisplayName(protocolName) +
+    ". Use TLS 1.2 or TLS 1.3 instead."

@@ -1,5 +1,5 @@
 name: codeql/csharp-all
-version: 5.4.11
+version: 7.0.0
 groups: csharp
 dbscheme: semmlecode.csharp.dbscheme
 extractor: csharp
@@ -10,6 +10,7 @@ dependencies:
   codeql/dataflow: ${workspace}
   codeql/dataflowstack: ${workspace}
   codeql/mad: ${workspace}
+  codeql/rangeanalysis: ${workspace}
   codeql/ssa: ${workspace}
   codeql/threat-models: ${workspace}
   codeql/tutorial: ${workspace}
@@ -17,6 +18,6 @@ dependencies:
   codeql/xml: ${workspace}
 dataExtensions:
   - ext/*.model.yml
-  - ext/generated/*.model.yml
+  - ext/generated/**/*.model.yml
 warnOnImplicitThis: true
 compileForOverlayEval: true

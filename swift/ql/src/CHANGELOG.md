@@ -1,3 +1,31 @@
+## 1.3.5
+
+### Minor Analysis Improvements
+
+* Fixed an issue where common usage patterns for `CryptoKit` weren't being recognized as hashing sinks for the `swift/weak-sensitive-data-hashing` and `swift/weak-password-hashing` queries. These queries may find additional results after this change.
+
+## 1.3.4
+
+No user-facing changes.
+
+## 1.3.3
+
+No user-facing changes.
+
+## 1.3.2
+
+No user-facing changes.
+
+## 1.3.1
+
+No user-facing changes.
+
+## 1.3.0
+
+### Query Metadata Changes
+
+* The `@security-severity` metadata of `swift/unsafe-webview-fetch` has been increased from 6.1 (medium) to 7.8 (high).
+
 ## 1.2.20
 
 No user-facing changes.

@@ -98,7 +98,7 @@ module Transform<InstructionSig Input> {
 
       Input::Function getStaticTarget(InstructionTag tag);
 
-      predicate hasJumpCondition(InstructionTag tag, Opcode::ConditionKind kind);
+      predicate hasJumpCondition(InstructionTag tag, Opcode::BinaryConditionKind kind);
 
       string toString();
 
@@ -184,6 +184,9 @@ module Transform<InstructionSig Input> {
       Type getDeclaringType() { result = super.getDeclaringType() }
 
       predicate isPublic() { super.isPublic() }
+
+      /** Gets the parenthesized parameter type signature, e.g. `(System.String,System.Int32)`. */
+      string getParamSignature() { result = super.getParamSignature() }
     }
 
     class Type instanceof Input::Type {
@@ -583,7 +586,7 @@ module Transform<InstructionSig Input> {
     class CJumpInstruction extends Instruction {
       CJumpInstruction() { this.getOpcode() instanceof Opcode::CJump }
 
-      Opcode::ConditionKind getKind() {
+      Opcode::BinaryConditionKind getKind() {
         exists(Input::CJumpInstruction cjump |
           this = TOldInstruction(cjump) and
           result = cjump.getKind()
@@ -595,7 +598,7 @@ module Transform<InstructionSig Input> {
         )
       }
 
-      override string getImmediateValue() { result = Opcode::stringOfConditionKind(this.getKind()) }
+      override string getImmediateValue() { result = Opcode::stringOfBinaryConditionKind(this.getKind()) }
 
       ConditionOperand getConditionOperand() { result = this.getAnOperand() }
 
@@ -728,6 +731,14 @@ module Transform<InstructionSig Input> {
         exists(Input::ExternalRefInstruction extRef |
           this = TOldInstruction(extRef) and
           result = extRef.getExternalName()
+        )
+      }
+
+      /** Gets the parenthesized parameter type signature, e.g. `(System.String,System.Int32)`. */
+      string getExternalParamSignature() {
+        exists(Input::ExternalRefInstruction extRef |
+          this = TOldInstruction(extRef) and
+          result = extRef.getExternalParamSignature()
         )
       }
     }

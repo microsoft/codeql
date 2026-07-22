@@ -1,5 +1,5 @@
 name: codeql/java-all
-version: 9.0.2
+version: 9.2.0
 groups: java
 dbscheme: config/semmlecode.dbscheme
 extractor: java
@@ -21,7 +21,7 @@ dependencies:
   codeql/xml: ${workspace}
 dataExtensions:
   - ext/*.model.yml
-  - ext/generated/*.model.yml
+  - ext/generated/**/*.model.yml
   - ext/experimental/*.model.yml
 warnOnImplicitThis: true
 compileForOverlayEval: true

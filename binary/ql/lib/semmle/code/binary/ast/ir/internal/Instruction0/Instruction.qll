@@ -112,9 +112,9 @@ class ConstInstruction extends Instruction {
 class CJumpInstruction extends Instruction {
   override Opcode::CJump opcode;
 
-  Opcode::ConditionKind getKind() { te.hasJumpCondition(tag, result) }
+  Opcode::BinaryConditionKind getKind() { te.hasJumpCondition(tag, result) }
 
-  override string getImmediateValue() { result = Opcode::stringOfConditionKind(this.getKind()) }
+  override string getImmediateValue() { result = Opcode::stringOfBinaryConditionKind(this.getKind()) }
 
   ConditionOperand getConditionOperand() { result = this.getAnOperand() }
 
@@ -175,6 +175,9 @@ class ExternalRefInstruction extends Instruction {
   override Opcode::ExternalRef opcode;
 
   string getExternalName() { result = te.getExternalName(tag) }
+
+  /** Gets the parenthesized parameter type signature, e.g. `(System.String,System.Int32)`. */
+  string getExternalParamSignature() { result = te.getExternalParamSignature(tag) }
 
   final override string getImmediateValue() { result = this.getExternalName() }
 }
