@@ -24,13 +24,13 @@ edges
 | test.ps1:4:1:4:7 | stream | test.ps1:5:31:5:37 | stream | provenance |  |
 | test.ps1:4:11:4:86 | Call to new | test.ps1:4:1:4:7 | stream | provenance |  |
 | test.ps1:4:41:4:85 | Call to frombase64string | test.ps1:4:11:4:86 | Call to new | provenance | MaD:104 |
-| test.ps1:4:69:4:84 | untrustedBase64 | test.ps1:4:41:4:85 | Call to frombase64string | provenance | MaD:141 |
+| test.ps1:4:69:4:84 | untrustedBase64 | test.ps1:4:41:4:85 | Call to frombase64string | provenance | MaD:142 |
 | test.ps1:8:1:8:7 | input2 | test.ps1:10:70:10:76 | input2 | provenance |  |
 | test.ps1:8:11:8:32 | Call to read-host | test.ps1:8:1:8:7 | input2 | provenance | Src:MaD:0  |
 | test.ps1:10:1:10:8 | stream2 | test.ps1:11:39:11:46 | stream2 | provenance |  |
 | test.ps1:10:12:10:78 | Call to new | test.ps1:10:1:10:8 | stream2 | provenance |  |
 | test.ps1:10:42:10:77 | Call to frombase64string | test.ps1:10:12:10:78 | Call to new | provenance | MaD:104 |
-| test.ps1:10:70:10:76 | input2 | test.ps1:10:42:10:77 | Call to frombase64string | provenance | MaD:141 |
+| test.ps1:10:70:10:76 | input2 | test.ps1:10:42:10:77 | Call to frombase64string | provenance | MaD:142 |
 | test.ps1:14:1:14:7 | input3 | test.ps1:16:80:16:86 | input3 | provenance |  |
 | test.ps1:14:11:14:37 | Call to read-host | test.ps1:14:1:14:7 | input3 | provenance | Src:MaD:0  |
 | test.ps1:16:1:16:8 | stream3 | test.ps1:17:36:17:43 | stream3 | provenance |  |
@@ -79,14 +79,14 @@ edges
 | test.ps1:75:1:75:9 | stream15 | test.ps1:76:49:76:57 | stream15 | provenance |  |
 | test.ps1:75:13:75:80 | Call to new | test.ps1:75:1:75:9 | stream15 | provenance |  |
 | test.ps1:75:43:75:79 | Call to frombase64string | test.ps1:75:13:75:80 | Call to new | provenance | MaD:104 |
-| test.ps1:75:71:75:78 | input15 | test.ps1:75:43:75:79 | Call to frombase64string | provenance | MaD:141 |
+| test.ps1:75:71:75:78 | input15 | test.ps1:75:43:75:79 | Call to frombase64string | provenance | MaD:142 |
 | test.ps1:79:1:79:8 | input16 | test.ps1:81:40:81:47 | input16 | provenance |  |
 | test.ps1:79:12:79:33 | Call to read-host | test.ps1:79:1:79:8 | input16 | provenance | Src:MaD:0  |
 | test.ps1:84:1:84:8 | input17 | test.ps1:85:40:85:47 | input17 | provenance |  |
 | test.ps1:84:12:84:40 | Call to read-host | test.ps1:84:1:84:8 | input17 | provenance | Src:MaD:0  |
 | test.ps1:85:1:85:8 | bytes17 | test.ps1:86:48:86:55 | bytes17 | provenance |  |
 | test.ps1:85:12:85:48 | Call to frombase64string | test.ps1:85:1:85:8 | bytes17 | provenance |  |
-| test.ps1:85:40:85:47 | input17 | test.ps1:85:12:85:48 | Call to frombase64string | provenance | MaD:141 |
+| test.ps1:85:40:85:47 | input17 | test.ps1:85:12:85:48 | Call to frombase64string | provenance | MaD:142 |
 | test.ps1:96:1:96:10 | fileBytes | test.ps1:97:45:97:54 | fileBytes | provenance |  |
 | test.ps1:96:14:96:58 | Call to readallbytes | test.ps1:96:1:96:10 | fileBytes | provenance | Src:MaD:83  |
 | test.ps1:97:1:97:11 | fileStream | test.ps1:98:39:98:49 | fileStream | provenance |  |
