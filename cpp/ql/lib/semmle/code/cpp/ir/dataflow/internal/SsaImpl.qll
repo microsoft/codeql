@@ -1439,6 +1439,12 @@ class Definition extends SsaImpl::Definition {
     )
   }
 
+  Parameter asParameter() {
+    this.getIndirectionIndex() = 0 and
+    getDefImpl(this).getValue().asInstruction().(InitializeParameterInstruction).getParameter() =
+      result
+  }
+
   /**
    * Holds if this definition defines the parameter `p` upon entry into the
    * enclosing function.
