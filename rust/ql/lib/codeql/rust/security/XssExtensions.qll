@@ -34,8 +34,15 @@ module Xss {
 
   /**
    * An active threat-model source, considered as a flow source.
+   *
+   * Environment variables are excluded: they hold trusted deployment
+   * configuration (for example the service's own hostname or public base URL,
+   * set from an environment variable at startup) rather than per-request,
+   * attacker-controlled input, so they are not a meaningful source for XSS.
    */
-  private class ActiveThreatModelSourceAsSource extends Source, ActiveThreatModelSource { }
+  private class ActiveThreatModelSourceAsSource extends Source, ActiveThreatModelSource {
+    ActiveThreatModelSourceAsSource() { not this.getThreatModel() = "environment" }
+  }
 
   /**
    * A sink for XSS from model data.
