@@ -1,10 +1,10 @@
-name: advanced-security/iac-queries
+name: codeql/iac-queries
 version: 0.5.1
 groups: 
   - iac
   - queries
 dependencies:
-  advanced-security/iac-all: ${workspace}
+  codeql/iac-all: ${workspace}
 extractor: iac
 warnOnImplicitThis: true
 defaultSuiteFile: codeql-suites/iac-code-scanning.qls
