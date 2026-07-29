@@ -1,0 +1,17 @@
+# Opt-in model pack holding the bulk of the generated .NET framework type models for
+# PowerShell analysis. These were split out of `microsoft/powershell-all` so that the
+# default (MRVA) query pack stays small enough to submit inline to the variant-analysis
+# API. The security-relevant core framework models remain in `microsoft/powershell-all`.
+#
+# This pack is applied when extension packs are enabled (e.g. the VS Code setting
+# `codeQL.runningQueries.useExtensionPacks: all`), and is not part of the default query
+# pack dependency closure, so it is not bundled into MRVA submissions by default.
+name: microsoft/powershell-frameworks-generated
+version: 0.0.1
+library: true
+warnOnImplicitThis: true
+extensionTargets:
+  microsoft/powershell-all: "*"
+dataExtensions:
+  - ext/**/*.model.yml
+  - ext/**/*.typemodel.yml
