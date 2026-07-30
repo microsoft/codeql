@@ -1,0 +1,2 @@
+| storage.tf:10:12:10:47 | mybadstorage.blob.core.windows.net | Custom domain value 'mybadstorage.blob.core.windows.net' points to a blob.core.windows.net endpoint and may be vulnerable to subdomain takeover. |
+| storage.tf:23:17:23:50 | oldaccount.blob.core.windows.net | Custom domain value 'oldaccount.blob.core.windows.net' points to a blob.core.windows.net endpoint and may be vulnerable to subdomain takeover. |

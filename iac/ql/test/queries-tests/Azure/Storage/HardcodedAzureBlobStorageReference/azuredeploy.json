@@ -1,0 +1,43 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "resources": [
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2021-02-01",
+      "name": "myWebApp",
+      "properties": {
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "STORAGE_URL",
+              "value": "https://danglingaccount.blob.core.windows.net/assets"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2021-07-01",
+      "name": "myVm/customScript",
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "settings": {
+          "fileUris": [
+            "https://abandonedscripts.blob.core.windows.net/scripts/install.ps1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-08-01",
+      "name": "goodStorageAccount",
+      "properties": {
+        "accessTier": "Hot"
+      }
+    }
+  ]
+}

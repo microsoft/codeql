@@ -1,0 +1,28 @@
+# Helm chart values with hardcoded Azure Blob Storage references
+
+image:
+  repository: myregistry.azurecr.io/myapp
+  tag: "1.0.0"
+
+config:
+  # BAD: Hardcoded blob storage URL for application assets
+  assetsUrl: "https://danglingassets.blob.core.windows.net/static" # $Alert[iac/azure/hardcoded-blob-storage-reference]
+
+  # BAD: Hardcoded blob storage URL for backups
+  backupEndpoint: "https://oldbackups.blob.core.windows.net/archive/db.bak" # $Alert[iac/azure/hardcoded-blob-storage-reference]
+
+initContainers:
+  - name: fetch-scripts
+    image: busybox
+    command:
+      - wget
+      # BAD: Hardcoded blob storage URL in an init container command
+      - "https://abandonedscripts.blob.core.windows.net/scripts/setup.sh" # $Alert[iac/azure/hardcoded-blob-storage-reference]
+
+# GOOD: Using a templated value instead of a hardcoded blob endpoint
+storage:
+  endpoint: "{{ .Values.global.storageEndpoint }}"
+
+# GOOD: A non-blob Azure endpoint is not flagged
+telemetry:
+  ingestionUrl: "https://myworkspace.ods.opinsights.azure.com/api/logs"
