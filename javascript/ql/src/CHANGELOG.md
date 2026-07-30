@@ -1,3 +1,11 @@
+## 2.4.2
+
+No user-facing changes.
+
+## 2.4.1
+
+No user-facing changes.
+
 ## 2.4.0
 
 ### New Queries
