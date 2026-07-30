@@ -12,15 +12,15 @@ namespace ZipSlip
         {
             foreach (var entry in archive.Entries)
             {
-                string fullPath_relative = Path.GetFullPath(entry.FullName);
+                string fullPath_relative = Path.GetFullPath(entry.FullName); // $ Alert=r1
                 string filename_filenameOnly = Path.GetFileName(entry.FullName);
                 string filename_noPathTraversal = entry.Name;
-                string file_badDirectoryTraversal = entry.FullName;
+                string file_badDirectoryTraversal = entry.FullName; // $ Alert=r2
                 if (!string.IsNullOrEmpty(file_badDirectoryTraversal))
                 {
                     // BAD
                     string destFileName = Path.Combine(destDirectory, file_badDirectoryTraversal);
-                    entry.ExtractToFile(destFileName, true);
+                    entry.ExtractToFile(destFileName, true); // $ Sink=r2
 
                     // GOOD
                     string sanitizedFileName = Path.Combine(destDirectory, filename_filenameOnly);
@@ -28,7 +28,7 @@ namespace ZipSlip
 
                     // BAD
                     string destFilePath = Path.Combine(destDirectory, fullPath_relative);
-                    entry.ExtractToFile(destFilePath, true);
+                    entry.ExtractToFile(destFilePath, true); // $ Sink=r1
 
                     unzipWrapperProtected(destDirectory, entry);
 
@@ -36,7 +36,7 @@ namespace ZipSlip
                     if (destFilePath_notCanonicalized.StartsWith(destDirectory)){
                         // BAD: no canonicalization has been applied. Directory traversal characters
                         // could still be present ie C:\some\dir\..\..\abc.exe
-                        entry.ExtractToFile(destFilePath_notCanonicalized, true);
+                        entry.ExtractToFile(destFilePath_notCanonicalized, true); // $ Sink=r1
                     }
 
                     string destFilePath_fullyCanonicalized = Path.GetFullPath(destFilePath_notCanonicalized);
@@ -55,11 +55,11 @@ namespace ZipSlip
         }
         
         private static void unzipWrapperProtected(string destinationPath, ZipArchiveEntry entry){
-            string fullpath = Path.Combine(destinationPath, entry.FullName);
+            string fullpath = Path.Combine(destinationPath, entry.FullName); // $ Alert=r3
             string entry_fullpath = Path.GetFullPath(entry.FullName);
 
             // BAD: no canonicalization, no validation/guard.
-            entry.ExtractToFile(fullpath, true);
+            entry.ExtractToFile(fullpath, true); // $ Sink=r3
 
             if(ContainsPath(fullpath, destinationPath, true)){
                 // GOOD - Barrier guard applied (canonicalization applied in ContainsPath)
@@ -68,7 +68,7 @@ namespace ZipSlip
             
             if(!ContainsPath(fullpath, destinationPath, true)){
                 // BAD: Failed guard
-                entry.ExtractToFile(fullpath, true);
+                entry.ExtractToFile(fullpath, true); // $ Sink=r3
                 Console.WriteLine("Path traversal detected");
                 return;
             }
@@ -102,28 +102,28 @@ namespace ZipSlip
                     foreach (ZipArchiveEntry entry in archive.Entries)
                     {
                         // figure out where we are putting the file
-                        String destFilePath = Path.Combine(InstallDir, entry.FullName); // $ Alert=r5 Alert=r6 Alert=r7 Alert=r8
+                        String destFilePath = Path.Combine(InstallDir, entry.FullName); // $ Alert=r4 Alert=r5 Alert=r6 Alert=r7
 
                         Directory.CreateDirectory(Path.GetDirectoryName(destFilePath));
 
                         using (Stream archiveFileStream = entry.Open())
                         {
                             // BAD: writing to file stream
-                            using (Stream tfsFileStream = new FileStream(destFilePath, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None)) // $ Sink=r5 Sink=r6 Sink=r7 Sink=r8
+                            using (Stream tfsFileStream = new FileStream(destFilePath, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None)) // $ Sink=r4 Sink=r5 Sink=r6 Sink=r7
                             {
                                 Console.WriteLine(@"Writing ""{0}""", destFilePath);
                                 archiveFileStream.CopyTo(tfsFileStream);
                             }
 
                             // BAD: can do it this way too
-                            using (Stream tfsFileStream = File.Create(destFilePath)) // $ Sink=r6 Sink=r5 Sink=r7 Sink=r8
+                            using (Stream tfsFileStream = File.Create(destFilePath)) // $ Sink=r5 Sink=r4 Sink=r6 Sink=r7
                             {
                                 Console.WriteLine(@"Writing ""{0}""", destFilePath);
                                 archiveFileStream.CopyTo(tfsFileStream);
                             }
 
                             // BAD: creating stream using fileInfo
-                            var fileInfo = new FileInfo(destFilePath); // $ Sink=r7 Sink=r5 Sink=r6 Sink=r8
+                            var fileInfo = new FileInfo(destFilePath); // $ Sink=r6 Sink=r4 Sink=r5 Sink=r7
                             using (FileStream fs = fileInfo.OpenWrite())
                             {
                                 Console.WriteLine(@"Writing ""{0}""", destFilePath);
@@ -131,7 +131,7 @@ namespace ZipSlip
                             }
 
                             // BAD: creating stream using fileInfo
-                            var fileInfo1 = new FileInfo(destFilePath); // $ Sink=r8 Sink=r5 Sink=r6 Sink=r7
+                            var fileInfo1 = new FileInfo(destFilePath); // $ Sink=r7 Sink=r4 Sink=r5 Sink=r6
                             using (FileStream fs = fileInfo1.Open(FileMode.Create))
                             {
                                 Console.WriteLine(@"Writing ""{0}""", destFilePath);
@@ -302,10 +302,10 @@ namespace ZipSlip
         */
         static void tp_throw_nested_exception_caught(ZipArchive archive, string root){
             foreach (var entry in archive.Entries){
-                string destinationOnDisk = Path.GetFullPath(Path.Combine(root, entry.FullName));
+                string destinationOnDisk = Path.GetFullPath(Path.Combine(root, entry.FullName)); // $ Alert
                 string fullRoot = Path.GetFullPath(root + Path.DirectorySeparatorChar);
                 fp_throw_sanitizer_invalid(destinationOnDisk, fullRoot);
-                entry.ExtractToFile(destinationOnDisk, true);
+                entry.ExtractToFile(destinationOnDisk, true); // $ Sink
             }
         }
     }

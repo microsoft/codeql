@@ -110,14 +110,3 @@ nodes
 | ZipSlipBad.cs:9:59:9:72 | access to property FullName : String | semmle.label | access to property FullName : String |
 | ZipSlipBad.cs:10:29:10:40 | access to local variable destFileName | semmle.label | access to local variable destFileName |
 subpaths
-testFailures
-| ZipSlip.cs:15:61:15:74 | access to property FullName : String | Unexpected result: Alert |
-| ZipSlip.cs:18:53:18:66 | access to property FullName : String | Unexpected result: Alert |
-| ZipSlip.cs:23:41:23:52 | access to local variable destFileName | Unexpected result: Sink |
-| ZipSlip.cs:31:41:31:52 | access to local variable destFilePath | Unexpected result: Sink |
-| ZipSlip.cs:39:45:39:73 | access to local variable destFilePath_notCanonicalized | Unexpected result: Sink |
-| ZipSlip.cs:58:61:58:74 | access to property FullName : String | Unexpected result: Alert |
-| ZipSlip.cs:62:33:62:40 | access to local variable fullpath | Unexpected result: Sink |
-| ZipSlip.cs:71:37:71:44 | access to local variable fullpath | Unexpected result: Sink |
-| ZipSlip.cs:305:80:305:93 | access to property FullName : String | Unexpected result: Alert |
-| ZipSlip.cs:308:37:308:53 | access to local variable destinationOnDisk | Unexpected result: Sink |
