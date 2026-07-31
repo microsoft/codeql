@@ -1,7 +1,7 @@
 import sys
 import os
 
-sys.path.append(os.path.dirname(os.path.dirname((__file__)))) # $ unresolved_call=sys.path.append(..)
+sys.path.append(os.path.dirname(os.path.dirname((__file__)))) # $ unresolved_call=sys.path.append(..) unresolved_call=os.path.dirname(..) unresolved_call=os.path.dirname(..)
 from testlib import expects
 
 # These are defined so that we can evaluate the test code.
