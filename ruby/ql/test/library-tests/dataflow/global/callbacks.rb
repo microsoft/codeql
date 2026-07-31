@@ -26,4 +26,4 @@ def apply_block_wrap (x, &block)
 end
 
 apply_block_wrap(taint(2)) { |x| sink(x) } # $ hasValueFlow=2
-apply_block_wrap("safe") { |x| sink(x) }
+apply_block_wrap("safe") { |x| sink(x) } # $ SPURIOUS: hasValueFlow=2

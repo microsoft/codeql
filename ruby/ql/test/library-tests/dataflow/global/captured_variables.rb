@@ -84,7 +84,7 @@ sink(foo.get_field) # $ hasValueFlow=5
 
 y = taint(6)
 fn = -> {
-    sink(y) # $ hasValueFlow=6
+    sink(y) # $ hasValueFlow=6 $ SPURIOUS: hasValueFlow=7
     y = taint(7)
 }
 fn.call
@@ -109,7 +109,7 @@ def capture_nested
     x = taint(10)
     middle = -> {
         inner = -> {
-            sink x # $ hasValueFlow=10
+            sink x # $ hasValueFlow=10 $ SPURIOUS: hasValueFlow=11
             x = taint(11)
         }
         inner.call
