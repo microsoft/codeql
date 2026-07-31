@@ -4877,6 +4877,42 @@ subpaths
 | array_flow.rb:1678:9:1678:9 | a : Array [element 2] | array_flow.rb:1678:19:1678:19 | x | array_flow.rb:1679:9:1679:9 | x | array_flow.rb:1678:9:1680:7 | call to map : [collection] [element] |
 | array_flow.rb:1704:17:1704:27 | call to source | array_flow.rb:1693:10:1693:14 | *args : Array [element 1] | array_flow.rb:1694:5:1694:21 | call to [] : Array [element 1] | array_flow.rb:1704:9:1704:31 | call to m141 : Array [element 1] |
 testFailures
+| array_flow.rb:107:15:107:35 | # $ hasValueFlow=11.2 | Missing result: hasValueFlow=11.2 |
+| array_flow.rb:226:16:226:34 | # $ hasValueFlow=25 | Missing result: hasValueFlow=25 |
+| array_flow.rb:319:15:319:35 | # $ hasValueFlow=36.1 | Missing result: hasValueFlow=36.1 |
+| array_flow.rb:320:15:320:35 | # $ hasValueFlow=36.1 | Missing result: hasValueFlow=36.1 |
+| array_flow.rb:321:15:321:35 | # $ hasValueFlow=36.1 | Missing result: hasValueFlow=36.1 |
+| array_flow.rb:328:15:328:55 | # $ hasValueFlow=37.1 $ hasValueFlow=37.2 | Missing result: hasValueFlow=37.1 |
+| array_flow.rb:486:16:486:56 | # $ hasValueFlow=54.2 $ hasValueFlow=54.3 | Missing result: hasValueFlow=54.2 |
+| array_flow.rb:490:16:490:76 | # $ hasValueFlow=54.2 $ hasValueFlow=54.3 $ hasValueFlow=54.4 | Missing result: hasValueFlow=54.2 |
+| array_flow.rb:490:16:490:76 | # $ hasValueFlow=54.2 $ hasValueFlow=54.3 $ hasValueFlow=54.4 | Missing result: hasValueFlow=54.3 |
+| array_flow.rb:494:16:494:96 | # $ hasValueFlow=54.2 $ hasValueFlow=54.3 $ hasValueFlow=54.4 $ hasValueFlow=54.5 | Missing result: hasValueFlow=54.2 |
+| array_flow.rb:494:16:494:96 | # $ hasValueFlow=54.2 $ hasValueFlow=54.3 $ hasValueFlow=54.4 $ hasValueFlow=54.5 | Missing result: hasValueFlow=54.3 |
+| array_flow.rb:659:15:659:55 | # $ hasValueFlow=70.1 $ hasValueFlow=70.3 | Missing result: hasValueFlow=70.1 |
+| array_flow.rb:664:15:664:55 | # $ hasValueFlow=70.1 $ hasValueFlow=70.3 | Missing result: hasValueFlow=70.1 |
+| array_flow.rb:928:16:928:56 | # $ hasValueFlow=90.1 $ hasValueFlow=90.2 | Missing result: hasValueFlow=90.1 |
+| array_flow.rb:1099:15:1099:78 | # $ hasValueFlow=105.1 $ hasValueFlow=105.2 $ hasValueFlow=105.3 | Missing result: hasValueFlow=105.2 |
+| array_flow.rb:1100:15:1100:57 | # $ hasValueFlow=105.1 $ hasValueFlow=105.3 | Missing result: hasValueFlow=105.3 |
+| array_flow.rb:1110:15:1110:57 | # $ hasValueFlow=105.1 $ hasValueFlow=105.2 | Missing result: hasValueFlow=105.2 |
+| array_flow.rb:1111:15:1111:57 | # $ hasValueFlow=105.1 $ hasValueFlow=105.3 | Missing result: hasValueFlow=105.3 |
+| array_flow.rb:1162:15:1162:36 | # $ hasValueFlow=108.1 | Missing result: hasValueFlow=108.1 |
+| array_flow.rb:1164:15:1164:36 | # $ hasValueFlow=108.2 | Missing result: hasValueFlow=108.2 |
+| array_flow.rb:1170:15:1170:57 | # $ hasValueFlow=108.1 $ hasValueFlow=108.2 | Missing result: hasValueFlow=108.1 |
+| array_flow.rb:1172:15:1172:36 | # $ hasValueFlow=108.2 | Missing result: hasValueFlow=108.2 |
+| array_flow.rb:1224:15:1224:57 | # $ hasValueFlow=111.1 $ hasValueFlow=111.2 | Missing result: hasValueFlow=111.1 |
+| array_flow.rb:1233:15:1233:36 | # $ hasValueFlow=111.1 | Missing result: hasValueFlow=111.1 |
+| array_flow.rb:1238:15:1238:36 | # $ hasValueFlow=111.1 | Missing result: hasValueFlow=111.1 |
+| array_flow.rb:1265:15:1265:36 | # $ hasValueFlow=112.1 | Missing result: hasValueFlow=112.1 |
+| array_flow.rb:1286:15:1286:36 | # $ hasValueFlow=112.1 | Missing result: hasValueFlow=112.1 |
+| array_flow.rb:1288:15:1288:36 | # $ hasValueFlow=112.2 | Missing result: hasValueFlow=112.2 |
+| array_flow.rb:1297:15:1297:57 | # $ hasValueFlow=112.1 $ hasValueFlow=112.2 | Missing result: hasValueFlow=112.1 |
+| array_flow.rb:1299:15:1299:36 | # $ hasValueFlow=112.2 | Missing result: hasValueFlow=112.2 |
+| array_flow.rb:1308:15:1308:57 | # $ hasValueFlow=112.1 $ hasValueFlow=112.2 | Missing result: hasValueFlow=112.1 |
+| array_flow.rb:1310:15:1310:36 | # $ hasValueFlow=112.2 | Missing result: hasValueFlow=112.2 |
+| array_flow.rb:1346:15:1346:36 | # $ hasValueFlow=112.1 | Missing result: hasValueFlow=112.1 |
+| array_flow.rb:1457:16:1457:37 | # $ hasValueFlow=121.2 | Missing result: hasValueFlow=121.2 |
+| array_flow.rb:1458:16:1458:58 | # $ hasValueFlow=121.1 $ hasValueFlow=121.2 | Missing result: hasValueFlow=121.2 |
+| array_flow.rb:1565:16:1565:58 | # $ hasValueFlow=132.1 $ hasValueFlow=132.2 | Missing result: hasValueFlow=132.1 |
 arrayLiteral
 | array_flow.rb:9:9:9:25 | call to [] |
 | array_flow.rb:33:9:33:22 | call to [] |
