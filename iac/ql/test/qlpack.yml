@@ -1,10 +1,8 @@
-name: advanced-security/iac-tests
+name: microsoft/iac-tests
 groups: [iac, test]
 dependencies:
-dependencies:
-  advanced-security/iac-all: ${workspace}
-  advanced-security/iac-queries: ${workspace}
-extractor: iac
+  microsoft/iac-all: ${workspace}
+  microsoft/iac-queries: ${workspace}
 extractor: iac
 tests: .
 warnOnImplicitThis: true
