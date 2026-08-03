@@ -5,7 +5,6 @@
     --include-extension=.hcl ^
     --include-extension=.tf ^
     --include-extension=.tfvars ^
-    --include-extension=.bicep ^
     --size-limit=5m ^
     --language=iac ^
     --working-dir=. ^
