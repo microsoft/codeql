@@ -114,9 +114,9 @@ def m7(x)
     sink(hash[:a]) # $ hasValueFlow=7.1
     sink(b) # $ hasValueFlow=7.1
     hash.store(:a, 1)
-    sink(hash[:a])
+    sink(hash[:a]) # $ hasValueFlow=7.1
     c = hash.store(x, taint(7.2))
-    sink(hash[:a]) # $ hasValueFlow=7.2
+    sink(hash[:a]) # $ hasValueFlow=7.1 $ hasValueFlow=7.2
     sink(hash[10]) # $ hasValueFlow=7.2
     sink(c) # $ hasValueFlow=7.2
 end
@@ -160,7 +160,7 @@ def m10()
         :b => 1
     }
     hash.clear
-    sink(hash[:a])
+    sink(hash[:a]) # $ hasValueFlow=9.1
 end
 
 m10()
@@ -184,7 +184,7 @@ def m12()
     }
     a = hash.delete(:a)
     sink(a) # $ hasValueFlow=12.1
-    sink(hash[:a])
+    sink(hash[:a]) # $ hasValueFlow=12.1
 end
 
 m12()
@@ -288,10 +288,10 @@ def m19(x)
         :d => taint(19.3)
     }
     x = hash.except(:a,x,:d)
-    sink(x[:a])
+    sink(x[:a]) # $ hasValueFlow=19.1
     sink(x[:b])
     sink(x[:c]) # $ hasValueFlow=19.2
-    sink(x[:d])
+    sink(x[:d]) # $ hasValueFlow=19.3
 end
 
 m19(:c)
@@ -512,7 +512,7 @@ def m31()
     hash2.replace(hash)
     sink (hash2[:a]) # $ hasValueFlow=31.1
     sink (hash2[:b])
-    sink (hash2[:c]) # $ hasValueFlow=31.2
+    sink (hash2[:c]) # $ hasValueFlow=31.2 $ hasValueFlow=31.3
 end
 
 def m32()
@@ -670,7 +670,7 @@ def m41()
         sink value # $ hasValueFlow=41.1 $ hasValueFlow=41.2
         taint(41.3)
     end
-    sink (hash[:a]) # $ hasValueFlow=41.3
+    sink (hash[:a]) # $ hasValueFlow=41.1 $ hasValueFlow=41.3
 end
 
 m41()
@@ -773,15 +773,15 @@ def m46(x)
 
     x = hash.except!(:a, x, :d)
 
-    sink(x[:a])
+    sink(x[:a]) # $ hasValueFlow=46.1
     sink(x[:b])
     sink(x[:c]) # $ hasValueFlow=46.2
-    sink(x[:d])
+    sink(x[:d]) # $ hasValueFlow=46.3
 
-    sink(hash[:a])
+    sink(hash[:a]) # $ hasValueFlow=46.1
     sink(hash[:b])
     sink(hash[:c]) # $ hasValueFlow=46.2
-    sink(hash[:d])
+    sink(hash[:d]) # $ hasValueFlow=46.3
 end
 
 m46(:c)

@@ -2280,6 +2280,18 @@ nodes
 | hash_flow.rb:1014:14:1014:14 | k | semmle.label | k |
 subpaths
 testFailures
+| hash_flow.rb:117:20:117:39 | # $ hasValueFlow=7.1 | Missing result: hasValueFlow=7.1 |
+| hash_flow.rb:119:20:119:58 | # $ hasValueFlow=7.1 $ hasValueFlow=7.2 | Missing result: hasValueFlow=7.1 |
+| hash_flow.rb:163:20:163:39 | # $ hasValueFlow=9.1 | Missing result: hasValueFlow=9.1 |
+| hash_flow.rb:187:20:187:40 | # $ hasValueFlow=12.1 | Missing result: hasValueFlow=12.1 |
+| hash_flow.rb:291:17:291:37 | # $ hasValueFlow=19.1 | Missing result: hasValueFlow=19.1 |
+| hash_flow.rb:294:17:294:37 | # $ hasValueFlow=19.3 | Missing result: hasValueFlow=19.3 |
+| hash_flow.rb:515:22:515:62 | # $ hasValueFlow=31.2 $ hasValueFlow=31.3 | Missing result: hasValueFlow=31.3 |
+| hash_flow.rb:673:21:673:61 | # $ hasValueFlow=41.1 $ hasValueFlow=41.3 | Missing result: hasValueFlow=41.1 |
+| hash_flow.rb:776:17:776:37 | # $ hasValueFlow=46.1 | Missing result: hasValueFlow=46.1 |
+| hash_flow.rb:779:17:779:37 | # $ hasValueFlow=46.3 | Missing result: hasValueFlow=46.3 |
+| hash_flow.rb:781:20:781:40 | # $ hasValueFlow=46.1 | Missing result: hasValueFlow=46.1 |
+| hash_flow.rb:784:20:784:40 | # $ hasValueFlow=46.3 | Missing result: hasValueFlow=46.3 |
 hashLiteral
 | hash_flow.rb:10:12:21:5 | call to [] |
 | hash_flow.rb:55:13:55:37 | ...[...] |

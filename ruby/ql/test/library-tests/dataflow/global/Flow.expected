@@ -600,6 +600,11 @@ subpaths
 | instance_variables.rb:120:6:120:10 | foo16 : Foo [@field] | captured_variables.rb:60:5:62:7 | self in get_field : Foo [@field] | captured_variables.rb:61:9:61:21 | return | instance_variables.rb:120:6:120:20 | call to get_field |
 | instance_variables.rb:120:6:120:10 | foo16 : Foo [@field] | instance_variables.rb:13:5:15:7 | self in get_field : Foo [@field] | instance_variables.rb:14:9:14:21 | return | instance_variables.rb:120:6:120:20 | call to get_field |
 testFailures
+| callbacks.rb:29:42:29:69 | # $ SPURIOUS: hasValueFlow=2 | Fixed spurious result: hasValueFlow=2 |
+| captured_variables.rb:87:13:87:57 | # $ hasValueFlow=6 $ SPURIOUS: hasValueFlow=7 | Fixed spurious result: hasValueFlow=7 |
+| captured_variables.rb:112:20:112:66 | # $ hasValueFlow=10 $ SPURIOUS: hasValueFlow=11 | Fixed spurious result: hasValueFlow=11 |
+| instance_variables.rb:49:16:49:90 | # $ hasValueFlow=36 $ SPURIOUS: hasValueFlow=30 $ SPURIOUS: hasValueFlow=35 | Fixed spurious result: hasValueFlow=30 |
+| instance_variables.rb:49:16:49:90 | # $ hasValueFlow=36 $ SPURIOUS: hasValueFlow=30 $ SPURIOUS: hasValueFlow=35 | Fixed spurious result: hasValueFlow=35 |
 #select
 | blocks.rb:8:10:8:14 | yield ... | blocks.rb:14:12:14:20 | call to source | blocks.rb:8:10:8:14 | yield ... | $@ | blocks.rb:14:12:14:20 | call to source | call to source |
 | blocks.rb:25:8:25:8 | x | blocks.rb:24:3:24:11 | call to source | blocks.rb:25:8:25:8 | x | $@ | blocks.rb:24:3:24:11 | call to source | call to source |

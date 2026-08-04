@@ -104,7 +104,7 @@ def m11(i)
     b = a[0...2] # exclusive range
     sink b[0]
     sink b[1] # $ hasValueFlow=11.1
-    sink b[2]
+    sink b[2] # $ hasValueFlow=11.2
 
     a = [0, source(11.1), 1, source(11.2)]
     b = a[1 .. -2] # we can't model negative ranges precisely
@@ -223,7 +223,7 @@ end
 def m25
     a = [0, 1, source(25)]
     b = a.clear()
-    sink(a[2])
+    sink(a[2]) # $ hasValueFlow=25
     sink(b[2])
 end
 
@@ -316,16 +316,16 @@ def m36
     a = [0, 1, source(36.1)]
     b = a.delete(2) { source(36.2) }
     sink b # $ hasValueFlow=36.1 $ hasValueFlow=36.2
-    sink a[0]
-    sink a[1]
-    sink a[2]
+    sink a[0] # $ hasValueFlow=36.1
+    sink a[1] # $ hasValueFlow=36.1
+    sink a[2] # $ hasValueFlow=36.1
 end
 
 def m37(i)
     a = [0, 1, source(37.1), source(37.2)]
     b = a.delete_at(2)
     sink b # $ hasValueFlow=37.1
-    sink a[2] # $ hasValueFlow=37.2
+    sink a[2] # $ hasValueFlow=37.1 $ hasValueFlow=37.2
 
     a = [0, 1, source(37.1), source(37.2)]
     b = a.delete_at(i)
@@ -483,15 +483,15 @@ def m54
     a.fill(source(54.2), 1, 1)
     sink(a[3]) # $ hasValueFlow=54.1 $ hasValueFlow=54.2
     a.fill(source(54.3))
-    sink(a[0]) # $ hasValueFlow=54.3
+    sink(a[0]) # $ hasValueFlow=54.2 $ hasValueFlow=54.3
     a.fill do |i|
         source(54.4)
     end
-    sink(a[0]) # $ hasValueFlow=54.4
+    sink(a[0]) # $ hasValueFlow=54.2 $ hasValueFlow=54.3 $ hasValueFlow=54.4
     a.fill(2) do |i|
         source(54.5)
     end
-    sink(a[0]) # $ hasValueFlow=54.4 $ hasValueFlow=54.5
+    sink(a[0]) # $ hasValueFlow=54.2 $ hasValueFlow=54.3 $ hasValueFlow=54.4 $ hasValueFlow=54.5
 end
 
 def m55
@@ -656,12 +656,12 @@ def m70(i)
     b = a.insert(1, source(70.2), source(70.3))
     sink a[0] # 0
     sink a[1] # $ hasValueFlow=70.2
-    sink a[2] # $ hasValueFlow=70.3
+    sink a[2] # $ hasValueFlow=70.1 $ hasValueFlow=70.3
     sink a[3] # 1
     sink a[4] # $ hasValueFlow=70.1
     sink b[0] # 0
     sink b[1] # $ hasValueFlow=70.2
-    sink b[2] # $ hasValueFlow=70.3
+    sink b[2] # $ hasValueFlow=70.1 $ hasValueFlow=70.3
     sink b[3] # 1
     sink b[4] # $ hasValueFlow=70.1
 
@@ -925,7 +925,7 @@ def m90
     a.prepend(2, 3, source(90.2))
     sink(a[0])
     sink(a[1])
-    sink(a[2]) # $ hasValueFlow=90.2
+    sink(a[2]) # $ hasValueFlow=90.1 $ hasValueFlow=90.2
     sink(a[3])
     sink(a[4])
     sink(a[5]) # $ hasValueFlow=90.1
@@ -1096,8 +1096,8 @@ def m105(i)
     b = a.rotate!
     sink a[0] # $ hasValueFlow=105.1
     sink a[1] # $ hasValueFlow=105.1 $ hasValueFlow=105.2
-    sink a[2] # $ hasValueFlow=105.1 $ hasValueFlow=105.3
-    sink a[3] # $ hasValueFlow=105.1
+    sink a[2] # $ hasValueFlow=105.1 $ hasValueFlow=105.2 $ hasValueFlow=105.3
+    sink a[3] # $ hasValueFlow=105.1 $ hasValueFlow=105.3
     sink b[0] # $ hasValueFlow=105.1
     sink b[1] # $ hasValueFlow=105.1 $ hasValueFlow=105.2
     sink b[2] # $ hasValueFlow=105.1 $ hasValueFlow=105.3
@@ -1107,8 +1107,8 @@ def m105(i)
     b = a.rotate!(2)
     sink a[0] # $ hasValueFlow=105.1 $ hasValueFlow=105.2
     sink a[1] # $ hasValueFlow=105.1 $ hasValueFlow=105.3
-    sink a[2] # $ hasValueFlow=105.1
-    sink a[3] # $ hasValueFlow=105.1
+    sink a[2] # $ hasValueFlow=105.1 $ hasValueFlow=105.2
+    sink a[3] # $ hasValueFlow=105.1 $ hasValueFlow=105.3
     sink b[0] # $ hasValueFlow=105.1 $ hasValueFlow=105.2
     sink b[1] # $ hasValueFlow=105.1 $ hasValueFlow=105.3
     sink b[2] # $ hasValueFlow=105.1
@@ -1159,17 +1159,17 @@ def m108(i)
     a = [source(108.1), 1, source(108.2)]
     b = a.shift
     sink b # $ hasValueFlow=108.1
-    sink a[0]
+    sink a[0] # $ hasValueFlow=108.1
     sink a[1] # $ hasValueFlow=108.2
-    sink a[2]
+    sink a[2] # $ hasValueFlow=108.2
 
     a = [source(108.1), 1, source(108.2)]
     b = a.shift(2)
     sink b[0] # $ hasValueFlow=108.1
     sink b[1]
-    sink a[0] # $ hasValueFlow=108.2
+    sink a[0] # $ hasValueFlow=108.1 $ hasValueFlow=108.2
     sink a[1]
-    sink a[2]
+    sink a[2] # $ hasValueFlow=108.2
 
     a = [source(108.1), 1, source(108.2)]
     b = a.shift(i)
@@ -1221,7 +1221,7 @@ def m111(i)
     b = a.slice(2, 3)
     sink b[0] # $ hasValueFlow=111.1
     sink b[1]
-    sink b[2] # $ hasValueFlow=111.2
+    sink b[2] # $ hasValueFlow=111.1 $ hasValueFlow=111.2
 
     b = a.slice(1, i) # unknown range
     sink b[0] # $ hasValueFlow=111.1 $ hasValueFlow=111.2
@@ -1230,12 +1230,12 @@ def m111(i)
     b = a.slice(2..3) # inclusive range
     sink b[0] # $ hasValueFlow=111.1
     sink b[1]
-    sink b[2]
+    sink b[2] # $ hasValueFlow=111.1
 
     b = a.slice(2...4) # exclusive range
     sink b[0] # $ hasValueFlow=111.1
     sink b[1]
-    sink b[2]
+    sink b[2] # $ hasValueFlow=111.1
 
     b = a.slice(3..i) # unknown range
     sink b[0] # $ hasValueFlow=111.1 $ hasValueFlow=111.2
@@ -1262,7 +1262,7 @@ def m112(i)
     sink b # $ hasValueFlow=112.1
     sink a[0]
     sink a[1]
-    sink a[2]
+    sink a[2] # $ hasValueFlow=112.1
     sink a[3] # $ hasValueFlow=112.2
 
     a = [0, 1, source(112.1), 2, source(112.2)]
@@ -1283,9 +1283,9 @@ def m112(i)
     sink b[2] # $ hasValueFlow=112.2
     sink a[0]
     sink a[1]
-    sink a[2]
+    sink a[2] # $ hasValueFlow=112.1
     sink a[3]
-    sink a[4]
+    sink a[4] # $ hasValueFlow=112.2
 
     a = [0, 1, source(112.1), 2, source(112.2)]
     b = a.slice!(2..3) # inclusive range
@@ -1294,9 +1294,9 @@ def m112(i)
     sink b[2]
     sink a[0]
     sink a[1]
-    sink a[2] # $ hasValueFlow=112.2
+    sink a[2] # $ hasValueFlow=112.1 $ hasValueFlow=112.2
     sink a[3]
-    sink a[4]
+    sink a[4] # $ hasValueFlow=112.2
 
     a = [0, 1, source(112.1), 2, source(112.2)]
     b = a.slice!(2...4) # exclusive range
@@ -1305,9 +1305,9 @@ def m112(i)
     sink b[2]
     sink a[0]
     sink a[1]
-    sink a[2] # $ hasValueFlow=112.2
+    sink a[2] # $ hasValueFlow=112.1 $ hasValueFlow=112.2
     sink a[3]
-    sink a[4]
+    sink a[4] # $ hasValueFlow=112.2
 
     a = [0, 1, source(112.1), 2, source(112.2)]
     b = a.slice!(2, i) # unknown range
@@ -1343,7 +1343,7 @@ def m112(i)
     sink b[2] # $ hasValueFlow=112.1
     sink a[0]
     sink a[1] # $ hasValueFlow=112.2
-    sink a[2]
+    sink a[2] # $ hasValueFlow=112.1
 
     a = [0, 1, source(112.1), 2, source(112.2)]
     b = a.slice!(3..) # unknown range
@@ -1454,8 +1454,8 @@ def m121(i)
     sink(b[0])
     sink(b[1])
     sink(b[2]) # $ hasValueFlow=121.1
-    sink(b[3])
-    sink(b[i]) # $ hasValueFlow=121.1
+    sink(b[3]) # $ hasValueFlow=121.2
+    sink(b[i]) # $ hasValueFlow=121.1 $ hasValueFlow=121.2
     b = a.take(133)
     sink(b[0])
     sink(b[1])
@@ -1562,7 +1562,7 @@ def m132
     a.unshift(2, 3, source(132.2))
     sink(a[0])
     sink(a[1])
-    sink(a[2]) # $ hasValueFlow=132.2
+    sink(a[2]) # $ hasValueFlow=132.1 $ hasValueFlow=132.2
     sink(a[3])
     sink(a[4])
     sink(a[5]) # $ hasValueFlow=132.1

@@ -46,7 +46,7 @@ end
 
 class Baz < Foo
     def initialize x
-        sink x # $ hasValueFlow=36
+        sink x # $ hasValueFlow=36 $ SPURIOUS: hasValueFlow=30 $ SPURIOUS: hasValueFlow=35
     end
 end
 
