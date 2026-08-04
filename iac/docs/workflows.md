@@ -70,10 +70,10 @@ The CodeQL CLI can be used to analyze IaC files using the CodeQL Extractor, Libr
 3. Check the extractor is installed correctly by running:
    - `codeql resolve languages` and checking if `iac` is listed
 4. Install the IaC queries pack by running:
-   - `codeql pack install advanced-security/iac-queries`
+   - `codeql pack install microsoft/iac-queries`
 5. Run the CodeQL database commands to create and analyze the IaC files
    - `codeql database create <database-name> --language=iac --source-root=<path-to-iac-files>`
-   - `codeql database analyze <database-name> --format=sarif-latest --output=<output-file-name> advanced-security/iac-queries`
+   - `codeql database analyze <database-name> --format=sarif-latest --output=<output-file-name> microsoft/iac-queries`
 
 ### CLI Example
 
@@ -108,5 +108,5 @@ codeql database analyze \
   --format="sarif-latest" \
   --output="./codeql-iac.sarif" \
   "$CODEQL_DATABASE" \
-  "advanced-security/iac-queries"
+  "microsoft/iac-queries"
 ```
