@@ -1,5 +1,6 @@
 import codeql.Locations
 import codeql.files.FileSystem
+import codeql.iac.Comments
 import codeql.iac.Dependencies
 // Azure
 import codeql.iac.azure.ARM

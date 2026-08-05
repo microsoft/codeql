@@ -1,0 +1,16 @@
+iacComments
+| sample.hcl:1:1:1:17 | sample.hcl@1:1:1:17 |
+| sample.hcl:2:1:2:19 | sample.hcl@2:1:2:19 |
+| sample.hcl:3:1:3:21 | sample.hcl@3:1:3:21 |
+| sample.hcl:6:24:6:48 | sample.hcl@6:24:6:48 |
+| template.yml:3:3:3:28 | template.yml@3:3:3:28 |
+getText
+| sample.hcl:1:1:1:17 | sample.hcl@1:1:1:17 |  a hash comment |
+| sample.hcl:2:1:2:19 | sample.hcl@2:1:2:19 |  a slash comment |
+| sample.hcl:3:1:3:21 | sample.hcl@3:1:3:21 |  a block comment  |
+| sample.hcl:6:24:6:48 | sample.hcl@6:24:6:48 |  an inline hash comment |
+| template.yml:3:3:3:28 | template.yml@3:3:3:28 |  a supported YAML comment |
+hasHashDelimiter
+| sample.hcl:1:1:1:17 | sample.hcl@1:1:1:17 |
+| sample.hcl:6:24:6:48 | sample.hcl@6:24:6:48 |
+| template.yml:3:3:3:28 | template.yml@3:3:3:28 |
