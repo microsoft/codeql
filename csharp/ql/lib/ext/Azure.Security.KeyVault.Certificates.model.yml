@@ -1,0 +1,17 @@
+extensions:
+  - addsTo:
+      pack: codeql/csharp-all
+      extensible: sinkModel
+    data:
+      - ["Azure.Security.KeyVault.Certificates", "CertificateClient", False, "CertificateClient", "(System.Uri,Azure.Core.TokenCredential,Azure.Security.KeyVault.Certificates.CertificateClientOptions)", "", "Argument[0]", "azure-ssrf-key-vault", "manual"]
+      - ["Azure.Security.KeyVault.Certificates", "CertificateClient", False, "CertificateClient", "(System.Uri,Azure.Core.TokenCredential)", "", "Argument[0]", "azure-ssrf-key-vault", "manual"]      
+  - addsTo:
+      pack: codeql/csharp-all
+      extensible: summaryModel
+    data:
+      - ["Azure.Security.KeyVault.Certificates", "CertificateClient", False, "CertificateClient", "(System.Uri,Azure.Core.TokenCredential,Azure.Security.KeyVault.Certificates.CertificateClientOptions)", "", "Argument[0]", "Argument[this].Property[Azure.Security.KeyVault.Certificates.CertificateClient.VaultUri]", "value", "manual"]
+      - ["Azure.Security.KeyVault.Certificates", "CertificateClient", False, "CertificateClient", "(System.Uri,Azure.Core.TokenCredential,Azure.Security.KeyVault.Certificates.CertificateClientOptions)", "", "Argument[1]", "Argument[this]", "value", "manual"]
+      - ["Azure.Security.KeyVault.Certificates", "CertificateClient", False, "CertificateClient", "(System.Uri,Azure.Core.TokenCredential,Azure.Security.KeyVault.Certificates.CertificateClientOptions)", "", "Argument[2]", "Argument[this]", "value", "manual"]
+      - ["Azure.Security.KeyVault.Certificates", "CertificateClient", False, "CertificateClient", "(System.Uri,Azure.Core.TokenCredential)", "", "Argument[0]", "Argument[this].Property[Azure.Security.KeyVault.Certificates.CertificateClient.VaultUri]", "value", "manual"]
+      - ["Azure.Security.KeyVault.Certificates", "CertificateClient", False, "CertificateClient", "(System.Uri,Azure.Core.TokenCredential)", "", "Argument[1]", "Argument[this]", "value", "manual"]
+      - ["Azure.Security.KeyVault.Certificates", "CertificateClient", True, "get_VaultUri", "()", "", "Argument[this].Property[Azure.Security.KeyVault.Certificates.CertificateClient.VaultUri]", "ReturnValue", "value", "manual"]

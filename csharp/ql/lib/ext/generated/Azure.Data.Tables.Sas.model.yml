@@ -1,0 +1,28 @@
+# THIS FILE IS AN AUTO-GENERATED MODELS AS DATA FILE. DO NOT EDIT.
+extensions:
+  - addsTo:
+      pack: codeql/csharp-all
+      extensible: summaryModel
+    data:
+      - ["Azure.Data.Tables.Sas", "TableAccountSasBuilder", False, "SetPermissions", "(System.String)", "", "Argument[0]", "Argument[this].Property[Azure.Data.Tables.Sas.TableAccountSasBuilder.Permissions]", "value", "dfc-generated"]
+      - ["Azure.Data.Tables.Sas", "TableAccountSasBuilder", False, "TableAccountSasBuilder", "(Azure.Data.Tables.Sas.TableAccountSasPermissions,Azure.Data.Tables.Sas.TableAccountSasResourceTypes,System.DateTimeOffset)", "", "Argument[2]", "Argument[this].Property[Azure.Data.Tables.Sas.TableAccountSasBuilder.ExpiresOn]", "value", "dfc-generated"]
+      - ["Azure.Data.Tables.Sas", "TableAccountSasBuilder", False, "TableAccountSasBuilder", "(System.String,Azure.Data.Tables.Sas.TableAccountSasResourceTypes,System.DateTimeOffset)", "", "Argument[0]", "Argument[this].Property[Azure.Data.Tables.Sas.TableAccountSasBuilder.Permissions]", "value", "dfc-generated"]
+      - ["Azure.Data.Tables.Sas", "TableAccountSasBuilder", False, "TableAccountSasBuilder", "(System.String,Azure.Data.Tables.Sas.TableAccountSasResourceTypes,System.DateTimeOffset)", "", "Argument[2]", "Argument[this].Property[Azure.Data.Tables.Sas.TableAccountSasBuilder.ExpiresOn]", "value", "dfc-generated"]
+      - ["Azure.Data.Tables.Sas", "TableAccountSasQueryParameters", False, "ToString", "()", "", "Argument[this]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Data.Tables.Sas", "TableAccountSasQueryParameters", False, "get_ExpiresOn", "()", "", "Argument[this]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Data.Tables.Sas", "TableAccountSasQueryParameters", False, "get_IPRange", "()", "", "Argument[this]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Data.Tables.Sas", "TableAccountSasQueryParameters", False, "get_Identifier", "()", "", "Argument[this]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Data.Tables.Sas", "TableAccountSasQueryParameters", False, "get_Permissions", "()", "", "Argument[this]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Data.Tables.Sas", "TableAccountSasQueryParameters", False, "get_Resource", "()", "", "Argument[this]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Data.Tables.Sas", "TableAccountSasQueryParameters", False, "get_ResourceTypes", "()", "", "Argument[this]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Data.Tables.Sas", "TableAccountSasQueryParameters", False, "get_Signature", "()", "", "Argument[this]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Data.Tables.Sas", "TableAccountSasQueryParameters", False, "get_StartsOn", "()", "", "Argument[this]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Data.Tables.Sas", "TableAccountSasQueryParameters", False, "get_Version", "()", "", "Argument[this]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Data.Tables.Sas", "TableSasBuilder", False, "SetPermissions", "(System.String)", "", "Argument[0]", "Argument[this].Property[Azure.Data.Tables.Sas.TableSasBuilder.Permissions]", "value", "dfc-generated"]
+      - ["Azure.Data.Tables.Sas", "TableSasBuilder", False, "TableSasBuilder", "(System.String,Azure.Data.Tables.Sas.TableSasPermissions,System.DateTimeOffset)", "", "Argument[0]", "Argument[this].Property[Azure.Data.Tables.Sas.TableSasBuilder.TableName]", "value", "dfc-generated"]
+      - ["Azure.Data.Tables.Sas", "TableSasBuilder", False, "TableSasBuilder", "(System.String,Azure.Data.Tables.Sas.TableSasPermissions,System.DateTimeOffset)", "", "Argument[2]", "Argument[this].Property[Azure.Data.Tables.Sas.TableSasBuilder.ExpiresOn]", "value", "dfc-generated"]
+      - ["Azure.Data.Tables.Sas", "TableSasBuilder", False, "TableSasBuilder", "(System.String,System.String,System.DateTimeOffset)", "", "Argument[0]", "Argument[this].Property[Azure.Data.Tables.Sas.TableSasBuilder.TableName]", "value", "dfc-generated"]
+      - ["Azure.Data.Tables.Sas", "TableSasBuilder", False, "TableSasBuilder", "(System.String,System.String,System.DateTimeOffset)", "", "Argument[1]", "Argument[this].Property[Azure.Data.Tables.Sas.TableSasBuilder.Permissions]", "taint", "dfc-generated"]
+      - ["Azure.Data.Tables.Sas", "TableSasBuilder", False, "TableSasBuilder", "(System.String,System.String,System.DateTimeOffset)", "", "Argument[2]", "Argument[this].Property[Azure.Data.Tables.Sas.TableSasBuilder.ExpiresOn]", "value", "dfc-generated"]
+      - ["Azure.Data.Tables.Sas", "TableSasIPRange", False, "TableSasIPRange", "(System.Net.IPAddress,System.Net.IPAddress)", "", "Argument[0]", "Argument[this].Property[Azure.Data.Tables.Sas.TableSasIPRange.Start]", "value", "dfc-generated"]
+      - ["Azure.Data.Tables.Sas", "TableSasIPRange", False, "TableSasIPRange", "(System.Net.IPAddress,System.Net.IPAddress)", "", "Argument[1]", "Argument[this].Property[Azure.Data.Tables.Sas.TableSasIPRange.End]", "value", "dfc-generated"]
