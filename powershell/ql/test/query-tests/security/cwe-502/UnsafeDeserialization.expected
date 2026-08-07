@@ -16,8 +16,11 @@
 | test.ps1:76:49:76:57 | stream15 | test.ps1:74:12:74:42 | Call to read-host | test.ps1:76:49:76:57 | stream15 | This unsafe deserializer deserializes  on a $@. | test.ps1:74:12:74:42 | Call to read-host | read from stdin |
 | test.ps1:81:40:81:47 | input16 | test.ps1:79:12:79:33 | Call to read-host | test.ps1:81:40:81:47 | input16 | This unsafe deserializer deserializes  on a $@. | test.ps1:79:12:79:33 | Call to read-host | read from stdin |
 | test.ps1:86:48:86:55 | bytes17 | test.ps1:84:12:84:40 | Call to read-host | test.ps1:86:48:86:55 | bytes17 | This unsafe deserializer deserializes  on a $@. | test.ps1:84:12:84:40 | Call to read-host | read from stdin |
-| test.ps1:98:39:98:49 | fileStream | test.ps1:96:14:96:58 | Call to readallbytes | test.ps1:98:39:98:49 | fileStream | This unsafe deserializer deserializes  on a $@. | test.ps1:96:14:96:58 | Call to readallbytes | file stream |
-| test.ps1:103:41:103:53 | remoteStream | test.ps1:101:16:101:92 | Call to downloaddata | test.ps1:103:41:103:53 | remoteStream | This unsafe deserializer deserializes  on a $@. | test.ps1:101:16:101:92 | Call to downloaddata | remote flow source |
+| test.ps1:90:30:90:37 | input18 | test.ps1:89:12:89:38 | Call to read-host | test.ps1:90:30:90:37 | input18 | This unsafe deserializer deserializes  on a $@. | test.ps1:89:12:89:38 | Call to read-host | read from stdin |
+| test.ps1:94:37:94:44 | input19 | test.ps1:93:12:93:41 | Call to read-host | test.ps1:94:37:94:44 | input19 | This unsafe deserializer deserializes  on a $@. | test.ps1:93:12:93:41 | Call to read-host | read from stdin |
+| test.ps1:98:10:98:17 | input20 | test.ps1:97:12:97:42 | Call to read-host | test.ps1:98:10:98:17 | input20 | This unsafe deserializer deserializes  on a $@. | test.ps1:97:12:97:42 | Call to read-host | read from stdin |
+| test.ps1:113:39:113:49 | fileStream | test.ps1:111:14:111:58 | Call to readallbytes | test.ps1:113:39:113:49 | fileStream | This unsafe deserializer deserializes  on a $@. | test.ps1:111:14:111:58 | Call to readallbytes | file stream |
+| test.ps1:118:41:118:53 | remoteStream | test.ps1:116:16:116:92 | Call to downloaddata | test.ps1:118:41:118:53 | remoteStream | This unsafe deserializer deserializes  on a $@. | test.ps1:116:16:116:92 | Call to downloaddata | remote flow source |
 edges
 | test.ps1:2:1:2:16 | untrustedBase64 | test.ps1:4:69:4:84 | untrustedBase64 | provenance |  |
 | test.ps1:2:20:2:47 | Call to read-host | test.ps1:2:1:2:16 | untrustedBase64 | provenance | Src:MaD:0  |
@@ -87,16 +90,22 @@ edges
 | test.ps1:85:1:85:8 | bytes17 | test.ps1:86:48:86:55 | bytes17 | provenance |  |
 | test.ps1:85:12:85:48 | Call to frombase64string | test.ps1:85:1:85:8 | bytes17 | provenance |  |
 | test.ps1:85:40:85:47 | input17 | test.ps1:85:12:85:48 | Call to frombase64string | provenance | MaD:142 |
-| test.ps1:96:1:96:10 | fileBytes | test.ps1:97:45:97:54 | fileBytes | provenance |  |
-| test.ps1:96:14:96:58 | Call to readallbytes | test.ps1:96:1:96:10 | fileBytes | provenance | Src:MaD:83  |
-| test.ps1:97:1:97:11 | fileStream | test.ps1:98:39:98:49 | fileStream | provenance |  |
-| test.ps1:97:15:97:55 | Call to new | test.ps1:97:1:97:11 | fileStream | provenance |  |
-| test.ps1:97:45:97:54 | fileBytes | test.ps1:97:15:97:55 | Call to new | provenance | MaD:104 |
-| test.ps1:101:1:101:12 | remoteBytes | test.ps1:102:47:102:58 | remoteBytes | provenance |  |
-| test.ps1:101:16:101:92 | Call to downloaddata | test.ps1:101:1:101:12 | remoteBytes | provenance | Src:MaD:125  |
-| test.ps1:102:1:102:13 | remoteStream | test.ps1:103:41:103:53 | remoteStream | provenance |  |
-| test.ps1:102:17:102:59 | Call to new | test.ps1:102:1:102:13 | remoteStream | provenance |  |
-| test.ps1:102:47:102:58 | remoteBytes | test.ps1:102:17:102:59 | Call to new | provenance | MaD:104 |
+| test.ps1:89:1:89:8 | input18 | test.ps1:90:30:90:37 | input18 | provenance |  |
+| test.ps1:89:12:89:38 | Call to read-host | test.ps1:89:1:89:8 | input18 | provenance | Src:MaD:0  |
+| test.ps1:93:1:93:8 | input19 | test.ps1:94:37:94:44 | input19 | provenance |  |
+| test.ps1:93:12:93:41 | Call to read-host | test.ps1:93:1:93:8 | input19 | provenance | Src:MaD:0  |
+| test.ps1:97:1:97:8 | input20 | test.ps1:98:10:98:17 | input20 | provenance |  |
+| test.ps1:97:12:97:42 | Call to read-host | test.ps1:97:1:97:8 | input20 | provenance | Src:MaD:0  |
+| test.ps1:111:1:111:10 | fileBytes | test.ps1:112:45:112:54 | fileBytes | provenance |  |
+| test.ps1:111:14:111:58 | Call to readallbytes | test.ps1:111:1:111:10 | fileBytes | provenance | Src:MaD:83  |
+| test.ps1:112:1:112:11 | fileStream | test.ps1:113:39:113:49 | fileStream | provenance |  |
+| test.ps1:112:15:112:55 | Call to new | test.ps1:112:1:112:11 | fileStream | provenance |  |
+| test.ps1:112:45:112:54 | fileBytes | test.ps1:112:15:112:55 | Call to new | provenance | MaD:104 |
+| test.ps1:116:1:116:12 | remoteBytes | test.ps1:117:47:117:58 | remoteBytes | provenance |  |
+| test.ps1:116:16:116:92 | Call to downloaddata | test.ps1:116:1:116:12 | remoteBytes | provenance | Src:MaD:125  |
+| test.ps1:117:1:117:13 | remoteStream | test.ps1:118:41:118:53 | remoteStream | provenance |  |
+| test.ps1:117:17:117:59 | Call to new | test.ps1:117:1:117:13 | remoteStream | provenance |  |
+| test.ps1:117:47:117:58 | remoteBytes | test.ps1:117:17:117:59 | Call to new | provenance | MaD:104 |
 nodes
 | test.ps1:2:1:2:16 | untrustedBase64 | semmle.label | untrustedBase64 |
 | test.ps1:2:20:2:47 | Call to read-host | semmle.label | Call to read-host |
@@ -183,16 +192,25 @@ nodes
 | test.ps1:85:12:85:48 | Call to frombase64string | semmle.label | Call to frombase64string |
 | test.ps1:85:40:85:47 | input17 | semmle.label | input17 |
 | test.ps1:86:48:86:55 | bytes17 | semmle.label | bytes17 |
-| test.ps1:96:1:96:10 | fileBytes | semmle.label | fileBytes |
-| test.ps1:96:14:96:58 | Call to readallbytes | semmle.label | Call to readallbytes |
-| test.ps1:97:1:97:11 | fileStream | semmle.label | fileStream |
-| test.ps1:97:15:97:55 | Call to new | semmle.label | Call to new |
-| test.ps1:97:45:97:54 | fileBytes | semmle.label | fileBytes |
-| test.ps1:98:39:98:49 | fileStream | semmle.label | fileStream |
-| test.ps1:101:1:101:12 | remoteBytes | semmle.label | remoteBytes |
-| test.ps1:101:16:101:92 | Call to downloaddata | semmle.label | Call to downloaddata |
-| test.ps1:102:1:102:13 | remoteStream | semmle.label | remoteStream |
-| test.ps1:102:17:102:59 | Call to new | semmle.label | Call to new |
-| test.ps1:102:47:102:58 | remoteBytes | semmle.label | remoteBytes |
-| test.ps1:103:41:103:53 | remoteStream | semmle.label | remoteStream |
+| test.ps1:89:1:89:8 | input18 | semmle.label | input18 |
+| test.ps1:89:12:89:38 | Call to read-host | semmle.label | Call to read-host |
+| test.ps1:90:30:90:37 | input18 | semmle.label | input18 |
+| test.ps1:93:1:93:8 | input19 | semmle.label | input19 |
+| test.ps1:93:12:93:41 | Call to read-host | semmle.label | Call to read-host |
+| test.ps1:94:37:94:44 | input19 | semmle.label | input19 |
+| test.ps1:97:1:97:8 | input20 | semmle.label | input20 |
+| test.ps1:97:12:97:42 | Call to read-host | semmle.label | Call to read-host |
+| test.ps1:98:10:98:17 | input20 | semmle.label | input20 |
+| test.ps1:111:1:111:10 | fileBytes | semmle.label | fileBytes |
+| test.ps1:111:14:111:58 | Call to readallbytes | semmle.label | Call to readallbytes |
+| test.ps1:112:1:112:11 | fileStream | semmle.label | fileStream |
+| test.ps1:112:15:112:55 | Call to new | semmle.label | Call to new |
+| test.ps1:112:45:112:54 | fileBytes | semmle.label | fileBytes |
+| test.ps1:113:39:113:49 | fileStream | semmle.label | fileStream |
+| test.ps1:116:1:116:12 | remoteBytes | semmle.label | remoteBytes |
+| test.ps1:116:16:116:92 | Call to downloaddata | semmle.label | Call to downloaddata |
+| test.ps1:117:1:117:13 | remoteStream | semmle.label | remoteStream |
+| test.ps1:117:17:117:59 | Call to new | semmle.label | Call to new |
+| test.ps1:117:47:117:58 | remoteBytes | semmle.label | remoteBytes |
+| test.ps1:118:41:118:53 | remoteStream | semmle.label | remoteStream |
 subpaths
