@@ -1,0 +1,14 @@
+edges
+| SystemPromptInjectionTest.java:9:22:9:46 | getParameter(...) : String | SystemPromptInjectionTest.java:10:24:10:30 | tainted | provenance | Src:MaD:48588  |
+| SystemPromptInjectionTest.java:9:22:9:46 | getParameter(...) : String | SystemPromptInjectionTest.java:11:33:11:39 | tainted | provenance | Src:MaD:48588  |
+| SystemPromptInjectionTest.java:9:22:9:46 | getParameter(...) : String | SystemPromptInjectionTest.java:12:41:12:47 | tainted | provenance | Src:MaD:48588  |
+nodes
+| SystemPromptInjectionTest.java:9:22:9:46 | getParameter(...) : String | semmle.label | getParameter(...) : String |
+| SystemPromptInjectionTest.java:10:24:10:30 | tainted | semmle.label | tainted |
+| SystemPromptInjectionTest.java:11:33:11:39 | tainted | semmle.label | tainted |
+| SystemPromptInjectionTest.java:12:41:12:47 | tainted | semmle.label | tainted |
+subpaths
+problems
+| SystemPromptInjectionTest.java:10:24:10:30 | tainted | SystemPromptInjectionTest.java:9:22:9:46 | getParameter(...) : String | SystemPromptInjectionTest.java:10:24:10:30 | tainted | This system prompt depends on a $@. | SystemPromptInjectionTest.java:9:22:9:46 | getParameter(...) | user-provided value |
+| SystemPromptInjectionTest.java:11:33:11:39 | tainted | SystemPromptInjectionTest.java:9:22:9:46 | getParameter(...) : String | SystemPromptInjectionTest.java:11:33:11:39 | tainted | This system prompt depends on a $@. | SystemPromptInjectionTest.java:9:22:9:46 | getParameter(...) | user-provided value |
+| SystemPromptInjectionTest.java:12:41:12:47 | tainted | SystemPromptInjectionTest.java:9:22:9:46 | getParameter(...) : String | SystemPromptInjectionTest.java:12:41:12:47 | tainted | This system prompt depends on a $@. | SystemPromptInjectionTest.java:9:22:9:46 | getParameter(...) | user-provided value |

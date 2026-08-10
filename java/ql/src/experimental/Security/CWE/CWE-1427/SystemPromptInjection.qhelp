@@ -1,0 +1,44 @@
+<!DOCTYPE qhelp PUBLIC
+  "-//Semmle//qhelp//EN"
+  "qhelp.dtd">
+<qhelp>
+
+<overview>
+<p>
+An AI model's system prompt (also called a developer prompt) defines the instructions
+that govern the model's behavior. When untrusted, user-controlled input is used to build
+the system prompt, an attacker can override those instructions, bypass safety controls,
+leak sensitive data, or cause the model to perform unintended operations. This is known
+as prompt injection.
+</p>
+</overview>
+
+<recommendation>
+<p>
+Keep untrusted input out of the system prompt. Place user-controlled data only in
+user-role messages, and rely on the system prompt (which should be composed solely of
+trusted, application-defined text) to constrain how that data is handled. Where user
+input must influence the system prompt, validate and sanitize it against a strict
+allow-list first.
+</p>
+</recommendation>
+
+<example>
+<p>
+In the following example, a value taken from an HTTP request is used directly as the
+LangChain4j system prompt, which allows an attacker to control the model's instructions.
+</p>
+<sample src="SystemPromptInjectionBad.java" />
+<p>
+In the fixed version, the untrusted value is placed in a user-role message instead, and
+the system prompt is a fixed, trusted string.
+</p>
+<sample src="SystemPromptInjectionGood.java" />
+</example>
+
+<references>
+<li>OWASP: <a href="https://genai.owasp.org/llmrisk/llm01-prompt-injection/">LLM01:2025 Prompt Injection</a>.</li>
+<li>MITRE: <a href="https://cwe.mitre.org/data/definitions/1427.html">CWE-1427: Improper Neutralization of Input Used for LLM Prompting</a>.</li>
+</references>
+
+</qhelp>
