@@ -1,0 +1,41 @@
+<!DOCTYPE qhelp PUBLIC
+  "-//Semmle//qhelp//EN"
+  "qhelp.dtd">
+<qhelp>
+<overview>
+<p>The system prompt of a large language model (LLM) defines the model's role,
+guardrails, and instructions, and is normally trusted more highly than user
+input. If untrusted data is used to build the system prompt, an attacker may be
+able to override those instructions, disable safety measures, or otherwise
+manipulate the model's behavior. This is a form of prompt injection
+(CWE-1427).</p>
+</overview>
+
+<recommendation>
+<p>Keep the system prompt under application control and never build it from
+untrusted input. Place untrusted data in a user- or human-role message instead
+of the system message, so the model treats it as data rather than as
+instructions. If untrusted values must influence the system prompt, constrain
+them to a fixed allowlist of trusted strings.</p>
+</recommendation>
+
+<example>
+<p>In the following example, untrusted input taken from an HTTP request is used
+directly as the content of a LangChainGo <code>SystemChatMessage</code>. An
+attacker can supply text that overrides the intended instructions of the
+model.</p>
+
+<sample src="example/example_bad.go" />
+
+<p>In the following example, the system prompt is a fixed, trusted string and the
+untrusted input is confined to a <code>HumanChatMessage</code>, so it is treated
+as data rather than as instructions.</p>
+
+<sample src="example/example_good.go" />
+</example>
+
+<references>
+<li>OWASP: <a href="https://genai.owasp.org/llmrisk/llm01-prompt-injection/">LLM01: Prompt Injection</a>.</li>
+<li>MITRE: <a href="https://cwe.mitre.org/data/definitions/1427.html">CWE-1427: Improper Neutralization of Input Used for LLM Prompting</a>.</li>
+</references>
+</qhelp>

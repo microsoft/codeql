@@ -1,0 +1,12 @@
+edges
+| SystemPromptInjectionTest.go:10:13:10:17 | selection of URL | SystemPromptInjectionTest.go:10:13:10:25 | call to Query | provenance | Src:MaD:1968 MaD:2029 |
+| SystemPromptInjectionTest.go:10:13:10:25 | call to Query | SystemPromptInjectionTest.go:10:13:10:40 | call to Get | provenance | MaD:2036 |
+| SystemPromptInjectionTest.go:10:13:10:40 | call to Get | SystemPromptInjectionTest.go:13:38:13:44 | persona | provenance |  |
+nodes
+| SystemPromptInjectionTest.go:10:13:10:17 | selection of URL | semmle.label | selection of URL |
+| SystemPromptInjectionTest.go:10:13:10:25 | call to Query | semmle.label | call to Query |
+| SystemPromptInjectionTest.go:10:13:10:40 | call to Get | semmle.label | call to Get |
+| SystemPromptInjectionTest.go:13:38:13:44 | persona | semmle.label | persona |
+subpaths
+#select
+| SystemPromptInjectionTest.go:13:38:13:44 | persona | SystemPromptInjectionTest.go:10:13:10:17 | selection of URL | SystemPromptInjectionTest.go:13:38:13:44 | persona | This system prompt depends on a $@. | SystemPromptInjectionTest.go:10:13:10:17 | selection of URL | user-provided value |
