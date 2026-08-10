@@ -1,0 +1,11 @@
+edges
+| SystemPromptInjectionTest.cs:10:40:10:46 | persona : String | SystemPromptInjectionTest.cs:12:44:12:50 | access to parameter persona | provenance |  |
+| SystemPromptInjectionTest.cs:10:40:10:46 | persona : String | SystemPromptInjectionTest.cs:13:54:13:60 | access to parameter persona | provenance |  |
+nodes
+| SystemPromptInjectionTest.cs:10:40:10:46 | persona : String | semmle.label | persona : String |
+| SystemPromptInjectionTest.cs:12:44:12:50 | access to parameter persona | semmle.label | access to parameter persona |
+| SystemPromptInjectionTest.cs:13:54:13:60 | access to parameter persona | semmle.label | access to parameter persona |
+subpaths
+#select
+| SystemPromptInjectionTest.cs:12:44:12:50 | access to parameter persona | SystemPromptInjectionTest.cs:10:40:10:46 | persona : String | SystemPromptInjectionTest.cs:12:44:12:50 | access to parameter persona | This system prompt depends on a $@. | SystemPromptInjectionTest.cs:10:40:10:46 | persona : String | user-provided value |
+| SystemPromptInjectionTest.cs:13:54:13:60 | access to parameter persona | SystemPromptInjectionTest.cs:10:40:10:46 | persona : String | SystemPromptInjectionTest.cs:13:54:13:60 | access to parameter persona | This system prompt depends on a $@. | SystemPromptInjectionTest.cs:10:40:10:46 | persona : String | user-provided value |
