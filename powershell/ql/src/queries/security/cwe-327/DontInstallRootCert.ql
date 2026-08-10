@@ -22,7 +22,7 @@ class ImportCertToRootStore extends CmdCall {
     this.getAName() = ["Import-Certificate", "Import-PfxCertificate"] and
     exists(Expr loc |
       loc = this.getNamedArgument("certstorelocation") and
-      loc.getValue().stringMatches("%Root%")
+      loc.getValue().asString().toLowerCase().matches("%root%")
     )
   }
 }
