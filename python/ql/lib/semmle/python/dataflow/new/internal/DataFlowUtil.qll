@@ -20,6 +20,8 @@ predicate localFlowStep(Node nodeFrom, Node nodeTo) {
   FlowSummaryImpl::Private::Steps::summaryThroughStepValue(nodeFrom, nodeTo, _)
 }
 
+private predicate localFlowStepPlus(Node node1, Node node2) = fastTC(localFlowStep/2)(node1, node2)
+
 /**
  * Holds if data flows from `source` to `sink` in one or more local
  * (intra-procedural) steps.
@@ -32,7 +34,4 @@ private predicate localFlowPlus(Node source, Node sink) = fastTC(localFlowStep/2
  * (intra-procedural) steps.
  */
 pragma[inline]
-predicate localFlow(Node source, Node sink) {
-  localFlowPlus(source, sink) or 
-  source = sink
-}
+predicate localFlow(Node source, Node sink) { source = sink or localFlowStepPlus(source, sink) }
