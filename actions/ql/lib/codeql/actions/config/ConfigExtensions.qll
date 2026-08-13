@@ -59,6 +59,12 @@ extensible predicate vulnerableActionsDataModel(
 );
 
 /**
+ * Holds for actions whose advisories have an exploitability model in the
+ * enabled vulnerable-action query.
+ */
+extensible predicate vulnerableActionsAdvisoryDataModel(string action, string advisory);
+
+/**
  * Holds for actions that are known to be immutable.
  */
 extensible predicate immutableActionsDataModel(string action);

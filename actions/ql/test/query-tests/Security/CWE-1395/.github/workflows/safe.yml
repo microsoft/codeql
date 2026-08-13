@@ -1,0 +1,13 @@
+name: Safe
+
+on:
+  push:
+
+permissions:
+  contents: write
+
+jobs:
+  safe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: rlespinasse/github-slug-action@v4.4.0

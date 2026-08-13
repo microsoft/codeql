@@ -585,3 +585,15 @@ extensions:
       - ["check-spelling/check-spelling", "0.0.3-alpha", "b8e280ae90b28f1aadc50f93073aa6450afe820d", "0.0.19"]
       - ["check-spelling/check-spelling", "0.0.2-alpha", "8e32de8a016bc4dce4170ec36881cbb315f94ff4", "0.0.19"]
       - ["check-spelling/check-spelling", "0.0.1-alpha", "d2d0ee06c72600982d2f80bca187ce90fee6ad94", "0.0.19"]
+
+  - addsTo:
+      pack: codeql/actions-all
+      extensible: vulnerableActionsAdvisoryDataModel
+    data:
+      # Only advisories with an exploitability model are enabled by the
+      # security query. The version inventory above remains available to
+      # consumers that need raw vulnerable-version data.
+      - ["actions/download-artifact", "GHSA-cxww-7g56-2vh6"]
+      - ["tj-actions/changed-files", "GHSA-mcph-m25j-8j63"]
+      - ["gradle/gradle-build-action", "GHSA-h3qr-39j9-4r5v"]
+      - ["rlespinasse/github-slug-action", "GHSA-6q4m-7476-932w"]
