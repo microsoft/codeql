@@ -178,12 +178,12 @@ private module LocalNameBindingInput implements LocalNameBindingInputSig<Locatio
     )
     or
     exists(CatchClause catch |
-      scope = catch and // ensure both 'body' and 'guard' clause are in scope
+      scope = catch and // ensure both body and pattern are in scope
       pattern = catch.getPattern()
     )
     or
     exists(SwitchCase case |
-      scope = case and // ensure both 'body' and 'guard' clause are in scope (TODO: merge CatchClause and SwitchCase?)
+      scope = case and // ensure both body and pattern are in scope
       pattern = case.getPattern()
     )
     or
@@ -192,20 +192,7 @@ private module LocalNameBindingInput implements LocalNameBindingInputSig<Locatio
       pattern = stmt.getPattern()
     )
     or
-    exists(TuplePattern pat |
-      bindingContext(pat, scope) and
-      pattern = pat.getElement(_).getPattern()
-    )
-    or
-    exists(ConstructorPattern pat |
-      bindingContext(pat, scope) and
-      pattern = pat.getElement(_).getPattern()
-    )
-    or
-    exists(OrPattern pat |
-      bindingContext(pat, scope) and
-      pattern = pat.getPattern(_)
-    )
+    bindingContext(pattern.(Pattern).getEnclosingPattern(), scope)
     or
     exists(PatternGuardExpr expr |
       pattern = expr.getPattern() and
@@ -225,11 +212,8 @@ private module LocalNameBindingInput implements LocalNameBindingInputSig<Locatio
   private OrPattern getEnclosingOrPattern(Pattern p) {
     p = result.getPattern(_)
     or
-    exists(Pattern parent | result = getEnclosingOrPattern(parent) |
-      p = parent.(ConstructorPattern).getElement(_).getPattern()
-      or
-      p = parent.(TuplePattern).getElement(_).getPattern()
-    )
+    not p instanceof OrPattern and
+    result = getEnclosingOrPattern(p.getEnclosingPattern())
   }
 
   predicate declInScope(AstNode definingNode, string name, AstNode scope) {
@@ -262,8 +246,6 @@ private module LocalNameBindingInput implements LocalNameBindingInputSig<Locatio
     n = any(LocalFunctionDeclaration f).getName() and
     n.(Identifier).getValue() = name
   }
-
-  predicate lookupStartsAt(AstNode n, AstNode scope) { none() }
 }
 
 module LocalNameBindingOutput = LocalNameBinding<Location, LocalNameBindingInput>;
