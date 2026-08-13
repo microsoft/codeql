@@ -1,0 +1,17 @@
+name: Precision reusable
+
+on:
+  workflow_call:
+    inputs:
+      head_sha:
+        required: true
+        type: string
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.head_sha }}
+      - run: ./trusted-reusable.sh

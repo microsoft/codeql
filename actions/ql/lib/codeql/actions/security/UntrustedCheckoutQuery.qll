@@ -1,4 +1,5 @@
 import actions
+import codeql.actions.security.ControlChecks
 private import codeql.actions.DataFlow
 private import codeql.actions.dataflow.FlowSources
 private import codeql.actions.TaintTracking
@@ -101,6 +102,16 @@ private module ActionsSHACheckoutConfig implements DataFlow::ConfigSig {
           or
           step.getCallee() = "potiuk/get-workflow-origin" and
           e.getFieldName() = ["sourceHeadSha", "mergeCommitSha"]
+        )
+      )
+      or
+      // Some authorization wrappers return a JSON object whose ref member is
+      // the already-resolved commit SHA.
+      exists(JsonReferenceExpression e |
+        source.asExpr() = e and
+        e.getAccessPath().regexpMatch("(?i)\\.ref\\b") and
+        e.getInnerExpression().regexpMatch(
+          "(?i)\\b(needs\\.Authorization|steps\\.(auth|authorization))\\.outputs\\.args\\b"
         )
       )
     )
@@ -274,9 +285,14 @@ class ActionsSHACheckout extends SHACheckoutStep instanceof UsesStep {
         this.getArgumentExpr(["ref", "repository"]) = sink.getNode().asExpr()
       )
       or
+      exists(Expression reference |
+        reference = this.getArgumentExpr("ref") and
+        isRecognizedSHAReference(reference)
+      )
+      or
       // heuristic base on the step id and field name
       exists(string value, Expression expr |
-        value.regexpMatch(".*(head|sha|commit).*") and expr = this.getArgumentExpr("ref")
+        value.regexpMatch(".*(sha|commit).*") and expr = this.getArgumentExpr("ref")
       |
         expr.(StepsExpression).getStepId() = value
         or
@@ -297,6 +313,70 @@ class ActionsSHACheckout extends SHACheckoutStep instanceof UsesStep {
     then result = this.(UsesStep).getArgument("path")
     else result = "GITHUB_WORKSPACE/"
   }
+}
+
+private predicate isRecognizedSHAReference(Expression reference) {
+  containsHeadSHA(reference.getExpression())
+  or
+  exists(StepsExpression expression |
+    expression = reference and
+    (
+      expression.getFieldName().regexpMatch("(?i).*(sha|commit).*")
+      or
+      exists(UsesStep producer |
+        producer = expression.getTarget() and
+        (
+          producer.getCallee() = "eficode/resolve-pr-refs" and
+          expression.getFieldName() = "head_sha"
+          or
+          producer.getCallee() = [
+            "xt0rted/pull-request-comment-branch",
+            "alessbell/pull-request-comment-branch",
+            "gotson/pull-request-comment-branch"
+          ] and
+          expression.getFieldName() = "head_sha"
+          or
+          producer.getCallee() = "potiuk/get-workflow-origin" and
+          expression.getFieldName() = ["sourceHeadSha", "mergeCommitSha"]
+        )
+      )
+    )
+  )
+  or
+  exists(NeedsExpression expression, Job job, Expression output |
+    expression = reference and
+    expression.getTarget() = job.getOutputs() and
+    output = job.getOutputExpr(expression.getFieldName()) and
+    (
+      containsHeadSHA(output.getExpression())
+      or
+      output.getExpression().regexpMatch("(?i).*(head_sha|merge_sha|commit_sha).*")
+    )
+  )
+  or
+  exists(JobsExpression expression, Job job, Expression output |
+    expression = reference and
+    expression.getTarget() = job.getOutputs() and
+    output = job.getOutputExpr(expression.getFieldName()) and
+    (
+      containsHeadSHA(output.getExpression())
+      or
+      output.getExpression().regexpMatch("(?i).*(head_sha|merge_sha|commit_sha).*")
+    )
+  )
+  or
+  exists(InputsExpression expression |
+    expression = reference and
+    expression.getFieldName().regexpMatch("(?i).*(head_sha|merge_sha|commit_sha).*")
+  )
+  or
+  exists(JsonReferenceExpression expression |
+    expression = reference and
+    expression.getAccessPath().regexpMatch("(?i)\\.ref\\b") and
+    expression.getInnerExpression().regexpMatch(
+      "(?i)\\b(needs\\.Authorization|steps\\.(auth|authorization))\\.outputs\\.args\\b"
+    )
+  )
 }
 
 /** Checkout of a Pull Request HEAD ref using git within a Run step */
@@ -399,6 +479,46 @@ private predicate isRunCheckoutReference(
   exists(string command |
     checkout.(Run).getScript().getACommand() = command and
     exists(command.regexpFind(variable, _, _))
+  )
+}
+
+bindingset[condition]
+private predicate hasTrustedAuthorAssociation(string condition) {
+  exists(string normalized |
+    normalized = normalizeExpr(condition) and
+    normalized.regexpMatch(
+      ".*\\bgithub\\.event\\.(pull_request|issue)\\.author_association\\b.*"
+    ) and
+    (
+      normalized.regexpMatch(".*\\b(OWNER|MEMBER|COLLABORATOR)\\b.*")
+      or
+      exists(string firstTimer, string firstContributor, string mannequin, string noneValue |
+        firstTimer = normalized.regexpFind("FIRST_TIMER", _, _) and
+        firstContributor = normalized.regexpFind("FIRST_TIME_CONTRIBUTOR", _, _) and
+        mannequin = normalized.regexpFind("MANNEQUIN", _, _) and
+        noneValue = normalized.regexpFind("NONE", _, _)
+      )
+    )
+  )
+}
+
+/**
+ * Holds if the checkout is restricted to a PR author or repository that is
+ * not attacker-controlled for the triggering event.
+ */
+predicate isTrustedCheckoutPath(PRHeadCheckoutStep checkout, Event event) {
+  exists(ControlCheck check |
+    check instanceof AssociationIfCheck and
+    check.protects(checkout, event, "untrusted-checkout") and
+    hasTrustedAuthorAssociation(check.(If).getCondition())
+  )
+  or
+  exists(PullRequestTargetRepositoryIfCheck check |
+    check.protects(checkout, event, "untrusted-checkout-toctou")
+  )
+  or
+  exists(WorkflowRunRepositoryIfCheck check |
+    check.protects(checkout, event, "untrusted-checkout-toctou")
   )
 }
 

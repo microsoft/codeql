@@ -1,0 +1,75 @@
+name: Precision
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+
+jobs:
+  secure-step-output:
+    if: github.event.issue.author_association == 'MEMBER'
+    runs-on: ubuntu-latest
+    steps:
+      - id: resolve
+        run: echo "head_sha=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.resolve.outputs.head_sha }}
+      - run: ./trusted.sh
+
+  mutable-job-output:
+    runs-on: ubuntu-latest
+    outputs:
+      ref: ${{ steps.resolve.outputs.ref }}
+    steps:
+      - id: resolve
+        run: echo "ref=${{ github.event.pull_request.head.ref }}" >> "$GITHUB_OUTPUT"
+      - run: echo authorized
+
+  mutable-checkout:
+    needs: mutable-job-output
+    if: github.actor == 'maintainer'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.mutable-job-output.outputs.ref }}
+      - run: ./untrusted.sh
+
+  mutable-after-sha-authorization:
+    if: github.actor == 'maintainer'
+    runs-on: ubuntu-latest
+    steps:
+      - id: authorize
+        run: echo "head_sha=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - run: ./different.sh
+
+  trusted-author-mutable:
+    if: github.event.issue.author_association == 'OWNER'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - run: ./trusted-author.sh
+
+  json-wrapper-sha:
+    if: github.actor == 'maintainer'
+    runs-on: ubuntu-latest
+    steps:
+      - id: authorization
+        run: echo 'args={"ref":"${{ github.event.pull_request.head.sha }}"}' >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ fromJson(steps.authorization.outputs.args).ref }}
+      - run: ./trusted-wrapper.sh
+
+  call-reusable:
+    uses: ./.github/workflows/precision-reusable.yml
+    with:
+      head_sha: ${{ github.event.pull_request.head.sha }}
