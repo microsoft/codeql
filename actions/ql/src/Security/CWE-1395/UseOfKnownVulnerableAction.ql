@@ -1,6 +1,7 @@
 /**
  * @name Use of a known vulnerable action
- * @description The workflow is using an action with known vulnerabilities.
+ * @description The workflow is using a known vulnerable action in an externally reachable,
+ *              privileged configuration with advisory-specific exploitability evidence.
  * @kind problem
  * @problem.severity error
  * @security-severity 7.5

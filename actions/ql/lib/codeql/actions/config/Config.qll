@@ -120,6 +120,17 @@ predicate vulnerableActionsDataModel(
 }
 
 /**
+ * MaD models for vulnerable actions with an advisory-specific exploitability
+ * model.
+ * Fields:
+ *    - action: action name
+ *    - advisory: advisory model identifier
+ */
+predicate vulnerableActionsAdvisoryDataModel(string action, string advisory) {
+  Extensions::vulnerableActionsAdvisoryDataModel(action, advisory)
+}
+
+/**
  * MaD models for immutable actions
  * Fields:
  *    - action: action name
