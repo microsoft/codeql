@@ -5,6 +5,8 @@
 		<Declaration><![CDATA[
 class XppLanguageBasics
 {
+    int             counter;
+    str             label;
 }
 ]]></Declaration>
 		<Methods>

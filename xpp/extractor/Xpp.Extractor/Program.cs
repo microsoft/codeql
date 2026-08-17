@@ -9,6 +9,7 @@ using Xpp.Extraction;
 // CODEQL_EXTRACTOR_XPP_* environment instead, and `--file-list` supplies the files to index.
 
 var paths = new List<string>();
+var indexed = new List<string>();
 string? trapPath = null;
 string? fileList = null;
 
@@ -36,10 +37,14 @@ if (fileList is not null)
         return 2;
     }
 
-    paths.AddRange(File.ReadAllLines(fileList).Where(l => !string.IsNullOrWhiteSpace(l)));
+    // The extractor declares the .xml extension, so the CLI's list covers every XML file in
+    // the tree. Only the metadata objects that can carry X++ are ours to extract.
+    indexed.AddRange(File.ReadAllLines(fileList)
+        .Where(l => !string.IsNullOrWhiteSpace(l))
+        .Where(XppSourceFile.IsCandidate));
 }
 
-if (paths.Count == 0)
+if (paths.Count == 0 && indexed.Count == 0)
 {
     Console.Error.WriteLine("usage: Xpp.Extractor [<path>...] [--file-list <file>] [--trap <file>]");
     return 2;
@@ -55,7 +60,7 @@ catch (DirectoryNotFoundException e)
     return 2;
 }
 
-var files = new List<string>();
+var files = new List<string>(indexed);
 foreach (var path in paths)
 {
     if (Directory.Exists(path))
@@ -89,21 +94,27 @@ TextWriter? shared = trapPath is not null
         ? Console.Out
         : null;
 
+// Labels are only unique within a TRAP file, so a shared stream must also share one writer;
+// a writer per input would restart at #1 and collide.
+var sharedTrap = shared is null ? null : new TrapFile(shared);
+
 try
 {
     foreach (var file in files.OrderBy(f => f, StringComparer.Ordinal))
     {
         var output = shared;
+        var trap = sharedTrap;
         if (output is null)
         {
             var destination = layout.TrapPathFor(file)!;
             Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
             output = new StreamWriter(File.Create(destination));
+            trap = new TrapFile(output);
         }
 
         try
         {
-            var result = extractor.Extract(file, new TrapFile(output));
+            var result = extractor.Extract(file, trap!);
             totalBlocks += result.Blocks;
             totalNodes += result.Nodes;
             totalUnsupported += result.Unsupported;

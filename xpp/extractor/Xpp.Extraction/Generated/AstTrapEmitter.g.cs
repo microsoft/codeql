@@ -25,12 +25,10 @@ internal static class AstTrapEmitter
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.AssignMultipleFieldStatement)node;
         if (n.Expression is { } c_expression)
             trap.Tuple("assign_multiple_field_statement_expressions", id, trap.Label(c_expression));
-        if (n.Fields is System.Collections.IEnumerable seq_fields)
         {
             var i = 0;
-            foreach (var item in seq_fields)
+            foreach (var item in AstSequence.Elements(n.Fields))
             {
-                if (item is null) continue;
                 trap.Tuple("assign_multiple_field_statement_fields", id, i, trap.Label(item));
                 i++;
             }
@@ -79,24 +77,20 @@ internal static class AstTrapEmitter
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.Attribute)node;
         if (n.Name is string s_name)
             trap.Tuple("attribute_names", id, s_name);
-        if (n.NamedParameters is System.Collections.IEnumerable seq_named_parameters)
         {
             var i = 0;
-            foreach (var item in seq_named_parameters)
+            foreach (var item in AstSequence.Elements(n.NamedParameters))
             {
-                if (item is null) continue;
                 trap.Tuple("attribute_named_parameters", id, i, EmitAttributeNamedParameterEntry(trap, (ITuple)item));
                 i++;
             }
         }
         if (n.NonFullyQualifiedName is string s_non_fully_qualified_name)
             trap.Tuple("attribute_non_fully_qualified_names", id, s_non_fully_qualified_name);
-        if (n.Parameters is System.Collections.IEnumerable seq_parameters)
         {
             var i = 0;
-            foreach (var item in seq_parameters)
+            foreach (var item in AstSequence.Elements(n.Parameters))
             {
-                if (item is null) continue;
                 trap.Tuple("attribute_parameters", id, i, trap.Label(item));
                 i++;
             }
@@ -113,12 +107,10 @@ internal static class AstTrapEmitter
     private static void EmitOwnAttributeList(ITrapFile trap, Label id, object node)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.AttributeList)node;
-        if (n.Attributes is System.Collections.IEnumerable seq_attributes)
         {
             var i = 0;
-            foreach (var item in seq_attributes)
+            foreach (var item in AstSequence.Elements(n.Attributes))
             {
-                if (item is null) continue;
                 trap.Tuple("attribute_list_attributes", id, i, trap.Label(item));
                 i++;
             }
@@ -139,12 +131,10 @@ internal static class AstTrapEmitter
     private static void EmitOwnCaseValues(ITrapFile trap, Label id, object node)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.CaseValues)node;
-        if (n.Values is System.Collections.IEnumerable seq_values)
         {
             var i = 0;
-            foreach (var item in seq_values)
+            foreach (var item in AstSequence.Elements(n.Values))
             {
-                if (item is null) continue;
                 trap.Tuple("case_values_values", id, i, trap.Label(item));
                 i++;
             }
@@ -179,24 +169,20 @@ internal static class AstTrapEmitter
     private static void EmitOwnClass(ITrapFile trap, Label id, object node)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.Class)node;
-        if (n.Fields is System.Collections.IEnumerable seq_fields)
         {
             var i = 0;
-            foreach (var item in seq_fields)
+            foreach (var item in AstSequence.Elements(n.Fields))
             {
-                if (item is null) continue;
                 trap.Tuple("class_fields", id, i, trap.Label(item));
                 i++;
             }
         }
         if (n.HasCyclicInheritance is true)
             trap.Tuple("class_has_cyclic_inheritance", id);
-        if (n.Implements is System.Collections.IEnumerable seq_implements)
         {
             var i = 0;
-            foreach (var item in seq_implements)
+            foreach (var item in AstSequence.Elements(n.Implements))
             {
-                if (item is null) continue;
                 trap.Tuple("class_implements", id, i, (string)item);
                 i++;
             }
@@ -249,12 +235,10 @@ internal static class AstTrapEmitter
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ClrType)node;
         if (n.FullName is string s_full_name)
             trap.Tuple("clr_type_full_names", id, s_full_name);
-        if (n.RectangularDimensions is System.Collections.IEnumerable seq_rectangular_dimensions)
         {
             var i = 0;
-            foreach (var item in seq_rectangular_dimensions)
+            foreach (var item in AstSequence.Elements(n.RectangularDimensions))
             {
-                if (item is null) continue;
                 trap.Tuple("clr_type_rectangular_dimensions", id, i, System.Convert.ToInt64(item));
                 i++;
             }
@@ -272,12 +256,10 @@ internal static class AstTrapEmitter
             trap.Tuple("compilation_unit_names", id, s_name);
         if (n.NeedsTransformation is true)
             trap.Tuple("compilation_unit_needs_transformation", id);
-        if (n.Regions is System.Collections.IEnumerable seq_regions)
         {
             var i = 0;
-            foreach (var item in seq_regions)
+            foreach (var item in AstSequence.Elements(n.Regions))
             {
-                if (item is null) continue;
                 trap.Tuple("compilation_unit_regions", id, i, EmitCompilationUnitRegionEntry(trap, (ITuple)item));
                 i++;
             }
@@ -287,12 +269,10 @@ internal static class AstTrapEmitter
     private static void EmitOwnCompoundStatement(ITrapFile trap, Label id, object node)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.CompoundStatement)node;
-        if (n.Content is System.Collections.IEnumerable seq_content)
         {
             var i = 0;
-            foreach (var item in seq_content)
+            foreach (var item in AstSequence.Elements(n.Content))
             {
-                if (item is null) continue;
                 trap.Tuple("compound_statement_contents", id, i, trap.Label(item));
                 i++;
             }
@@ -313,12 +293,10 @@ internal static class AstTrapEmitter
     private static void EmitOwnContainerAttributeLiteral(ITrapFile trap, Label id, object node)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ContainerAttributeLiteral)node;
-        if (n.Value is System.Collections.IEnumerable seq_value)
         {
             var i = 0;
-            foreach (var item in seq_value)
+            foreach (var item in AstSequence.Elements(n.Value))
             {
-                if (item is null) continue;
                 trap.Tuple("container_attribute_literal_values", id, i, trap.Label(item));
                 i++;
             }
@@ -328,12 +306,10 @@ internal static class AstTrapEmitter
     private static void EmitOwnContainerLiteralExpression(ITrapFile trap, Label id, object node)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ContainerLiteralExpression)node;
-        if (n.Value is System.Collections.IEnumerable seq_value)
         {
             var i = 0;
-            foreach (var item in seq_value)
+            foreach (var item in AstSequence.Elements(n.Value))
             {
-                if (item is null) continue;
                 trap.Tuple("container_literal_expression_values", id, i, trap.Label(item));
                 i++;
             }
@@ -352,12 +328,10 @@ internal static class AstTrapEmitter
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.Declaration)node;
         if (n.ArraySpecification is { } c_array_specification)
             trap.Tuple("declaration_array_specifications", id, trap.Label(c_array_specification));
-        if (n.ModifierList is System.Collections.IEnumerable seq_modifier_list)
         {
             var i = 0;
-            foreach (var item in seq_modifier_list)
+            foreach (var item in AstSequence.Elements(n.ModifierList))
             {
-                if (item is null) continue;
                 trap.Tuple("declaration_modifier_lists", id, i, trap.Label(item));
                 i++;
             }
@@ -437,12 +411,10 @@ internal static class AstTrapEmitter
     private static void EmitOwnEvaluation(ITrapFile trap, Label id, object node)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.Evaluation)node;
-        if (n.ActualParameters is System.Collections.IEnumerable seq_actual_parameters)
         {
             var i = 0;
-            foreach (var item in seq_actual_parameters)
+            foreach (var item in AstSequence.Elements(n.ActualParameters))
             {
-                if (item is null) continue;
                 trap.Tuple("evaluation_actual_parameters", id, i, EmitEvaluationActualParameterEntry(trap, (ITuple)item));
                 i++;
             }
@@ -452,12 +424,10 @@ internal static class AstTrapEmitter
     private static void EmitOwnExplicitSelection(ITrapFile trap, Label id, object node)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ExplicitSelection)node;
-        if (n.Fields is System.Collections.IEnumerable seq_fields)
         {
             var i = 0;
-            foreach (var item in seq_fields)
+            foreach (var item in AstSequence.Elements(n.Fields))
             {
-                if (item is null) continue;
                 trap.Tuple("explicit_selection_fields", id, i, trap.Label(item));
                 i++;
             }
@@ -593,12 +563,10 @@ internal static class AstTrapEmitter
     private static void EmitOwnFlushStatement(ITrapFile trap, Label id, object node)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.FlushStatement)node;
-        if (n.IdList is System.Collections.IEnumerable seq_id_list)
         {
             var i = 0;
-            foreach (var item in seq_id_list)
+            foreach (var item in AstSequence.Elements(n.IdList))
             {
-                if (item is null) continue;
                 trap.Tuple("flush_statement_id_lists", id, i, (string)item);
                 i++;
             }
@@ -615,12 +583,10 @@ internal static class AstTrapEmitter
     private static void EmitOwnForDeclarationAssign(ITrapFile trap, Label id, object node)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ForDeclarationAssign)node;
-        if (n.InitializationDeclaration is System.Collections.IEnumerable seq_initialization_declaration)
         {
             var i = 0;
-            foreach (var item in seq_initialization_declaration)
+            foreach (var item in AstSequence.Elements(n.InitializationDeclaration))
             {
-                if (item is null) continue;
                 trap.Tuple("for_declaration_assign_initialization_declarations", id, i, trap.Label(item));
                 i++;
             }
@@ -652,12 +618,10 @@ internal static class AstTrapEmitter
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.FormControl)node;
         if (n.AutoDeclaration is true)
             trap.Tuple("form_control_auto_declaration", id);
-        if (n.ChildControls is System.Collections.IEnumerable seq_child_controls)
         {
             var i = 0;
-            foreach (var item in seq_child_controls)
+            foreach (var item in AstSequence.Elements(n.ChildControls))
             {
-                if (item is null) continue;
                 trap.Tuple("form_control_child_controls", id, i, trap.Label(item));
                 i++;
             }
@@ -690,12 +654,10 @@ internal static class AstTrapEmitter
     private static void EmitOwnFormDataSource(ITrapFile trap, Label id, object node)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.FormDataSource)node;
-        if (n.DataFields is System.Collections.IEnumerable seq_data_fields)
         {
             var i = 0;
-            foreach (var item in seq_data_fields)
+            foreach (var item in AstSequence.Elements(n.DataFields))
             {
-                if (item is null) continue;
                 trap.Tuple("form_data_source_data_fields", id, i, trap.Label(item));
                 i++;
             }
@@ -728,22 +690,18 @@ internal static class AstTrapEmitter
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.FormModelElement)node;
         if (n.Behavior is { } c_behavior)
             trap.Tuple("form_model_element_behaviors", id, trap.Label(c_behavior));
-        if (n.Controls is System.Collections.IEnumerable seq_controls)
         {
             var i = 0;
-            foreach (var item in seq_controls)
+            foreach (var item in AstSequence.Elements(n.Controls))
             {
-                if (item is null) continue;
                 trap.Tuple("form_model_element_controls", id, i, trap.Label(item));
                 i++;
             }
         }
-        if (n.DataSources is System.Collections.IEnumerable seq_data_sources)
         {
             var i = 0;
-            foreach (var item in seq_data_sources)
+            foreach (var item in AstSequence.Elements(n.DataSources))
             {
-                if (item is null) continue;
                 trap.Tuple("form_model_element_data_sources", id, i, trap.Label(item));
                 i++;
             }
@@ -771,44 +729,36 @@ internal static class AstTrapEmitter
     private static void EmitOwnFunctionDeclaration(ITrapFile trap, Label id, object node)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.FunctionDeclaration)node;
-        if (n.DeclarationsAndStatements is System.Collections.IEnumerable seq_declarations_and_statements)
         {
             var i = 0;
-            foreach (var item in seq_declarations_and_statements)
+            foreach (var item in AstSequence.Elements(n.DeclarationsAndStatements))
             {
-                if (item is null) continue;
                 trap.Tuple("function_declaration_declarations_and_statements", id, i, trap.Label(item));
                 i++;
             }
         }
         if (n.ElementTypeName is string s_element_type_name)
             trap.Tuple("function_declaration_element_type_names", id, s_element_type_name);
-        if (n.Locals is System.Collections.IEnumerable seq_locals)
         {
             var i = 0;
-            foreach (var item in seq_locals)
+            foreach (var item in AstSequence.Elements(n.Locals))
             {
-                if (item is null) continue;
                 trap.Tuple("function_declaration_locals", id, i, trap.Label(item));
                 i++;
             }
         }
-        if (n.Parameters is System.Collections.IEnumerable seq_parameters)
         {
             var i = 0;
-            foreach (var item in seq_parameters)
+            foreach (var item in AstSequence.Elements(n.Parameters))
             {
-                if (item is null) continue;
                 trap.Tuple("function_declaration_parameters", id, i, trap.Label(item));
                 i++;
             }
         }
-        if (n.Statements is System.Collections.IEnumerable seq_statements)
         {
             var i = 0;
-            foreach (var item in seq_statements)
+            foreach (var item in AstSequence.Elements(n.Statements))
             {
-                if (item is null) continue;
                 trap.Tuple("function_declaration_statements", id, i, trap.Label(item));
                 i++;
             }
@@ -818,12 +768,10 @@ internal static class AstTrapEmitter
     private static void EmitOwnGenericEvaluation(ITrapFile trap, Label id, object node)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.GenericEvaluation)node;
-        if (n.TypeArgumentList is System.Collections.IEnumerable seq_type_argument_list)
         {
             var i = 0;
-            foreach (var item in seq_type_argument_list)
+            foreach (var item in AstSequence.Elements(n.TypeArgumentList))
             {
-                if (item is null) continue;
                 trap.Tuple("generic_evaluation_type_argument_lists", id, i, trap.Label(item));
                 i++;
             }
@@ -833,12 +781,10 @@ internal static class AstTrapEmitter
     private static void EmitOwnGenericXppType(ITrapFile trap, Label id, object node)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.GenericXppType)node;
-        if (n.TypeArgumentList is System.Collections.IEnumerable seq_type_argument_list)
         {
             var i = 0;
-            foreach (var item in seq_type_argument_list)
+            foreach (var item in AstSequence.Elements(n.TypeArgumentList))
             {
-                if (item is null) continue;
                 trap.Tuple("generic_xpp_type_type_argument_lists", id, i, trap.Label(item));
                 i++;
             }
@@ -892,12 +838,10 @@ internal static class AstTrapEmitter
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.InsertStatement)node;
         if (n.CrossCompany is { } c_cross_company)
             trap.Tuple("insert_statement_cross_companies", id, trap.Label(c_cross_company));
-        if (n.Fields is System.Collections.IEnumerable seq_fields)
         {
             var i = 0;
-            foreach (var item in seq_fields)
+            foreach (var item in AstSequence.Elements(n.Fields))
             {
-                if (item is null) continue;
                 trap.Tuple("insert_statement_fields", id, i, trap.Label(item));
                 i++;
             }
@@ -955,12 +899,10 @@ internal static class AstTrapEmitter
     private static void EmitOwnLocalDeclarationsStatement(ITrapFile trap, Label id, object node)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.LocalDeclarationsStatement)node;
-        if (n.Declarations is System.Collections.IEnumerable seq_declarations)
         {
             var i = 0;
-            foreach (var item in seq_declarations)
+            foreach (var item in AstSequence.Elements(n.Declarations))
             {
-                if (item is null) continue;
                 trap.Tuple("local_declarations_statement_declarations", id, i, trap.Label(item));
                 i++;
             }
@@ -970,12 +912,10 @@ internal static class AstTrapEmitter
     private static void EmitOwnMethod(ITrapFile trap, Label id, object node)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.Method)node;
-        if (n.DeclarationsAndStatements is System.Collections.IEnumerable seq_declarations_and_statements)
         {
             var i = 0;
-            foreach (var item in seq_declarations_and_statements)
+            foreach (var item in AstSequence.Elements(n.DeclarationsAndStatements))
             {
-                if (item is null) continue;
                 trap.Tuple("method_declarations_and_statements", id, i, trap.Label(item));
                 i++;
             }
@@ -1022,24 +962,20 @@ internal static class AstTrapEmitter
             trap.Tuple("method_is_type_initializer", id);
         if (n.IsWrappable is true)
             trap.Tuple("method_is_wrappable", id);
-        if (n.Locals is System.Collections.IEnumerable seq_locals)
         {
             var i = 0;
-            foreach (var item in seq_locals)
+            foreach (var item in AstSequence.Elements(n.Locals))
             {
-                if (item is null) continue;
                 trap.Tuple("method_locals", id, i, trap.Label(item));
                 i++;
             }
         }
         if (n.Modifiers is { } e_modifiers)
             trap.Tuple("method_modifiers", id, e_modifiers.ToString());
-        if (n.Statements is System.Collections.IEnumerable seq_statements)
         {
             var i = 0;
-            foreach (var item in seq_statements)
+            foreach (var item in AstSequence.Elements(n.Statements))
             {
-                if (item is null) continue;
                 trap.Tuple("method_statements", id, i, trap.Label(item));
                 i++;
             }
@@ -1051,22 +987,18 @@ internal static class AstTrapEmitter
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.MethodOrDelegate)node;
         if (n.Attributes is { } c_attributes)
             trap.Tuple("method_or_delegate_attributes", id, trap.Label(c_attributes));
-        if (n.ModifierList is System.Collections.IEnumerable seq_modifier_list)
         {
             var i = 0;
-            foreach (var item in seq_modifier_list)
+            foreach (var item in AstSequence.Elements(n.ModifierList))
             {
-                if (item is null) continue;
                 trap.Tuple("method_or_delegate_modifier_lists", id, i, trap.Label(item));
                 i++;
             }
         }
-        if (n.Parameters is System.Collections.IEnumerable seq_parameters)
         {
             var i = 0;
-            foreach (var item in seq_parameters)
+            foreach (var item in AstSequence.Elements(n.Parameters))
             {
-                if (item is null) continue;
                 trap.Tuple("method_or_delegate_parameters", id, i, trap.Label(item));
                 i++;
             }
@@ -1075,12 +1007,10 @@ internal static class AstTrapEmitter
             trap.Tuple("method_or_delegate_path_contributions", id, s_path_contribution);
         if (n.Type is { } c_type)
             trap.Tuple("method_or_delegate_types", id, trap.Label(c_type));
-        if (n.TypeParameters is System.Collections.IEnumerable seq_type_parameters)
         {
             var i = 0;
-            foreach (var item in seq_type_parameters)
+            foreach (var item in AstSequence.Elements(n.TypeParameters))
             {
-                if (item is null) continue;
                 trap.Tuple("method_or_delegate_type_parameters", id, i, (string)item);
                 i++;
             }
@@ -1090,22 +1020,18 @@ internal static class AstTrapEmitter
     private static void EmitOwnModelElement(ITrapFile trap, Label id, object node)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ModelElement)node;
-        if (n.BaseMethods is System.Collections.IEnumerable seq_base_methods)
         {
             var i = 0;
-            foreach (var item in seq_base_methods)
+            foreach (var item in AstSequence.Elements(n.BaseMethods))
             {
-                if (item is null) continue;
                 trap.Tuple("model_element_base_methods", id, i, trap.Label(item));
                 i++;
             }
         }
-        if (n.ExtendGenericParameters is System.Collections.IEnumerable seq_extend_generic_parameters)
         {
             var i = 0;
-            foreach (var item in seq_extend_generic_parameters)
+            foreach (var item in AstSequence.Elements(n.ExtendGenericParameters))
             {
-                if (item is null) continue;
                 trap.Tuple("model_element_extend_generic_parameters", id, i, trap.Label(item));
                 i++;
             }
@@ -1124,24 +1050,20 @@ internal static class AstTrapEmitter
             trap.Tuple("model_element_is_private", id);
         if (n.IsPublic is true)
             trap.Tuple("model_element_is_public", id);
-        if (n.Methods is System.Collections.IEnumerable seq_methods)
         {
             var i = 0;
-            foreach (var item in seq_methods)
+            foreach (var item in AstSequence.Elements(n.Methods))
             {
-                if (item is null) continue;
                 trap.Tuple("model_element_methods", id, i, trap.Label(item));
                 i++;
             }
         }
         if (n.ModelId is { } v_model_id)
             trap.Tuple("model_element_model_ids", id, System.Convert.ToInt64(v_model_id));
-        if (n.ModifierList is System.Collections.IEnumerable seq_modifier_list)
         {
             var i = 0;
-            foreach (var item in seq_modifier_list)
+            foreach (var item in AstSequence.Elements(n.ModifierList))
             {
-                if (item is null) continue;
                 trap.Tuple("model_element_modifier_lists", id, i, trap.Label(item));
                 i++;
             }
@@ -1150,34 +1072,28 @@ internal static class AstTrapEmitter
             trap.Tuple("model_element_modifiers", id, e_modifiers.ToString());
         if (n.Namespace is string s_namespace)
             trap.Tuple("model_element_namespaces", id, s_namespace);
-        if (n.NestedClasses is System.Collections.IEnumerable seq_nested_classes)
         {
             var i = 0;
-            foreach (var item in seq_nested_classes)
+            foreach (var item in AstSequence.Elements(n.NestedClasses))
             {
-                if (item is null) continue;
                 trap.Tuple("model_element_nested_classes", id, i, trap.Label(item));
                 i++;
             }
         }
         if (n.PathContribution is string s_path_contribution)
             trap.Tuple("model_element_path_contributions", id, s_path_contribution);
-        if (n.TypeParameters is System.Collections.IEnumerable seq_type_parameters)
         {
             var i = 0;
-            foreach (var item in seq_type_parameters)
+            foreach (var item in AstSequence.Elements(n.TypeParameters))
             {
-                if (item is null) continue;
                 trap.Tuple("model_element_type_parameters", id, i, (string)item);
                 i++;
             }
         }
-        if (n.Using is System.Collections.IEnumerable seq_using)
         {
             var i = 0;
-            foreach (var item in seq_using)
+            foreach (var item in AstSequence.Elements(n.Using))
             {
-                if (item is null) continue;
                 trap.Tuple("model_element_usings", id, i, EmitModelElementUsingEntry(trap, (ITuple)item));
                 i++;
             }
@@ -1230,32 +1146,26 @@ internal static class AstTrapEmitter
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.NewClrArrayExpression)node;
         if (n.FullName is string s_full_name)
             trap.Tuple("new_clr_array_expression_full_names", id, s_full_name);
-        if (n.RectangularDimensions is System.Collections.IEnumerable seq_rectangular_dimensions)
         {
             var i = 0;
-            foreach (var item in seq_rectangular_dimensions)
+            foreach (var item in AstSequence.Elements(n.RectangularDimensions))
             {
-                if (item is null) continue;
                 trap.Tuple("new_clr_array_expression_rectangular_dimensions", id, i, System.Convert.ToInt64(item));
                 i++;
             }
         }
-        if (n.Sizes is System.Collections.IEnumerable seq_sizes)
         {
             var i = 0;
-            foreach (var item in seq_sizes)
+            foreach (var item in AstSequence.Elements(n.Sizes))
             {
-                if (item is null) continue;
                 trap.Tuple("new_clr_array_expression_sizes", id, i, trap.Label(item));
                 i++;
             }
         }
-        if (n.TypeArgumentList is System.Collections.IEnumerable seq_type_argument_list)
         {
             var i = 0;
-            foreach (var item in seq_type_argument_list)
+            foreach (var item in AstSequence.Elements(n.TypeArgumentList))
             {
-                if (item is null) continue;
                 trap.Tuple("new_clr_array_expression_type_argument_lists", id, i, trap.Label(item));
                 i++;
             }
@@ -1306,12 +1216,10 @@ internal static class AstTrapEmitter
     private static void EmitOwnPrintStatement(ITrapFile trap, Label id, object node)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.PrintStatement)node;
-        if (n.Expressions is System.Collections.IEnumerable seq_expressions)
         {
             var i = 0;
-            foreach (var item in seq_expressions)
+            foreach (var item in AstSequence.Elements(n.Expressions))
             {
-                if (item is null) continue;
                 trap.Tuple("print_statement_expressions", id, i, trap.Label(item));
                 i++;
             }
@@ -1321,12 +1229,10 @@ internal static class AstTrapEmitter
     private static void EmitOwnProvidedType(ITrapFile trap, Label id, object node)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ProvidedType)node;
-        if (n.ArgumentList is System.Collections.IEnumerable seq_argument_list)
         {
             var i = 0;
-            foreach (var item in seq_argument_list)
+            foreach (var item in AstSequence.Elements(n.ArgumentList))
             {
-                if (item is null) continue;
                 trap.Tuple("provided_type_argument_lists", id, i, trap.Label(item));
                 i++;
             }
@@ -1385,12 +1291,10 @@ internal static class AstTrapEmitter
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.QualifiedStaticCall)node;
         if (n.ClassName is string s_class_name)
             trap.Tuple("qualified_static_call_class_names", id, s_class_name);
-        if (n.ClassTypeArgumentList is System.Collections.IEnumerable seq_class_type_argument_list)
         {
             var i = 0;
-            foreach (var item in seq_class_type_argument_list)
+            foreach (var item in AstSequence.Elements(n.ClassTypeArgumentList))
             {
-                if (item is null) continue;
                 trap.Tuple("qualified_static_call_class_type_argument_lists", id, i, trap.Label(item));
                 i++;
             }
@@ -1432,12 +1336,10 @@ internal static class AstTrapEmitter
             trap.Tuple("query_buffer_names", id, s_buffer_name);
         if (n.CrossCompany is { } c_cross_company)
             trap.Tuple("query_cross_companies", id, trap.Label(c_cross_company));
-        if (n.GroupByElements is System.Collections.IEnumerable seq_group_by_elements)
         {
             var i = 0;
-            foreach (var item in seq_group_by_elements)
+            foreach (var item in AstSequence.Elements(n.GroupByElements))
             {
-                if (item is null) continue;
                 trap.Tuple("query_group_by_elements", id, i, trap.Label(item));
                 i++;
             }
@@ -1446,24 +1348,20 @@ internal static class AstTrapEmitter
             trap.Tuple("query_index_names", id, s_index_name);
         if (n.Joins is { } c_joins)
             trap.Tuple("query_joins", id, trap.Label(c_joins));
-        if (n.OrderByElements is System.Collections.IEnumerable seq_order_by_elements)
         {
             var i = 0;
-            foreach (var item in seq_order_by_elements)
+            foreach (var item in AstSequence.Elements(n.OrderByElements))
             {
-                if (item is null) continue;
                 trap.Tuple("query_order_by_elements", id, i, trap.Label(item));
                 i++;
             }
         }
         if (n.Selection is { } c_selection)
             trap.Tuple("query_selections", id, trap.Label(c_selection));
-        if (n.SelectionHints is System.Collections.IEnumerable seq_selection_hints)
         {
             var i = 0;
-            foreach (var item in seq_selection_hints)
+            foreach (var item in AstSequence.Elements(n.SelectionHints))
             {
-                if (item is null) continue;
                 trap.Tuple("query_selection_hints", id, i, item.ToString());
                 i++;
             }
@@ -1479,12 +1377,10 @@ internal static class AstTrapEmitter
     private static void EmitOwnQueryDataSource(ITrapFile trap, Label id, object node)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.QueryDataSource)node;
-        if (n.DataSources is System.Collections.IEnumerable seq_data_sources)
         {
             var i = 0;
-            foreach (var item in seq_data_sources)
+            foreach (var item in AstSequence.Elements(n.DataSources))
             {
-                if (item is null) continue;
                 trap.Tuple("query_data_source_data_sources", id, i, trap.Label(item));
                 i++;
             }
@@ -1493,12 +1389,10 @@ internal static class AstTrapEmitter
             trap.Tuple("query_data_source_element_type_names", id, s_element_type_name);
         if (n.FetchMode is { } e_fetch_mode)
             trap.Tuple("query_data_source_fetch_modes", id, e_fetch_mode.ToString());
-        if (n.Fields is System.Collections.IEnumerable seq_fields)
         {
             var i = 0;
-            foreach (var item in seq_fields)
+            foreach (var item in AstSequence.Elements(n.Fields))
             {
-                if (item is null) continue;
                 trap.Tuple("query_data_source_fields", id, i, (string)item);
                 i++;
             }
@@ -1507,22 +1401,18 @@ internal static class AstTrapEmitter
             trap.Tuple("query_data_source_first_fast", id);
         if (n.FirstOnly is true)
             trap.Tuple("query_data_source_first_only", id);
-        if (n.GroupBy is System.Collections.IEnumerable seq_group_by)
         {
             var i = 0;
-            foreach (var item in seq_group_by)
+            foreach (var item in AstSequence.Elements(n.GroupBy))
             {
-                if (item is null) continue;
                 trap.Tuple("query_data_source_group_bies", id, i, trap.Label(item));
                 i++;
             }
         }
-        if (n.Having is System.Collections.IEnumerable seq_having)
         {
             var i = 0;
-            foreach (var item in seq_having)
+            foreach (var item in AstSequence.Elements(n.Having))
             {
-                if (item is null) continue;
                 trap.Tuple("query_data_source_having_prop", id, i, trap.Label(item));
                 i++;
             }
@@ -1531,12 +1421,10 @@ internal static class AstTrapEmitter
             trap.Tuple("query_data_source_join_modes", id, e_join_mode.ToString());
         if (n.Name is string s_name)
             trap.Tuple("query_data_source_names", id, s_name);
-        if (n.OrderBy is System.Collections.IEnumerable seq_order_by)
         {
             var i = 0;
-            foreach (var item in seq_order_by)
+            foreach (var item in AstSequence.Elements(n.OrderBy))
             {
-                if (item is null) continue;
                 trap.Tuple("query_data_source_order_bies", id, i, trap.Label(item));
                 i++;
             }
@@ -1545,22 +1433,18 @@ internal static class AstTrapEmitter
             trap.Tuple("query_data_source_parent_data_sources", id, trap.Label(c_parent_data_source));
         if (n.PathContribution is string s_path_contribution)
             trap.Tuple("query_data_source_path_contributions", id, s_path_contribution);
-        if (n.Ranges is System.Collections.IEnumerable seq_ranges)
         {
             var i = 0;
-            foreach (var item in seq_ranges)
+            foreach (var item in AstSequence.Elements(n.Ranges))
             {
-                if (item is null) continue;
                 trap.Tuple("query_data_source_ranges_prop", id, i, trap.Label(item));
                 i++;
             }
         }
-        if (n.Relations is System.Collections.IEnumerable seq_relations)
         {
             var i = 0;
-            foreach (var item in seq_relations)
+            foreach (var item in AstSequence.Elements(n.Relations))
             {
-                if (item is null) continue;
                 trap.Tuple("query_data_source_relations_prop", id, i, trap.Label(item));
                 i++;
             }
@@ -1611,22 +1495,18 @@ internal static class AstTrapEmitter
             trap.Tuple("query_model_element_allow_cross_company", id);
         if (n.Behavior is { } c_behavior)
             trap.Tuple("query_model_element_behaviors", id, trap.Label(c_behavior));
-        if (n.DataSourceList is System.Collections.IEnumerable seq_data_source_list)
         {
             var i = 0;
-            foreach (var item in seq_data_source_list)
+            foreach (var item in AstSequence.Elements(n.DataSourceList))
             {
-                if (item is null) continue;
                 trap.Tuple("query_model_element_data_source_lists", id, i, trap.Label(item));
                 i++;
             }
         }
-        if (n.DataSources is System.Collections.IEnumerable seq_data_sources)
         {
             var i = 0;
-            foreach (var item in seq_data_sources)
+            foreach (var item in AstSequence.Elements(n.DataSources))
             {
-                if (item is null) continue;
                 trap.Tuple("query_model_element_data_sources", id, i, trap.Label(item));
                 i++;
             }
@@ -1724,12 +1604,10 @@ internal static class AstTrapEmitter
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.StaticMethodCall)node;
         if (n.ClassName is string s_class_name)
             trap.Tuple("static_method_call_class_names", id, s_class_name);
-        if (n.ClassTypeArgumentList is System.Collections.IEnumerable seq_class_type_argument_list)
         {
             var i = 0;
-            foreach (var item in seq_class_type_argument_list)
+            foreach (var item in AstSequence.Elements(n.ClassTypeArgumentList))
             {
-                if (item is null) continue;
                 trap.Tuple("static_method_call_class_type_argument_lists", id, i, trap.Label(item));
                 i++;
             }
@@ -1741,12 +1619,10 @@ internal static class AstTrapEmitter
     private static void EmitOwnStaticQualifier(ITrapFile trap, Label id, object node)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.StaticQualifier)node;
-        if (n.ClassTypeArgumentList is System.Collections.IEnumerable seq_class_type_argument_list)
         {
             var i = 0;
-            foreach (var item in seq_class_type_argument_list)
+            foreach (var item in AstSequence.Elements(n.ClassTypeArgumentList))
             {
-                if (item is null) continue;
                 trap.Tuple("static_qualifier_class_type_argument_lists", id, i, trap.Label(item));
                 i++;
             }
@@ -1778,12 +1654,10 @@ internal static class AstTrapEmitter
     private static void EmitOwnSwitchStatement(ITrapFile trap, Label id, object node)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.SwitchStatement)node;
-        if (n.Cases is System.Collections.IEnumerable seq_cases)
         {
             var i = 0;
-            foreach (var item in seq_cases)
+            foreach (var item in AstSequence.Elements(n.Cases))
             {
-                if (item is null) continue;
                 trap.Tuple("switch_statement_cases", id, i, EmitSwitchStatementCaseEntry(trap, (ITuple)item));
                 i++;
             }
@@ -1801,22 +1675,18 @@ internal static class AstTrapEmitter
             trap.Tuple("table_element_type_names", id, s_element_type_name);
         if (n.Extends is string s_extends)
             trap.Tuple("table_extends", id, s_extends);
-        if (n.Fields is System.Collections.IEnumerable seq_fields)
         {
             var i = 0;
-            foreach (var item in seq_fields)
+            foreach (var item in AstSequence.Elements(n.Fields))
             {
-                if (item is null) continue;
                 trap.Tuple("table_fields", id, i, trap.Label(item));
                 i++;
             }
         }
-        if (n.Indexes is System.Collections.IEnumerable seq_indexes)
         {
             var i = 0;
-            foreach (var item in seq_indexes)
+            foreach (var item in AstSequence.Elements(n.Indexes))
             {
-                if (item is null) continue;
                 trap.Tuple("table_indexes", id, i, (string)item);
                 i++;
             }
@@ -1861,12 +1731,10 @@ internal static class AstTrapEmitter
     private static void EmitOwnTryStatement(ITrapFile trap, Label id, object node)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.TryStatement)node;
-        if (n.Catches is System.Collections.IEnumerable seq_catches)
         {
             var i = 0;
-            foreach (var item in seq_catches)
+            foreach (var item in AstSequence.Elements(n.Catches))
             {
-                if (item is null) continue;
                 trap.Tuple("try_statement_catches", id, i, EmitTryStatementCatchEntry(trap, (ITuple)item));
                 i++;
             }
@@ -1898,22 +1766,18 @@ internal static class AstTrapEmitter
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.UpdateStatement)node;
         if (n.CrossCompany is { } c_cross_company)
             trap.Tuple("update_statement_cross_companies", id, trap.Label(c_cross_company));
-        if (n.FieldAssignments is System.Collections.IEnumerable seq_field_assignments)
         {
             var i = 0;
-            foreach (var item in seq_field_assignments)
+            foreach (var item in AstSequence.Elements(n.FieldAssignments))
             {
-                if (item is null) continue;
                 trap.Tuple("update_statement_field_assignments", id, i, trap.Label(item));
                 i++;
             }
         }
-        if (n.Hints is System.Collections.IEnumerable seq_hints)
         {
             var i = 0;
-            foreach (var item in seq_hints)
+            foreach (var item in AstSequence.Elements(n.Hints))
             {
-                if (item is null) continue;
                 trap.Tuple("update_statement_hints", id, i, item.ToString());
                 i++;
             }
@@ -1929,12 +1793,10 @@ internal static class AstTrapEmitter
     private static void EmitOwnUsingStatement(ITrapFile trap, Label id, object node)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.UsingStatement)node;
-        if (n.DisposableObjectInitializers is System.Collections.IEnumerable seq_disposable_object_initializers)
         {
             var i = 0;
-            foreach (var item in seq_disposable_object_initializers)
+            foreach (var item in AstSequence.Elements(n.DisposableObjectInitializers))
             {
-                if (item is null) continue;
                 trap.Tuple("using_statement_disposable_object_initializers", id, i, trap.Label(item));
                 i++;
             }
@@ -2045,12 +1907,10 @@ internal static class AstTrapEmitter
         trap.Tuple("switch_statement_case_entries", id);
         if (tuple[0] is { } c_case)
             trap.Tuple("switch_statement_case_entry_cases", id, trap.Label(c_case));
-        if (tuple[1] is System.Collections.IEnumerable seq_statements)
         {
             var i = 0;
-            foreach (var item in seq_statements)
+            foreach (var item in AstSequence.Elements(tuple[1]))
             {
-                if (item is null) continue;
                 trap.Tuple("switch_statement_case_entry_statements", id, i, trap.Label(item));
                 i++;
             }

@@ -4,6 +4,7 @@ methods
 | controlFlow |
 | databaseAccess |
 statementCounts
+| FieldDeclaration | 2 |
 | FindStatement | 1 |
 | ForStatement | 1 |
 | IfThenElseStatement | 1 |
@@ -17,3 +18,5 @@ statementCounts
 | TtsBeginStatement | 1 |
 | TtsEndStatement | 1 |
 | WhileStatement | 1 |
+searchStatementLine
+| 64 |

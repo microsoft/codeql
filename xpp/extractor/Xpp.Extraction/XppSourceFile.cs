@@ -1,3 +1,4 @@
+using System.Xml;
 using System.Xml.Linq;
 
 namespace Xpp.Extraction;
@@ -42,6 +43,12 @@ public static class XppSourceFile
                SourceBearingDirectories.Contains(directory, StringComparer.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// Parses <paramref name="text"/> keeping line information, which the source blocks need in
+    /// order to report file-relative positions.
+    /// </summary>
+    public static XDocument Parse(string text) => XDocument.Parse(text, LoadOptions.SetLineInfo);
+
     /// <summary>The object's name, or null if the document is not a metadata object.</summary>
     public static string? ObjectName(XDocument document) =>
         document.Root?.Element("Name")?.Value;
@@ -49,15 +56,15 @@ public static class XppSourceFile
     /// <summary>
     /// Every source block in the document, in file order.
     /// </summary>
-    public static IEnumerable<XppSourceBlock> Blocks(string text, XDocument document)
+    public static IEnumerable<XppSourceBlock> Blocks(XDocument document)
     {
         var sourceCode = document.Root?.Element("SourceCode");
         if (sourceCode is null)
             yield break;
 
-        var declaration = sourceCode.Element("Declaration")?.Value;
-        if (!string.IsNullOrWhiteSpace(declaration))
-            yield return new XppSourceBlock(null, declaration, LineOf(text, declaration));
+        var declaration = sourceCode.Element("Declaration");
+        if (declaration is not null && !string.IsNullOrWhiteSpace(declaration.Value))
+            yield return new XppSourceBlock(null, declaration.Value, LineOffsetOf(declaration));
 
         var methods = sourceCode.Element("Methods");
         if (methods is null)
@@ -65,36 +72,30 @@ public static class XppSourceFile
 
         foreach (var method in methods.Elements("Method"))
         {
-            var body = method.Element("Source")?.Value;
-            if (string.IsNullOrWhiteSpace(body))
+            var source = method.Element("Source");
+            if (source is null || string.IsNullOrWhiteSpace(source.Value))
                 continue;
 
             yield return new XppSourceBlock(
-                method.Element("Name")?.Value, body, LineOf(text, body));
+                method.Element("Name")?.Value, source.Value, LineOffsetOf(source));
         }
     }
 
     /// <summary>
-    /// The line on which <paramref name="fragment"/> starts within <paramref name="text"/>.
+    /// The line offset to give the parser for the CDATA payload of <paramref name="element"/>.
     /// </summary>
     /// <remarks>
-    /// The fragments are CDATA payloads, so they appear verbatim in the file and can be located
-    /// by substring search. Anything not found falls back to offset zero, which keeps positions
-    /// fragment-relative rather than wrong in an unpredictable way.
+    /// This comes from the XML line information rather than from searching the raw text for the
+    /// payload. An XML parser normalises CRLF to LF inside element values, so on the
+    /// Windows-authored files that F&amp;O produces the payload never matches the bytes on disk
+    /// and a search-based offset silently collapses to zero.
+    ///
+    /// The element's reported line is where <c>&lt;Source&gt;&lt;![CDATA[</c> sits, and the
+    /// payload begins immediately after, so the offset is one less than that line.
     /// </remarks>
-    private static int LineOf(string text, string fragment)
+    private static int LineOffsetOf(XElement element)
     {
-        var index = text.IndexOf(fragment, StringComparison.Ordinal);
-        if (index < 0)
-            return 0;
-
-        var line = 0;
-        for (var i = 0; i < index; i++)
-        {
-            if (text[i] == '\n')
-                line++;
-        }
-
-        return line;
+        var info = (IXmlLineInfo)element;
+        return info.HasLineInfo() ? Math.Max(0, info.LineNumber - 1) : 0;
     }
 }

@@ -33,7 +33,7 @@ public sealed class Extractor
         XDocument document;
         try
         {
-            document = XDocument.Parse(text);
+            document = XppSourceFile.Parse(text);
         }
         catch (Exception e)
         {
@@ -50,7 +50,7 @@ public sealed class Extractor
         var nodes = 0;
         var unsupported = 0;
 
-        foreach (var block in XppSourceFile.Blocks(text, document))
+        foreach (var block in XppSourceFile.Blocks(document))
         {
             blocks++;
             var context = new ParserContext(elementType, name);
@@ -79,7 +79,7 @@ public sealed class Extractor
             if (unit is null)
                 continue;
 
-            EmitTree(trap, unit, ref nodes, ref unsupported);
+            EmitTree(trap, fileLabel, unit, ref nodes, ref unsupported);
         }
 
         return new ExtractionResult(path, blocks, nodes, unsupported, errors);
@@ -98,7 +98,8 @@ public sealed class Extractor
     }
 
     /// <summary>Walks the AST, writing each node's tuples exactly once.</summary>
-    private static void EmitTree(ITrapFile trap, object root, ref int nodes, ref int unsupported)
+    private static void EmitTree(
+        ITrapFile trap, Label file, object root, ref int nodes, ref int unsupported)
     {
         var seen = new HashSet<object>(ReferenceEqualityComparer.Instance);
         var pending = new Stack<object>();
@@ -111,12 +112,41 @@ public sealed class Extractor
                 continue;
 
             nodes++;
-            if (!AstTrapEmitter.Emit(trap, trap.Label(node), node))
+            var id = trap.Label(node);
+            if (!AstTrapEmitter.Emit(trap, id, node))
                 unsupported++;
+
+            EmitLocation(trap, file, id, node);
 
             foreach (var child in Children(node))
                 pending.Push(child);
         }
+    }
+
+    /// <summary>
+    /// Records where <paramref name="node"/> came from.
+    /// </summary>
+    /// <remarks>
+    /// The parser was given the source block's line offset, so these positions are already
+    /// relative to the containing file rather than to the extracted fragment.
+    /// </remarks>
+    private static void EmitLocation(ITrapFile trap, Label file, Label id, object node)
+    {
+        if (node is not Ast ast)
+            return;
+
+        var position = ast.Position;
+
+        // Nodes the parser synthesises carry no extent; recording a zero span would put alerts
+        // at the top of the file.
+        if (position.StartLine <= 0)
+            return;
+
+        var location = trap.FreshLabel();
+        trap.Tuple(
+            "locations", location, file,
+            position.StartLine, position.StartCol, position.EndLine, position.EndCol);
+        trap.Tuple("locatable_locations", id, location);
     }
 
     /// <summary>The AST nodes directly reachable from <paramref name="node"/>.</summary>
@@ -171,8 +201,11 @@ public sealed class Extractor
 
                 break;
 
-            case System.Collections.IEnumerable sequence:
-                foreach (var item in sequence)
+            case System.Collections.IEnumerable:
+                // AstSequence reduces dictionary entries to their values; iterating the raw
+                // collection would yield KeyValuePair, which is neither an Ast nor a tuple and
+                // would silently drop the subtree.
+                foreach (var item in AstSequence.Elements(value))
                 {
                     foreach (var nested in Reachable(item))
                         yield return nested;

@@ -38,4 +38,12 @@ query predicate statementCounts(string kind, int n) {
   kind = "SwitchStatementCaseEntry" and n = count(SwitchStatementCaseEntry e)
   or
   kind = "TryStatementCatchEntry" and n = count(TryStatementCatchEntry e)
+  or
+  // Class fields live in a dictionary keyed by name in the compiler's AST, so this confirms
+  // dictionary-held children are reduced to their values rather than to key/value pairs.
+  kind = "FieldDeclaration" and n = count(FieldDeclaration d)
+}
+
+query predicate searchStatementLine(int line) {
+  line = any(SearchStatement s).getLocation().getStartLine()
 }

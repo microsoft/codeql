@@ -26,7 +26,33 @@ case "$(uname -s)" in
 esac
 
 pack="$output/xpp"
-rm -rf "$pack"
+
+# Resolve $pack without requiring it to exist yet, so it can be compared with the source tree.
+pack_parent="$(cd "$(dirname "$pack")" 2>/dev/null && pwd || true)"
+if [ -z "$pack_parent" ]; then
+    echo "output directory does not exist: $(dirname "$pack")" >&2
+    exit 2
+fi
+pack_abs="$pack_parent/$(basename "$pack")"
+xpp_abs="$(cd "$xpp_root" && pwd)"
+
+# Passing the repository root would make $pack the source tree itself, and the removal below
+# would delete it.
+if [ "$pack_abs" = "$xpp_abs" ]; then
+    echo "refusing to build into the source tree: $pack_abs" >&2
+    exit 2
+fi
+
+if [ -e "$pack_abs" ]; then
+    # Only ever remove something that is itself a previously built pack.
+    if [ ! -f "$pack_abs/codeql-extractor.yml" ]; then
+        echo "refusing to remove $pack_abs: it is not a generated extractor pack" >&2
+        exit 2
+    fi
+    rm -rf "$pack_abs"
+fi
+
+pack="$pack_abs"
 mkdir -p "$pack/tools/$platform"
 
 cp "$xpp_root/codeql-extractor.yml" "$pack/"

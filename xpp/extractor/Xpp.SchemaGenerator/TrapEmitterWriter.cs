@@ -285,12 +285,12 @@ public static partial class TrapEmitterWriter
         string _)
     {
         var seq = $"seq_{property.SchemaName}";
-        writer.WriteLine($"{indent}if ({access} is System.Collections.IEnumerable {seq})");
+        // AstSequence flattens dictionary entries to their values; iterating the raw collection
+        // would yield KeyValuePair and label the wrong thing.
         writer.WriteLine($"{indent}{{");
         writer.WriteLine($"{indent}    var i = 0;");
-        writer.WriteLine($"{indent}    foreach (var item in {seq})");
+        writer.WriteLine($"{indent}    foreach (var item in AstSequence.Elements({access}))");
         writer.WriteLine($"{indent}    {{");
-        writer.WriteLine($"{indent}        if (item is null) continue;");
         writer.WriteLine($"{indent}        {body}");
         writer.WriteLine($"{indent}        i++;");
         writer.WriteLine($"{indent}    }}");
