@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 using Microsoft.Dynamics.AX.Framework.Xlnt.XppParser;
 using Microsoft.Dynamics.AX.Metadata.XppCompiler;
@@ -136,24 +137,48 @@ public sealed class Extractor
                 continue;
             }
 
-            switch (value)
-            {
-                case null:
-                    break;
-                case Ast child:
-                    yield return child;
-                    break;
-                case string:
-                    break;
-                case System.Collections.IEnumerable sequence:
-                    foreach (var item in sequence)
-                    {
-                        if (item is Ast element)
-                            yield return element;
-                    }
+            foreach (var child in Reachable(value))
+                yield return child;
+        }
+    }
 
-                    break;
-            }
+    /// <summary>
+    /// The AST nodes held by a property value.
+    /// </summary>
+    /// <remarks>
+    /// The compiler groups some children in CLR tuples, such as a `catch` with its handler body
+    /// or a switch case with its statements, so tuple slots have to be looked through or those
+    /// subtrees are never visited.
+    /// </remarks>
+    private static IEnumerable<object> Reachable(object? value)
+    {
+        switch (value)
+        {
+            case null:
+            case string:
+                yield break;
+
+            case Ast child:
+                yield return child;
+                break;
+
+            case ITuple tuple:
+                for (var i = 0; i < tuple.Length; i++)
+                {
+                    foreach (var nested in Reachable(tuple[i]))
+                        yield return nested;
+                }
+
+                break;
+
+            case System.Collections.IEnumerable sequence:
+                foreach (var item in sequence)
+                {
+                    foreach (var nested in Reachable(item))
+                        yield return nested;
+                }
+
+                break;
         }
     }
 }
