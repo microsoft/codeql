@@ -2,29 +2,34 @@ using Xpp.SchemaGenerator;
 
 // Regenerates xpp/schema/ast.py from the X++ compiler package's AST hierarchy.
 //
-//   Xpp.SchemaGenerator <command> [--package <dir>] [--output <file>]
+//   Xpp.SchemaGenerator <command> [args] [--package <dir>] [--output <file>]
 //
 // Commands:
-//   schema   write the generated schema module
-//   report   summarise the reflected model and any unmapped properties
+//   schema          write the generated schema module
+//   report          summarise the reflected model and any unmapped properties
+//   type <name>     dump the members of a single type, for investigation
 
-var command = args.FirstOrDefault() ?? "report";
-
+var positional = new List<string>();
 string? packageDirectory = null;
 string? output = null;
 
-for (var i = 1; i < args.Length - 1; i++)
+for (var i = 0; i < args.Length; i++)
 {
     switch (args[i])
     {
-        case "--package":
+        case "--package" when i + 1 < args.Length:
             packageDirectory = args[++i];
             break;
-        case "--output":
+        case "--output" when i + 1 < args.Length:
             output = args[++i];
+            break;
+        default:
+            positional.Add(args[i]);
             break;
     }
 }
+
+var command = positional.Count > 0 ? positional[0] : "report";
 
 packageDirectory ??= Environment.GetEnvironmentVariable("XPP_COMPILER_PACKAGE");
 
