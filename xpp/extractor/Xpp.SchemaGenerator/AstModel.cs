@@ -46,7 +46,12 @@ public sealed record AstType(
     string? BaseName,
     bool IsAbstract,
     IReadOnlyList<AstProperty> Properties,
-    bool IsSynthetic = false);
+    bool IsSynthetic = false,
+    /// <summary>
+    /// True for open generic CLR classes. They cannot be named in generated code, and a closed
+    /// instance's runtime name would not match a dispatch case, so they are treated as abstract.
+    /// </summary>
+    bool IsGeneric = false);
 
 /// <summary>
 /// The X++ AST hierarchy, reflected out of the compiler package and classified into the shape
@@ -136,12 +141,14 @@ public sealed class AstModel
                     properties.Add(classified);
             }
 
-            result.Add(new AstType(TypeName(type), baseName, type.IsAbstract, properties));
+            result.Add(new AstType(
+                TypeName(type), baseName, type.IsAbstract, properties, IsGeneric: IsGeneric(type)));
         }
 
         result.AddRange(context.Synthetics.Values.OrderBy(t => t.Name, StringComparer.Ordinal));
         result = DropInheritedRedeclarations(result);
         result = DropUnreferencedSynthetics(result);
+        result = AddLeavesForConcreteBases(result);
         result = DropRedundantPresenceFlags(result);
         result = ResolveTableNameConflicts(result);
 
@@ -469,6 +476,42 @@ public sealed class AstModel
         return types.Where(t => !t.IsSynthetic || referenced.Contains(t.Name)).ToList();
     }
 
+    /// <summary>Suffix for the leaf classes standing in for instantiable base classes.</summary>
+    public const string ConcreteBaseLeafSuffix = "Internal";
+
+    /// <summary>
+    /// Adds a leaf subclass for every instantiable class that also has subclasses.
+    /// </summary>
+    /// <remarks>
+    /// The dbscheme only binds ids in leaf tables: a class with subclasses becomes a union and
+    /// gets no table of its own. The X++ AST has classes such as <c>FieldExpression</c> that are
+    /// both instantiable and extended, so instances of exactly that class would have nowhere to
+    /// bind. A generated leaf gives them one, mirroring the <c>...Internal</c> classes in the
+    /// Rust schema.
+    /// </remarks>
+    private static List<AstType> AddLeavesForConcreteBases(List<AstType> types)
+    {
+        var bases = types
+            .Select(t => t.BaseName)
+            .Where(n => n is not null)
+            .ToHashSet(StringComparer.Ordinal)!;
+
+        var existing = types.Select(t => t.Name).ToHashSet(StringComparer.Ordinal);
+
+        var leaves = types
+            .Where(t => !t.IsAbstract && bases.Contains(t.Name))
+            .Select(t => t.Name + ConcreteBaseLeafSuffix)
+            .Where(name => !existing.Contains(name))
+            .Select(name => new AstType(
+                name,
+                name[..^ConcreteBaseLeafSuffix.Length],
+                IsAbstract: false,
+                Properties: []))
+            .ToList();
+
+        return types.Concat(leaves).ToList();
+    }
+
     private static List<AstType> DropRedundantPresenceFlags(List<AstType> types)
     {
         return types.Select(type =>
@@ -543,6 +586,18 @@ public sealed class AstModel
         try
         {
             return type.IsEnum;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static bool IsGeneric(Type type)
+    {
+        try
+        {
+            return type.IsGenericTypeDefinition || type.ContainsGenericParameters;
         }
         catch
         {

@@ -113,6 +113,12 @@ module Synth {
     /**
      * INTERNAL: Do not use.
      */
+    TAssignmentEventHandlerStaticInternal(Raw::AssignmentEventHandlerStaticInternal id) {
+      constructAssignmentEventHandlerStaticInternal(id)
+    } or
+    /**
+     * INTERNAL: Do not use.
+     */
     TAttribute(Raw::Attribute id) { constructAttribute(id) } or
     /**
      * INTERNAL: Do not use.
@@ -356,6 +362,18 @@ module Synth {
      * INTERNAL: Do not use.
      */
     TFieldAssignment(Raw::FieldAssignment id) { constructFieldAssignment(id) } or
+    /**
+     * INTERNAL: Do not use.
+     */
+    TFieldDeclarationInternal(Raw::FieldDeclarationInternal id) {
+      constructFieldDeclarationInternal(id)
+    } or
+    /**
+     * INTERNAL: Do not use.
+     */
+    TFieldExpressionInternal(Raw::FieldExpressionInternal id) {
+      constructFieldExpressionInternal(id)
+    } or
     /**
      * INTERNAL: Do not use.
      */
@@ -607,6 +625,10 @@ module Synth {
     /**
      * INTERNAL: Do not use.
      */
+    TNamedTypeInternal(Raw::NamedTypeInternal id) { constructNamedTypeInternal(id) } or
+    /**
+     * INTERNAL: Do not use.
+     */
     TNewCall(Raw::NewCall id) { constructNewCall(id) } or
     /**
      * INTERNAL: Do not use.
@@ -771,6 +793,12 @@ module Synth {
     /**
      * INTERNAL: Do not use.
      */
+    TSimpleQualifierInternal(Raw::SimpleQualifierInternal id) {
+      constructSimpleQualifierInternal(id)
+    } or
+    /**
+     * INTERNAL: Do not use.
+     */
     TStaticField(Raw::StaticField id) { constructStaticField(id) } or
     /**
      * INTERNAL: Do not use.
@@ -794,6 +822,10 @@ module Synth {
     TStringLiteralExpression(Raw::StringLiteralExpression id) {
       constructStringLiteralExpression(id)
     } or
+    /**
+     * INTERNAL: Do not use.
+     */
+    TStringTypeInternal(Raw::StringTypeInternal id) { constructStringTypeInternal(id) } or
     /**
      * INTERNAL: Do not use.
      */
@@ -891,6 +923,12 @@ module Synth {
     /**
      * INTERNAL: Do not use.
      */
+    TVariableDeclarationInternal(Raw::VariableDeclarationInternal id) {
+      constructVariableDeclarationInternal(id)
+    } or
+    /**
+     * INTERNAL: Do not use.
+     */
     TVoidType(Raw::VoidType id) { constructVoidType(id) } or
     /**
      * INTERNAL: Do not use.
@@ -924,7 +962,8 @@ module Synth {
   /**
    * INTERNAL: Do not use.
    */
-  class TAssignmentEventHandlerStatic = TAssignmentEventHandlerClr;
+  class TAssignmentEventHandlerStatic =
+    TAssignmentEventHandlerClr or TAssignmentEventHandlerStaticInternal;
 
   /**
    * INTERNAL: Do not use.
@@ -1043,12 +1082,12 @@ module Synth {
   /**
    * INTERNAL: Do not use.
    */
-  class TFieldDeclaration = TTableFieldDeclaration;
+  class TFieldDeclaration = TFieldDeclarationInternal or TTableFieldDeclaration;
 
   /**
    * INTERNAL: Do not use.
    */
-  class TFieldExpression = TQualifiedStaticFieldExpression;
+  class TFieldExpression = TFieldExpressionInternal or TQualifiedStaticFieldExpression;
 
   /**
    * INTERNAL: Do not use.
@@ -1127,7 +1166,7 @@ module Synth {
   /**
    * INTERNAL: Do not use.
    */
-  class TNamedType = TFormElementType;
+  class TNamedType = TFormElementType or TNamedTypeInternal;
 
   /**
    * INTERNAL: Do not use.
@@ -1159,7 +1198,7 @@ module Synth {
   /**
    * INTERNAL: Do not use.
    */
-  class TSimpleQualifier = TStaticQualifier;
+  class TSimpleQualifier = TSimpleQualifierInternal or TStaticQualifier;
 
   /**
    * INTERNAL: Do not use.
@@ -1177,7 +1216,7 @@ module Synth {
   /**
    * INTERNAL: Do not use.
    */
-  class TStringType = TStringLengthType;
+  class TStringType = TStringLengthType or TStringTypeInternal;
 
   /**
    * INTERNAL: Do not use.
@@ -1202,7 +1241,7 @@ module Synth {
   /**
    * INTERNAL: Do not use.
    */
-  class TVariableDeclaration = TParameterDeclaration;
+  class TVariableDeclaration = TParameterDeclaration or TVariableDeclarationInternal;
 
   /**
    * INTERNAL: Do not use.
@@ -1386,6 +1425,17 @@ module Synth {
    */
   TAssignmentEventHandlerInstance convertAssignmentEventHandlerInstanceFromRaw(Raw::Element e) {
     result = TAssignmentEventHandlerInstance(e)
+  }
+
+  /**
+   * INTERNAL: Do not use.
+   *
+   * Converts a raw element to a synthesized `TAssignmentEventHandlerStaticInternal`, if possible.
+   */
+  TAssignmentEventHandlerStaticInternal convertAssignmentEventHandlerStaticInternalFromRaw(
+    Raw::Element e
+  ) {
+    result = TAssignmentEventHandlerStaticInternal(e)
   }
 
   /**
@@ -1832,6 +1882,24 @@ module Synth {
    * Converts a raw element to a synthesized `TFieldAssignment`, if possible.
    */
   TFieldAssignment convertFieldAssignmentFromRaw(Raw::Element e) { result = TFieldAssignment(e) }
+
+  /**
+   * INTERNAL: Do not use.
+   *
+   * Converts a raw element to a synthesized `TFieldDeclarationInternal`, if possible.
+   */
+  TFieldDeclarationInternal convertFieldDeclarationInternalFromRaw(Raw::Element e) {
+    result = TFieldDeclarationInternal(e)
+  }
+
+  /**
+   * INTERNAL: Do not use.
+   *
+   * Converts a raw element to a synthesized `TFieldExpressionInternal`, if possible.
+   */
+  TFieldExpressionInternal convertFieldExpressionInternalFromRaw(Raw::Element e) {
+    result = TFieldExpressionInternal(e)
+  }
 
   /**
    * INTERNAL: Do not use.
@@ -2304,6 +2372,15 @@ module Synth {
   /**
    * INTERNAL: Do not use.
    *
+   * Converts a raw element to a synthesized `TNamedTypeInternal`, if possible.
+   */
+  TNamedTypeInternal convertNamedTypeInternalFromRaw(Raw::Element e) {
+    result = TNamedTypeInternal(e)
+  }
+
+  /**
+   * INTERNAL: Do not use.
+   *
    * Converts a raw element to a synthesized `TNewCall`, if possible.
    */
   TNewCall convertNewCallFromRaw(Raw::Element e) { result = TNewCall(e) }
@@ -2632,6 +2709,15 @@ module Synth {
   /**
    * INTERNAL: Do not use.
    *
+   * Converts a raw element to a synthesized `TSimpleQualifierInternal`, if possible.
+   */
+  TSimpleQualifierInternal convertSimpleQualifierInternalFromRaw(Raw::Element e) {
+    result = TSimpleQualifierInternal(e)
+  }
+
+  /**
+   * INTERNAL: Do not use.
+   *
    * Converts a raw element to a synthesized `TStaticField`, if possible.
    */
   TStaticField convertStaticFieldFromRaw(Raw::Element e) { result = TStaticField(e) }
@@ -2673,6 +2759,15 @@ module Synth {
    */
   TStringLiteralExpression convertStringLiteralExpressionFromRaw(Raw::Element e) {
     result = TStringLiteralExpression(e)
+  }
+
+  /**
+   * INTERNAL: Do not use.
+   *
+   * Converts a raw element to a synthesized `TStringTypeInternal`, if possible.
+   */
+  TStringTypeInternal convertStringTypeInternalFromRaw(Raw::Element e) {
+    result = TStringTypeInternal(e)
   }
 
   /**
@@ -2865,6 +2960,15 @@ module Synth {
   /**
    * INTERNAL: Do not use.
    *
+   * Converts a raw element to a synthesized `TVariableDeclarationInternal`, if possible.
+   */
+  TVariableDeclarationInternal convertVariableDeclarationInternalFromRaw(Raw::Element e) {
+    result = TVariableDeclarationInternal(e)
+  }
+
+  /**
+   * INTERNAL: Do not use.
+   *
    * Converts a raw element to a synthesized `TVoidType`, if possible.
    */
   TVoidType convertVoidTypeFromRaw(Raw::Element e) { result = TVoidType(e) }
@@ -2933,6 +3037,8 @@ module Synth {
    */
   TAssignmentEventHandlerStatic convertAssignmentEventHandlerStaticFromRaw(Raw::Element e) {
     result = convertAssignmentEventHandlerClrFromRaw(e)
+    or
+    result = convertAssignmentEventHandlerStaticInternalFromRaw(e)
   }
 
   /**
@@ -3272,6 +3378,8 @@ module Synth {
    * Converts a raw DB element to a synthesized `TFieldDeclaration`, if possible.
    */
   TFieldDeclaration convertFieldDeclarationFromRaw(Raw::Element e) {
+    result = convertFieldDeclarationInternalFromRaw(e)
+    or
     result = convertTableFieldDeclarationFromRaw(e)
   }
 
@@ -3280,6 +3388,8 @@ module Synth {
    * Converts a raw DB element to a synthesized `TFieldExpression`, if possible.
    */
   TFieldExpression convertFieldExpressionFromRaw(Raw::Element e) {
+    result = convertFieldExpressionInternalFromRaw(e)
+    or
     result = convertQualifiedStaticFieldExpressionFromRaw(e)
   }
 
@@ -3461,7 +3571,11 @@ module Synth {
    * INTERNAL: Do not use.
    * Converts a raw DB element to a synthesized `TNamedType`, if possible.
    */
-  TNamedType convertNamedTypeFromRaw(Raw::Element e) { result = convertFormElementTypeFromRaw(e) }
+  TNamedType convertNamedTypeFromRaw(Raw::Element e) {
+    result = convertFormElementTypeFromRaw(e)
+    or
+    result = convertNamedTypeInternalFromRaw(e)
+  }
 
   /**
    * INTERNAL: Do not use.
@@ -3530,6 +3644,8 @@ module Synth {
    * Converts a raw DB element to a synthesized `TSimpleQualifier`, if possible.
    */
   TSimpleQualifier convertSimpleQualifierFromRaw(Raw::Element e) {
+    result = convertSimpleQualifierInternalFromRaw(e)
+    or
     result = convertStaticQualifierFromRaw(e)
   }
 
@@ -3605,6 +3721,8 @@ module Synth {
    */
   TStringType convertStringTypeFromRaw(Raw::Element e) {
     result = convertStringLengthTypeFromRaw(e)
+    or
+    result = convertStringTypeInternalFromRaw(e)
   }
 
   /**
@@ -3657,6 +3775,8 @@ module Synth {
    */
   TVariableDeclaration convertVariableDeclarationFromRaw(Raw::Element e) {
     result = convertParameterDeclarationFromRaw(e)
+    or
+    result = convertVariableDeclarationInternalFromRaw(e)
   }
 
   /**
@@ -3853,6 +3973,16 @@ module Synth {
    */
   Raw::Element convertAssignmentEventHandlerInstanceToRaw(TAssignmentEventHandlerInstance e) {
     e = TAssignmentEventHandlerInstance(result)
+  }
+
+  /**
+   * INTERNAL: Do not use.
+   * Converts a synthesized `TAssignmentEventHandlerStaticInternal` to a raw DB element, if possible.
+   */
+  Raw::Element convertAssignmentEventHandlerStaticInternalToRaw(
+    TAssignmentEventHandlerStaticInternal e
+  ) {
+    e = TAssignmentEventHandlerStaticInternal(result)
   }
 
   /**
@@ -4244,6 +4374,22 @@ module Synth {
    * Converts a synthesized `TFieldAssignment` to a raw DB element, if possible.
    */
   Raw::Element convertFieldAssignmentToRaw(TFieldAssignment e) { e = TFieldAssignment(result) }
+
+  /**
+   * INTERNAL: Do not use.
+   * Converts a synthesized `TFieldDeclarationInternal` to a raw DB element, if possible.
+   */
+  Raw::Element convertFieldDeclarationInternalToRaw(TFieldDeclarationInternal e) {
+    e = TFieldDeclarationInternal(result)
+  }
+
+  /**
+   * INTERNAL: Do not use.
+   * Converts a synthesized `TFieldExpressionInternal` to a raw DB element, if possible.
+   */
+  Raw::Element convertFieldExpressionInternalToRaw(TFieldExpressionInternal e) {
+    e = TFieldExpressionInternal(result)
+  }
 
   /**
    * INTERNAL: Do not use.
@@ -4657,6 +4803,14 @@ module Synth {
 
   /**
    * INTERNAL: Do not use.
+   * Converts a synthesized `TNamedTypeInternal` to a raw DB element, if possible.
+   */
+  Raw::Element convertNamedTypeInternalToRaw(TNamedTypeInternal e) {
+    e = TNamedTypeInternal(result)
+  }
+
+  /**
+   * INTERNAL: Do not use.
    * Converts a synthesized `TNewCall` to a raw DB element, if possible.
    */
   Raw::Element convertNewCallToRaw(TNewCall e) { e = TNewCall(result) }
@@ -4945,6 +5099,14 @@ module Synth {
 
   /**
    * INTERNAL: Do not use.
+   * Converts a synthesized `TSimpleQualifierInternal` to a raw DB element, if possible.
+   */
+  Raw::Element convertSimpleQualifierInternalToRaw(TSimpleQualifierInternal e) {
+    e = TSimpleQualifierInternal(result)
+  }
+
+  /**
+   * INTERNAL: Do not use.
    * Converts a synthesized `TStaticField` to a raw DB element, if possible.
    */
   Raw::Element convertStaticFieldToRaw(TStaticField e) { e = TStaticField(result) }
@@ -4981,6 +5143,14 @@ module Synth {
    */
   Raw::Element convertStringLiteralExpressionToRaw(TStringLiteralExpression e) {
     e = TStringLiteralExpression(result)
+  }
+
+  /**
+   * INTERNAL: Do not use.
+   * Converts a synthesized `TStringTypeInternal` to a raw DB element, if possible.
+   */
+  Raw::Element convertStringTypeInternalToRaw(TStringTypeInternal e) {
+    e = TStringTypeInternal(result)
   }
 
   /**
@@ -5149,6 +5319,14 @@ module Synth {
 
   /**
    * INTERNAL: Do not use.
+   * Converts a synthesized `TVariableDeclarationInternal` to a raw DB element, if possible.
+   */
+  Raw::Element convertVariableDeclarationInternalToRaw(TVariableDeclarationInternal e) {
+    e = TVariableDeclarationInternal(result)
+  }
+
+  /**
+   * INTERNAL: Do not use.
    * Converts a synthesized `TVoidType` to a raw DB element, if possible.
    */
   Raw::Element convertVoidTypeToRaw(TVoidType e) { e = TVoidType(result) }
@@ -5215,6 +5393,8 @@ module Synth {
    */
   Raw::Element convertAssignmentEventHandlerStaticToRaw(TAssignmentEventHandlerStatic e) {
     result = convertAssignmentEventHandlerClrToRaw(e)
+    or
+    result = convertAssignmentEventHandlerStaticInternalToRaw(e)
   }
 
   /**
@@ -5554,6 +5734,8 @@ module Synth {
    * Converts a synthesized `TFieldDeclaration` to a raw DB element, if possible.
    */
   Raw::Element convertFieldDeclarationToRaw(TFieldDeclaration e) {
+    result = convertFieldDeclarationInternalToRaw(e)
+    or
     result = convertTableFieldDeclarationToRaw(e)
   }
 
@@ -5562,6 +5744,8 @@ module Synth {
    * Converts a synthesized `TFieldExpression` to a raw DB element, if possible.
    */
   Raw::Element convertFieldExpressionToRaw(TFieldExpression e) {
+    result = convertFieldExpressionInternalToRaw(e)
+    or
     result = convertQualifiedStaticFieldExpressionToRaw(e)
   }
 
@@ -5743,7 +5927,11 @@ module Synth {
    * INTERNAL: Do not use.
    * Converts a synthesized `TNamedType` to a raw DB element, if possible.
    */
-  Raw::Element convertNamedTypeToRaw(TNamedType e) { result = convertFormElementTypeToRaw(e) }
+  Raw::Element convertNamedTypeToRaw(TNamedType e) {
+    result = convertFormElementTypeToRaw(e)
+    or
+    result = convertNamedTypeInternalToRaw(e)
+  }
 
   /**
    * INTERNAL: Do not use.
@@ -5812,6 +6000,8 @@ module Synth {
    * Converts a synthesized `TSimpleQualifier` to a raw DB element, if possible.
    */
   Raw::Element convertSimpleQualifierToRaw(TSimpleQualifier e) {
+    result = convertSimpleQualifierInternalToRaw(e)
+    or
     result = convertStaticQualifierToRaw(e)
   }
 
@@ -5885,7 +6075,11 @@ module Synth {
    * INTERNAL: Do not use.
    * Converts a synthesized `TStringType` to a raw DB element, if possible.
    */
-  Raw::Element convertStringTypeToRaw(TStringType e) { result = convertStringLengthTypeToRaw(e) }
+  Raw::Element convertStringTypeToRaw(TStringType e) {
+    result = convertStringLengthTypeToRaw(e)
+    or
+    result = convertStringTypeInternalToRaw(e)
+  }
 
   /**
    * INTERNAL: Do not use.
@@ -5937,6 +6131,8 @@ module Synth {
    */
   Raw::Element convertVariableDeclarationToRaw(TVariableDeclaration e) {
     result = convertParameterDeclarationToRaw(e)
+    or
+    result = convertVariableDeclarationInternalToRaw(e)
   }
 
   /**

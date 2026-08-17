@@ -65,7 +65,44 @@ switch (command)
         Console.Write(SchemaWriter.RenderReport(model));
         return 0;
 
+    case "trap":
+        var dbscheme = positional.Count > 1
+            ? positional[1]
+            : Path.Combine(Directory.GetCurrentDirectory(), "ql", "lib", "xpp.dbscheme");
+
+        if (!File.Exists(dbscheme))
+        {
+            Console.Error.WriteLine($"dbscheme not found: {dbscheme}");
+            Console.Error.WriteLine("Generate it first, then rerun; the TRAP writer is checked against it.");
+            return 2;
+        }
+
+        var tables = TrapEmitterWriter.ReadDbschemeTables(dbscheme);
+        string emitter;
+        try
+        {
+            emitter = TrapEmitterWriter.Render(model, tables);
+        }
+        catch (InvalidOperationException e)
+        {
+            Console.Error.WriteLine(e.Message);
+            return 1;
+        }
+
+        if (output is null)
+        {
+            Console.Write(emitter);
+        }
+        else
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(output))!);
+            File.WriteAllText(output, emitter);
+            Console.Error.WriteLine($"wrote TRAP emitter to {output}, validated against {tables.Count} relations");
+        }
+
+        return 0;
+
     default:
-        Console.Error.WriteLine($"Unknown command '{command}'. Expected 'schema' or 'report'.");
+        Console.Error.WriteLine($"Unknown command '{command}'. Expected 'schema', 'trap' or 'report'.");
         return 2;
 }

@@ -23,6 +23,7 @@
 /lib/codeql/xpp/elements/AssignmentEventHandlerClr.qll linguist-generated
 /lib/codeql/xpp/elements/AssignmentEventHandlerInstance.qll linguist-generated
 /lib/codeql/xpp/elements/AssignmentEventHandlerStatic.qll linguist-generated
+/lib/codeql/xpp/elements/AssignmentEventHandlerStaticInternal.qll linguist-generated
 /lib/codeql/xpp/elements/AssignmentSingleField.qll linguist-generated
 /lib/codeql/xpp/elements/AssignmentStatement.qll linguist-generated
 /lib/codeql/xpp/elements/Ast.qll linguist-generated
@@ -97,7 +98,9 @@
 /lib/codeql/xpp/elements/ExpressionStatement.qll linguist-generated
 /lib/codeql/xpp/elements/FieldAssignment.qll linguist-generated
 /lib/codeql/xpp/elements/FieldDeclaration.qll linguist-generated
+/lib/codeql/xpp/elements/FieldDeclarationInternal.qll linguist-generated
 /lib/codeql/xpp/elements/FieldExpression.qll linguist-generated
+/lib/codeql/xpp/elements/FieldExpressionInternal.qll linguist-generated
 /lib/codeql/xpp/elements/FieldSelection.qll linguist-generated
 /lib/codeql/xpp/elements/FieldSpecification.qll linguist-generated
 /lib/codeql/xpp/elements/File.qll linguist-generated
@@ -170,6 +173,7 @@
 /lib/codeql/xpp/elements/MultiplyExpression.qll linguist-generated
 /lib/codeql/xpp/elements/NamedFieldReference.qll linguist-generated
 /lib/codeql/xpp/elements/NamedType.qll linguist-generated
+/lib/codeql/xpp/elements/NamedTypeInternal.qll linguist-generated
 /lib/codeql/xpp/elements/NewCall.qll linguist-generated
 /lib/codeql/xpp/elements/NewClrArrayExpression.qll linguist-generated
 /lib/codeql/xpp/elements/NewClrCall.qll linguist-generated
@@ -216,6 +220,7 @@
 /lib/codeql/xpp/elements/SimpleInstanceName.qll linguist-generated
 /lib/codeql/xpp/elements/SimpleOrderElement.qll linguist-generated
 /lib/codeql/xpp/elements/SimpleQualifier.qll linguist-generated
+/lib/codeql/xpp/elements/SimpleQualifierInternal.qll linguist-generated
 /lib/codeql/xpp/elements/Statement.qll linguist-generated
 /lib/codeql/xpp/elements/StaticField.qll linguist-generated
 /lib/codeql/xpp/elements/StaticMethodCall.qll linguist-generated
@@ -224,6 +229,7 @@
 /lib/codeql/xpp/elements/StringLengthType.qll linguist-generated
 /lib/codeql/xpp/elements/StringLiteralExpression.qll linguist-generated
 /lib/codeql/xpp/elements/StringType.qll linguist-generated
+/lib/codeql/xpp/elements/StringTypeInternal.qll linguist-generated
 /lib/codeql/xpp/elements/SubtractExpression.qll linguist-generated
 /lib/codeql/xpp/elements/SumAggregateSelection.qll linguist-generated
 /lib/codeql/xpp/elements/SuperCall.qll linguist-generated
@@ -252,6 +258,7 @@
 /lib/codeql/xpp/elements/ValidTimeStateRange.qll linguist-generated
 /lib/codeql/xpp/elements/VarType.qll linguist-generated
 /lib/codeql/xpp/elements/VariableDeclaration.qll linguist-generated
+/lib/codeql/xpp/elements/VariableDeclarationInternal.qll linguist-generated
 /lib/codeql/xpp/elements/VoidType.qll linguist-generated
 /lib/codeql/xpp/elements/WhileStatement.qll linguist-generated
 /lib/codeql/xpp/elements/XppTuple.qll linguist-generated
@@ -299,6 +306,8 @@
 /lib/codeql/xpp/elements/internal/AssignmentEventHandlerInstanceConstructor.qll linguist-generated
 /lib/codeql/xpp/elements/internal/AssignmentEventHandlerInstanceImpl.qll linguist-generated
 /lib/codeql/xpp/elements/internal/AssignmentEventHandlerStaticImpl.qll linguist-generated
+/lib/codeql/xpp/elements/internal/AssignmentEventHandlerStaticInternalConstructor.qll linguist-generated
+/lib/codeql/xpp/elements/internal/AssignmentEventHandlerStaticInternalImpl.qll linguist-generated
 /lib/codeql/xpp/elements/internal/AssignmentSingleFieldImpl.qll linguist-generated
 /lib/codeql/xpp/elements/internal/AssignmentStatementImpl.qll linguist-generated
 /lib/codeql/xpp/elements/internal/AstImpl.qll linguist-generated
@@ -427,7 +436,11 @@
 /lib/codeql/xpp/elements/internal/FieldAssignmentConstructor.qll linguist-generated
 /lib/codeql/xpp/elements/internal/FieldAssignmentImpl.qll linguist-generated
 /lib/codeql/xpp/elements/internal/FieldDeclarationImpl.qll linguist-generated
+/lib/codeql/xpp/elements/internal/FieldDeclarationInternalConstructor.qll linguist-generated
+/lib/codeql/xpp/elements/internal/FieldDeclarationInternalImpl.qll linguist-generated
 /lib/codeql/xpp/elements/internal/FieldExpressionImpl.qll linguist-generated
+/lib/codeql/xpp/elements/internal/FieldExpressionInternalConstructor.qll linguist-generated
+/lib/codeql/xpp/elements/internal/FieldExpressionInternalImpl.qll linguist-generated
 /lib/codeql/xpp/elements/internal/FieldSelectionConstructor.qll linguist-generated
 /lib/codeql/xpp/elements/internal/FieldSelectionImpl.qll linguist-generated
 /lib/codeql/xpp/elements/internal/FieldSpecificationImpl.qll linguist-generated
@@ -558,6 +571,8 @@
 /lib/codeql/xpp/elements/internal/NamedFieldReferenceConstructor.qll linguist-generated
 /lib/codeql/xpp/elements/internal/NamedFieldReferenceImpl.qll linguist-generated
 /lib/codeql/xpp/elements/internal/NamedTypeImpl.qll linguist-generated
+/lib/codeql/xpp/elements/internal/NamedTypeInternalConstructor.qll linguist-generated
+/lib/codeql/xpp/elements/internal/NamedTypeInternalImpl.qll linguist-generated
 /lib/codeql/xpp/elements/internal/NewCallConstructor.qll linguist-generated
 /lib/codeql/xpp/elements/internal/NewCallImpl.qll linguist-generated
 /lib/codeql/xpp/elements/internal/NewClrArrayExpressionConstructor.qll linguist-generated
@@ -644,6 +659,8 @@
 /lib/codeql/xpp/elements/internal/SimpleOrderElementConstructor.qll linguist-generated
 /lib/codeql/xpp/elements/internal/SimpleOrderElementImpl.qll linguist-generated
 /lib/codeql/xpp/elements/internal/SimpleQualifierImpl.qll linguist-generated
+/lib/codeql/xpp/elements/internal/SimpleQualifierInternalConstructor.qll linguist-generated
+/lib/codeql/xpp/elements/internal/SimpleQualifierInternalImpl.qll linguist-generated
 /lib/codeql/xpp/elements/internal/StatementImpl.qll linguist-generated
 /lib/codeql/xpp/elements/internal/StaticFieldConstructor.qll linguist-generated
 /lib/codeql/xpp/elements/internal/StaticFieldImpl.qll linguist-generated
@@ -658,6 +675,8 @@
 /lib/codeql/xpp/elements/internal/StringLiteralExpressionConstructor.qll linguist-generated
 /lib/codeql/xpp/elements/internal/StringLiteralExpressionImpl.qll linguist-generated
 /lib/codeql/xpp/elements/internal/StringTypeImpl.qll linguist-generated
+/lib/codeql/xpp/elements/internal/StringTypeInternalConstructor.qll linguist-generated
+/lib/codeql/xpp/elements/internal/StringTypeInternalImpl.qll linguist-generated
 /lib/codeql/xpp/elements/internal/SubtractExpressionConstructor.qll linguist-generated
 /lib/codeql/xpp/elements/internal/SubtractExpressionImpl.qll linguist-generated
 /lib/codeql/xpp/elements/internal/SumAggregateSelectionConstructor.qll linguist-generated
@@ -709,6 +728,8 @@
 /lib/codeql/xpp/elements/internal/VarTypeConstructor.qll linguist-generated
 /lib/codeql/xpp/elements/internal/VarTypeImpl.qll linguist-generated
 /lib/codeql/xpp/elements/internal/VariableDeclarationImpl.qll linguist-generated
+/lib/codeql/xpp/elements/internal/VariableDeclarationInternalConstructor.qll linguist-generated
+/lib/codeql/xpp/elements/internal/VariableDeclarationInternalImpl.qll linguist-generated
 /lib/codeql/xpp/elements/internal/VoidTypeConstructor.qll linguist-generated
 /lib/codeql/xpp/elements/internal/VoidTypeImpl.qll linguist-generated
 /lib/codeql/xpp/elements/internal/WhileStatementConstructor.qll linguist-generated
@@ -740,6 +761,7 @@
 /lib/codeql/xpp/elements/internal/generated/AssignmentEventHandlerClr.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/AssignmentEventHandlerInstance.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/AssignmentEventHandlerStatic.qll linguist-generated
+/lib/codeql/xpp/elements/internal/generated/AssignmentEventHandlerStaticInternal.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/AssignmentSingleField.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/AssignmentStatement.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/Ast.qll linguist-generated
@@ -814,7 +836,9 @@
 /lib/codeql/xpp/elements/internal/generated/ExpressionStatement.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/FieldAssignment.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/FieldDeclaration.qll linguist-generated
+/lib/codeql/xpp/elements/internal/generated/FieldDeclarationInternal.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/FieldExpression.qll linguist-generated
+/lib/codeql/xpp/elements/internal/generated/FieldExpressionInternal.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/FieldSelection.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/FieldSpecification.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/File.qll linguist-generated
@@ -887,6 +911,7 @@
 /lib/codeql/xpp/elements/internal/generated/MultiplyExpression.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/NamedFieldReference.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/NamedType.qll linguist-generated
+/lib/codeql/xpp/elements/internal/generated/NamedTypeInternal.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/NewCall.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/NewClrArrayExpression.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/NewClrCall.qll linguist-generated
@@ -936,6 +961,7 @@
 /lib/codeql/xpp/elements/internal/generated/SimpleInstanceName.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/SimpleOrderElement.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/SimpleQualifier.qll linguist-generated
+/lib/codeql/xpp/elements/internal/generated/SimpleQualifierInternal.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/Statement.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/StaticField.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/StaticMethodCall.qll linguist-generated
@@ -944,6 +970,7 @@
 /lib/codeql/xpp/elements/internal/generated/StringLengthType.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/StringLiteralExpression.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/StringType.qll linguist-generated
+/lib/codeql/xpp/elements/internal/generated/StringTypeInternal.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/SubtractExpression.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/SumAggregateSelection.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/SuperCall.qll linguist-generated
@@ -974,6 +1001,7 @@
 /lib/codeql/xpp/elements/internal/generated/ValidTimeStateRange.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/VarType.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/VariableDeclaration.qll linguist-generated
+/lib/codeql/xpp/elements/internal/generated/VariableDeclarationInternal.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/VoidType.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/WhileStatement.qll linguist-generated
 /lib/codeql/xpp/elements/internal/generated/XppTuple.qll linguist-generated
@@ -999,6 +1027,7 @@
 /test/extractor-tests/generated/AssignPreIncrementStatement/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/AssignmentEventHandlerClr/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/AssignmentEventHandlerInstance/MISSING_SOURCE.txt linguist-generated
+/test/extractor-tests/generated/AssignmentEventHandlerStaticInternal/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/Attribute/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/AttributeExpression/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/AttributeList/MISSING_SOURCE.txt linguist-generated
@@ -1054,6 +1083,8 @@
 /test/extractor-tests/generated/ExpressionQualifier/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/ExpressionStatement/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/FieldAssignment/MISSING_SOURCE.txt linguist-generated
+/test/extractor-tests/generated/FieldDeclarationInternal/MISSING_SOURCE.txt linguist-generated
+/test/extractor-tests/generated/FieldExpressionInternal/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/FieldSelection/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/File/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/FindStatement/MISSING_SOURCE.txt linguist-generated
@@ -1111,6 +1142,7 @@
 /test/extractor-tests/generated/MoveCursorStatement/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/MultiplyExpression/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/NamedFieldReference/MISSING_SOURCE.txt linguist-generated
+/test/extractor-tests/generated/NamedTypeInternal/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/NewCall/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/NewClrArrayExpression/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/NewClrCall/MISSING_SOURCE.txt linguist-generated
@@ -1151,12 +1183,14 @@
 /test/extractor-tests/generated/SimpleField/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/SimpleInstanceName/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/SimpleOrderElement/MISSING_SOURCE.txt linguist-generated
+/test/extractor-tests/generated/SimpleQualifierInternal/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/StaticField/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/StaticMethodCall/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/StaticQualifier/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/StringAttributeLiteral/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/StringLengthType/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/StringLiteralExpression/MISSING_SOURCE.txt linguist-generated
+/test/extractor-tests/generated/StringTypeInternal/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/SubtractExpression/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/SumAggregateSelection/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/SuperCall/MISSING_SOURCE.txt linguist-generated
@@ -1179,6 +1213,7 @@
 /test/extractor-tests/generated/ValidTimeStateDate/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/ValidTimeStateRange/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/VarType/MISSING_SOURCE.txt linguist-generated
+/test/extractor-tests/generated/VariableDeclarationInternal/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/VoidType/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/WhileStatement/MISSING_SOURCE.txt linguist-generated
 /test/extractor-tests/generated/XppTypeCompilationUnit/MISSING_SOURCE.txt linguist-generated

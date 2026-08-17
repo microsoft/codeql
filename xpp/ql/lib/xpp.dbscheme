@@ -1327,7 +1327,8 @@ expression_statement_expressions(
 );
 
 @field_expression =
-  @qualified_static_field_expression
+  @field_expression_internal
+| @qualified_static_field_expression
 ;
 
 #keyset[id]
@@ -2064,7 +2065,8 @@ simple_order_element_extension_names(
 );
 
 @simple_qualifier =
-  @static_qualifier
+  @simple_qualifier_internal
+| @static_qualifier
 ;
 
 #keyset[id]
@@ -2091,6 +2093,7 @@ static_field_names(
 
 @string_type =
   @string_length_type
+| @string_type_internal
 ;
 
 switch_statements(
@@ -2538,7 +2541,8 @@ enumeration_literal_expression_enumeration_types(
 );
 
 @field_declaration =
-  @table_field_declaration
+  @field_declaration_internal
+| @table_field_declaration
 ;
 
 #keyset[id]
@@ -2608,6 +2612,10 @@ field_declaration_is_read_only(
 #keyset[id]
 field_declaration_is_static(
   int id: @field_declaration ref
+);
+
+field_expression_internals(
+  unique int id: @field_expression_internal
 );
 
 for_field_assigns(
@@ -2872,6 +2880,7 @@ multiply_expressions(
 
 @named_type =
   @form_element_type
+| @named_type_internal
 ;
 
 #keyset[id]
@@ -3029,6 +3038,10 @@ shift_right_expressions(
   unique int id: @shift_right_expression
 );
 
+simple_qualifier_internals(
+  unique int id: @simple_qualifier_internal
+);
+
 static_qualifiers(
   unique int id: @static_qualifier
 );
@@ -3063,6 +3076,10 @@ string_length_type_is_edt(
 string_length_type_lengths(
   int id: @string_length_type ref,
   int length: int ref
+);
+
+string_type_internals(
+  unique int id: @string_type_internal
 );
 
 subtract_expressions(
@@ -3242,6 +3259,10 @@ date_time_literal_expressions(
 
 equal_expressions(
   unique int id: @equal_expression
+);
+
+field_declaration_internals(
+  unique int id: @field_declaration_internal
 );
 
 form_controls(
@@ -3459,6 +3480,10 @@ like_expressions(
   unique int id: @like_expression
 );
 
+named_type_internals(
+  unique int id: @named_type_internal
+);
+
 new_clr_calls(
   unique int id: @new_clr_call
 );
@@ -3577,6 +3602,7 @@ table_field_declarations(
 
 @variable_declaration =
   @parameter_declaration
+| @variable_declaration_internal
 ;
 
 #keyset[id]
@@ -3628,6 +3654,7 @@ assignment_event_handler_instance_qualifier_parts(
 
 @assignment_event_handler_static =
   @assignment_event_handler_clr
+| @assignment_event_handler_static_internal
 ;
 
 #keyset[id]
@@ -3650,8 +3677,16 @@ parameter_declaration_is_optional(
   int id: @parameter_declaration ref
 );
 
+variable_declaration_internals(
+  unique int id: @variable_declaration_internal
+);
+
 assignment_event_handler_clrs(
   unique int id: @assignment_event_handler_clr
+);
+
+assignment_event_handler_static_internals(
+  unique int id: @assignment_event_handler_static_internal
 );
 
 @array_specification_or_none =

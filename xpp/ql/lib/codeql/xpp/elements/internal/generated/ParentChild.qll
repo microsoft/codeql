@@ -1622,6 +1622,23 @@ private module Impl {
     )
   }
 
+  private Element getImmediateChildOfFieldExpressionInternal(
+    FieldExpressionInternal e, int index, string partialPredicateCall
+  ) {
+    exists(int n, int nTransformation, int nField |
+      n = 0 and
+      nTransformation = n + 1 and
+      nField = nTransformation + 1 and
+      (
+        none()
+        or
+        index = n and result = e.getTransformation() and partialPredicateCall = "Transformation()"
+        or
+        index = nTransformation and result = e.getField() and partialPredicateCall = "Field()"
+      )
+    )
+  }
+
   private Element getImmediateChildOfForFieldAssign(
     ForFieldAssign e, int index, string partialPredicateCall
   ) {
@@ -2240,6 +2257,12 @@ private module Impl {
     )
   }
 
+  private Element getImmediateChildOfSimpleQualifierInternal(
+    SimpleQualifierInternal e, int index, string partialPredicateCall
+  ) {
+    none()
+  }
+
   private Element getImmediateChildOfStaticQualifier(
     StaticQualifier e, int index, string partialPredicateCall
   ) {
@@ -2263,6 +2286,12 @@ private module Impl {
 
   private Element getImmediateChildOfStringLengthType(
     StringLengthType e, int index, string partialPredicateCall
+  ) {
+    none()
+  }
+
+  private Element getImmediateChildOfStringTypeInternal(
+    StringTypeInternal e, int index, string partialPredicateCall
   ) {
     none()
   }
@@ -2566,6 +2595,47 @@ private module Impl {
         index = nTransformation and result = e.getLeft() and partialPredicateCall = "Left()"
         or
         index = nLeft and result = e.getRight() and partialPredicateCall = "Right()"
+      )
+    )
+  }
+
+  private Element getImmediateChildOfFieldDeclarationInternal(
+    FieldDeclarationInternal e, int index, string partialPredicateCall
+  ) {
+    exists(
+      int n, int nComments, int nRegion, int nArraySpecification, int nModifierList, int nType,
+      int nAttributes, int nInitialValue
+    |
+      n = 0 and
+      nComments = n + 1 and
+      nRegion = nComments + e.getNumberOfRegions() and
+      nArraySpecification = nRegion + 1 and
+      nModifierList = nArraySpecification + e.getNumberOfModifierLists() and
+      nType = nModifierList + 1 and
+      nAttributes = nType + 1 and
+      nInitialValue = nAttributes + 1 and
+      (
+        none()
+        or
+        index = n and result = e.getComments() and partialPredicateCall = "Comments()"
+        or
+        result = e.getRegion(index - nComments) and
+        partialPredicateCall = "Region(" + (index - nComments).toString() + ")"
+        or
+        index = nRegion and
+        result = e.getArraySpecification() and
+        partialPredicateCall = "ArraySpecification()"
+        or
+        result = e.getModifierList(index - nArraySpecification) and
+        partialPredicateCall = "ModifierList(" + (index - nArraySpecification).toString() + ")"
+        or
+        index = nModifierList and result = e.getType() and partialPredicateCall = "Type()"
+        or
+        index = nType and result = e.getAttributes() and partialPredicateCall = "Attributes()"
+        or
+        index = nAttributes and
+        result = e.getInitialValue() and
+        partialPredicateCall = "InitialValue()"
       )
     )
   }
@@ -3001,6 +3071,21 @@ private module Impl {
     )
   }
 
+  private Element getImmediateChildOfNamedTypeInternal(
+    NamedTypeInternal e, int index, string partialPredicateCall
+  ) {
+    exists(int n, int nTypeArgumentList |
+      n = 0 and
+      nTypeArgumentList = n + e.getNumberOfTypeArgumentLists() and
+      (
+        none()
+        or
+        result = e.getTypeArgumentList(index - n) and
+        partialPredicateCall = "TypeArgumentList(" + (index - n).toString() + ")"
+      )
+    )
+  }
+
   private Element getImmediateChildOfNewClrCall(NewClrCall e, int index, string partialPredicateCall) {
     exists(int n, int nTransformation, int nActualParameter, int nTypeArgumentList |
       n = 0 and
@@ -3342,8 +3427,58 @@ private module Impl {
     )
   }
 
+  private Element getImmediateChildOfVariableDeclarationInternal(
+    VariableDeclarationInternal e, int index, string partialPredicateCall
+  ) {
+    exists(
+      int n, int nComments, int nRegion, int nArraySpecification, int nModifierList, int nType,
+      int nInitialValue
+    |
+      n = 0 and
+      nComments = n + 1 and
+      nRegion = nComments + e.getNumberOfRegions() and
+      nArraySpecification = nRegion + 1 and
+      nModifierList = nArraySpecification + e.getNumberOfModifierLists() and
+      nType = nModifierList + 1 and
+      nInitialValue = nType + 1 and
+      (
+        none()
+        or
+        index = n and result = e.getComments() and partialPredicateCall = "Comments()"
+        or
+        result = e.getRegion(index - nComments) and
+        partialPredicateCall = "Region(" + (index - nComments).toString() + ")"
+        or
+        index = nRegion and
+        result = e.getArraySpecification() and
+        partialPredicateCall = "ArraySpecification()"
+        or
+        result = e.getModifierList(index - nArraySpecification) and
+        partialPredicateCall = "ModifierList(" + (index - nArraySpecification).toString() + ")"
+        or
+        index = nModifierList and result = e.getType() and partialPredicateCall = "Type()"
+        or
+        index = nType and result = e.getInitialValue() and partialPredicateCall = "InitialValue()"
+      )
+    )
+  }
+
   private Element getImmediateChildOfAssignmentEventHandlerClr(
     AssignmentEventHandlerClr e, int index, string partialPredicateCall
+  ) {
+    exists(int n, int nField |
+      n = 0 and
+      nField = n + 1 and
+      (
+        none()
+        or
+        index = n and result = e.getField() and partialPredicateCall = "Field()"
+      )
+    )
+  }
+
+  private Element getImmediateChildOfAssignmentEventHandlerStaticInternal(
+    AssignmentEventHandlerStaticInternal e, int index, string partialPredicateCall
   ) {
     exists(int n, int nField |
       n = 0 and
@@ -3610,6 +3745,8 @@ private module Impl {
     or
     result = getImmediateChildOfEnumerationLiteralExpression(e, index, partialAccessor)
     or
+    result = getImmediateChildOfFieldExpressionInternal(e, index, partialAccessor)
+    or
     result = getImmediateChildOfForFieldAssign(e, index, partialAccessor)
     or
     result = getImmediateChildOfForFieldDecrementAssign(e, index, partialAccessor)
@@ -3670,11 +3807,15 @@ private module Impl {
     or
     result = getImmediateChildOfShiftRightExpression(e, index, partialAccessor)
     or
+    result = getImmediateChildOfSimpleQualifierInternal(e, index, partialAccessor)
+    or
     result = getImmediateChildOfStaticQualifier(e, index, partialAccessor)
     or
     result = getImmediateChildOfStringAttributeLiteral(e, index, partialAccessor)
     or
     result = getImmediateChildOfStringLengthType(e, index, partialAccessor)
+    or
+    result = getImmediateChildOfStringTypeInternal(e, index, partialAccessor)
     or
     result = getImmediateChildOfSubtractExpression(e, index, partialAccessor)
     or
@@ -3710,6 +3851,8 @@ private module Impl {
     or
     result = getImmediateChildOfEqualExpression(e, index, partialAccessor)
     or
+    result = getImmediateChildOfFieldDeclarationInternal(e, index, partialAccessor)
+    or
     result = getImmediateChildOfFormControl(e, index, partialAccessor)
     or
     result = getImmediateChildOfFormDataField(e, index, partialAccessor)
@@ -3737,6 +3880,8 @@ private module Impl {
     result = getImmediateChildOfLessThanOrEqualExpression(e, index, partialAccessor)
     or
     result = getImmediateChildOfLikeExpression(e, index, partialAccessor)
+    or
+    result = getImmediateChildOfNamedTypeInternal(e, index, partialAccessor)
     or
     result = getImmediateChildOfNewClrCall(e, index, partialAccessor)
     or
@@ -3768,7 +3913,11 @@ private module Impl {
     or
     result = getImmediateChildOfParameterDeclaration(e, index, partialAccessor)
     or
+    result = getImmediateChildOfVariableDeclarationInternal(e, index, partialAccessor)
+    or
     result = getImmediateChildOfAssignmentEventHandlerClr(e, index, partialAccessor)
+    or
+    result = getImmediateChildOfAssignmentEventHandlerStaticInternal(e, index, partialAccessor)
   }
 }
 

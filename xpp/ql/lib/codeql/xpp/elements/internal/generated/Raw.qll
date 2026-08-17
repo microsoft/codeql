@@ -4235,6 +4235,28 @@ module Raw {
   /**
    * INTERNAL: Do not use.
    */
+  class FieldExpressionInternal extends @field_expression_internal, FieldExpression {
+    override string toString() { result = "FieldExpressionInternal" }
+  }
+
+  private Element getImmediateChildOfFieldExpressionInternal(FieldExpressionInternal e, int index) {
+    exists(int n, int nTransformation, int nField |
+      n = 0 and
+      nTransformation = n + 1 and
+      nField = nTransformation + 1 and
+      (
+        none()
+        or
+        index = n and result = e.getTransformation()
+        or
+        index = nTransformation and result = e.getField()
+      )
+    )
+  }
+
+  /**
+   * INTERNAL: Do not use.
+   */
   class ForFieldAssign extends @for_field_assign, ForExpressionAssign {
     override string toString() { result = "ForFieldAssign" }
   }
@@ -5278,6 +5300,17 @@ module Raw {
   /**
    * INTERNAL: Do not use.
    */
+  class SimpleQualifierInternal extends @simple_qualifier_internal, SimpleQualifier {
+    override string toString() { result = "SimpleQualifierInternal" }
+  }
+
+  private Element getImmediateChildOfSimpleQualifierInternal(SimpleQualifierInternal e, int index) {
+    none()
+  }
+
+  /**
+   * INTERNAL: Do not use.
+   */
   class StaticQualifier extends @static_qualifier, SimpleQualifier {
     override string toString() { result = "StaticQualifier" }
 
@@ -5342,6 +5375,15 @@ module Raw {
   }
 
   private Element getImmediateChildOfStringLengthType(StringLengthType e, int index) { none() }
+
+  /**
+   * INTERNAL: Do not use.
+   */
+  class StringTypeInternal extends @string_type_internal, StringType {
+    override string toString() { result = "StringTypeInternal" }
+  }
+
+  private Element getImmediateChildOfStringTypeInternal(StringTypeInternal e, int index) { none() }
 
   /**
    * INTERNAL: Do not use.
@@ -5835,6 +5877,46 @@ module Raw {
         index = nTransformation and result = e.getLeft()
         or
         index = nLeft and result = e.getRight()
+      )
+    )
+  }
+
+  /**
+   * INTERNAL: Do not use.
+   */
+  class FieldDeclarationInternal extends @field_declaration_internal, FieldDeclaration {
+    override string toString() { result = "FieldDeclarationInternal" }
+  }
+
+  private Element getImmediateChildOfFieldDeclarationInternal(FieldDeclarationInternal e, int index) {
+    exists(
+      int n, int nComments, int nRegion, int nArraySpecification, int nModifierList, int nType,
+      int nAttributes, int nInitialValue
+    |
+      n = 0 and
+      nComments = n + 1 and
+      nRegion = nComments + e.getNumberOfRegions() and
+      nArraySpecification = nRegion + 1 and
+      nModifierList = nArraySpecification + e.getNumberOfModifierLists() and
+      nType = nModifierList + 1 and
+      nAttributes = nType + 1 and
+      nInitialValue = nAttributes + 1 and
+      (
+        none()
+        or
+        index = n and result = e.getComments()
+        or
+        result = e.getRegion(index - nComments)
+        or
+        index = nRegion and result = e.getArraySpecification()
+        or
+        result = e.getModifierList(index - nArraySpecification)
+        or
+        index = nModifierList and result = e.getType()
+        or
+        index = nType and result = e.getAttributes()
+        or
+        index = nAttributes and result = e.getInitialValue()
       )
     )
   }
@@ -6475,6 +6557,25 @@ module Raw {
   /**
    * INTERNAL: Do not use.
    */
+  class NamedTypeInternal extends @named_type_internal, NamedType {
+    override string toString() { result = "NamedTypeInternal" }
+  }
+
+  private Element getImmediateChildOfNamedTypeInternal(NamedTypeInternal e, int index) {
+    exists(int n, int nTypeArgumentList |
+      n = 0 and
+      nTypeArgumentList = n + e.getNumberOfTypeArgumentLists() and
+      (
+        none()
+        or
+        result = e.getTypeArgumentList(index - n)
+      )
+    )
+  }
+
+  /**
+   * INTERNAL: Do not use.
+   */
   class NewClrCall extends @new_clr_call, GenericEvaluation {
     override string toString() { result = "NewClrCall" }
 
@@ -7004,6 +7105,45 @@ module Raw {
   /**
    * INTERNAL: Do not use.
    */
+  class VariableDeclarationInternal extends @variable_declaration_internal, VariableDeclaration {
+    override string toString() { result = "VariableDeclarationInternal" }
+  }
+
+  private Element getImmediateChildOfVariableDeclarationInternal(
+    VariableDeclarationInternal e, int index
+  ) {
+    exists(
+      int n, int nComments, int nRegion, int nArraySpecification, int nModifierList, int nType,
+      int nInitialValue
+    |
+      n = 0 and
+      nComments = n + 1 and
+      nRegion = nComments + e.getNumberOfRegions() and
+      nArraySpecification = nRegion + 1 and
+      nModifierList = nArraySpecification + e.getNumberOfModifierLists() and
+      nType = nModifierList + 1 and
+      nInitialValue = nType + 1 and
+      (
+        none()
+        or
+        index = n and result = e.getComments()
+        or
+        result = e.getRegion(index - nComments)
+        or
+        index = nRegion and result = e.getArraySpecification()
+        or
+        result = e.getModifierList(index - nArraySpecification)
+        or
+        index = nModifierList and result = e.getType()
+        or
+        index = nType and result = e.getInitialValue()
+      )
+    )
+  }
+
+  /**
+   * INTERNAL: Do not use.
+   */
   class AssignmentEventHandlerClr extends @assignment_event_handler_clr,
     AssignmentEventHandlerStatic
   {
@@ -7012,6 +7152,29 @@ module Raw {
 
   private Element getImmediateChildOfAssignmentEventHandlerClr(
     AssignmentEventHandlerClr e, int index
+  ) {
+    exists(int n, int nField |
+      n = 0 and
+      nField = n + 1 and
+      (
+        none()
+        or
+        index = n and result = e.getField()
+      )
+    )
+  }
+
+  /**
+   * INTERNAL: Do not use.
+   */
+  class AssignmentEventHandlerStaticInternal extends @assignment_event_handler_static_internal,
+    AssignmentEventHandlerStatic
+  {
+    override string toString() { result = "AssignmentEventHandlerStaticInternal" }
+  }
+
+  private Element getImmediateChildOfAssignmentEventHandlerStaticInternal(
+    AssignmentEventHandlerStaticInternal e, int index
   ) {
     exists(int n, int nField |
       n = 0 and
@@ -7281,6 +7444,8 @@ module Raw {
     or
     result = getImmediateChildOfEnumerationLiteralExpression(e, index)
     or
+    result = getImmediateChildOfFieldExpressionInternal(e, index)
+    or
     result = getImmediateChildOfForFieldAssign(e, index)
     or
     result = getImmediateChildOfForFieldDecrementAssign(e, index)
@@ -7341,11 +7506,15 @@ module Raw {
     or
     result = getImmediateChildOfShiftRightExpression(e, index)
     or
+    result = getImmediateChildOfSimpleQualifierInternal(e, index)
+    or
     result = getImmediateChildOfStaticQualifier(e, index)
     or
     result = getImmediateChildOfStringAttributeLiteral(e, index)
     or
     result = getImmediateChildOfStringLengthType(e, index)
+    or
+    result = getImmediateChildOfStringTypeInternal(e, index)
     or
     result = getImmediateChildOfSubtractExpression(e, index)
     or
@@ -7381,6 +7550,8 @@ module Raw {
     or
     result = getImmediateChildOfEqualExpression(e, index)
     or
+    result = getImmediateChildOfFieldDeclarationInternal(e, index)
+    or
     result = getImmediateChildOfFormControl(e, index)
     or
     result = getImmediateChildOfFormDataField(e, index)
@@ -7408,6 +7579,8 @@ module Raw {
     result = getImmediateChildOfLessThanOrEqualExpression(e, index)
     or
     result = getImmediateChildOfLikeExpression(e, index)
+    or
+    result = getImmediateChildOfNamedTypeInternal(e, index)
     or
     result = getImmediateChildOfNewClrCall(e, index)
     or
@@ -7439,6 +7612,10 @@ module Raw {
     or
     result = getImmediateChildOfParameterDeclaration(e, index)
     or
+    result = getImmediateChildOfVariableDeclarationInternal(e, index)
+    or
     result = getImmediateChildOfAssignmentEventHandlerClr(e, index)
+    or
+    result = getImmediateChildOfAssignmentEventHandlerStaticInternal(e, index)
   }
 }

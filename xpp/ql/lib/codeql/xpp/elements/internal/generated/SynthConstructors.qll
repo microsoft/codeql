@@ -22,6 +22,7 @@ import codeql.xpp.elements.internal.AssignPreDecrementStatementConstructor
 import codeql.xpp.elements.internal.AssignPreIncrementStatementConstructor
 import codeql.xpp.elements.internal.AssignmentEventHandlerClrConstructor
 import codeql.xpp.elements.internal.AssignmentEventHandlerInstanceConstructor
+import codeql.xpp.elements.internal.AssignmentEventHandlerStaticInternalConstructor
 import codeql.xpp.elements.internal.AttributeConstructor
 import codeql.xpp.elements.internal.AttributeExpressionConstructor
 import codeql.xpp.elements.internal.AttributeListConstructor
@@ -77,6 +78,8 @@ import codeql.xpp.elements.internal.ExpressionCompilationUnitConstructor
 import codeql.xpp.elements.internal.ExpressionQualifierConstructor
 import codeql.xpp.elements.internal.ExpressionStatementConstructor
 import codeql.xpp.elements.internal.FieldAssignmentConstructor
+import codeql.xpp.elements.internal.FieldDeclarationInternalConstructor
+import codeql.xpp.elements.internal.FieldExpressionInternalConstructor
 import codeql.xpp.elements.internal.FieldSelectionConstructor
 import codeql.xpp.elements.internal.FileConstructor
 import codeql.xpp.elements.internal.FindStatementConstructor
@@ -135,6 +138,7 @@ import codeql.xpp.elements.internal.ModifierConstructor
 import codeql.xpp.elements.internal.MoveCursorStatementConstructor
 import codeql.xpp.elements.internal.MultiplyExpressionConstructor
 import codeql.xpp.elements.internal.NamedFieldReferenceConstructor
+import codeql.xpp.elements.internal.NamedTypeInternalConstructor
 import codeql.xpp.elements.internal.NewCallConstructor
 import codeql.xpp.elements.internal.NewClrArrayExpressionConstructor
 import codeql.xpp.elements.internal.NewClrCallConstructor
@@ -175,12 +179,14 @@ import codeql.xpp.elements.internal.ShiftRightExpressionConstructor
 import codeql.xpp.elements.internal.SimpleFieldConstructor
 import codeql.xpp.elements.internal.SimpleInstanceNameConstructor
 import codeql.xpp.elements.internal.SimpleOrderElementConstructor
+import codeql.xpp.elements.internal.SimpleQualifierInternalConstructor
 import codeql.xpp.elements.internal.StaticFieldConstructor
 import codeql.xpp.elements.internal.StaticMethodCallConstructor
 import codeql.xpp.elements.internal.StaticQualifierConstructor
 import codeql.xpp.elements.internal.StringAttributeLiteralConstructor
 import codeql.xpp.elements.internal.StringLengthTypeConstructor
 import codeql.xpp.elements.internal.StringLiteralExpressionConstructor
+import codeql.xpp.elements.internal.StringTypeInternalConstructor
 import codeql.xpp.elements.internal.SubtractExpressionConstructor
 import codeql.xpp.elements.internal.SumAggregateSelectionConstructor
 import codeql.xpp.elements.internal.SuperCallConstructor
@@ -204,6 +210,7 @@ import codeql.xpp.elements.internal.UsingStatementConstructor
 import codeql.xpp.elements.internal.ValidTimeStateDateConstructor
 import codeql.xpp.elements.internal.ValidTimeStateRangeConstructor
 import codeql.xpp.elements.internal.VarTypeConstructor
+import codeql.xpp.elements.internal.VariableDeclarationInternalConstructor
 import codeql.xpp.elements.internal.VoidTypeConstructor
 import codeql.xpp.elements.internal.WhileStatementConstructor
 import codeql.xpp.elements.internal.XppTypeCompilationUnitConstructor

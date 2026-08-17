@@ -35,4 +35,10 @@ echo "==> running misc/codegen"
 cd "$xpp_root"
 PYTHONPATH="$repo_root" "$PYTHON" "$repo_root/misc/codegen/codegen.py"
 
+echo "==> generating the TRAP writer"
+dotnet run --project "$xpp_root/extractor/Xpp.SchemaGenerator" -c Release -- \
+    trap "$xpp_root/ql/lib/xpp.dbscheme" \
+    --package "$XPP_COMPILER_PACKAGE" \
+    --output "$xpp_root/extractor/Xpp.Extraction/Generated/AstTrapEmitter.g.cs"
+
 echo "==> done"

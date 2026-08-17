@@ -662,6 +662,9 @@ class FieldDeclaration(Declaration):
     is_read_only: predicate
     is_static: predicate
 
+class FieldExpressionInternal(FieldExpression):
+    pass
+
 class ForFieldAssign(ForExpressionAssign):
     pass
 
@@ -803,6 +806,9 @@ class ShiftLeftExpression(BinaryExpression):
 class ShiftRightExpression(BinaryExpression):
     pass
 
+class SimpleQualifierInternal(SimpleQualifier):
+    pass
+
 class StaticQualifier(SimpleQualifier):
     class_type_argument_list: list["XppType"] | child
 
@@ -813,6 +819,9 @@ class StringLengthType(StringType):
     edt_name: optional[string]
     is_edt: predicate
     length: optional[int]
+
+class StringTypeInternal(StringType):
+    pass
 
 class SubtractExpression(BinaryExpression):
     pass
@@ -884,6 +893,9 @@ class DateTimeLiteralExpression(DefaultTypeLiteralExpression):
 class EqualExpression(RelationalExpression):
     pass
 
+class FieldDeclarationInternal(FieldDeclaration):
+    pass
+
 class FormControl(FormNestedElement):
     auto_declaration: predicate
     child_controls: list["FormControl"] | child
@@ -944,6 +956,9 @@ class LessThanOrEqualExpression(RelationalExpression):
     pass
 
 class LikeExpression(RelationalExpression):
+    pass
+
+class NamedTypeInternal(NamedType):
     pass
 
 class NewClrCall(GenericEvaluation):
@@ -1009,5 +1024,11 @@ class ParameterDeclaration(VariableDeclaration):
     is_by_ref: predicate
     is_optional: predicate
 
+class VariableDeclarationInternal(VariableDeclaration):
+    pass
+
 class AssignmentEventHandlerClr(AssignmentEventHandlerStatic):
+    pass
+
+class AssignmentEventHandlerStaticInternal(AssignmentEventHandlerStatic):
     pass

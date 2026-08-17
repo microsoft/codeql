@@ -26,6 +26,7 @@ import codeql.xpp.elements.AssignmentEventHandlerBase
 import codeql.xpp.elements.AssignmentEventHandlerClr
 import codeql.xpp.elements.AssignmentEventHandlerInstance
 import codeql.xpp.elements.AssignmentEventHandlerStatic
+import codeql.xpp.elements.AssignmentEventHandlerStaticInternal
 import codeql.xpp.elements.AssignmentSingleField
 import codeql.xpp.elements.AssignmentStatement
 import codeql.xpp.elements.Ast
@@ -100,7 +101,9 @@ import codeql.xpp.elements.ExpressionQualifier
 import codeql.xpp.elements.ExpressionStatement
 import codeql.xpp.elements.FieldAssignment
 import codeql.xpp.elements.FieldDeclaration
+import codeql.xpp.elements.FieldDeclarationInternal
 import codeql.xpp.elements.FieldExpression
+import codeql.xpp.elements.FieldExpressionInternal
 import codeql.xpp.elements.FieldSelection
 import codeql.xpp.elements.FieldSpecification
 import codeql.xpp.elements.File
@@ -173,6 +176,7 @@ import codeql.xpp.elements.MoveCursorStatement
 import codeql.xpp.elements.MultiplyExpression
 import codeql.xpp.elements.NamedFieldReference
 import codeql.xpp.elements.NamedType
+import codeql.xpp.elements.NamedTypeInternal
 import codeql.xpp.elements.NewCall
 import codeql.xpp.elements.NewClrArrayExpression
 import codeql.xpp.elements.NewClrCall
@@ -219,6 +223,7 @@ import codeql.xpp.elements.SimpleField
 import codeql.xpp.elements.SimpleInstanceName
 import codeql.xpp.elements.SimpleOrderElement
 import codeql.xpp.elements.SimpleQualifier
+import codeql.xpp.elements.SimpleQualifierInternal
 import codeql.xpp.elements.Statement
 import codeql.xpp.elements.StaticField
 import codeql.xpp.elements.StaticMethodCall
@@ -227,6 +232,7 @@ import codeql.xpp.elements.StringAttributeLiteral
 import codeql.xpp.elements.StringLengthType
 import codeql.xpp.elements.StringLiteralExpression
 import codeql.xpp.elements.StringType
+import codeql.xpp.elements.StringTypeInternal
 import codeql.xpp.elements.SubtractExpression
 import codeql.xpp.elements.SumAggregateSelection
 import codeql.xpp.elements.SuperCall
@@ -255,6 +261,7 @@ import codeql.xpp.elements.ValidTimeStateDate
 import codeql.xpp.elements.ValidTimeStateRange
 import codeql.xpp.elements.VarType
 import codeql.xpp.elements.VariableDeclaration
+import codeql.xpp.elements.VariableDeclarationInternal
 import codeql.xpp.elements.VoidType
 import codeql.xpp.elements.WhileStatement
 import codeql.xpp.elements.XppTuple
