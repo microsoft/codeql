@@ -35,7 +35,7 @@ class Rfc2898DeriveBytesCreation extends DataFlow::CallNode {
     // New-Object pattern
     exists(DataFlow::ObjectCreationNode oc |
       oc = this and
-      oc.getExprNode().getExpr().(CallExpr).getAnArgument().getValue().asString().toLowerCase() =
+      oc.getLowerCaseConstructedTypeName() =
         [
           "system.security.cryptography.rfc2898derivebytes",
           "rfc2898derivebytes"
@@ -43,17 +43,62 @@ class Rfc2898DeriveBytesCreation extends DataFlow::CallNode {
     )
   }
 
+  private DataFlow::Node getNewObjectArgumentList() {
+    this.getExprNode().getExpr() instanceof DotNetObjectCreation and
+    (
+      result = this.getNamedArgument("argumentlist")
+      or
+      not this.hasNamedArgument("argumentlist") and result = this.getPositionalArgument(1)
+    )
+  }
+
+  private DataFlow::Node getNewObjectArgument(int index) {
+    exists(ArrayLiteral args |
+      args = this.getNewObjectArgumentList().asExpr().getExpr() and
+      result.asExpr().getExpr() = args.getExpr(index)
+    )
+    or
+    exists(ParenExpr paren, ArrayLiteral args |
+      paren = this.getNewObjectArgumentList().asExpr().getExpr() and
+      args = paren.getExpr() and
+      result.asExpr().getExpr() = args.getExpr(index)
+    )
+  }
+
+  private predicate hasKnownNewObjectArgumentList() {
+    this.getNewObjectArgumentList().asExpr().getExpr() instanceof ArrayLiteral
+    or
+    this.getNewObjectArgumentList().asExpr().getExpr().(ParenExpr).getExpr() instanceof ArrayLiteral
+  }
+
+  private DataFlow::Node getConstructorArgument(int index) {
+    this.getExprNode().getExpr() instanceof NewObjectCreation and
+    result = this.getPositionalArgument(index)
+    or
+    result = this.getNewObjectArgument(index)
+  }
+
   /** Gets the iteration count argument (position 2, 0-indexed), if any. */
-  DataFlow::Node getIterationCountArg() { result = this.getPositionalArgument(2) }
+  DataFlow::Node getIterationCountArg() { result = this.getConstructorArgument(2) }
 
   /** Gets the hash algorithm argument (position 3, 0-indexed), if any. */
-  DataFlow::Node getHashAlgorithmArg() { result = this.getPositionalArgument(3) }
+  DataFlow::Node getHashAlgorithmArg() { result = this.getConstructorArgument(3) }
 
-  /** Holds if the constructor has an explicit iteration count argument. */
-  predicate hasIterationCountArg() { exists(this.getIterationCountArg()) }
+  /** Holds if the constructor is known to omit the iteration count argument. */
+  predicate hasDefaultIterationCount() {
+    not this.getExprNode().getExpr() instanceof DotNetObjectCreation and
+    not exists(this.getIterationCountArg())
+    or
+    this.hasKnownNewObjectArgumentList() and not exists(this.getNewObjectArgument(2))
+  }
 
-  /** Holds if the constructor has an explicit hash algorithm argument. */
-  predicate hasHashAlgorithmArg() { exists(this.getHashAlgorithmArg()) }
+  /** Holds if the constructor is known to omit the hash algorithm argument. */
+  predicate hasDefaultHashAlgorithm() {
+    not this.getExprNode().getExpr() instanceof DotNetObjectCreation and
+    not exists(this.getHashAlgorithmArg())
+    or
+    this.hasKnownNewObjectArgumentList() and not exists(this.getNewObjectArgument(3))
+  }
 }
 
 /**
@@ -120,7 +165,7 @@ from DataFlow::CallNode call, string message
 where
   // Case 1: Rfc2898DeriveBytes created without specifying iteration count
   call instanceof Rfc2898DeriveBytesCreation and
-  not call.(Rfc2898DeriveBytesCreation).hasIterationCountArg() and
+  call.(Rfc2898DeriveBytesCreation).hasDefaultIterationCount() and
   message =
     "Rfc2898DeriveBytes uses default iteration count of 1000. Specify at least " +
       minIterationCount().toString() + " iterations."
@@ -136,7 +181,7 @@ where
   or
   // Case 3: Rfc2898DeriveBytes created without specifying hash algorithm (defaults to SHA1)
   call instanceof Rfc2898DeriveBytesCreation and
-  not call.(Rfc2898DeriveBytesCreation).hasHashAlgorithmArg() and
+  call.(Rfc2898DeriveBytesCreation).hasDefaultHashAlgorithm() and
   message = "Rfc2898DeriveBytes uses the default hash algorithm SHA1. Specify SHA-256 or stronger."
   or
   // Case 4: Rfc2898DeriveBytes created with weak hash algorithm

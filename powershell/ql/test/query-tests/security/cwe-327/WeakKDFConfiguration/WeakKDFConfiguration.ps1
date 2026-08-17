@@ -28,12 +28,20 @@ $kdf = [System.Security.Cryptography.Rfc2898DeriveBytes]::new($password, $salt, 
 $kdf = [System.Security.Cryptography.Rfc2898DeriveBytes]::new($password, $salt, 100000, [System.Security.Cryptography.HashAlgorithmName]::MD5) # $ Alert
 
 # --- Case 5: New-Object pattern (defaults to both issues) ---
-# BAD: New-Object with low iteration count (detected as default iterations + default algorithm)
+# BAD: New-Object with low iteration count and default algorithm
 $kdf = New-Object System.Security.Cryptography.Rfc2898DeriveBytes($password, $salt, 5000) # $ Alert $ Alert
 
 # --- Case 6: New-Object pattern with no extra args ---
 # BAD: New-Object with default iterations and algorithm
 $kdf = New-Object System.Security.Cryptography.Rfc2898DeriveBytes($password, $salt) # $ Alert $ Alert
+
+# BAD: Canonical New-Object forms with low iterations and weak algorithms
+$kdf = New-Object System.Security.Cryptography.Rfc2898DeriveBytes -ArgumentList (
+    $password, $salt, 5000, [System.Security.Cryptography.HashAlgorithmName]::SHA1
+) # $ Alert $ Alert
+$kdf = New-Object -TypeName System.Security.Cryptography.Rfc2898DeriveBytes -ArgumentList (
+    $password, $salt, 5000, [System.Security.Cryptography.HashAlgorithmName]::SHA1
+) # $ Alert $ Alert
 
 # --- Case 7: Pbkdf2 static method with low iterations ---
 # BAD: Static Pbkdf2 method with 1000 iterations
@@ -62,6 +70,26 @@ $kdf = [System.Security.Cryptography.Rfc2898DeriveBytes]::new($password, $salt, 
 
 # GOOD: 600000 iterations with SHA256
 $kdf = [System.Security.Cryptography.Rfc2898DeriveBytes]::new($password, $salt, 600000, [System.Security.Cryptography.HashAlgorithmName]::SHA256)
+
+# GOOD: Multiline New-Object calls from Encrypt-SycamoreBundle.ps1 and Decrypt-SycamoreBundle.ps1
+$encryptPbkdf2 = New-Object System.Security.Cryptography.Rfc2898DeriveBytes(
+    $passwordBytes, $salt, 100000, [System.Security.Cryptography.HashAlgorithmName]::SHA256
+)
+$decryptPbkdf2 = New-Object System.Security.Cryptography.Rfc2898DeriveBytes(
+    $passwordBytes, $salt, 100000, [System.Security.Cryptography.HashAlgorithmName]::SHA256
+)
+
+# GOOD: Canonical New-Object argument list forms
+$kdf = New-Object System.Security.Cryptography.Rfc2898DeriveBytes -ArgumentList (
+    $passwordBytes, $salt, 100000, [System.Security.Cryptography.HashAlgorithmName]::SHA256
+)
+$kdf = New-Object -TypeName System.Security.Cryptography.Rfc2898DeriveBytes -ArgumentList (
+    $passwordBytes, $salt, 100000, [System.Security.Cryptography.HashAlgorithmName]::SHA256
+)
+
+# GOOD: An opaque argument list is not assumed to use default settings
+$constructorArguments = @($passwordBytes, $salt, 100000, [System.Security.Cryptography.HashAlgorithmName]::SHA256)
+$kdf = New-Object -TypeName System.Security.Cryptography.Rfc2898DeriveBytes -ArgumentList $constructorArguments
 
 # --- Safe: Pbkdf2 with proper config ---
 # GOOD: Static Pbkdf2 with adequate iterations and strong hash
