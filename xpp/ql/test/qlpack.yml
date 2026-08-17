@@ -7,3 +7,4 @@ dependencies:
   microsoft/xpp-all: ${workspace}
 extractor: xpp
 tests: .
+warnOnImplicitThis: true
