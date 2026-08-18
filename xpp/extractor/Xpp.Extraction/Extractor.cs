@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 using Microsoft.Dynamics.AX.Framework.Xlnt.XppParser;
+using XppComment = Microsoft.Dynamics.AX.Framework.Xlnt.XppParser.Comment;
 using Microsoft.Dynamics.AX.Metadata.XppCompiler;
 using Xpp.Extraction.Generated;
 
@@ -50,6 +51,9 @@ public sealed class Extractor
         var nodes = 0;
         var unsupported = 0;
 
+        // Shared across blocks so a node reachable from two of them is only emitted once.
+        var seen = new HashSet<object>(ReferenceEqualityComparer.Instance);
+
         foreach (var block in XppSourceFile.Blocks(document))
         {
             blocks++;
@@ -79,7 +83,7 @@ public sealed class Extractor
             if (unit is null)
                 continue;
 
-            EmitTree(trap, fileLabel, unit, ref nodes, ref unsupported);
+            EmitTree(trap, fileLabel, unit, seen, ref nodes, ref unsupported);
         }
 
         return new ExtractionResult(path, blocks, nodes, unsupported, errors);
@@ -98,12 +102,20 @@ public sealed class Extractor
     }
 
     /// <summary>Walks the AST, writing each node's tuples exactly once.</summary>
+    /// <remarks>
+    /// Children come back from the emitter rather than being re-read here. Some of the
+    /// compiler's node properties are structs, which box to a fresh object on every read, so
+    /// reading a property twice yields two objects and therefore two different labels: one for
+    /// the reference and one for the definition, leaving both dangling.
+    /// </remarks>
     private static void EmitTree(
-        ITrapFile trap, Label file, object root, ref int nodes, ref int unsupported)
+        ITrapFile trap, Label file, object root, HashSet<object> seen,
+        ref int nodes, ref int unsupported)
     {
-        var seen = new HashSet<object>(ReferenceEqualityComparer.Instance);
         var pending = new Stack<object>();
         pending.Push(root);
+
+        var children = new List<object>();
 
         while (pending.Count > 0)
         {
@@ -113,12 +125,24 @@ public sealed class Extractor
 
             nodes++;
             var id = trap.Label(node);
-            if (!AstTrapEmitter.Emit(trap, id, node))
+            children.Clear();
+
+            // Comments are referenced by CompilationUnit but are not Ast nodes, so the
+            // generated emitter does not know them.
+            if (node is XppComment comment)
+            {
+                trap.Tuple("comments", id);
+                if (comment.Text is { } text)
+                    trap.Tuple("comment_texts", id, text);
+            }
+            else if (!AstTrapEmitter.Emit(trap, id, node, children))
+            {
                 unsupported++;
+            }
 
             EmitLocation(trap, file, id, node);
 
-            foreach (var child in Children(node))
+            foreach (var child in children)
                 pending.Push(child);
         }
     }
@@ -132,14 +156,16 @@ public sealed class Extractor
     /// </remarks>
     private static void EmitLocation(ITrapFile trap, Label file, Label id, object node)
     {
-        if (node is not Ast ast)
-            return;
+        var position = node switch
+        {
+            Ast ast => ast.Position,
+            XppComment comment => comment.Position,
+            _ => null,
+        };
 
-        var position = ast.Position;
-
-        // Nodes the parser synthesises carry no extent; recording a zero span would put alerts
-        // at the top of the file.
-        if (position.StartLine <= 0)
+        // Nodes the parser synthesises carry no extent, and TextPosition is a reference type so
+        // it can also be absent outright. Recording a zero span would put alerts at line 1.
+        if (position is null || position.StartLine <= 0)
             return;
 
         var location = trap.FreshLabel();
@@ -147,71 +173,5 @@ public sealed class Extractor
             "locations", location, file,
             position.StartLine, position.StartCol, position.EndLine, position.EndCol);
         trap.Tuple("locatable_locations", id, location);
-    }
-
-    /// <summary>The AST nodes directly reachable from <paramref name="node"/>.</summary>
-    private static IEnumerable<object> Children(object node)
-    {
-        foreach (var property in node.GetType().GetProperties())
-        {
-            if (property.Name is "Parent" or "ParentAst")
-                continue;
-
-            object? value;
-            try
-            {
-                value = property.GetValue(node);
-            }
-            catch
-            {
-                continue;
-            }
-
-            foreach (var child in Reachable(value))
-                yield return child;
-        }
-    }
-
-    /// <summary>
-    /// The AST nodes held by a property value.
-    /// </summary>
-    /// <remarks>
-    /// The compiler groups some children in CLR tuples, such as a `catch` with its handler body
-    /// or a switch case with its statements, so tuple slots have to be looked through or those
-    /// subtrees are never visited.
-    /// </remarks>
-    private static IEnumerable<object> Reachable(object? value)
-    {
-        switch (value)
-        {
-            case null:
-            case string:
-                yield break;
-
-            case Ast child:
-                yield return child;
-                break;
-
-            case ITuple tuple:
-                for (var i = 0; i < tuple.Length; i++)
-                {
-                    foreach (var nested in Reachable(tuple[i]))
-                        yield return nested;
-                }
-
-                break;
-
-            case System.Collections.IEnumerable:
-                // AstSequence reduces dictionary entries to their values; iterating the raw
-                // collection would yield KeyValuePair, which is neither an Ast nor a tuple and
-                // would silently drop the subtree.
-                foreach (var item in AstSequence.Elements(value))
-                {
-                    foreach (var nested in Reachable(item))
-                        yield return nested;
-                }
-
-                break;
-        }
     }
 }

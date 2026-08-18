@@ -65,6 +65,17 @@ public static partial class TrapEmitterWriter
 
         writer.WriteLine("internal static class AstTrapEmitter");
         writer.WriteLine("{");
+        writer.WriteLine();
+        writer.WriteLine("    /// <summary>");
+        writer.WriteLine("    /// Labels a child and records it, so the caller walks the same instances that were");
+        writer.WriteLine("    /// labelled here. Reading a property twice is not safe: some are structs, which box");
+        writer.WriteLine("    /// to a new object on each read and would otherwise get two different labels.");
+        writer.WriteLine("    /// </summary>");
+        writer.WriteLine("    private static Label Child(ITrapFile trap, ICollection<object> children, object node)");
+        writer.WriteLine("    {");
+        writer.WriteLine("        children.Add(node);");
+        writer.WriteLine("        return trap.Label(node);");
+        writer.WriteLine("    }");
 
         // Per-class emission of that class's own properties.
         foreach (var type in model.Types.OrderBy(t => t.Name, StringComparer.Ordinal))
@@ -73,7 +84,7 @@ public static partial class TrapEmitterWriter
                 continue;
 
             writer.WriteLine();
-            writer.WriteLine($"    private static void EmitOwn{type.Name}(ITrapFile trap, Label id, object node)");
+            writer.WriteLine($"    private static void EmitOwn{type.Name}(ITrapFile trap, Label id, object node, ICollection<object> children)");
             writer.WriteLine("    {");
             if (type.IsGeneric)
             {
@@ -103,7 +114,7 @@ public static partial class TrapEmitterWriter
             Require(classTable);
 
             writer.WriteLine();
-            writer.WriteLine($"    private static Label Emit{type.Name}(ITrapFile trap, ITuple tuple)");
+            writer.WriteLine($"    private static Label Emit{type.Name}(ITrapFile trap, ICollection<object> children, ITuple tuple)");
             writer.WriteLine("    {");
             writer.WriteLine("        var id = trap.FreshLabel();");
             writer.WriteLine($"        trap.Tuple(\"{classTable}\", id);");
@@ -142,7 +153,7 @@ public static partial class TrapEmitterWriter
         writer.WriteLine("    /// Writes every tuple describing <paramref name=\"node\"/>, returning false when the");
         writer.WriteLine("    /// node's type is not part of the generated schema.");
         writer.WriteLine("    /// </summary>");
-        writer.WriteLine("    public static bool Emit(ITrapFile trap, Label id, object node)");
+        writer.WriteLine("    public static bool Emit(ITrapFile trap, Label id, object node, ICollection<object> children)");
         writer.WriteLine("    {");
         writer.WriteLine("        // Dispatch on the exact runtime type: C# type patterns also match subclasses,");
         writer.WriteLine("        // which would bind a node to an ancestor's table.");
@@ -167,7 +178,7 @@ public static partial class TrapEmitterWriter
             foreach (var ancestor in Ancestry(leaf, byName))
             {
                 if (ancestor.Properties.Count > 0)
-                    writer.WriteLine($"                EmitOwn{ancestor.Name}(trap, id, node);");
+                    writer.WriteLine($"                EmitOwn{ancestor.Name}(trap, id, node, children);");
             }
 
             writer.WriteLine("                return true;");
@@ -222,23 +233,23 @@ public static partial class TrapEmitterWriter
         {
             case PropertyKind.Child when IsSynthetic(property, byName):
                 writer.WriteLine($"{indent}if ({access} is ITuple t_{property.SchemaName})");
-                writer.WriteLine($"{indent}    trap.Tuple(\"{table}\", id, Emit{property.TypeName}(trap, t_{property.SchemaName}));");
+                writer.WriteLine($"{indent}    trap.Tuple(\"{table}\", id, Emit{property.TypeName}(trap, children, t_{property.SchemaName}));");
                 break;
 
             case PropertyKind.Child:
                 writer.WriteLine($"{indent}if ({access} is {{ }} c_{property.SchemaName})");
-                writer.WriteLine($"{indent}    trap.Tuple(\"{table}\", id, trap.Label(c_{property.SchemaName}));");
+                writer.WriteLine($"{indent}    trap.Tuple(\"{table}\", id, Child(trap, children, c_{property.SchemaName}));");
                 break;
 
             case PropertyKind.ChildList when IsSynthetic(property, byName):
                 Loop(writer, indent, access, property,
-                    $"trap.Tuple(\"{table}\", id, i, Emit{property.TypeName}(trap, (ITuple)item));",
+                    $"trap.Tuple(\"{table}\", id, i, Emit{property.TypeName}(trap, children, (ITuple)item));",
                     "ITuple");
                 break;
 
             case PropertyKind.ChildList:
                 Loop(writer, indent, access, property,
-                    $"trap.Tuple(\"{table}\", id, i, trap.Label(item));",
+                    $"trap.Tuple(\"{table}\", id, i, Child(trap, children, item));",
                     "object");
                 break;
 

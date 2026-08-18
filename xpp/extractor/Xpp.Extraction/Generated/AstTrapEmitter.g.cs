@@ -11,38 +11,49 @@ namespace Xpp.Extraction.Generated;
 internal static class AstTrapEmitter
 {
 
-    private static void EmitOwnArraySpecification(ITrapFile trap, Label id, object node)
+    /// <summary>
+    /// Labels a child and records it, so the caller walks the same instances that were
+    /// labelled here. Reading a property twice is not safe: some are structs, which box
+    /// to a new object on each read and would otherwise get two different labels.
+    /// </summary>
+    private static Label Child(ITrapFile trap, ICollection<object> children, object node)
+    {
+        children.Add(node);
+        return trap.Label(node);
+    }
+
+    private static void EmitOwnArraySpecification(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ArraySpecification)node;
         if (n.Index1 is { } c_index1)
-            trap.Tuple("array_specification_index1s", id, trap.Label(c_index1));
+            trap.Tuple("array_specification_index1s", id, Child(trap, children, c_index1));
         if (n.Index2 is { } c_index2)
-            trap.Tuple("array_specification_index2s", id, trap.Label(c_index2));
+            trap.Tuple("array_specification_index2s", id, Child(trap, children, c_index2));
     }
 
-    private static void EmitOwnAssignMultipleFieldStatement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnAssignMultipleFieldStatement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.AssignMultipleFieldStatement)node;
         if (n.Expression is { } c_expression)
-            trap.Tuple("assign_multiple_field_statement_expressions", id, trap.Label(c_expression));
+            trap.Tuple("assign_multiple_field_statement_expressions", id, Child(trap, children, c_expression));
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.Fields))
             {
-                trap.Tuple("assign_multiple_field_statement_fields", id, i, trap.Label(item));
+                trap.Tuple("assign_multiple_field_statement_fields", id, i, Child(trap, children, item));
                 i++;
             }
         }
     }
 
-    private static void EmitOwnAssignmentBinary(ITrapFile trap, Label id, object node)
+    private static void EmitOwnAssignmentBinary(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.AssignmentBinary)node;
         if (n.Expression is { } c_expression)
-            trap.Tuple("assignment_binary_expressions", id, trap.Label(c_expression));
+            trap.Tuple("assignment_binary_expressions", id, Child(trap, children, c_expression));
     }
 
-    private static void EmitOwnAssignmentEventHandlerBase(ITrapFile trap, Label id, object node)
+    private static void EmitOwnAssignmentEventHandlerBase(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.AssignmentEventHandlerBase)node;
         if (n.Addition is true)
@@ -51,28 +62,28 @@ internal static class AstTrapEmitter
             trap.Tuple("assignment_event_handler_base_names", id, s_name);
     }
 
-    private static void EmitOwnAssignmentEventHandlerInstance(ITrapFile trap, Label id, object node)
+    private static void EmitOwnAssignmentEventHandlerInstance(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.AssignmentEventHandlerInstance)node;
         if (n.QualifierPart is { } c_qualifier_part)
-            trap.Tuple("assignment_event_handler_instance_qualifier_parts", id, trap.Label(c_qualifier_part));
+            trap.Tuple("assignment_event_handler_instance_qualifier_parts", id, Child(trap, children, c_qualifier_part));
     }
 
-    private static void EmitOwnAssignmentEventHandlerStatic(ITrapFile trap, Label id, object node)
+    private static void EmitOwnAssignmentEventHandlerStatic(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.AssignmentEventHandlerStatic)node;
         if (n.TypeName is string s_type_name)
             trap.Tuple("assignment_event_handler_static_type_names", id, s_type_name);
     }
 
-    private static void EmitOwnAssignmentSingleField(ITrapFile trap, Label id, object node)
+    private static void EmitOwnAssignmentSingleField(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.AssignmentSingleField)node;
         if (n.Field is { } c_field)
-            trap.Tuple("assignment_single_field_fields", id, trap.Label(c_field));
+            trap.Tuple("assignment_single_field_fields", id, Child(trap, children, c_field));
     }
 
-    private static void EmitOwnAttribute(ITrapFile trap, Label id, object node)
+    private static void EmitOwnAttribute(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.Attribute)node;
         if (n.Name is string s_name)
@@ -81,7 +92,7 @@ internal static class AstTrapEmitter
             var i = 0;
             foreach (var item in AstSequence.Elements(n.NamedParameters))
             {
-                trap.Tuple("attribute_named_parameters", id, i, EmitAttributeNamedParameterEntry(trap, (ITuple)item));
+                trap.Tuple("attribute_named_parameters", id, i, EmitAttributeNamedParameterEntry(trap, children, (ITuple)item));
                 i++;
             }
         }
@@ -91,27 +102,27 @@ internal static class AstTrapEmitter
             var i = 0;
             foreach (var item in AstSequence.Elements(n.Parameters))
             {
-                trap.Tuple("attribute_parameters", id, i, trap.Label(item));
+                trap.Tuple("attribute_parameters", id, i, Child(trap, children, item));
                 i++;
             }
         }
     }
 
-    private static void EmitOwnAttributeExpression(ITrapFile trap, Label id, object node)
+    private static void EmitOwnAttributeExpression(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.AttributeExpression)node;
         if (n.Literal is { } c_literal)
-            trap.Tuple("attribute_expression_literals", id, trap.Label(c_literal));
+            trap.Tuple("attribute_expression_literals", id, Child(trap, children, c_literal));
     }
 
-    private static void EmitOwnAttributeList(ITrapFile trap, Label id, object node)
+    private static void EmitOwnAttributeList(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.AttributeList)node;
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.Attributes))
             {
-                trap.Tuple("attribute_list_attributes", id, i, trap.Label(item));
+                trap.Tuple("attribute_list_attributes", id, i, Child(trap, children, item));
                 i++;
             }
         }
@@ -119,61 +130,61 @@ internal static class AstTrapEmitter
             trap.Tuple("attribute_list_contains_internal_use_only_attribute", id);
     }
 
-    private static void EmitOwnBinaryExpression(ITrapFile trap, Label id, object node)
+    private static void EmitOwnBinaryExpression(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.BinaryExpression)node;
         if (n.Left is { } c_left)
-            trap.Tuple("binary_expression_lefts", id, trap.Label(c_left));
+            trap.Tuple("binary_expression_lefts", id, Child(trap, children, c_left));
         if (n.Right is { } c_right)
-            trap.Tuple("binary_expression_rights", id, trap.Label(c_right));
+            trap.Tuple("binary_expression_rights", id, Child(trap, children, c_right));
     }
 
-    private static void EmitOwnCaseValues(ITrapFile trap, Label id, object node)
+    private static void EmitOwnCaseValues(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.CaseValues)node;
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.Values))
             {
-                trap.Tuple("case_values_values", id, i, trap.Label(item));
+                trap.Tuple("case_values_values", id, i, Child(trap, children, item));
                 i++;
             }
         }
     }
 
-    private static void EmitOwnCatchExpression(ITrapFile trap, Label id, object node)
+    private static void EmitOwnCatchExpression(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.CatchExpression)node;
         if (n.Expression is { } c_expression)
-            trap.Tuple("catch_expression_expressions", id, trap.Label(c_expression));
+            trap.Tuple("catch_expression_expressions", id, Child(trap, children, c_expression));
     }
 
-    private static void EmitOwnCatchUpdateConflict(ITrapFile trap, Label id, object node)
+    private static void EmitOwnCatchUpdateConflict(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.CatchUpdateConflict)node;
         if (n.Expression is { } c_expression)
-            trap.Tuple("catch_update_conflict_expressions", id, trap.Label(c_expression));
+            trap.Tuple("catch_update_conflict_expressions", id, Child(trap, children, c_expression));
         if (n.Instance is { } c_instance)
-            trap.Tuple("catch_update_conflict_instances", id, trap.Label(c_instance));
+            trap.Tuple("catch_update_conflict_instances", id, Child(trap, children, c_instance));
     }
 
-    private static void EmitOwnChangeStatement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnChangeStatement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ChangeStatement)node;
         if (n.Expression is { } c_expression)
-            trap.Tuple("change_statement_expressions", id, trap.Label(c_expression));
+            trap.Tuple("change_statement_expressions", id, Child(trap, children, c_expression));
         if (n.Statement is { } c_statement)
-            trap.Tuple("change_statement_statements", id, trap.Label(c_statement));
+            trap.Tuple("change_statement_statements", id, Child(trap, children, c_statement));
     }
 
-    private static void EmitOwnClass(ITrapFile trap, Label id, object node)
+    private static void EmitOwnClass(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.Class)node;
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.Fields))
             {
-                trap.Tuple("class_fields", id, i, trap.Label(item));
+                trap.Tuple("class_fields", id, i, Child(trap, children, item));
                 i++;
             }
         }
@@ -189,22 +200,22 @@ internal static class AstTrapEmitter
         }
     }
 
-    private static void EmitOwnClassAccessModifier(ITrapFile trap, Label id, object node)
+    private static void EmitOwnClassAccessModifier(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ClassAccessModifier)node;
         if (n.ClassModifiers is { } e_class_modifiers)
             trap.Tuple("class_access_modifier_class_modifiers", id, e_class_modifiers.ToString());
     }
 
-    private static void EmitOwnClassOrInterface(ITrapFile trap, Label id, object node)
+    private static void EmitOwnClassOrInterface(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ClassOrInterface)node;
         if (n.Attributes is { } c_attributes)
-            trap.Tuple("class_or_interface_attributes", id, trap.Label(c_attributes));
+            trap.Tuple("class_or_interface_attributes", id, Child(trap, children, c_attributes));
         if (n.ElementTypeName is string s_element_type_name)
             trap.Tuple("class_or_interface_element_type_names", id, s_element_type_name);
         if (n.EnclosingType is { } c_enclosing_type)
-            trap.Tuple("class_or_interface_enclosing_types", id, trap.Label(c_enclosing_type));
+            trap.Tuple("class_or_interface_enclosing_types", id, Child(trap, children, c_enclosing_type));
         if (n.Extends is string s_extends)
             trap.Tuple("class_or_interface_extends", id, s_extends);
         if (n.IsAbstract is true)
@@ -221,7 +232,7 @@ internal static class AstTrapEmitter
             trap.Tuple("class_or_interface_qualifiers", id, s_qualifier);
     }
 
-    private static void EmitOwnClrEnumerationLiteralExpression(ITrapFile trap, Label id, object node)
+    private static void EmitOwnClrEnumerationLiteralExpression(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ClrEnumerationLiteralExpression)node;
         if (n.EnumerationLiteral is string s_enumeration_literal)
@@ -230,7 +241,7 @@ internal static class AstTrapEmitter
             trap.Tuple("clr_enumeration_literal_expression_enumeration_types", id, s_enumeration_type);
     }
 
-    private static void EmitOwnClrType(ITrapFile trap, Label id, object node)
+    private static void EmitOwnClrType(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ClrType)node;
         if (n.FullName is string s_full_name)
@@ -245,11 +256,11 @@ internal static class AstTrapEmitter
         }
     }
 
-    private static void EmitOwnCompilationUnit(ITrapFile trap, Label id, object node)
+    private static void EmitOwnCompilationUnit(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.CompilationUnit)node;
         if (n.Comments is { } c_comments)
-            trap.Tuple("compilation_unit_comments", id, trap.Label(c_comments));
+            trap.Tuple("compilation_unit_comments", id, Child(trap, children, c_comments));
         if (n.IsNameEscaped is true)
             trap.Tuple("compilation_unit_is_name_escaped", id);
         if (n.Name is string s_name)
@@ -260,126 +271,126 @@ internal static class AstTrapEmitter
             var i = 0;
             foreach (var item in AstSequence.Elements(n.Regions))
             {
-                trap.Tuple("compilation_unit_regions", id, i, EmitCompilationUnitRegionEntry(trap, (ITuple)item));
+                trap.Tuple("compilation_unit_regions", id, i, EmitCompilationUnitRegionEntry(trap, children, (ITuple)item));
                 i++;
             }
         }
     }
 
-    private static void EmitOwnCompoundStatement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnCompoundStatement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.CompoundStatement)node;
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.Content))
             {
-                trap.Tuple("compound_statement_contents", id, i, trap.Label(item));
+                trap.Tuple("compound_statement_contents", id, i, Child(trap, children, item));
                 i++;
             }
         }
     }
 
-    private static void EmitOwnConditionalExpression(ITrapFile trap, Label id, object node)
+    private static void EmitOwnConditionalExpression(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ConditionalExpression)node;
         if (n.Condition is { } c_condition)
-            trap.Tuple("conditional_expression_conditions", id, trap.Label(c_condition));
+            trap.Tuple("conditional_expression_conditions", id, Child(trap, children, c_condition));
         if (n.ElsePart is { } c_else_part)
-            trap.Tuple("conditional_expression_else_parts", id, trap.Label(c_else_part));
+            trap.Tuple("conditional_expression_else_parts", id, Child(trap, children, c_else_part));
         if (n.IfPart is { } c_if_part)
-            trap.Tuple("conditional_expression_if_parts", id, trap.Label(c_if_part));
+            trap.Tuple("conditional_expression_if_parts", id, Child(trap, children, c_if_part));
     }
 
-    private static void EmitOwnContainerAttributeLiteral(ITrapFile trap, Label id, object node)
+    private static void EmitOwnContainerAttributeLiteral(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ContainerAttributeLiteral)node;
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.Value))
             {
-                trap.Tuple("container_attribute_literal_values", id, i, trap.Label(item));
+                trap.Tuple("container_attribute_literal_values", id, i, Child(trap, children, item));
                 i++;
             }
         }
     }
 
-    private static void EmitOwnContainerLiteralExpression(ITrapFile trap, Label id, object node)
+    private static void EmitOwnContainerLiteralExpression(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ContainerLiteralExpression)node;
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.Value))
             {
-                trap.Tuple("container_literal_expression_values", id, i, trap.Label(item));
+                trap.Tuple("container_literal_expression_values", id, i, Child(trap, children, item));
                 i++;
             }
         }
     }
 
-    private static void EmitOwnCrossCompanyContainer(ITrapFile trap, Label id, object node)
+    private static void EmitOwnCrossCompanyContainer(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.CrossCompanyContainer)node;
         if (n.Container is { } c_container)
-            trap.Tuple("cross_company_container_containers", id, trap.Label(c_container));
+            trap.Tuple("cross_company_container_containers", id, Child(trap, children, c_container));
     }
 
-    private static void EmitOwnDeclaration(ITrapFile trap, Label id, object node)
+    private static void EmitOwnDeclaration(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.Declaration)node;
         if (n.ArraySpecification is { } c_array_specification)
-            trap.Tuple("declaration_array_specifications", id, trap.Label(c_array_specification));
+            trap.Tuple("declaration_array_specifications", id, Child(trap, children, c_array_specification));
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.ModifierList))
             {
-                trap.Tuple("declaration_modifier_lists", id, i, trap.Label(item));
+                trap.Tuple("declaration_modifier_lists", id, i, Child(trap, children, item));
                 i++;
             }
         }
         if (n.Modifiers is { } e_modifiers)
             trap.Tuple("declaration_modifiers", id, e_modifiers.ToString());
         if (n.Type is { } c_type)
-            trap.Tuple("declaration_types", id, trap.Label(c_type));
+            trap.Tuple("declaration_types", id, Child(trap, children, c_type));
     }
 
-    private static void EmitOwnDefaultTypeAttributeLiteral(ITrapFile trap, Label id, object node)
+    private static void EmitOwnDefaultTypeAttributeLiteral(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         dynamic n = node;
         if (n.ScannedLiteralValue is string s_scanned_literal_value)
             trap.Tuple("default_type_attribute_literal_scanned_literal_values", id, s_scanned_literal_value);
     }
 
-    private static void EmitOwnDefaultTypeLiteralExpression(ITrapFile trap, Label id, object node)
+    private static void EmitOwnDefaultTypeLiteralExpression(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         dynamic n = node;
         if (n.ScannedLiteralValue is string s_scanned_literal_value)
             trap.Tuple("default_type_literal_expression_scanned_literal_values", id, s_scanned_literal_value);
     }
 
-    private static void EmitOwnDelegate(ITrapFile trap, Label id, object node)
+    private static void EmitOwnDelegate(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.Delegate)node;
         if (n.IsStatic is true)
             trap.Tuple("delegate_is_static", id);
     }
 
-    private static void EmitOwnDeleteStatement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnDeleteStatement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.DeleteStatement)node;
         if (n.Query is { } c_query)
-            trap.Tuple("delete_statement_queries", id, trap.Label(c_query));
+            trap.Tuple("delete_statement_queries", id, Child(trap, children, c_query));
     }
 
-    private static void EmitOwnDoWhileStatement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnDoWhileStatement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.DoWhileStatement)node;
         if (n.Condition is { } c_condition)
-            trap.Tuple("do_while_statement_conditions", id, trap.Label(c_condition));
+            trap.Tuple("do_while_statement_conditions", id, Child(trap, children, c_condition));
         if (n.Statement is { } c_statement)
-            trap.Tuple("do_while_statement_statements", id, trap.Label(c_statement));
+            trap.Tuple("do_while_statement_statements", id, Child(trap, children, c_statement));
     }
 
-    private static void EmitOwnEnumAttributeLiteral(ITrapFile trap, Label id, object node)
+    private static void EmitOwnEnumAttributeLiteral(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.EnumAttributeLiteral)node;
         if (n.Literal is string s_literal)
@@ -388,7 +399,7 @@ internal static class AstTrapEmitter
             trap.Tuple("enum_attribute_literal_type_names", id, s_type_name);
     }
 
-    private static void EmitOwnEnumerationLiteralExpression(ITrapFile trap, Label id, object node)
+    private static void EmitOwnEnumerationLiteralExpression(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.EnumerationLiteralExpression)node;
         if (n.EnumerationLiteral is string s_enumeration_literal)
@@ -397,7 +408,7 @@ internal static class AstTrapEmitter
             trap.Tuple("enumeration_literal_expression_enumeration_types", id, s_enumeration_type);
     }
 
-    private static void EmitOwnEnumerationType(ITrapFile trap, Label id, object node)
+    private static void EmitOwnEnumerationType(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.EnumerationType)node;
         if (n.EnumeratedType is string s_enumerated_type)
@@ -408,71 +419,71 @@ internal static class AstTrapEmitter
             trap.Tuple("enumeration_type_namespaces", id, s_namespace);
     }
 
-    private static void EmitOwnEvaluation(ITrapFile trap, Label id, object node)
+    private static void EmitOwnEvaluation(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.Evaluation)node;
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.ActualParameters))
             {
-                trap.Tuple("evaluation_actual_parameters", id, i, EmitEvaluationActualParameterEntry(trap, (ITuple)item));
+                trap.Tuple("evaluation_actual_parameters", id, i, EmitEvaluationActualParameterEntry(trap, children, (ITuple)item));
                 i++;
             }
         }
     }
 
-    private static void EmitOwnExplicitSelection(ITrapFile trap, Label id, object node)
+    private static void EmitOwnExplicitSelection(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ExplicitSelection)node;
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.Fields))
             {
-                trap.Tuple("explicit_selection_fields", id, i, trap.Label(item));
+                trap.Tuple("explicit_selection_fields", id, i, Child(trap, children, item));
                 i++;
             }
         }
     }
 
-    private static void EmitOwnExpression(ITrapFile trap, Label id, object node)
+    private static void EmitOwnExpression(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.Expression)node;
         if (n.IsConst is true)
             trap.Tuple("expression_is_const", id);
         if (n.Transformation is { } c_transformation)
-            trap.Tuple("expression_transformations", id, trap.Label(c_transformation));
+            trap.Tuple("expression_transformations", id, Child(trap, children, c_transformation));
     }
 
-    private static void EmitOwnExpressionCompilationUnit(ITrapFile trap, Label id, object node)
+    private static void EmitOwnExpressionCompilationUnit(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ExpressionCompilationUnit)node;
         if (n.Expression is { } c_expression)
-            trap.Tuple("expression_compilation_unit_expressions", id, trap.Label(c_expression));
+            trap.Tuple("expression_compilation_unit_expressions", id, Child(trap, children, c_expression));
         if (n.PathContribution is string s_path_contribution)
             trap.Tuple("expression_compilation_unit_path_contributions", id, s_path_contribution);
     }
 
-    private static void EmitOwnExpressionQualifier(ITrapFile trap, Label id, object node)
+    private static void EmitOwnExpressionQualifier(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ExpressionQualifier)node;
         if (n.Expression is { } c_expression)
-            trap.Tuple("expression_qualifier_expressions", id, trap.Label(c_expression));
+            trap.Tuple("expression_qualifier_expressions", id, Child(trap, children, c_expression));
     }
 
-    private static void EmitOwnExpressionStatement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnExpressionStatement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ExpressionStatement)node;
         if (n.ElementTypeName is string s_element_type_name)
             trap.Tuple("expression_statement_element_type_names", id, s_element_type_name);
         if (n.Expression is { } c_expression)
-            trap.Tuple("expression_statement_expressions", id, trap.Label(c_expression));
+            trap.Tuple("expression_statement_expressions", id, Child(trap, children, c_expression));
     }
 
-    private static void EmitOwnFieldAssignment(ITrapFile trap, Label id, object node)
+    private static void EmitOwnFieldAssignment(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.FieldAssignment)node;
         if (n.Expression is { } c_expression)
-            trap.Tuple("field_assignment_expressions", id, trap.Label(c_expression));
+            trap.Tuple("field_assignment_expressions", id, Child(trap, children, c_expression));
         if (n.ExtensionName is string s_extension_name)
             trap.Tuple("field_assignment_extension_names", id, s_extension_name);
         if (n.FieldName is string s_field_name)
@@ -481,17 +492,17 @@ internal static class AstTrapEmitter
             trap.Tuple("field_assignment_indices", id, System.Convert.ToInt64(v_index));
     }
 
-    private static void EmitOwnFieldDeclaration(ITrapFile trap, Label id, object node)
+    private static void EmitOwnFieldDeclaration(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.FieldDeclaration)node;
         if (n.Attributes is { } c_attributes)
-            trap.Tuple("field_declaration_attributes", id, trap.Label(c_attributes));
+            trap.Tuple("field_declaration_attributes", id, Child(trap, children, c_attributes));
         if (n.ElementTypeName is string s_element_type_name)
             trap.Tuple("field_declaration_element_type_names", id, s_element_type_name);
         if (n.ExtensionName is string s_extension_name)
             trap.Tuple("field_declaration_extension_names", id, s_extension_name);
         if (n.InitialValue is { } c_initial_value)
-            trap.Tuple("field_declaration_initial_values", id, trap.Label(c_initial_value));
+            trap.Tuple("field_declaration_initial_values", id, Child(trap, children, c_initial_value));
         if (n.IsConst is true)
             trap.Tuple("field_declaration_is_const", id);
         if (n.IsExtension is true)
@@ -512,27 +523,27 @@ internal static class AstTrapEmitter
             trap.Tuple("field_declaration_is_static", id);
     }
 
-    private static void EmitOwnFieldExpression(ITrapFile trap, Label id, object node)
+    private static void EmitOwnFieldExpression(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.FieldExpression)node;
         if (n.Field is { } c_field)
-            trap.Tuple("field_expression_fields", id, trap.Label(c_field));
+            trap.Tuple("field_expression_fields", id, Child(trap, children, c_field));
         if (n.IsEnum is true)
             trap.Tuple("field_expression_is_enum", id);
     }
 
-    private static void EmitOwnFieldSelection(ITrapFile trap, Label id, object node)
+    private static void EmitOwnFieldSelection(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.FieldSelection)node;
         if (n.Index is { } v_index)
             trap.Tuple("field_selection_indices", id, System.Convert.ToInt64(v_index));
     }
 
-    private static void EmitOwnFieldSpecification(ITrapFile trap, Label id, object node)
+    private static void EmitOwnFieldSpecification(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.FieldSpecification)node;
         if (n.ArrayIndex is { } c_array_index)
-            trap.Tuple("field_specification_array_indices", id, trap.Label(c_array_index));
+            trap.Tuple("field_specification_array_indices", id, Child(trap, children, c_array_index));
         if (n.ElementTypeName is string s_element_type_name)
             trap.Tuple("field_specification_element_type_names", id, s_element_type_name);
         if (n.IsConst is true)
@@ -550,17 +561,17 @@ internal static class AstTrapEmitter
         if (n.IsStatic is true)
             trap.Tuple("field_specification_is_static", id);
         if (n.Qualifier is { } c_qualifier)
-            trap.Tuple("field_specification_qualifiers", id, trap.Label(c_qualifier));
+            trap.Tuple("field_specification_qualifiers", id, Child(trap, children, c_qualifier));
     }
 
-    private static void EmitOwnFindStatement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnFindStatement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.FindStatement)node;
         if (n.Query is { } c_query)
-            trap.Tuple("find_statement_queries", id, trap.Label(c_query));
+            trap.Tuple("find_statement_queries", id, Child(trap, children, c_query));
     }
 
-    private static void EmitOwnFlushStatement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnFlushStatement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.FlushStatement)node;
         {
@@ -573,47 +584,47 @@ internal static class AstTrapEmitter
         }
     }
 
-    private static void EmitOwnForAssign(ITrapFile trap, Label id, object node)
+    private static void EmitOwnForAssign(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ForAssign)node;
         if (n.FieldSpecification is { } c_field_specification)
-            trap.Tuple("for_assign_field_specifications", id, trap.Label(c_field_specification));
+            trap.Tuple("for_assign_field_specifications", id, Child(trap, children, c_field_specification));
     }
 
-    private static void EmitOwnForDeclarationAssign(ITrapFile trap, Label id, object node)
+    private static void EmitOwnForDeclarationAssign(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ForDeclarationAssign)node;
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.InitializationDeclaration))
             {
-                trap.Tuple("for_declaration_assign_initialization_declarations", id, i, trap.Label(item));
+                trap.Tuple("for_declaration_assign_initialization_declarations", id, i, Child(trap, children, item));
                 i++;
             }
         }
     }
 
-    private static void EmitOwnForExpressionAssign(ITrapFile trap, Label id, object node)
+    private static void EmitOwnForExpressionAssign(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ForExpressionAssign)node;
         if (n.Expression is { } c_expression)
-            trap.Tuple("for_expression_assign_expressions", id, trap.Label(c_expression));
+            trap.Tuple("for_expression_assign_expressions", id, Child(trap, children, c_expression));
     }
 
-    private static void EmitOwnForStatement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnForStatement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ForStatement)node;
         if (n.Condition is { } c_condition)
-            trap.Tuple("for_statement_conditions", id, trap.Label(c_condition));
+            trap.Tuple("for_statement_conditions", id, Child(trap, children, c_condition));
         if (n.Initialization is { } c_initialization)
-            trap.Tuple("for_statement_initializations", id, trap.Label(c_initialization));
+            trap.Tuple("for_statement_initializations", id, Child(trap, children, c_initialization));
         if (n.Statement is { } c_statement)
-            trap.Tuple("for_statement_statements", id, trap.Label(c_statement));
+            trap.Tuple("for_statement_statements", id, Child(trap, children, c_statement));
         if (n.Update is { } c_update)
-            trap.Tuple("for_statement_updates", id, trap.Label(c_update));
+            trap.Tuple("for_statement_updates", id, Child(trap, children, c_update));
     }
 
-    private static void EmitOwnFormControl(ITrapFile trap, Label id, object node)
+    private static void EmitOwnFormControl(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.FormControl)node;
         if (n.AutoDeclaration is true)
@@ -622,7 +633,7 @@ internal static class AstTrapEmitter
             var i = 0;
             foreach (var item in AstSequence.Elements(n.ChildControls))
             {
-                trap.Tuple("form_control_child_controls", id, i, trap.Label(item));
+                trap.Tuple("form_control_child_controls", id, i, Child(trap, children, item));
                 i++;
             }
         }
@@ -639,26 +650,26 @@ internal static class AstTrapEmitter
         if (n.IsFormControlExtension is true)
             trap.Tuple("form_control_is_form_control_extension", id);
         if (n.ParentControl is { } c_parent_control)
-            trap.Tuple("form_control_parent_controls", id, trap.Label(c_parent_control));
+            trap.Tuple("form_control_parent_controls", id, Child(trap, children, c_parent_control));
     }
 
-    private static void EmitOwnFormDataField(ITrapFile trap, Label id, object node)
+    private static void EmitOwnFormDataField(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.FormDataField)node;
         if (n.ElementTypeName is string s_element_type_name)
             trap.Tuple("form_data_field_element_type_names", id, s_element_type_name);
         if (n.FormDataSource is { } c_form_data_source)
-            trap.Tuple("form_data_field_form_data_sources", id, trap.Label(c_form_data_source));
+            trap.Tuple("form_data_field_form_data_sources", id, Child(trap, children, c_form_data_source));
     }
 
-    private static void EmitOwnFormDataSource(ITrapFile trap, Label id, object node)
+    private static void EmitOwnFormDataSource(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.FormDataSource)node;
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.DataFields))
             {
-                trap.Tuple("form_data_source_data_fields", id, i, trap.Label(item));
+                trap.Tuple("form_data_source_data_fields", id, i, Child(trap, children, item));
                 i++;
             }
         }
@@ -671,30 +682,30 @@ internal static class AstTrapEmitter
         if (n.NestedDataSource is true)
             trap.Tuple("form_data_source_nested_data_source", id);
         if (n.Query is { } c_query)
-            trap.Tuple("form_data_source_queries", id, trap.Label(c_query));
+            trap.Tuple("form_data_source_queries", id, Child(trap, children, c_query));
         if (n.QueryName is string s_query_name)
             trap.Tuple("form_data_source_query_names", id, s_query_name);
         if (n.Table is string s_table)
             trap.Tuple("form_data_source_tables", id, s_table);
     }
 
-    private static void EmitOwnFormElementType(ITrapFile trap, Label id, object node)
+    private static void EmitOwnFormElementType(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.FormElementType)node;
         if (n.FormName is string s_form_name)
             trap.Tuple("form_element_type_form_names", id, s_form_name);
     }
 
-    private static void EmitOwnFormModelElement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnFormModelElement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.FormModelElement)node;
         if (n.Behavior is { } c_behavior)
-            trap.Tuple("form_model_element_behaviors", id, trap.Label(c_behavior));
+            trap.Tuple("form_model_element_behaviors", id, Child(trap, children, c_behavior));
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.Controls))
             {
-                trap.Tuple("form_model_element_controls", id, i, trap.Label(item));
+                trap.Tuple("form_model_element_controls", id, i, Child(trap, children, item));
                 i++;
             }
         }
@@ -702,7 +713,7 @@ internal static class AstTrapEmitter
             var i = 0;
             foreach (var item in AstSequence.Elements(n.DataSources))
             {
-                trap.Tuple("form_model_element_data_sources", id, i, trap.Label(item));
+                trap.Tuple("form_model_element_data_sources", id, i, Child(trap, children, item));
                 i++;
             }
         }
@@ -712,28 +723,28 @@ internal static class AstTrapEmitter
             trap.Tuple("form_model_element_full_type_names", id, s_full_type_name);
     }
 
-    private static void EmitOwnFormNestedElement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnFormNestedElement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.FormNestedElement)node;
         if (n.Form is { } c_form)
-            trap.Tuple("form_nested_element_forms", id, trap.Label(c_form));
+            trap.Tuple("form_nested_element_forms", id, Child(trap, children, c_form));
     }
 
-    private static void EmitOwnFunctionCall(ITrapFile trap, Label id, object node)
+    private static void EmitOwnFunctionCall(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.FunctionCall)node;
         if (n.FunctionName is string s_function_name)
             trap.Tuple("function_call_function_names", id, s_function_name);
     }
 
-    private static void EmitOwnFunctionDeclaration(ITrapFile trap, Label id, object node)
+    private static void EmitOwnFunctionDeclaration(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.FunctionDeclaration)node;
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.DeclarationsAndStatements))
             {
-                trap.Tuple("function_declaration_declarations_and_statements", id, i, trap.Label(item));
+                trap.Tuple("function_declaration_declarations_and_statements", id, i, Child(trap, children, item));
                 i++;
             }
         }
@@ -743,7 +754,7 @@ internal static class AstTrapEmitter
             var i = 0;
             foreach (var item in AstSequence.Elements(n.Locals))
             {
-                trap.Tuple("function_declaration_locals", id, i, trap.Label(item));
+                trap.Tuple("function_declaration_locals", id, i, Child(trap, children, item));
                 i++;
             }
         }
@@ -751,7 +762,7 @@ internal static class AstTrapEmitter
             var i = 0;
             foreach (var item in AstSequence.Elements(n.Parameters))
             {
-                trap.Tuple("function_declaration_parameters", id, i, trap.Label(item));
+                trap.Tuple("function_declaration_parameters", id, i, Child(trap, children, item));
                 i++;
             }
         }
@@ -759,39 +770,39 @@ internal static class AstTrapEmitter
             var i = 0;
             foreach (var item in AstSequence.Elements(n.Statements))
             {
-                trap.Tuple("function_declaration_statements", id, i, trap.Label(item));
+                trap.Tuple("function_declaration_statements", id, i, Child(trap, children, item));
                 i++;
             }
         }
     }
 
-    private static void EmitOwnGenericEvaluation(ITrapFile trap, Label id, object node)
+    private static void EmitOwnGenericEvaluation(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.GenericEvaluation)node;
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.TypeArgumentList))
             {
-                trap.Tuple("generic_evaluation_type_argument_lists", id, i, trap.Label(item));
+                trap.Tuple("generic_evaluation_type_argument_lists", id, i, Child(trap, children, item));
                 i++;
             }
         }
     }
 
-    private static void EmitOwnGenericXppType(ITrapFile trap, Label id, object node)
+    private static void EmitOwnGenericXppType(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.GenericXppType)node;
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.TypeArgumentList))
             {
-                trap.Tuple("generic_xpp_type_type_argument_lists", id, i, trap.Label(item));
+                trap.Tuple("generic_xpp_type_type_argument_lists", id, i, Child(trap, children, item));
                 i++;
             }
         }
     }
 
-    private static void EmitOwnGlobalOrderElement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnGlobalOrderElement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.GlobalOrderElement)node;
         if (n.ExtensionName is string s_extension_name)
@@ -800,27 +811,27 @@ internal static class AstTrapEmitter
             trap.Tuple("global_order_element_tables", id, s_table);
     }
 
-    private static void EmitOwnIfStatement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnIfStatement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.IfStatement)node;
         if (n.Condition is { } c_condition)
-            trap.Tuple("if_statement_conditions", id, trap.Label(c_condition));
+            trap.Tuple("if_statement_conditions", id, Child(trap, children, c_condition));
         if (n.Consequent is { } c_consequent)
-            trap.Tuple("if_statement_consequents", id, trap.Label(c_consequent));
+            trap.Tuple("if_statement_consequents", id, Child(trap, children, c_consequent));
     }
 
-    private static void EmitOwnIfThenElseStatement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnIfThenElseStatement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.IfThenElseStatement)node;
         if (n.Antecedent is { } c_antecedent)
-            trap.Tuple("if_then_else_statement_antecedents", id, trap.Label(c_antecedent));
+            trap.Tuple("if_then_else_statement_antecedents", id, Child(trap, children, c_antecedent));
         if (n.Condition is { } c_condition)
-            trap.Tuple("if_then_else_statement_conditions", id, trap.Label(c_condition));
+            trap.Tuple("if_then_else_statement_conditions", id, Child(trap, children, c_condition));
         if (n.Consequent is { } c_consequent)
-            trap.Tuple("if_then_else_statement_consequents", id, trap.Label(c_consequent));
+            trap.Tuple("if_then_else_statement_consequents", id, Child(trap, children, c_consequent));
     }
 
-    private static void EmitOwnInsertFieldSpecification(ITrapFile trap, Label id, object node)
+    private static void EmitOwnInsertFieldSpecification(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.InsertFieldSpecification)node;
         if (n.ArrayIndex is { } v_array_index)
@@ -833,26 +844,26 @@ internal static class AstTrapEmitter
             trap.Tuple("insert_field_specification_names", id, s_name);
     }
 
-    private static void EmitOwnInsertStatement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnInsertStatement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.InsertStatement)node;
         if (n.CrossCompany is { } c_cross_company)
-            trap.Tuple("insert_statement_cross_companies", id, trap.Label(c_cross_company));
+            trap.Tuple("insert_statement_cross_companies", id, Child(trap, children, c_cross_company));
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.Fields))
             {
-                trap.Tuple("insert_statement_fields", id, i, trap.Label(item));
+                trap.Tuple("insert_statement_fields", id, i, Child(trap, children, item));
                 i++;
             }
         }
         if (n.Query is { } c_query)
-            trap.Tuple("insert_statement_queries", id, trap.Label(c_query));
+            trap.Tuple("insert_statement_queries", id, Child(trap, children, c_query));
         if (n.Table is string s_table)
             trap.Tuple("insert_statement_tables", id, s_table);
     }
 
-    private static void EmitOwnIntrinsic(ITrapFile trap, Label id, object node)
+    private static void EmitOwnIntrinsic(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.Intrinsic)node;
         if (n.Arg1 is string s_arg1)
@@ -865,7 +876,7 @@ internal static class AstTrapEmitter
             trap.Tuple("intrinsic_names", id, s_name);
     }
 
-    private static void EmitOwnIntrinsicAttributeLiteral(ITrapFile trap, Label id, object node)
+    private static void EmitOwnIntrinsicAttributeLiteral(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.IntrinsicAttributeLiteral)node;
         if (n.Arg1 is string s_arg1)
@@ -878,45 +889,45 @@ internal static class AstTrapEmitter
             trap.Tuple("intrinsic_attribute_literal_function_names", id, s_function_name);
     }
 
-    private static void EmitOwnIsAsExpression(ITrapFile trap, Label id, object node)
+    private static void EmitOwnIsAsExpression(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.IsAsExpression)node;
         if (n.Expression is { } c_expression)
-            trap.Tuple("is_as_expression_expressions", id, trap.Label(c_expression));
+            trap.Tuple("is_as_expression_expressions", id, Child(trap, children, c_expression));
         if (n.TypeName is string s_type_name)
             trap.Tuple("is_as_expression_type_names", id, s_type_name);
     }
 
-    private static void EmitOwnJoinSpecification(ITrapFile trap, Label id, object node)
+    private static void EmitOwnJoinSpecification(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.JoinSpecification)node;
         if (n.Kind is { } e_kind)
             trap.Tuple("join_specification_kinds", id, e_kind.ToString());
         if (n.Query is { } c_query)
-            trap.Tuple("join_specification_queries", id, trap.Label(c_query));
+            trap.Tuple("join_specification_queries", id, Child(trap, children, c_query));
     }
 
-    private static void EmitOwnLocalDeclarationsStatement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnLocalDeclarationsStatement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.LocalDeclarationsStatement)node;
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.Declarations))
             {
-                trap.Tuple("local_declarations_statement_declarations", id, i, trap.Label(item));
+                trap.Tuple("local_declarations_statement_declarations", id, i, Child(trap, children, item));
                 i++;
             }
         }
     }
 
-    private static void EmitOwnMethod(ITrapFile trap, Label id, object node)
+    private static void EmitOwnMethod(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.Method)node;
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.DeclarationsAndStatements))
             {
-                trap.Tuple("method_declarations_and_statements", id, i, trap.Label(item));
+                trap.Tuple("method_declarations_and_statements", id, i, Child(trap, children, item));
                 i++;
             }
         }
@@ -966,7 +977,7 @@ internal static class AstTrapEmitter
             var i = 0;
             foreach (var item in AstSequence.Elements(n.Locals))
             {
-                trap.Tuple("method_locals", id, i, trap.Label(item));
+                trap.Tuple("method_locals", id, i, Child(trap, children, item));
                 i++;
             }
         }
@@ -976,22 +987,22 @@ internal static class AstTrapEmitter
             var i = 0;
             foreach (var item in AstSequence.Elements(n.Statements))
             {
-                trap.Tuple("method_statements", id, i, trap.Label(item));
+                trap.Tuple("method_statements", id, i, Child(trap, children, item));
                 i++;
             }
         }
     }
 
-    private static void EmitOwnMethodOrDelegate(ITrapFile trap, Label id, object node)
+    private static void EmitOwnMethodOrDelegate(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.MethodOrDelegate)node;
         if (n.Attributes is { } c_attributes)
-            trap.Tuple("method_or_delegate_attributes", id, trap.Label(c_attributes));
+            trap.Tuple("method_or_delegate_attributes", id, Child(trap, children, c_attributes));
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.ModifierList))
             {
-                trap.Tuple("method_or_delegate_modifier_lists", id, i, trap.Label(item));
+                trap.Tuple("method_or_delegate_modifier_lists", id, i, Child(trap, children, item));
                 i++;
             }
         }
@@ -999,14 +1010,14 @@ internal static class AstTrapEmitter
             var i = 0;
             foreach (var item in AstSequence.Elements(n.Parameters))
             {
-                trap.Tuple("method_or_delegate_parameters", id, i, trap.Label(item));
+                trap.Tuple("method_or_delegate_parameters", id, i, Child(trap, children, item));
                 i++;
             }
         }
         if (n.PathContribution is string s_path_contribution)
             trap.Tuple("method_or_delegate_path_contributions", id, s_path_contribution);
         if (n.Type is { } c_type)
-            trap.Tuple("method_or_delegate_types", id, trap.Label(c_type));
+            trap.Tuple("method_or_delegate_types", id, Child(trap, children, c_type));
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.TypeParameters))
@@ -1017,14 +1028,14 @@ internal static class AstTrapEmitter
         }
     }
 
-    private static void EmitOwnModelElement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnModelElement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ModelElement)node;
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.BaseMethods))
             {
-                trap.Tuple("model_element_base_methods", id, i, trap.Label(item));
+                trap.Tuple("model_element_base_methods", id, i, Child(trap, children, item));
                 i++;
             }
         }
@@ -1032,7 +1043,7 @@ internal static class AstTrapEmitter
             var i = 0;
             foreach (var item in AstSequence.Elements(n.ExtendGenericParameters))
             {
-                trap.Tuple("model_element_extend_generic_parameters", id, i, trap.Label(item));
+                trap.Tuple("model_element_extend_generic_parameters", id, i, Child(trap, children, item));
                 i++;
             }
         }
@@ -1054,7 +1065,7 @@ internal static class AstTrapEmitter
             var i = 0;
             foreach (var item in AstSequence.Elements(n.Methods))
             {
-                trap.Tuple("model_element_methods", id, i, trap.Label(item));
+                trap.Tuple("model_element_methods", id, i, Child(trap, children, item));
                 i++;
             }
         }
@@ -1064,7 +1075,7 @@ internal static class AstTrapEmitter
             var i = 0;
             foreach (var item in AstSequence.Elements(n.ModifierList))
             {
-                trap.Tuple("model_element_modifier_lists", id, i, trap.Label(item));
+                trap.Tuple("model_element_modifier_lists", id, i, Child(trap, children, item));
                 i++;
             }
         }
@@ -1076,7 +1087,7 @@ internal static class AstTrapEmitter
             var i = 0;
             foreach (var item in AstSequence.Elements(n.NestedClasses))
             {
-                trap.Tuple("model_element_nested_classes", id, i, trap.Label(item));
+                trap.Tuple("model_element_nested_classes", id, i, Child(trap, children, item));
                 i++;
             }
         }
@@ -1094,7 +1105,7 @@ internal static class AstTrapEmitter
             var i = 0;
             foreach (var item in AstSequence.Elements(n.Using))
             {
-                trap.Tuple("model_element_usings", id, i, EmitModelElementUsingEntry(trap, (ITuple)item));
+                trap.Tuple("model_element_usings", id, i, EmitModelElementUsingEntry(trap, children, (ITuple)item));
                 i++;
             }
         }
@@ -1102,23 +1113,23 @@ internal static class AstTrapEmitter
             trap.Tuple("model_element_visibilities", id, e_visibility.ToString());
     }
 
-    private static void EmitOwnModifier(ITrapFile trap, Label id, object node)
+    private static void EmitOwnModifier(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.Modifier)node;
         if (n.Modifiers is { } e_modifiers)
             trap.Tuple("modifier_modifiers", id, e_modifiers.ToString());
     }
 
-    private static void EmitOwnMoveCursorStatement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnMoveCursorStatement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.MoveCursorStatement)node;
         if (n.Selection is { } c_selection)
-            trap.Tuple("move_cursor_statement_selections", id, trap.Label(c_selection));
+            trap.Tuple("move_cursor_statement_selections", id, Child(trap, children, c_selection));
         if (n.Table is string s_table)
             trap.Tuple("move_cursor_statement_tables", id, s_table);
     }
 
-    private static void EmitOwnNamedFieldReference(ITrapFile trap, Label id, object node)
+    private static void EmitOwnNamedFieldReference(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.NamedFieldReference)node;
         if (n.ExtensionName is string s_extension_name)
@@ -1127,21 +1138,21 @@ internal static class AstTrapEmitter
             trap.Tuple("named_field_reference_field_names", id, s_field_name);
     }
 
-    private static void EmitOwnNamedType(ITrapFile trap, Label id, object node)
+    private static void EmitOwnNamedType(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.NamedType)node;
         if (n.Name is string s_name)
             trap.Tuple("named_type_names", id, s_name);
     }
 
-    private static void EmitOwnNewCall(ITrapFile trap, Label id, object node)
+    private static void EmitOwnNewCall(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.NewCall)node;
         if (n.Type is { } c_type)
-            trap.Tuple("new_call_types", id, trap.Label(c_type));
+            trap.Tuple("new_call_types", id, Child(trap, children, c_type));
     }
 
-    private static void EmitOwnNewClrArrayExpression(ITrapFile trap, Label id, object node)
+    private static void EmitOwnNewClrArrayExpression(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.NewClrArrayExpression)node;
         if (n.FullName is string s_full_name)
@@ -1158,7 +1169,7 @@ internal static class AstTrapEmitter
             var i = 0;
             foreach (var item in AstSequence.Elements(n.Sizes))
             {
-                trap.Tuple("new_clr_array_expression_sizes", id, i, trap.Label(item));
+                trap.Tuple("new_clr_array_expression_sizes", id, i, Child(trap, children, item));
                 i++;
             }
         }
@@ -1166,34 +1177,34 @@ internal static class AstTrapEmitter
             var i = 0;
             foreach (var item in AstSequence.Elements(n.TypeArgumentList))
             {
-                trap.Tuple("new_clr_array_expression_type_argument_lists", id, i, trap.Label(item));
+                trap.Tuple("new_clr_array_expression_type_argument_lists", id, i, Child(trap, children, item));
                 i++;
             }
         }
     }
 
-    private static void EmitOwnNewClrCall(ITrapFile trap, Label id, object node)
+    private static void EmitOwnNewClrCall(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.NewClrCall)node;
         if (n.ClrClassName is string s_clr_class_name)
             trap.Tuple("new_clr_call_clr_class_names", id, s_clr_class_name);
     }
 
-    private static void EmitOwnNextExpression(ITrapFile trap, Label id, object node)
+    private static void EmitOwnNextExpression(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.NextExpression)node;
         if (n.Name is string s_name)
             trap.Tuple("next_expression_names", id, s_name);
     }
 
-    private static void EmitOwnNumberedFieldReference(ITrapFile trap, Label id, object node)
+    private static void EmitOwnNumberedFieldReference(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.NumberedFieldReference)node;
         if (n.FieldNumber is { } c_field_number)
-            trap.Tuple("numbered_field_reference_field_numbers", id, trap.Label(c_field_number));
+            trap.Tuple("numbered_field_reference_field_numbers", id, Child(trap, children, c_field_number));
     }
 
-    private static void EmitOwnOrderElement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnOrderElement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.OrderElement)node;
         if (n.Direction is { } e_direction)
@@ -1204,7 +1215,7 @@ internal static class AstTrapEmitter
             trap.Tuple("order_element_indices", id, System.Convert.ToInt64(v_index));
     }
 
-    private static void EmitOwnParameterDeclaration(ITrapFile trap, Label id, object node)
+    private static void EmitOwnParameterDeclaration(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ParameterDeclaration)node;
         if (n.IsByRef is true)
@@ -1213,27 +1224,27 @@ internal static class AstTrapEmitter
             trap.Tuple("parameter_declaration_is_optional", id);
     }
 
-    private static void EmitOwnPrintStatement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnPrintStatement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.PrintStatement)node;
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.Expressions))
             {
-                trap.Tuple("print_statement_expressions", id, i, trap.Label(item));
+                trap.Tuple("print_statement_expressions", id, i, Child(trap, children, item));
                 i++;
             }
         }
     }
 
-    private static void EmitOwnProvidedType(ITrapFile trap, Label id, object node)
+    private static void EmitOwnProvidedType(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ProvidedType)node;
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.ArgumentList))
             {
-                trap.Tuple("provided_type_argument_lists", id, i, trap.Label(item));
+                trap.Tuple("provided_type_argument_lists", id, i, Child(trap, children, item));
                 i++;
             }
         }
@@ -1241,25 +1252,25 @@ internal static class AstTrapEmitter
             trap.Tuple("provided_type_names", id, s_name);
     }
 
-    private static void EmitOwnProvidedTypeStaticCall(ITrapFile trap, Label id, object node)
+    private static void EmitOwnProvidedTypeStaticCall(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ProvidedTypeStaticCall)node;
         if (n.MethodName is string s_method_name)
             trap.Tuple("provided_type_static_call_method_names", id, s_method_name);
         if (n.ProvidedType is { } c_provided_type)
-            trap.Tuple("provided_type_static_call_provided_types", id, trap.Label(c_provided_type));
+            trap.Tuple("provided_type_static_call_provided_types", id, Child(trap, children, c_provided_type));
     }
 
-    private static void EmitOwnQualifiedCall(ITrapFile trap, Label id, object node)
+    private static void EmitOwnQualifiedCall(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.QualifiedCall)node;
         if (n.MethodName is string s_method_name)
             trap.Tuple("qualified_call_method_names", id, s_method_name);
         if (n.Qualifier is { } c_qualifier)
-            trap.Tuple("qualified_call_qualifiers", id, trap.Label(c_qualifier));
+            trap.Tuple("qualified_call_qualifiers", id, Child(trap, children, c_qualifier));
     }
 
-    private static void EmitOwnQualifiedField(ITrapFile trap, Label id, object node)
+    private static void EmitOwnQualifiedField(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.QualifiedField)node;
         if (n.ExtensionName is string s_extension_name)
@@ -1268,25 +1279,25 @@ internal static class AstTrapEmitter
             trap.Tuple("qualified_field_names", id, s_name);
     }
 
-    private static void EmitOwnQualifiedInstanceName(ITrapFile trap, Label id, object node)
+    private static void EmitOwnQualifiedInstanceName(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.QualifiedInstanceName)node;
         if (n.Index is { } c_index)
-            trap.Tuple("qualified_instance_name_indices", id, trap.Label(c_index));
+            trap.Tuple("qualified_instance_name_indices", id, Child(trap, children, c_index));
         if (n.Name is string s_name)
             trap.Tuple("qualified_instance_name_names", id, s_name);
         if (n.Qualifier is { } c_qualifier)
-            trap.Tuple("qualified_instance_name_qualifiers", id, trap.Label(c_qualifier));
+            trap.Tuple("qualified_instance_name_qualifiers", id, Child(trap, children, c_qualifier));
     }
 
-    private static void EmitOwnQualifiedNumberedField(ITrapFile trap, Label id, object node)
+    private static void EmitOwnQualifiedNumberedField(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.QualifiedNumberedField)node;
         if (n.FieldNumber is { } c_field_number)
-            trap.Tuple("qualified_numbered_field_field_numbers", id, trap.Label(c_field_number));
+            trap.Tuple("qualified_numbered_field_field_numbers", id, Child(trap, children, c_field_number));
     }
 
-    private static void EmitOwnQualifiedStaticCall(ITrapFile trap, Label id, object node)
+    private static void EmitOwnQualifiedStaticCall(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.QualifiedStaticCall)node;
         if (n.ClassName is string s_class_name)
@@ -1295,7 +1306,7 @@ internal static class AstTrapEmitter
             var i = 0;
             foreach (var item in AstSequence.Elements(n.ClassTypeArgumentList))
             {
-                trap.Tuple("qualified_static_call_class_type_argument_lists", id, i, trap.Label(item));
+                trap.Tuple("qualified_static_call_class_type_argument_lists", id, i, Child(trap, children, item));
                 i++;
             }
         }
@@ -1304,10 +1315,10 @@ internal static class AstTrapEmitter
         if (n.MethodName is string s_method_name)
             trap.Tuple("qualified_static_call_method_names", id, s_method_name);
         if (n.Qualifier is { } c_qualifier)
-            trap.Tuple("qualified_static_call_qualifiers", id, trap.Label(c_qualifier));
+            trap.Tuple("qualified_static_call_qualifiers", id, Child(trap, children, c_qualifier));
     }
 
-    private static void EmitOwnQualifiedStaticField(ITrapFile trap, Label id, object node)
+    private static void EmitOwnQualifiedStaticField(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.QualifiedStaticField)node;
         if (n.ClassName is string s_class_name)
@@ -1318,7 +1329,7 @@ internal static class AstTrapEmitter
             trap.Tuple("qualified_static_field_names", id, s_name);
     }
 
-    private static void EmitOwnQualifiedStaticFieldExpression(ITrapFile trap, Label id, object node)
+    private static void EmitOwnQualifiedStaticFieldExpression(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.QualifiedStaticFieldExpression)node;
         if (n.ClassName is string s_class_name)
@@ -1329,35 +1340,35 @@ internal static class AstTrapEmitter
             trap.Tuple("qualified_static_field_expression_names", id, s_name);
     }
 
-    private static void EmitOwnQuery(ITrapFile trap, Label id, object node)
+    private static void EmitOwnQuery(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.Query)node;
         if (n.BufferName is string s_buffer_name)
             trap.Tuple("query_buffer_names", id, s_buffer_name);
         if (n.CrossCompany is { } c_cross_company)
-            trap.Tuple("query_cross_companies", id, trap.Label(c_cross_company));
+            trap.Tuple("query_cross_companies", id, Child(trap, children, c_cross_company));
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.GroupByElements))
             {
-                trap.Tuple("query_group_by_elements", id, i, trap.Label(item));
+                trap.Tuple("query_group_by_elements", id, i, Child(trap, children, item));
                 i++;
             }
         }
         if (n.IndexName is string s_index_name)
             trap.Tuple("query_index_names", id, s_index_name);
         if (n.Joins is { } c_joins)
-            trap.Tuple("query_joins", id, trap.Label(c_joins));
+            trap.Tuple("query_joins", id, Child(trap, children, c_joins));
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.OrderByElements))
             {
-                trap.Tuple("query_order_by_elements", id, i, trap.Label(item));
+                trap.Tuple("query_order_by_elements", id, i, Child(trap, children, item));
                 i++;
             }
         }
         if (n.Selection is { } c_selection)
-            trap.Tuple("query_selections", id, trap.Label(c_selection));
+            trap.Tuple("query_selections", id, Child(trap, children, c_selection));
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.SelectionHints))
@@ -1369,19 +1380,19 @@ internal static class AstTrapEmitter
         if (n.UsesHint is true)
             trap.Tuple("query_uses_hint", id);
         if (n.ValidTimeState is { } c_valid_time_state)
-            trap.Tuple("query_valid_time_states", id, trap.Label(c_valid_time_state));
+            trap.Tuple("query_valid_time_states", id, Child(trap, children, c_valid_time_state));
         if (n.Where is { } c_where)
-            trap.Tuple("query_wheres", id, trap.Label(c_where));
+            trap.Tuple("query_wheres", id, Child(trap, children, c_where));
     }
 
-    private static void EmitOwnQueryDataSource(ITrapFile trap, Label id, object node)
+    private static void EmitOwnQueryDataSource(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.QueryDataSource)node;
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.DataSources))
             {
-                trap.Tuple("query_data_source_data_sources", id, i, trap.Label(item));
+                trap.Tuple("query_data_source_data_sources", id, i, Child(trap, children, item));
                 i++;
             }
         }
@@ -1405,7 +1416,7 @@ internal static class AstTrapEmitter
             var i = 0;
             foreach (var item in AstSequence.Elements(n.GroupBy))
             {
-                trap.Tuple("query_data_source_group_bies", id, i, trap.Label(item));
+                trap.Tuple("query_data_source_group_bies", id, i, Child(trap, children, item));
                 i++;
             }
         }
@@ -1413,7 +1424,7 @@ internal static class AstTrapEmitter
             var i = 0;
             foreach (var item in AstSequence.Elements(n.Having))
             {
-                trap.Tuple("query_data_source_having_prop", id, i, trap.Label(item));
+                trap.Tuple("query_data_source_having_prop", id, i, Child(trap, children, item));
                 i++;
             }
         }
@@ -1425,19 +1436,19 @@ internal static class AstTrapEmitter
             var i = 0;
             foreach (var item in AstSequence.Elements(n.OrderBy))
             {
-                trap.Tuple("query_data_source_order_bies", id, i, trap.Label(item));
+                trap.Tuple("query_data_source_order_bies", id, i, Child(trap, children, item));
                 i++;
             }
         }
         if (n.ParentDataSource is { } c_parent_data_source)
-            trap.Tuple("query_data_source_parent_data_sources", id, trap.Label(c_parent_data_source));
+            trap.Tuple("query_data_source_parent_data_sources", id, Child(trap, children, c_parent_data_source));
         if (n.PathContribution is string s_path_contribution)
             trap.Tuple("query_data_source_path_contributions", id, s_path_contribution);
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.Ranges))
             {
-                trap.Tuple("query_data_source_ranges_prop", id, i, trap.Label(item));
+                trap.Tuple("query_data_source_ranges_prop", id, i, Child(trap, children, item));
                 i++;
             }
         }
@@ -1445,7 +1456,7 @@ internal static class AstTrapEmitter
             var i = 0;
             foreach (var item in AstSequence.Elements(n.Relations))
             {
-                trap.Tuple("query_data_source_relations_prop", id, i, trap.Label(item));
+                trap.Tuple("query_data_source_relations_prop", id, i, Child(trap, children, item));
                 i++;
             }
         }
@@ -1457,18 +1468,18 @@ internal static class AstTrapEmitter
             trap.Tuple("query_data_source_update", id);
     }
 
-    private static void EmitOwnQueryDataSourceHaving(ITrapFile trap, Label id, object node)
+    private static void EmitOwnQueryDataSourceHaving(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.QueryDataSourceHaving)node;
         if (n.DataSourceName is string s_data_source_name)
             trap.Tuple("query_data_source_having_data_source_names", id, s_data_source_name);
         if (n.Selection is { } c_selection)
-            trap.Tuple("query_data_source_having_selections", id, trap.Label(c_selection));
+            trap.Tuple("query_data_source_having_selections", id, Child(trap, children, c_selection));
         if (n.Value is string s_value)
             trap.Tuple("query_data_source_having_values", id, s_value);
     }
 
-    private static void EmitOwnQueryDataSourceRange(ITrapFile trap, Label id, object node)
+    private static void EmitOwnQueryDataSourceRange(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.QueryDataSourceRange)node;
         if (n.Field is string s_field)
@@ -1477,7 +1488,7 @@ internal static class AstTrapEmitter
             trap.Tuple("query_data_source_range_values", id, s_value);
     }
 
-    private static void EmitOwnQueryDataSourceRelation(ITrapFile trap, Label id, object node)
+    private static void EmitOwnQueryDataSourceRelation(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.QueryDataSourceRelation)node;
         if (n.Field is string s_field)
@@ -1488,18 +1499,18 @@ internal static class AstTrapEmitter
             trap.Tuple("query_data_source_relation_related_fields", id, s_related_field);
     }
 
-    private static void EmitOwnQueryModelElement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnQueryModelElement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.QueryModelElement)node;
         if (n.AllowCrossCompany is true)
             trap.Tuple("query_model_element_allow_cross_company", id);
         if (n.Behavior is { } c_behavior)
-            trap.Tuple("query_model_element_behaviors", id, trap.Label(c_behavior));
+            trap.Tuple("query_model_element_behaviors", id, Child(trap, children, c_behavior));
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.DataSourceList))
             {
-                trap.Tuple("query_model_element_data_source_lists", id, i, trap.Label(item));
+                trap.Tuple("query_model_element_data_source_lists", id, i, Child(trap, children, item));
                 i++;
             }
         }
@@ -1507,7 +1518,7 @@ internal static class AstTrapEmitter
             var i = 0;
             foreach (var item in AstSequence.Elements(n.DataSources))
             {
-                trap.Tuple("query_model_element_data_sources", id, i, trap.Label(item));
+                trap.Tuple("query_model_element_data_sources", id, i, Child(trap, children, item));
                 i++;
             }
         }
@@ -1517,30 +1528,30 @@ internal static class AstTrapEmitter
             trap.Tuple("query_model_element_user_update", id);
     }
 
-    private static void EmitOwnRelationalExpression(ITrapFile trap, Label id, object node)
+    private static void EmitOwnRelationalExpression(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.RelationalExpression)node;
         if (n.Operator is string s_operator)
             trap.Tuple("relational_expression_operators", id, s_operator);
     }
 
-    private static void EmitOwnReturnStatement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnReturnStatement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ReturnStatement)node;
         if (n.Expression is { } c_expression)
-            trap.Tuple("return_statement_expressions", id, trap.Label(c_expression));
+            trap.Tuple("return_statement_expressions", id, Child(trap, children, c_expression));
     }
 
-    private static void EmitOwnSearchStatement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnSearchStatement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.SearchStatement)node;
         if (n.Query is { } c_query)
-            trap.Tuple("search_statement_queries", id, trap.Label(c_query));
+            trap.Tuple("search_statement_queries", id, Child(trap, children, c_query));
         if (n.Statement is { } c_statement)
-            trap.Tuple("search_statement_statements", id, trap.Label(c_statement));
+            trap.Tuple("search_statement_statements", id, Child(trap, children, c_statement));
     }
 
-    private static void EmitOwnSelectionField(ITrapFile trap, Label id, object node)
+    private static void EmitOwnSelectionField(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.SelectionField)node;
         if (n.ExtensionName is string s_extension_name)
@@ -1549,7 +1560,7 @@ internal static class AstTrapEmitter
             trap.Tuple("selection_field_fields", id, s_field);
     }
 
-    private static void EmitOwnSimpleField(ITrapFile trap, Label id, object node)
+    private static void EmitOwnSimpleField(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.SimpleField)node;
         if (n.ExtensionName is string s_extension_name)
@@ -1560,37 +1571,37 @@ internal static class AstTrapEmitter
             trap.Tuple("simple_field_names", id, s_name);
     }
 
-    private static void EmitOwnSimpleInstanceName(ITrapFile trap, Label id, object node)
+    private static void EmitOwnSimpleInstanceName(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.SimpleInstanceName)node;
         if (n.Index is { } c_index)
-            trap.Tuple("simple_instance_name_indices", id, trap.Label(c_index));
+            trap.Tuple("simple_instance_name_indices", id, Child(trap, children, c_index));
         if (n.Name is string s_name)
             trap.Tuple("simple_instance_name_names", id, s_name);
     }
 
-    private static void EmitOwnSimpleOrderElement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnSimpleOrderElement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.SimpleOrderElement)node;
         if (n.ExtensionName is string s_extension_name)
             trap.Tuple("simple_order_element_extension_names", id, s_extension_name);
     }
 
-    private static void EmitOwnSimpleQualifier(ITrapFile trap, Label id, object node)
+    private static void EmitOwnSimpleQualifier(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.SimpleQualifier)node;
         if (n.Name is string s_name)
             trap.Tuple("simple_qualifier_names", id, s_name);
     }
 
-    private static void EmitOwnStatement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnStatement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.Statement)node;
         if (n.Comments is string s_comments)
             trap.Tuple("statement_comments", id, s_comments);
     }
 
-    private static void EmitOwnStaticField(ITrapFile trap, Label id, object node)
+    private static void EmitOwnStaticField(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.StaticField)node;
         if (n.ClassName is string s_class_name)
@@ -1599,7 +1610,7 @@ internal static class AstTrapEmitter
             trap.Tuple("static_field_names", id, s_name);
     }
 
-    private static void EmitOwnStaticMethodCall(ITrapFile trap, Label id, object node)
+    private static void EmitOwnStaticMethodCall(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.StaticMethodCall)node;
         if (n.ClassName is string s_class_name)
@@ -1608,7 +1619,7 @@ internal static class AstTrapEmitter
             var i = 0;
             foreach (var item in AstSequence.Elements(n.ClassTypeArgumentList))
             {
-                trap.Tuple("static_method_call_class_type_argument_lists", id, i, trap.Label(item));
+                trap.Tuple("static_method_call_class_type_argument_lists", id, i, Child(trap, children, item));
                 i++;
             }
         }
@@ -1616,20 +1627,20 @@ internal static class AstTrapEmitter
             trap.Tuple("static_method_call_method_names", id, s_method_name);
     }
 
-    private static void EmitOwnStaticQualifier(ITrapFile trap, Label id, object node)
+    private static void EmitOwnStaticQualifier(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.StaticQualifier)node;
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.ClassTypeArgumentList))
             {
-                trap.Tuple("static_qualifier_class_type_argument_lists", id, i, trap.Label(item));
+                trap.Tuple("static_qualifier_class_type_argument_lists", id, i, Child(trap, children, item));
                 i++;
             }
         }
     }
 
-    private static void EmitOwnStringLengthType(ITrapFile trap, Label id, object node)
+    private static void EmitOwnStringLengthType(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.StringLengthType)node;
         if (n.EdtName is string s_edt_name)
@@ -1640,7 +1651,7 @@ internal static class AstTrapEmitter
             trap.Tuple("string_length_type_lengths", id, System.Convert.ToInt64(v_length));
     }
 
-    private static void EmitOwnStringLiteralExpression(ITrapFile trap, Label id, object node)
+    private static void EmitOwnStringLiteralExpression(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.StringLiteralExpression)node;
         if (n.IsLabel is true)
@@ -1651,26 +1662,26 @@ internal static class AstTrapEmitter
             trap.Tuple("string_literal_expression_label_ids", id, s_label_id);
     }
 
-    private static void EmitOwnSwitchStatement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnSwitchStatement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.SwitchStatement)node;
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.Cases))
             {
-                trap.Tuple("switch_statement_cases", id, i, EmitSwitchStatementCaseEntry(trap, (ITuple)item));
+                trap.Tuple("switch_statement_cases", id, i, EmitSwitchStatementCaseEntry(trap, children, (ITuple)item));
                 i++;
             }
         }
         if (n.Selector is { } c_selector)
-            trap.Tuple("switch_statement_selectors", id, trap.Label(c_selector));
+            trap.Tuple("switch_statement_selectors", id, Child(trap, children, c_selector));
     }
 
-    private static void EmitOwnTable(ITrapFile trap, Label id, object node)
+    private static void EmitOwnTable(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.Table)node;
         if (n.Attributes is { } c_attributes)
-            trap.Tuple("table_attributes", id, trap.Label(c_attributes));
+            trap.Tuple("table_attributes", id, Child(trap, children, c_attributes));
         if (n.ElementTypeName is string s_element_type_name)
             trap.Tuple("table_element_type_names", id, s_element_type_name);
         if (n.Extends is string s_extends)
@@ -1679,7 +1690,7 @@ internal static class AstTrapEmitter
             var i = 0;
             foreach (var item in AstSequence.Elements(n.Fields))
             {
-                trap.Tuple("table_fields", id, i, trap.Label(item));
+                trap.Tuple("table_fields", id, i, Child(trap, children, item));
                 i++;
             }
         }
@@ -1705,72 +1716,72 @@ internal static class AstTrapEmitter
             trap.Tuple("table_support_inheritance", id);
     }
 
-    private static void EmitOwnTableFieldReference(ITrapFile trap, Label id, object node)
+    private static void EmitOwnTableFieldReference(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.TableFieldReference)node;
         if (n.Index is { } c_index)
-            trap.Tuple("table_field_reference_indices", id, trap.Label(c_index));
+            trap.Tuple("table_field_reference_indices", id, Child(trap, children, c_index));
     }
 
-    private static void EmitOwnTableLookupExpression(ITrapFile trap, Label id, object node)
+    private static void EmitOwnTableLookupExpression(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.TableLookupExpression)node;
         if (n.Field is { } c_field)
-            trap.Tuple("table_lookup_expression_fields", id, trap.Label(c_field));
+            trap.Tuple("table_lookup_expression_fields", id, Child(trap, children, c_field));
         if (n.Query is { } c_query)
-            trap.Tuple("table_lookup_expression_queries", id, trap.Label(c_query));
+            trap.Tuple("table_lookup_expression_queries", id, Child(trap, children, c_query));
     }
 
-    private static void EmitOwnThrowStatement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnThrowStatement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ThrowStatement)node;
         if (n.Exception is { } c_exception)
-            trap.Tuple("throw_statement_exceptions", id, trap.Label(c_exception));
+            trap.Tuple("throw_statement_exceptions", id, Child(trap, children, c_exception));
     }
 
-    private static void EmitOwnTryStatement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnTryStatement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.TryStatement)node;
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.Catches))
             {
-                trap.Tuple("try_statement_catches", id, i, EmitTryStatementCatchEntry(trap, (ITuple)item));
+                trap.Tuple("try_statement_catches", id, i, EmitTryStatementCatchEntry(trap, children, (ITuple)item));
                 i++;
             }
         }
         if (n.Finally is { } c_finally)
-            trap.Tuple("try_statement_finallies", id, trap.Label(c_finally));
+            trap.Tuple("try_statement_finallies", id, Child(trap, children, c_finally));
         if (n.Statement is { } c_statement)
-            trap.Tuple("try_statement_statements", id, trap.Label(c_statement));
+            trap.Tuple("try_statement_statements", id, Child(trap, children, c_statement));
     }
 
-    private static void EmitOwnUnaryExpression(ITrapFile trap, Label id, object node)
+    private static void EmitOwnUnaryExpression(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.UnaryExpression)node;
         if (n.Expression is { } c_expression)
-            trap.Tuple("unary_expression_expressions", id, trap.Label(c_expression));
+            trap.Tuple("unary_expression_expressions", id, Child(trap, children, c_expression));
     }
 
-    private static void EmitOwnUncheckedStatement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnUncheckedStatement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.UncheckedStatement)node;
         if (n.Expression is { } c_expression)
-            trap.Tuple("unchecked_statement_expressions", id, trap.Label(c_expression));
+            trap.Tuple("unchecked_statement_expressions", id, Child(trap, children, c_expression));
         if (n.Statement is { } c_statement)
-            trap.Tuple("unchecked_statement_statements", id, trap.Label(c_statement));
+            trap.Tuple("unchecked_statement_statements", id, Child(trap, children, c_statement));
     }
 
-    private static void EmitOwnUpdateStatement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnUpdateStatement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.UpdateStatement)node;
         if (n.CrossCompany is { } c_cross_company)
-            trap.Tuple("update_statement_cross_companies", id, trap.Label(c_cross_company));
+            trap.Tuple("update_statement_cross_companies", id, Child(trap, children, c_cross_company));
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.FieldAssignments))
             {
-                trap.Tuple("update_statement_field_assignments", id, i, trap.Label(item));
+                trap.Tuple("update_statement_field_assignments", id, i, Child(trap, children, item));
                 i++;
             }
         }
@@ -1783,36 +1794,36 @@ internal static class AstTrapEmitter
             }
         }
         if (n.Joins is { } c_joins)
-            trap.Tuple("update_statement_joins", id, trap.Label(c_joins));
+            trap.Tuple("update_statement_joins", id, Child(trap, children, c_joins));
         if (n.Table is string s_table)
             trap.Tuple("update_statement_tables", id, s_table);
         if (n.Where is { } c_where)
-            trap.Tuple("update_statement_wheres", id, trap.Label(c_where));
+            trap.Tuple("update_statement_wheres", id, Child(trap, children, c_where));
     }
 
-    private static void EmitOwnUsingStatement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnUsingStatement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.UsingStatement)node;
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(n.DisposableObjectInitializers))
             {
-                trap.Tuple("using_statement_disposable_object_initializers", id, i, trap.Label(item));
+                trap.Tuple("using_statement_disposable_object_initializers", id, i, Child(trap, children, item));
                 i++;
             }
         }
         if (n.Statement is { } c_statement)
-            trap.Tuple("using_statement_statements", id, trap.Label(c_statement));
+            trap.Tuple("using_statement_statements", id, Child(trap, children, c_statement));
     }
 
-    private static void EmitOwnValidTimeStateDate(ITrapFile trap, Label id, object node)
+    private static void EmitOwnValidTimeStateDate(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ValidTimeStateDate)node;
         if (n.DateVariable is string s_date_variable)
             trap.Tuple("valid_time_state_date_date_variables", id, s_date_variable);
     }
 
-    private static void EmitOwnValidTimeStateRange(ITrapFile trap, Label id, object node)
+    private static void EmitOwnValidTimeStateRange(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.ValidTimeStateRange)node;
         if (n.FromDateVariable is string s_from_date_variable)
@@ -1821,27 +1832,27 @@ internal static class AstTrapEmitter
             trap.Tuple("valid_time_state_range_to_date_variables", id, s_to_date_variable);
     }
 
-    private static void EmitOwnVariableDeclaration(ITrapFile trap, Label id, object node)
+    private static void EmitOwnVariableDeclaration(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.VariableDeclaration)node;
         if (n.ElementTypeName is string s_element_type_name)
             trap.Tuple("variable_declaration_element_type_names", id, s_element_type_name);
         if (n.InitialValue is { } c_initial_value)
-            trap.Tuple("variable_declaration_initial_values", id, trap.Label(c_initial_value));
+            trap.Tuple("variable_declaration_initial_values", id, Child(trap, children, c_initial_value));
         if (n.IsConst is true)
             trap.Tuple("variable_declaration_is_const", id);
     }
 
-    private static void EmitOwnWhileStatement(ITrapFile trap, Label id, object node)
+    private static void EmitOwnWhileStatement(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.WhileStatement)node;
         if (n.Condition is { } c_condition)
-            trap.Tuple("while_statement_conditions", id, trap.Label(c_condition));
+            trap.Tuple("while_statement_conditions", id, Child(trap, children, c_condition));
         if (n.Statement is { } c_statement)
-            trap.Tuple("while_statement_statements", id, trap.Label(c_statement));
+            trap.Tuple("while_statement_statements", id, Child(trap, children, c_statement));
     }
 
-    private static void EmitOwnXppType(ITrapFile trap, Label id, object node)
+    private static void EmitOwnXppType(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.XppType)node;
         if (n.ElementTypeName is string s_element_type_name)
@@ -1850,47 +1861,47 @@ internal static class AstTrapEmitter
             trap.Tuple("xpp_type_is_obsolete", id);
     }
 
-    private static void EmitOwnXppTypeCompilationUnit(ITrapFile trap, Label id, object node)
+    private static void EmitOwnXppTypeCompilationUnit(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         var n = (Microsoft.Dynamics.AX.Metadata.XppCompiler.XppTypeCompilationUnit)node;
         if (n.Type is { } c_type)
-            trap.Tuple("xpp_type_compilation_unit_types", id, trap.Label(c_type));
+            trap.Tuple("xpp_type_compilation_unit_types", id, Child(trap, children, c_type));
     }
 
-    private static Label EmitAttributeNamedParameterEntry(ITrapFile trap, ITuple tuple)
+    private static Label EmitAttributeNamedParameterEntry(ITrapFile trap, ICollection<object> children, ITuple tuple)
     {
         var id = trap.FreshLabel();
         trap.Tuple("attribute_named_parameter_entries", id);
         if (tuple[0] is string s_item1)
             trap.Tuple("attribute_named_parameter_entry_item1s", id, s_item1);
         if (tuple[1] is { } c_attribute_expression)
-            trap.Tuple("attribute_named_parameter_entry_attribute_expressions", id, trap.Label(c_attribute_expression));
+            trap.Tuple("attribute_named_parameter_entry_attribute_expressions", id, Child(trap, children, c_attribute_expression));
         return id;
     }
 
-    private static Label EmitCompilationUnitRegionEntry(ITrapFile trap, ITuple tuple)
+    private static Label EmitCompilationUnitRegionEntry(ITrapFile trap, ICollection<object> children, ITuple tuple)
     {
         var id = trap.FreshLabel();
         trap.Tuple("compilation_unit_region_entries", id);
         if (tuple[0] is { } c_comment)
-            trap.Tuple("compilation_unit_region_entry_comments", id, trap.Label(c_comment));
+            trap.Tuple("compilation_unit_region_entry_comments", id, Child(trap, children, c_comment));
         if (tuple[1] is { } c_comment2)
-            trap.Tuple("compilation_unit_region_entry_comment2s", id, trap.Label(c_comment2));
+            trap.Tuple("compilation_unit_region_entry_comment2s", id, Child(trap, children, c_comment2));
         return id;
     }
 
-    private static Label EmitEvaluationActualParameterEntry(ITrapFile trap, ITuple tuple)
+    private static Label EmitEvaluationActualParameterEntry(ITrapFile trap, ICollection<object> children, ITuple tuple)
     {
         var id = trap.FreshLabel();
         trap.Tuple("evaluation_actual_parameter_entries", id);
         if (tuple[0] is true)
             trap.Tuple("evaluation_actual_parameter_entry_item1", id);
         if (tuple[1] is { } c_expression)
-            trap.Tuple("evaluation_actual_parameter_entry_expressions", id, trap.Label(c_expression));
+            trap.Tuple("evaluation_actual_parameter_entry_expressions", id, Child(trap, children, c_expression));
         return id;
     }
 
-    private static Label EmitModelElementUsingEntry(ITrapFile trap, ITuple tuple)
+    private static Label EmitModelElementUsingEntry(ITrapFile trap, ICollection<object> children, ITuple tuple)
     {
         var id = trap.FreshLabel();
         trap.Tuple("model_element_using_entries", id);
@@ -1901,31 +1912,31 @@ internal static class AstTrapEmitter
         return id;
     }
 
-    private static Label EmitSwitchStatementCaseEntry(ITrapFile trap, ITuple tuple)
+    private static Label EmitSwitchStatementCaseEntry(ITrapFile trap, ICollection<object> children, ITuple tuple)
     {
         var id = trap.FreshLabel();
         trap.Tuple("switch_statement_case_entries", id);
         if (tuple[0] is { } c_case)
-            trap.Tuple("switch_statement_case_entry_cases", id, trap.Label(c_case));
+            trap.Tuple("switch_statement_case_entry_cases", id, Child(trap, children, c_case));
         {
             var i = 0;
             foreach (var item in AstSequence.Elements(tuple[1]))
             {
-                trap.Tuple("switch_statement_case_entry_statements", id, i, trap.Label(item));
+                trap.Tuple("switch_statement_case_entry_statements", id, i, Child(trap, children, item));
                 i++;
             }
         }
         return id;
     }
 
-    private static Label EmitTryStatementCatchEntry(ITrapFile trap, ITuple tuple)
+    private static Label EmitTryStatementCatchEntry(ITrapFile trap, ICollection<object> children, ITuple tuple)
     {
         var id = trap.FreshLabel();
         trap.Tuple("try_statement_catch_entries", id);
         if (tuple[0] is { } c_catch)
-            trap.Tuple("try_statement_catch_entry_catches", id, trap.Label(c_catch));
+            trap.Tuple("try_statement_catch_entry_catches", id, Child(trap, children, c_catch));
         if (tuple[1] is { } c_statement)
-            trap.Tuple("try_statement_catch_entry_statements", id, trap.Label(c_statement));
+            trap.Tuple("try_statement_catch_entry_statements", id, Child(trap, children, c_statement));
         return id;
     }
 
@@ -1933,7 +1944,7 @@ internal static class AstTrapEmitter
     /// Writes every tuple describing <paramref name="node"/>, returning false when the
     /// node's type is not part of the generated schema.
     /// </summary>
-    public static bool Emit(ITrapFile trap, Label id, object node)
+    public static bool Emit(ITrapFile trap, Label id, object node, ICollection<object> children)
     {
         // Dispatch on the exact runtime type: C# type patterns also match subclasses,
         // which would bind a node to an ancestor's table.
@@ -1941,985 +1952,985 @@ internal static class AstTrapEmitter
         {
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.AddExpression":
                 trap.Tuple("add_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnBinaryExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnBinaryExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.AllFieldsSelection":
                 trap.Tuple("all_fields_selections", id);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.AndExpression":
                 trap.Tuple("and_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnBinaryExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnBinaryExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.AnyType":
                 trap.Tuple("any_types", id);
-                EmitOwnXppType(trap, id, node);
+                EmitOwnXppType(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ArraySpecification":
                 trap.Tuple("array_specifications", id);
-                EmitOwnArraySpecification(trap, id, node);
+                EmitOwnArraySpecification(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.AsClrExpression":
                 trap.Tuple("as_clr_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnIsAsExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnIsAsExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.AsExpression":
                 trap.Tuple("as_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnIsAsExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnIsAsExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.AssignDecrementStatement":
                 trap.Tuple("assign_decrement_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnAssignmentSingleField(trap, id, node);
-                EmitOwnAssignmentBinary(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnAssignmentSingleField(trap, id, node, children);
+                EmitOwnAssignmentBinary(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.AssignDivideStatement":
                 trap.Tuple("assign_divide_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnAssignmentSingleField(trap, id, node);
-                EmitOwnAssignmentBinary(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnAssignmentSingleField(trap, id, node, children);
+                EmitOwnAssignmentBinary(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.AssignEqualStatement":
                 trap.Tuple("assign_equal_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnAssignmentSingleField(trap, id, node);
-                EmitOwnAssignmentBinary(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnAssignmentSingleField(trap, id, node, children);
+                EmitOwnAssignmentBinary(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.AssignIncrementStatement":
                 trap.Tuple("assign_increment_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnAssignmentSingleField(trap, id, node);
-                EmitOwnAssignmentBinary(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnAssignmentSingleField(trap, id, node, children);
+                EmitOwnAssignmentBinary(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.AssignMultipleFieldStatement":
                 trap.Tuple("assign_multiple_field_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnAssignMultipleFieldStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnAssignMultipleFieldStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.AssignMultiplyStatement":
                 trap.Tuple("assign_multiply_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnAssignmentSingleField(trap, id, node);
-                EmitOwnAssignmentBinary(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnAssignmentSingleField(trap, id, node, children);
+                EmitOwnAssignmentBinary(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.AssignPostDecrementStatement":
                 trap.Tuple("assign_post_decrement_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnAssignmentSingleField(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnAssignmentSingleField(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.AssignPostIncrementStatement":
                 trap.Tuple("assign_post_increment_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnAssignmentSingleField(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnAssignmentSingleField(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.AssignPreDecrementStatement":
                 trap.Tuple("assign_pre_decrement_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnAssignmentSingleField(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnAssignmentSingleField(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.AssignPreIncrementStatement":
                 trap.Tuple("assign_pre_increment_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnAssignmentSingleField(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnAssignmentSingleField(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.AssignmentEventHandlerClr":
                 trap.Tuple("assignment_event_handler_clrs", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnAssignmentSingleField(trap, id, node);
-                EmitOwnAssignmentEventHandlerBase(trap, id, node);
-                EmitOwnAssignmentEventHandlerStatic(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnAssignmentSingleField(trap, id, node, children);
+                EmitOwnAssignmentEventHandlerBase(trap, id, node, children);
+                EmitOwnAssignmentEventHandlerStatic(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.AssignmentEventHandlerInstance":
                 trap.Tuple("assignment_event_handler_instances", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnAssignmentSingleField(trap, id, node);
-                EmitOwnAssignmentEventHandlerBase(trap, id, node);
-                EmitOwnAssignmentEventHandlerInstance(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnAssignmentSingleField(trap, id, node, children);
+                EmitOwnAssignmentEventHandlerBase(trap, id, node, children);
+                EmitOwnAssignmentEventHandlerInstance(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.AssignmentEventHandlerStatic":
                 trap.Tuple("assignment_event_handler_static_internals", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnAssignmentSingleField(trap, id, node);
-                EmitOwnAssignmentEventHandlerBase(trap, id, node);
-                EmitOwnAssignmentEventHandlerStatic(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnAssignmentSingleField(trap, id, node, children);
+                EmitOwnAssignmentEventHandlerBase(trap, id, node, children);
+                EmitOwnAssignmentEventHandlerStatic(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.Attribute":
                 trap.Tuple("attributes", id);
-                EmitOwnAttribute(trap, id, node);
+                EmitOwnAttribute(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.AttributeExpression":
                 trap.Tuple("attribute_expressions", id);
-                EmitOwnAttributeExpression(trap, id, node);
+                EmitOwnAttributeExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.AttributeList":
                 trap.Tuple("attribute_lists", id);
-                EmitOwnAttributeList(trap, id, node);
+                EmitOwnAttributeList(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.AvgAggregateSelection":
                 trap.Tuple("avg_aggregate_selections", id);
-                EmitOwnSelectionField(trap, id, node);
+                EmitOwnSelectionField(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.BooleanAttributeLiteral":
                 trap.Tuple("boolean_attribute_literals", id);
-                EmitOwnDefaultTypeAttributeLiteral(trap, id, node);
+                EmitOwnDefaultTypeAttributeLiteral(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.BooleanLiteralExpression":
                 trap.Tuple("boolean_literal_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnDefaultTypeLiteralExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnDefaultTypeLiteralExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.BooleanType":
                 trap.Tuple("boolean_types", id);
-                EmitOwnXppType(trap, id, node);
+                EmitOwnXppType(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.BreakStatement":
                 trap.Tuple("break_statements", id);
-                EmitOwnStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.BreakpointStatement":
                 trap.Tuple("breakpoint_statements", id);
-                EmitOwnStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.CaseDefault":
                 trap.Tuple("case_defaults", id);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.CaseValues":
                 trap.Tuple("case_values", id);
-                EmitOwnCaseValues(trap, id, node);
+                EmitOwnCaseValues(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.CatchAllValues":
                 trap.Tuple("catch_all_values", id);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.CatchExpression":
                 trap.Tuple("catch_expressions", id);
-                EmitOwnCatchExpression(trap, id, node);
+                EmitOwnCatchExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.CatchUpdateConflict":
                 trap.Tuple("catch_update_conflicts", id);
-                EmitOwnCatchUpdateConflict(trap, id, node);
+                EmitOwnCatchUpdateConflict(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ChangeCompanyStatement":
                 trap.Tuple("change_company_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnChangeStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnChangeStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.Class":
                 trap.Tuple("classes", id);
-                EmitOwnCompilationUnit(trap, id, node);
-                EmitOwnModelElement(trap, id, node);
-                EmitOwnClassOrInterface(trap, id, node);
-                EmitOwnClass(trap, id, node);
+                EmitOwnCompilationUnit(trap, id, node, children);
+                EmitOwnModelElement(trap, id, node, children);
+                EmitOwnClassOrInterface(trap, id, node, children);
+                EmitOwnClass(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ClassAccessModifier":
                 trap.Tuple("class_access_modifiers", id);
-                EmitOwnClassAccessModifier(trap, id, node);
+                EmitOwnClassAccessModifier(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ClrEnumerationLiteralExpression":
                 trap.Tuple("clr_enumeration_literal_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnClrEnumerationLiteralExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnClrEnumerationLiteralExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ClrType":
                 trap.Tuple("clr_types", id);
-                EmitOwnXppType(trap, id, node);
-                EmitOwnGenericXppType(trap, id, node);
-                EmitOwnClrType(trap, id, node);
+                EmitOwnXppType(trap, id, node, children);
+                EmitOwnGenericXppType(trap, id, node, children);
+                EmitOwnClrType(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.CompoundStatement":
                 trap.Tuple("compound_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnCompoundStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnCompoundStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ConditionalExpression":
                 trap.Tuple("conditional_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnConditionalExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnConditionalExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ContainerAttributeLiteral":
                 trap.Tuple("container_attribute_literals", id);
-                EmitOwnContainerAttributeLiteral(trap, id, node);
+                EmitOwnContainerAttributeLiteral(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ContainerLiteralExpression":
                 trap.Tuple("container_literal_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnContainerLiteralExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnContainerLiteralExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ContainerType":
                 trap.Tuple("container_types", id);
-                EmitOwnXppType(trap, id, node);
+                EmitOwnXppType(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ContinueStatement":
                 trap.Tuple("continue_statements", id);
-                EmitOwnStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.CountAggregateSelection":
                 trap.Tuple("count_aggregate_selections", id);
-                EmitOwnSelectionField(trap, id, node);
+                EmitOwnSelectionField(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.CrossCompanyAll":
                 trap.Tuple("cross_company_alls", id);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.CrossCompanyContainer":
                 trap.Tuple("cross_company_containers", id);
-                EmitOwnCrossCompanyContainer(trap, id, node);
+                EmitOwnCrossCompanyContainer(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.DateAttributeLiteral":
                 trap.Tuple("date_attribute_literals", id);
-                EmitOwnDefaultTypeAttributeLiteral(trap, id, node);
+                EmitOwnDefaultTypeAttributeLiteral(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.DateLiteralExpression":
                 trap.Tuple("date_literal_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnDefaultTypeLiteralExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnDefaultTypeLiteralExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.DateTimeAttributeLiteral":
                 trap.Tuple("date_time_attribute_literals", id);
-                EmitOwnDefaultTypeAttributeLiteral(trap, id, node);
+                EmitOwnDefaultTypeAttributeLiteral(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.DateTimeLiteralExpression":
                 trap.Tuple("date_time_literal_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnDefaultTypeLiteralExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnDefaultTypeLiteralExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.DateTimeType":
                 trap.Tuple("date_time_types", id);
-                EmitOwnXppType(trap, id, node);
+                EmitOwnXppType(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.DateType":
                 trap.Tuple("date_types", id);
-                EmitOwnXppType(trap, id, node);
+                EmitOwnXppType(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.DblAttributeLiteral":
                 trap.Tuple("dbl_attribute_literals", id);
-                EmitOwnDefaultTypeAttributeLiteral(trap, id, node);
+                EmitOwnDefaultTypeAttributeLiteral(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.DblType":
                 trap.Tuple("dbl_types", id);
-                EmitOwnXppType(trap, id, node);
+                EmitOwnXppType(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.Delegate":
                 trap.Tuple("delegates", id);
-                EmitOwnCompilationUnit(trap, id, node);
-                EmitOwnMethodOrDelegate(trap, id, node);
-                EmitOwnDelegate(trap, id, node);
+                EmitOwnCompilationUnit(trap, id, node, children);
+                EmitOwnMethodOrDelegate(trap, id, node, children);
+                EmitOwnDelegate(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.DeleteStatement":
                 trap.Tuple("delete_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnDeleteStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnDeleteStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.DivideExpression":
                 trap.Tuple("divide_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnBinaryExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnBinaryExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.DoWhileStatement":
                 trap.Tuple("do_while_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnDoWhileStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnDoWhileStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.EmptyExpression":
                 trap.Tuple("empty_expressions", id);
-                EmitOwnExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.EmptyStatement":
                 trap.Tuple("empty_statements", id);
-                EmitOwnStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.EnumAttributeLiteral":
                 trap.Tuple("enum_attribute_literals", id);
-                EmitOwnEnumAttributeLiteral(trap, id, node);
+                EmitOwnEnumAttributeLiteral(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.EnumerationLiteralExpression":
                 trap.Tuple("enumeration_literal_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnEnumerationLiteralExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnEnumerationLiteralExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.EnumerationType":
                 trap.Tuple("enumeration_types", id);
-                EmitOwnXppType(trap, id, node);
-                EmitOwnEnumerationType(trap, id, node);
+                EmitOwnXppType(trap, id, node, children);
+                EmitOwnEnumerationType(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.EqualExpression":
                 trap.Tuple("equal_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnBinaryExpression(trap, id, node);
-                EmitOwnRelationalExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnBinaryExpression(trap, id, node, children);
+                EmitOwnRelationalExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ExplicitSelection":
                 trap.Tuple("explicit_selections", id);
-                EmitOwnExplicitSelection(trap, id, node);
+                EmitOwnExplicitSelection(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ExpressionCompilationUnit":
                 trap.Tuple("expression_compilation_units", id);
-                EmitOwnCompilationUnit(trap, id, node);
-                EmitOwnExpressionCompilationUnit(trap, id, node);
+                EmitOwnCompilationUnit(trap, id, node, children);
+                EmitOwnExpressionCompilationUnit(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ExpressionQualifier":
                 trap.Tuple("expression_qualifiers", id);
-                EmitOwnExpressionQualifier(trap, id, node);
+                EmitOwnExpressionQualifier(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ExpressionStatement":
                 trap.Tuple("expression_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnExpressionStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnExpressionStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.FieldAssignment":
                 trap.Tuple("field_assignments", id);
-                EmitOwnFieldAssignment(trap, id, node);
+                EmitOwnFieldAssignment(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.FieldDeclaration":
                 trap.Tuple("field_declaration_internals", id);
-                EmitOwnCompilationUnit(trap, id, node);
-                EmitOwnDeclaration(trap, id, node);
-                EmitOwnFieldDeclaration(trap, id, node);
+                EmitOwnCompilationUnit(trap, id, node, children);
+                EmitOwnDeclaration(trap, id, node, children);
+                EmitOwnFieldDeclaration(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.FieldExpression":
                 trap.Tuple("field_expression_internals", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnFieldExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnFieldExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.FieldSelection":
                 trap.Tuple("field_selections", id);
-                EmitOwnSelectionField(trap, id, node);
-                EmitOwnFieldSelection(trap, id, node);
+                EmitOwnSelectionField(trap, id, node, children);
+                EmitOwnFieldSelection(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.FindStatement":
                 trap.Tuple("find_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnFindStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnFindStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.FlushStatement":
                 trap.Tuple("flush_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnFlushStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnFlushStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ForDeclarationAssign":
                 trap.Tuple("for_declaration_assigns", id);
-                EmitOwnForAssign(trap, id, node);
-                EmitOwnForDeclarationAssign(trap, id, node);
+                EmitOwnForAssign(trap, id, node, children);
+                EmitOwnForDeclarationAssign(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ForFieldAssign":
                 trap.Tuple("for_field_assigns", id);
-                EmitOwnForAssign(trap, id, node);
-                EmitOwnForExpressionAssign(trap, id, node);
+                EmitOwnForAssign(trap, id, node, children);
+                EmitOwnForExpressionAssign(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ForFieldDecrementAssign":
                 trap.Tuple("for_field_decrement_assigns", id);
-                EmitOwnForAssign(trap, id, node);
-                EmitOwnForExpressionAssign(trap, id, node);
+                EmitOwnForAssign(trap, id, node, children);
+                EmitOwnForExpressionAssign(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ForFieldIncrementAssign":
                 trap.Tuple("for_field_increment_assigns", id);
-                EmitOwnForAssign(trap, id, node);
-                EmitOwnForExpressionAssign(trap, id, node);
+                EmitOwnForAssign(trap, id, node, children);
+                EmitOwnForExpressionAssign(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ForFieldPostDecrement":
                 trap.Tuple("for_field_post_decrements", id);
-                EmitOwnForAssign(trap, id, node);
+                EmitOwnForAssign(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ForFieldPostIncrement":
                 trap.Tuple("for_field_post_increments", id);
-                EmitOwnForAssign(trap, id, node);
+                EmitOwnForAssign(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ForFieldPreDecrement":
                 trap.Tuple("for_field_pre_decrements", id);
-                EmitOwnForAssign(trap, id, node);
+                EmitOwnForAssign(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ForFieldPreIncrement":
                 trap.Tuple("for_field_pre_increments", id);
-                EmitOwnForAssign(trap, id, node);
+                EmitOwnForAssign(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ForStatement":
                 trap.Tuple("for_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnForStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnForStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.FormControl":
                 trap.Tuple("form_controls", id);
-                EmitOwnCompilationUnit(trap, id, node);
-                EmitOwnModelElement(trap, id, node);
-                EmitOwnFormNestedElement(trap, id, node);
-                EmitOwnFormControl(trap, id, node);
+                EmitOwnCompilationUnit(trap, id, node, children);
+                EmitOwnModelElement(trap, id, node, children);
+                EmitOwnFormNestedElement(trap, id, node, children);
+                EmitOwnFormControl(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.FormDataField":
                 trap.Tuple("form_data_fields", id);
-                EmitOwnCompilationUnit(trap, id, node);
-                EmitOwnModelElement(trap, id, node);
-                EmitOwnFormNestedElement(trap, id, node);
-                EmitOwnFormDataField(trap, id, node);
+                EmitOwnCompilationUnit(trap, id, node, children);
+                EmitOwnModelElement(trap, id, node, children);
+                EmitOwnFormNestedElement(trap, id, node, children);
+                EmitOwnFormDataField(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.FormDataSource":
                 trap.Tuple("form_data_sources", id);
-                EmitOwnCompilationUnit(trap, id, node);
-                EmitOwnModelElement(trap, id, node);
-                EmitOwnFormNestedElement(trap, id, node);
-                EmitOwnFormDataSource(trap, id, node);
+                EmitOwnCompilationUnit(trap, id, node, children);
+                EmitOwnModelElement(trap, id, node, children);
+                EmitOwnFormNestedElement(trap, id, node, children);
+                EmitOwnFormDataSource(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.FormElementType":
                 trap.Tuple("form_element_types", id);
-                EmitOwnXppType(trap, id, node);
-                EmitOwnGenericXppType(trap, id, node);
-                EmitOwnNamedType(trap, id, node);
-                EmitOwnFormElementType(trap, id, node);
+                EmitOwnXppType(trap, id, node, children);
+                EmitOwnGenericXppType(trap, id, node, children);
+                EmitOwnNamedType(trap, id, node, children);
+                EmitOwnFormElementType(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.FormModelElement":
                 trap.Tuple("form_model_elements", id);
-                EmitOwnCompilationUnit(trap, id, node);
-                EmitOwnModelElement(trap, id, node);
-                EmitOwnFormModelElement(trap, id, node);
+                EmitOwnCompilationUnit(trap, id, node, children);
+                EmitOwnModelElement(trap, id, node, children);
+                EmitOwnFormModelElement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.FunctionCall":
                 trap.Tuple("function_calls", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnEvaluation(trap, id, node);
-                EmitOwnGenericEvaluation(trap, id, node);
-                EmitOwnFunctionCall(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnEvaluation(trap, id, node, children);
+                EmitOwnGenericEvaluation(trap, id, node, children);
+                EmitOwnFunctionCall(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.FunctionDeclaration":
                 trap.Tuple("function_declarations", id);
-                EmitOwnCompilationUnit(trap, id, node);
-                EmitOwnDeclaration(trap, id, node);
-                EmitOwnFunctionDeclaration(trap, id, node);
+                EmitOwnCompilationUnit(trap, id, node, children);
+                EmitOwnDeclaration(trap, id, node, children);
+                EmitOwnFunctionDeclaration(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.GlobalOrderElement":
                 trap.Tuple("global_order_elements", id);
-                EmitOwnOrderElement(trap, id, node);
-                EmitOwnGlobalOrderElement(trap, id, node);
+                EmitOwnOrderElement(trap, id, node, children);
+                EmitOwnGlobalOrderElement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.GreaterThanExpression":
                 trap.Tuple("greater_than_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnBinaryExpression(trap, id, node);
-                EmitOwnRelationalExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnBinaryExpression(trap, id, node, children);
+                EmitOwnRelationalExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.GreaterThanOrEqualExpression":
                 trap.Tuple("greater_than_or_equal_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnBinaryExpression(trap, id, node);
-                EmitOwnRelationalExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnBinaryExpression(trap, id, node, children);
+                EmitOwnRelationalExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.GuidAttributeLiteral":
                 trap.Tuple("guid_attribute_literals", id);
-                EmitOwnDefaultTypeAttributeLiteral(trap, id, node);
+                EmitOwnDefaultTypeAttributeLiteral(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.GuidType":
                 trap.Tuple("guid_types", id);
-                EmitOwnXppType(trap, id, node);
+                EmitOwnXppType(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.IfStatement":
                 trap.Tuple("if_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnIfStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnIfStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.IfThenElseStatement":
                 trap.Tuple("if_then_else_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnIfThenElseStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnIfThenElseStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ImplicitSelection":
                 trap.Tuple("implicit_selections", id);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.InExpression":
                 trap.Tuple("in_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnBinaryExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnBinaryExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.InsertFieldSpecification":
                 trap.Tuple("insert_field_specifications", id);
-                EmitOwnInsertFieldSpecification(trap, id, node);
+                EmitOwnInsertFieldSpecification(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.InsertStatement":
                 trap.Tuple("insert_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnInsertStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnInsertStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.Int64AttributeLiteral":
                 trap.Tuple("int64_attribute_literals", id);
-                EmitOwnDefaultTypeAttributeLiteral(trap, id, node);
+                EmitOwnDefaultTypeAttributeLiteral(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.Int64LiteralExpression":
                 trap.Tuple("int64_literal_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnDefaultTypeLiteralExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnDefaultTypeLiteralExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.Int64Type":
                 trap.Tuple("int64_types", id);
-                EmitOwnXppType(trap, id, node);
+                EmitOwnXppType(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.IntAttributeLiteral":
                 trap.Tuple("int_attribute_literals", id);
-                EmitOwnDefaultTypeAttributeLiteral(trap, id, node);
+                EmitOwnDefaultTypeAttributeLiteral(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.IntLiteralExpression":
                 trap.Tuple("int_literal_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnDefaultTypeLiteralExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnDefaultTypeLiteralExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.IntType":
                 trap.Tuple("int_types", id);
-                EmitOwnXppType(trap, id, node);
+                EmitOwnXppType(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.IntegerDivideExpression":
                 trap.Tuple("integer_divide_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnBinaryExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnBinaryExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.Interface":
                 trap.Tuple("interfaces", id);
-                EmitOwnCompilationUnit(trap, id, node);
-                EmitOwnModelElement(trap, id, node);
-                EmitOwnClassOrInterface(trap, id, node);
+                EmitOwnCompilationUnit(trap, id, node, children);
+                EmitOwnModelElement(trap, id, node, children);
+                EmitOwnClassOrInterface(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.Intrinsic":
                 trap.Tuple("intrinsics", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnIntrinsic(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnIntrinsic(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.IntrinsicAttributeLiteral":
                 trap.Tuple("intrinsic_attribute_literals", id);
-                EmitOwnIntrinsicAttributeLiteral(trap, id, node);
+                EmitOwnIntrinsicAttributeLiteral(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.IsClrExpression":
                 trap.Tuple("is_clr_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnIsAsExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnIsAsExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.IsExpression":
                 trap.Tuple("is_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnIsAsExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnIsAsExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.JoinSpecification":
                 trap.Tuple("join_specifications", id);
-                EmitOwnJoinSpecification(trap, id, node);
+                EmitOwnJoinSpecification(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.LessThanExpression":
                 trap.Tuple("less_than_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnBinaryExpression(trap, id, node);
-                EmitOwnRelationalExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnBinaryExpression(trap, id, node, children);
+                EmitOwnRelationalExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.LessThanOrEqualExpression":
                 trap.Tuple("less_than_or_equal_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnBinaryExpression(trap, id, node);
-                EmitOwnRelationalExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnBinaryExpression(trap, id, node, children);
+                EmitOwnRelationalExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.LikeExpression":
                 trap.Tuple("like_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnBinaryExpression(trap, id, node);
-                EmitOwnRelationalExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnBinaryExpression(trap, id, node, children);
+                EmitOwnRelationalExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.LocalDeclarationsStatement":
                 trap.Tuple("local_declarations_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnLocalDeclarationsStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnLocalDeclarationsStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.MaxAggregateSelection":
                 trap.Tuple("max_aggregate_selections", id);
-                EmitOwnSelectionField(trap, id, node);
+                EmitOwnSelectionField(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.Method":
                 trap.Tuple("methods", id);
-                EmitOwnCompilationUnit(trap, id, node);
-                EmitOwnMethodOrDelegate(trap, id, node);
-                EmitOwnMethod(trap, id, node);
+                EmitOwnCompilationUnit(trap, id, node, children);
+                EmitOwnMethodOrDelegate(trap, id, node, children);
+                EmitOwnMethod(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.MinAggregateSelection":
                 trap.Tuple("min_aggregate_selections", id);
-                EmitOwnSelectionField(trap, id, node);
+                EmitOwnSelectionField(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ModExpression":
                 trap.Tuple("mod_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnBinaryExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnBinaryExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.Modifier":
                 trap.Tuple("modifiers", id);
-                EmitOwnModifier(trap, id, node);
+                EmitOwnModifier(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.MoveCursorStatement":
                 trap.Tuple("move_cursor_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnMoveCursorStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnMoveCursorStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.MultiplyExpression":
                 trap.Tuple("multiply_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnBinaryExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnBinaryExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.NamedFieldReference":
                 trap.Tuple("named_field_references", id);
-                EmitOwnTableFieldReference(trap, id, node);
-                EmitOwnNamedFieldReference(trap, id, node);
+                EmitOwnTableFieldReference(trap, id, node, children);
+                EmitOwnNamedFieldReference(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.NamedType":
                 trap.Tuple("named_type_internals", id);
-                EmitOwnXppType(trap, id, node);
-                EmitOwnGenericXppType(trap, id, node);
-                EmitOwnNamedType(trap, id, node);
+                EmitOwnXppType(trap, id, node, children);
+                EmitOwnGenericXppType(trap, id, node, children);
+                EmitOwnNamedType(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.NewCall":
                 trap.Tuple("new_calls", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnEvaluation(trap, id, node);
-                EmitOwnNewCall(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnEvaluation(trap, id, node, children);
+                EmitOwnNewCall(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.NewClrArrayExpression":
                 trap.Tuple("new_clr_array_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnNewClrArrayExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnNewClrArrayExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.NewClrCall":
                 trap.Tuple("new_clr_calls", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnEvaluation(trap, id, node);
-                EmitOwnGenericEvaluation(trap, id, node);
-                EmitOwnNewClrCall(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnEvaluation(trap, id, node, children);
+                EmitOwnGenericEvaluation(trap, id, node, children);
+                EmitOwnNewClrCall(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.NextExpression":
                 trap.Tuple("next_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnEvaluation(trap, id, node);
-                EmitOwnNextExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnEvaluation(trap, id, node, children);
+                EmitOwnNextExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.NotEqualExpression":
                 trap.Tuple("not_equal_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnBinaryExpression(trap, id, node);
-                EmitOwnRelationalExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnBinaryExpression(trap, id, node, children);
+                EmitOwnRelationalExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.NotExpression":
                 trap.Tuple("not_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnUnaryExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnUnaryExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.NullLiteralExpression":
                 trap.Tuple("null_literal_expressions", id);
-                EmitOwnExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.NumberedFieldReference":
                 trap.Tuple("numbered_field_references", id);
-                EmitOwnTableFieldReference(trap, id, node);
-                EmitOwnNumberedFieldReference(trap, id, node);
+                EmitOwnTableFieldReference(trap, id, node, children);
+                EmitOwnNumberedFieldReference(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.OrExpression":
                 trap.Tuple("or_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnBinaryExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnBinaryExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ParameterDeclaration":
                 trap.Tuple("parameter_declarations", id);
-                EmitOwnCompilationUnit(trap, id, node);
-                EmitOwnDeclaration(trap, id, node);
-                EmitOwnVariableDeclaration(trap, id, node);
-                EmitOwnParameterDeclaration(trap, id, node);
+                EmitOwnCompilationUnit(trap, id, node, children);
+                EmitOwnDeclaration(trap, id, node, children);
+                EmitOwnVariableDeclaration(trap, id, node, children);
+                EmitOwnParameterDeclaration(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.PhysicalAndExpression":
                 trap.Tuple("physical_and_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnBinaryExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnBinaryExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.PhysicalNotExpression":
                 trap.Tuple("physical_not_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnUnaryExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnUnaryExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.PhysicalOrExpression":
                 trap.Tuple("physical_or_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnBinaryExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnBinaryExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.PhysicalXorExpression":
                 trap.Tuple("physical_xor_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnBinaryExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnBinaryExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.Placeholder":
                 trap.Tuple("placeholders", id);
-                EmitOwnExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.PrintStatement":
                 trap.Tuple("print_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnPrintStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnPrintStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ProvidedType":
                 trap.Tuple("provided_types", id);
-                EmitOwnXppType(trap, id, node);
-                EmitOwnProvidedType(trap, id, node);
+                EmitOwnXppType(trap, id, node, children);
+                EmitOwnProvidedType(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ProvidedTypeStaticCall":
                 trap.Tuple("provided_type_static_calls", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnEvaluation(trap, id, node);
-                EmitOwnProvidedTypeStaticCall(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnEvaluation(trap, id, node, children);
+                EmitOwnProvidedTypeStaticCall(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.QualifiedCall":
                 trap.Tuple("qualified_calls", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnEvaluation(trap, id, node);
-                EmitOwnGenericEvaluation(trap, id, node);
-                EmitOwnQualifiedCall(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnEvaluation(trap, id, node, children);
+                EmitOwnGenericEvaluation(trap, id, node, children);
+                EmitOwnQualifiedCall(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.QualifiedField":
                 trap.Tuple("qualified_fields", id);
-                EmitOwnFieldSpecification(trap, id, node);
-                EmitOwnQualifiedField(trap, id, node);
+                EmitOwnFieldSpecification(trap, id, node, children);
+                EmitOwnQualifiedField(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.QualifiedInstanceName":
                 trap.Tuple("qualified_instance_names", id);
-                EmitOwnQualifiedInstanceName(trap, id, node);
+                EmitOwnQualifiedInstanceName(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.QualifiedNumberedField":
                 trap.Tuple("qualified_numbered_fields", id);
-                EmitOwnFieldSpecification(trap, id, node);
-                EmitOwnQualifiedNumberedField(trap, id, node);
+                EmitOwnFieldSpecification(trap, id, node, children);
+                EmitOwnQualifiedNumberedField(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.QualifiedStaticCall":
                 trap.Tuple("qualified_static_calls", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnEvaluation(trap, id, node);
-                EmitOwnGenericEvaluation(trap, id, node);
-                EmitOwnQualifiedStaticCall(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnEvaluation(trap, id, node, children);
+                EmitOwnGenericEvaluation(trap, id, node, children);
+                EmitOwnQualifiedStaticCall(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.QualifiedStaticField":
                 trap.Tuple("qualified_static_fields", id);
-                EmitOwnFieldSpecification(trap, id, node);
-                EmitOwnQualifiedStaticField(trap, id, node);
+                EmitOwnFieldSpecification(trap, id, node, children);
+                EmitOwnQualifiedStaticField(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.QualifiedStaticFieldExpression":
                 trap.Tuple("qualified_static_field_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnFieldExpression(trap, id, node);
-                EmitOwnQualifiedStaticFieldExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnFieldExpression(trap, id, node, children);
+                EmitOwnQualifiedStaticFieldExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.Query":
                 trap.Tuple("queries", id);
-                EmitOwnQuery(trap, id, node);
+                EmitOwnQuery(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.QueryDataSource":
                 trap.Tuple("query_data_sources", id);
-                EmitOwnQueryDataSource(trap, id, node);
+                EmitOwnQueryDataSource(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.QueryDataSourceHaving":
                 trap.Tuple("query_data_source_havings", id);
-                EmitOwnQueryDataSourceHaving(trap, id, node);
+                EmitOwnQueryDataSourceHaving(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.QueryDataSourceRange":
                 trap.Tuple("query_data_source_ranges", id);
-                EmitOwnQueryDataSourceRange(trap, id, node);
+                EmitOwnQueryDataSourceRange(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.QueryDataSourceRelation":
                 trap.Tuple("query_data_source_relations", id);
-                EmitOwnQueryDataSourceRelation(trap, id, node);
+                EmitOwnQueryDataSourceRelation(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.QueryModelElement":
                 trap.Tuple("query_model_elements", id);
-                EmitOwnCompilationUnit(trap, id, node);
-                EmitOwnModelElement(trap, id, node);
-                EmitOwnQueryModelElement(trap, id, node);
+                EmitOwnCompilationUnit(trap, id, node, children);
+                EmitOwnModelElement(trap, id, node, children);
+                EmitOwnQueryModelElement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.RealLiteralExpression":
                 trap.Tuple("real_literal_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnDefaultTypeLiteralExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnDefaultTypeLiteralExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.RetryStatement":
                 trap.Tuple("retry_statements", id);
-                EmitOwnStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ReturnStatement":
                 trap.Tuple("return_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnReturnStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnReturnStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.SearchStatement":
                 trap.Tuple("search_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnSearchStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnSearchStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ShiftLeftExpression":
                 trap.Tuple("shift_left_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnBinaryExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnBinaryExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ShiftRightExpression":
                 trap.Tuple("shift_right_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnBinaryExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnBinaryExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.SimpleField":
                 trap.Tuple("simple_fields", id);
-                EmitOwnFieldSpecification(trap, id, node);
-                EmitOwnSimpleField(trap, id, node);
+                EmitOwnFieldSpecification(trap, id, node, children);
+                EmitOwnSimpleField(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.SimpleInstanceName":
                 trap.Tuple("simple_instance_names", id);
-                EmitOwnSimpleInstanceName(trap, id, node);
+                EmitOwnSimpleInstanceName(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.SimpleOrderElement":
                 trap.Tuple("simple_order_elements", id);
-                EmitOwnOrderElement(trap, id, node);
-                EmitOwnSimpleOrderElement(trap, id, node);
+                EmitOwnOrderElement(trap, id, node, children);
+                EmitOwnSimpleOrderElement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.SimpleQualifier":
                 trap.Tuple("simple_qualifier_internals", id);
-                EmitOwnSimpleQualifier(trap, id, node);
+                EmitOwnSimpleQualifier(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.StaticField":
                 trap.Tuple("static_fields", id);
-                EmitOwnFieldSpecification(trap, id, node);
-                EmitOwnStaticField(trap, id, node);
+                EmitOwnFieldSpecification(trap, id, node, children);
+                EmitOwnStaticField(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.StaticMethodCall":
                 trap.Tuple("static_method_calls", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnEvaluation(trap, id, node);
-                EmitOwnGenericEvaluation(trap, id, node);
-                EmitOwnStaticMethodCall(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnEvaluation(trap, id, node, children);
+                EmitOwnGenericEvaluation(trap, id, node, children);
+                EmitOwnStaticMethodCall(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.StaticQualifier":
                 trap.Tuple("static_qualifiers", id);
-                EmitOwnSimpleQualifier(trap, id, node);
-                EmitOwnStaticQualifier(trap, id, node);
+                EmitOwnSimpleQualifier(trap, id, node, children);
+                EmitOwnStaticQualifier(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.StringAttributeLiteral":
                 trap.Tuple("string_attribute_literals", id);
-                EmitOwnDefaultTypeAttributeLiteral(trap, id, node);
+                EmitOwnDefaultTypeAttributeLiteral(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.StringLengthType":
                 trap.Tuple("string_length_types", id);
-                EmitOwnXppType(trap, id, node);
-                EmitOwnStringLengthType(trap, id, node);
+                EmitOwnXppType(trap, id, node, children);
+                EmitOwnStringLengthType(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.StringLiteralExpression":
                 trap.Tuple("string_literal_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnDefaultTypeLiteralExpression(trap, id, node);
-                EmitOwnStringLiteralExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnDefaultTypeLiteralExpression(trap, id, node, children);
+                EmitOwnStringLiteralExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.StringType":
                 trap.Tuple("string_type_internals", id);
-                EmitOwnXppType(trap, id, node);
+                EmitOwnXppType(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.SubtractExpression":
                 trap.Tuple("subtract_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnBinaryExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnBinaryExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.SumAggregateSelection":
                 trap.Tuple("sum_aggregate_selections", id);
-                EmitOwnSelectionField(trap, id, node);
+                EmitOwnSelectionField(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.SuperCall":
                 trap.Tuple("super_calls", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnEvaluation(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnEvaluation(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.SwitchCase":
                 trap.Tuple("switch_cases", id);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.SwitchStatement":
                 trap.Tuple("switch_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnSwitchStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnSwitchStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.Table":
                 trap.Tuple("tables", id);
-                EmitOwnCompilationUnit(trap, id, node);
-                EmitOwnModelElement(trap, id, node);
-                EmitOwnTable(trap, id, node);
+                EmitOwnCompilationUnit(trap, id, node, children);
+                EmitOwnModelElement(trap, id, node, children);
+                EmitOwnTable(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.TableFieldDeclaration":
                 trap.Tuple("table_field_declarations", id);
-                EmitOwnCompilationUnit(trap, id, node);
-                EmitOwnDeclaration(trap, id, node);
-                EmitOwnFieldDeclaration(trap, id, node);
+                EmitOwnCompilationUnit(trap, id, node, children);
+                EmitOwnDeclaration(trap, id, node, children);
+                EmitOwnFieldDeclaration(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.TableLookupExpression":
                 trap.Tuple("table_lookup_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnTableLookupExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnTableLookupExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ThrowStatement":
                 trap.Tuple("throw_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnThrowStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnThrowStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.TryStatement":
                 trap.Tuple("try_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnTryStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnTryStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.TtsAbortStatement":
                 trap.Tuple("tts_abort_statements", id);
-                EmitOwnStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.TtsBeginStatement":
                 trap.Tuple("tts_begin_statements", id);
-                EmitOwnStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.TtsEndStatement":
                 trap.Tuple("tts_end_statements", id);
-                EmitOwnStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.UnaryMinusExpression":
                 trap.Tuple("unary_minus_expressions", id);
-                EmitOwnExpression(trap, id, node);
-                EmitOwnUnaryExpression(trap, id, node);
+                EmitOwnExpression(trap, id, node, children);
+                EmitOwnUnaryExpression(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.UncheckedStatement":
                 trap.Tuple("unchecked_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnUncheckedStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnUncheckedStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.UpdateStatement":
                 trap.Tuple("update_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnUpdateStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnUpdateStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.UsingStatement":
                 trap.Tuple("using_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnUsingStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnUsingStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ValidTimeStateDate":
                 trap.Tuple("valid_time_state_dates", id);
-                EmitOwnValidTimeStateDate(trap, id, node);
+                EmitOwnValidTimeStateDate(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.ValidTimeStateRange":
                 trap.Tuple("valid_time_state_ranges", id);
-                EmitOwnValidTimeStateRange(trap, id, node);
+                EmitOwnValidTimeStateRange(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.VarType":
                 trap.Tuple("var_types", id);
-                EmitOwnXppType(trap, id, node);
+                EmitOwnXppType(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.VariableDeclaration":
                 trap.Tuple("variable_declaration_internals", id);
-                EmitOwnCompilationUnit(trap, id, node);
-                EmitOwnDeclaration(trap, id, node);
-                EmitOwnVariableDeclaration(trap, id, node);
+                EmitOwnCompilationUnit(trap, id, node, children);
+                EmitOwnDeclaration(trap, id, node, children);
+                EmitOwnVariableDeclaration(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.VoidType":
                 trap.Tuple("void_types", id);
-                EmitOwnXppType(trap, id, node);
+                EmitOwnXppType(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.WhileStatement":
                 trap.Tuple("while_statements", id);
-                EmitOwnStatement(trap, id, node);
-                EmitOwnWhileStatement(trap, id, node);
+                EmitOwnStatement(trap, id, node, children);
+                EmitOwnWhileStatement(trap, id, node, children);
                 return true;
             case "Microsoft.Dynamics.AX.Metadata.XppCompiler.XppTypeCompilationUnit":
                 trap.Tuple("xpp_type_compilation_units", id);
-                EmitOwnCompilationUnit(trap, id, node);
-                EmitOwnXppTypeCompilationUnit(trap, id, node);
+                EmitOwnCompilationUnit(trap, id, node, children);
+                EmitOwnXppTypeCompilationUnit(trap, id, node, children);
                 return true;
             default:
                 return false;

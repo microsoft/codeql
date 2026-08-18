@@ -4,6 +4,7 @@ methods
 | controlFlow |
 | databaseAccess |
 statementCounts
+| Comment | 10 |
 | FieldDeclaration | 2 |
 | FindStatement | 1 |
 | ForStatement | 1 |

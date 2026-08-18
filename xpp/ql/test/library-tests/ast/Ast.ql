@@ -42,6 +42,11 @@ query predicate statementCounts(string kind, int n) {
   // Class fields live in a dictionary keyed by name in the compiler's AST, so this confirms
   // dictionary-held children are reduced to their values rather than to key/value pairs.
   kind = "FieldDeclaration" and n = count(FieldDeclaration d)
+  or
+  // Comments are struct-typed in the compiler's AST, so they box to a new object on every
+  // property read. This guards against the reference and the definition getting separate
+  // labels, which left every comment dangling and failed `codeql dataset check`.
+  kind = "Comment" and n = count(Comment c)
 }
 
 query predicate searchStatementLine(int line) {
