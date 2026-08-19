@@ -17,6 +17,50 @@ import semmle.code.csharp.security.dataflow.flowsources.FlowSources
 import SystemPromptInjection::PathGraph
 
 /**
+ * Gets the expression that selects a system-message branch containing `sinkExpr`.
+ */
+private Expr getSystemRoleSelector(Expr sinkExpr) {
+  exists(SwitchExpr switchExpr, SwitchCaseExpr switchCase, StringLiteral systemPattern |
+    switchCase = switchExpr.getACase() and
+    switchCase.getBody().getAChild*() = sinkExpr and
+    switchCase.getPattern().getAChild*() = systemPattern and
+    systemPattern.getValue().toLowerCase() = "system" and
+    result = switchExpr.getExpr()
+  )
+  or
+  exists(IfStmt ifStmt, MethodCall roleCheck, StringLiteral systemArgument |
+    sinkExpr.getEnclosingStmt().getParent*() = ifStmt.getThen() and
+    ifStmt.getCondition().getAChild*() = roleCheck and
+    roleCheck.getTarget().getName().matches(["Equals", "OrdinalEquals"]) and
+    roleCheck.getArgument(0) = systemArgument and
+    systemArgument.getValue().toLowerCase() = "system" and
+    result = roleCheck.getQualifier()
+  )
+  or
+  exists(IfStmt ifStmt, EQExpr roleCheck, StringLiteral systemOperand |
+    sinkExpr.getEnclosingStmt().getParent*() = ifStmt.getThen() and
+    ifStmt.getCondition().getAChild*() = roleCheck and
+    roleCheck.getAnOperand() = systemOperand and
+    systemOperand.getValue().toLowerCase() = "system" and
+    result = roleCheck.getAnOperand() and
+    result != systemOperand
+  )
+}
+
+/**
+ * Tracks untrusted input to expressions that select a system-message branch.
+ */
+module SystemRoleConfig implements DataFlow::ConfigSig {
+  predicate isSource(DataFlow::Node source) { source instanceof ActiveThreatModelSource }
+
+  predicate isSink(DataFlow::Node sink) {
+    exists(Expr sinkExpr | sink = DataFlow::exprNode(getSystemRoleSelector(sinkExpr)))
+  }
+}
+
+module SystemRole = TaintTracking::Global<SystemRoleConfig>;
+
+/**
  * A data flow sink corresponding to the textual content of a system prompt
  * constructed via the OpenAI .NET SDK.
  *
@@ -27,14 +71,24 @@ predicate isSystemPromptSink(DataFlow::Node sink) {
   exists(ObjectCreation oc |
     oc.getType().hasFullyQualifiedName("OpenAI.Chat", "SystemChatMessage") and
     sink.asExpr() = oc.getArgument(0) and
-    oc.getArgument(0).getType() instanceof StringType
+    oc.getArgument(0).getType() instanceof StringType and
+    (
+      not exists(getSystemRoleSelector(oc))
+      or
+      SystemRole::flowTo(DataFlow::exprNode(getSystemRoleSelector(oc)))
+    )
   )
   or
   exists(MethodCall mc |
     mc.getTarget().hasName("CreateSystemMessage") and
     mc.getTarget().getDeclaringType().hasFullyQualifiedName("OpenAI.Chat", "ChatMessage") and
     sink.asExpr() = mc.getArgument(0) and
-    mc.getArgument(0).getType() instanceof StringType
+    mc.getArgument(0).getType() instanceof StringType and
+    (
+      not exists(getSystemRoleSelector(mc))
+      or
+      SystemRole::flowTo(DataFlow::exprNode(getSystemRoleSelector(mc)))
+    )
   )
 }
 

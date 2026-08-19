@@ -1,11 +1,26 @@
 edges
 | SystemPromptInjectionTest.cs:10:40:10:46 | persona : String | SystemPromptInjectionTest.cs:12:44:12:50 | access to parameter persona | provenance |  |
 | SystemPromptInjectionTest.cs:10:40:10:46 | persona : String | SystemPromptInjectionTest.cs:13:54:13:60 | access to parameter persona | provenance |  |
+| SystemPromptInjectionTest.cs:36:65:36:71 | content : String | SystemPromptInjectionTest.cs:38:50:38:56 | access to parameter content : String | provenance |  |
+| SystemPromptInjectionTest.cs:36:65:36:71 | content : String | SystemPromptInjectionTest.cs:39:46:39:52 | access to parameter content : String | provenance |  |
+| SystemPromptInjectionTest.cs:38:50:38:56 | access to parameter content : String | SystemPromptInjectionTest.cs:62:87:62:93 | content : String | provenance |  |
+| SystemPromptInjectionTest.cs:39:46:39:52 | access to parameter content : String | SystemPromptInjectionTest.cs:71:83:71:89 | content : String | provenance |  |
+| SystemPromptInjectionTest.cs:62:87:62:93 | content : String | SystemPromptInjectionTest.cs:66:51:66:57 | access to parameter content | provenance |  |
+| SystemPromptInjectionTest.cs:71:83:71:89 | content : String | SystemPromptInjectionTest.cs:75:56:75:62 | access to parameter content | provenance |  |
 nodes
 | SystemPromptInjectionTest.cs:10:40:10:46 | persona : String | semmle.label | persona : String |
 | SystemPromptInjectionTest.cs:12:44:12:50 | access to parameter persona | semmle.label | access to parameter persona |
 | SystemPromptInjectionTest.cs:13:54:13:60 | access to parameter persona | semmle.label | access to parameter persona |
+| SystemPromptInjectionTest.cs:36:65:36:71 | content : String | semmle.label | content : String |
+| SystemPromptInjectionTest.cs:38:50:38:56 | access to parameter content : String | semmle.label | access to parameter content : String |
+| SystemPromptInjectionTest.cs:39:46:39:52 | access to parameter content : String | semmle.label | access to parameter content : String |
+| SystemPromptInjectionTest.cs:62:87:62:93 | content : String | semmle.label | content : String |
+| SystemPromptInjectionTest.cs:66:51:66:57 | access to parameter content | semmle.label | access to parameter content |
+| SystemPromptInjectionTest.cs:71:83:71:89 | content : String | semmle.label | content : String |
+| SystemPromptInjectionTest.cs:75:56:75:62 | access to parameter content | semmle.label | access to parameter content |
 subpaths
 #select
 | SystemPromptInjectionTest.cs:12:44:12:50 | access to parameter persona | SystemPromptInjectionTest.cs:10:40:10:46 | persona : String | SystemPromptInjectionTest.cs:12:44:12:50 | access to parameter persona | This system prompt depends on a $@. | SystemPromptInjectionTest.cs:10:40:10:46 | persona : String | user-provided value |
 | SystemPromptInjectionTest.cs:13:54:13:60 | access to parameter persona | SystemPromptInjectionTest.cs:10:40:10:46 | persona : String | SystemPromptInjectionTest.cs:13:54:13:60 | access to parameter persona | This system prompt depends on a $@. | SystemPromptInjectionTest.cs:10:40:10:46 | persona : String | user-provided value |
+| SystemPromptInjectionTest.cs:66:51:66:57 | access to parameter content | SystemPromptInjectionTest.cs:36:65:36:71 | content : String | SystemPromptInjectionTest.cs:66:51:66:57 | access to parameter content | This system prompt depends on a $@. | SystemPromptInjectionTest.cs:36:65:36:71 | content : String | user-provided value |
+| SystemPromptInjectionTest.cs:75:56:75:62 | access to parameter content | SystemPromptInjectionTest.cs:36:65:36:71 | content : String | SystemPromptInjectionTest.cs:75:56:75:62 | access to parameter content | This system prompt depends on a $@. | SystemPromptInjectionTest.cs:36:65:36:71 | content : String | user-provided value |
