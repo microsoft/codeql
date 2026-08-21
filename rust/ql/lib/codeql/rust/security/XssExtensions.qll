@@ -35,14 +35,24 @@ module Xss {
 
   /**
    * An active threat-model source, considered as a flow source.
-   *
-   * Environment variables are excluded: they hold trusted deployment
-   * configuration (for example the service's own hostname or public base URL,
-   * set from an environment variable at startup) rather than per-request,
-   * attacker-controlled input, so they are not a meaningful source for XSS.
    */
-  private class ActiveThreatModelSourceAsSource extends Source, ActiveThreatModelSource {
-    ActiveThreatModelSourceAsSource() { not this.getThreatModel() = "environment" }
+  private class ActiveThreatModelSourceAsSource extends Source, ActiveThreatModelSource { }
+
+  /**
+   * A host or URL field read from a configuration type.
+   */
+  private class ConfigHostFieldBarrier extends Barrier {
+    ConfigHostFieldBarrier() {
+      exists(FieldExpr field, Struct configType, string fieldName |
+        this.asExpr() = field and
+        field.getStructField().isStructField(configType, fieldName) and
+        configType.getName().getText().regexpMatch(".*(Config|Configuration|Options|Opts|Settings).*") and
+        fieldName =
+          [
+            "external_domain", "hostname", "host_name", "base_url", "server_url", "public_url"
+          ]
+      )
+    }
   }
 
   /**
