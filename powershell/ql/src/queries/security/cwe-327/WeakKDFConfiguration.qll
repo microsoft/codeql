@@ -25,19 +25,7 @@ private API::Node rfc2898DeriveBytesType() {
  * An instantiation of Rfc2898DeriveBytes via New-Object or [Type]::new().
  */
 class Rfc2898DeriveBytesCreation extends DataFlow::CallNode {
-  Rfc2898DeriveBytesCreation() {
-    this = rfc2898DeriveBytesType().getMember("new").asCall()
-    or
-    // New-Object pattern
-    exists(DataFlow::ObjectCreationNode oc |
-      oc = this and
-      oc.getLowerCaseConstructedTypeName() =
-        [
-          "system.security.cryptography.rfc2898derivebytes",
-          "rfc2898derivebytes"
-        ]
-    )
-  }
+  Rfc2898DeriveBytesCreation() { this = rfc2898DeriveBytesType().getInstance().asSource() }
 
   private DataFlow::Node getNewObjectArgumentList() {
     this.getExprNode().getExpr() instanceof DotNetObjectCreation and
