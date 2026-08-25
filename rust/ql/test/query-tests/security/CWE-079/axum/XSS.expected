@@ -1,24 +1,58 @@
 #select
-| main.rs:10:10:10:21 | html_content | main.rs:15:51:15:53 | get | main.rs:10:10:10:21 | html_content | Cross-site scripting vulnerability due to a $@. | main.rs:15:51:15:53 | get | user-provided value |
+| main.rs:15:10:15:21 | html_content | main.rs:37:26:37:28 | get | main.rs:15:10:15:21 | html_content | Cross-site scripting vulnerability due to a $@. | main.rs:37:26:37:28 | get | user-provided value |
+| main.rs:19:10:19:60 | MacroExpr | main.rs:38:33:38:35 | get | main.rs:19:10:19:60 | MacroExpr | Cross-site scripting vulnerability due to a $@. | main.rs:38:33:38:35 | get | user-provided value |
+| main.rs:31:10:31:34 | MacroExpr | main.rs:30:17:30:29 | ...::var | main.rs:31:10:31:34 | MacroExpr | Cross-site scripting vulnerability due to a $@. | main.rs:30:17:30:29 | ...::var | user-provided value |
 edges
-| main.rs:8:24:8:59 | ...: Query::<...> | main.rs:9:32:9:63 | MacroExpr | provenance |  |
-| main.rs:9:9:9:20 | html_content | main.rs:10:10:10:21 | html_content | provenance |  |
-| main.rs:9:32:9:63 | ...::format(...) | main.rs:9:32:9:63 | { ... } | provenance |  |
-| main.rs:9:32:9:63 | ...::must_use(...) | main.rs:9:9:9:20 | html_content | provenance |  |
-| main.rs:9:32:9:63 | MacroExpr | main.rs:9:32:9:63 | ...::format(...) | provenance | MaD:2 |
-| main.rs:9:32:9:63 | { ... } | main.rs:9:32:9:63 | ...::must_use(...) | provenance | MaD:3 |
-| main.rs:15:51:15:53 | get | main.rs:8:24:8:59 | ...: Query::<...> | provenance | Src:MaD:1  |
+| main.rs:13:24:13:59 | ...: Query::<...> | main.rs:14:32:14:63 | MacroExpr | provenance |  |
+| main.rs:14:9:14:20 | html_content | main.rs:15:10:15:21 | html_content | provenance |  |
+| main.rs:14:32:14:63 | ...::format(...) | main.rs:14:32:14:63 | { ... } | provenance |  |
+| main.rs:14:32:14:63 | ...::must_use(...) | main.rs:14:9:14:20 | html_content | provenance |  |
+| main.rs:14:32:14:63 | MacroExpr | main.rs:14:32:14:63 | ...::format(...) | provenance | MaD:4 |
+| main.rs:14:32:14:63 | { ... } | main.rs:14:32:14:63 | ...::must_use(...) | provenance | MaD:5 |
+| main.rs:18:31:18:66 | ...: Query::<...> | main.rs:19:18:19:59 | MacroExpr | provenance |  |
+| main.rs:19:18:19:59 | ...::format(...) | main.rs:19:18:19:59 | { ... } | provenance |  |
+| main.rs:19:18:19:59 | ...::must_use(...) | main.rs:19:10:19:60 | MacroExpr | provenance |  |
+| main.rs:19:18:19:59 | MacroExpr | main.rs:19:18:19:59 | ...::format(...) | provenance | MaD:4 |
+| main.rs:19:18:19:59 | { ... } | main.rs:19:18:19:59 | ...::must_use(...) | provenance | MaD:5 |
+| main.rs:30:9:30:13 | value | main.rs:31:18:31:33 | MacroExpr | provenance |  |
+| main.rs:30:17:30:29 | ...::var | main.rs:30:17:30:37 | ...::var(...) [Ok] | provenance | Src:MaD:2  |
+| main.rs:30:17:30:37 | ...::var(...) [Ok] | main.rs:30:17:30:46 | ... .unwrap() | provenance | MaD:3 |
+| main.rs:30:17:30:46 | ... .unwrap() | main.rs:30:9:30:13 | value | provenance |  |
+| main.rs:31:18:31:33 | ...::format(...) | main.rs:31:18:31:33 | { ... } | provenance |  |
+| main.rs:31:18:31:33 | ...::must_use(...) | main.rs:31:10:31:34 | MacroExpr | provenance |  |
+| main.rs:31:18:31:33 | MacroExpr | main.rs:31:18:31:33 | ...::format(...) | provenance | MaD:4 |
+| main.rs:31:18:31:33 | { ... } | main.rs:31:18:31:33 | ...::must_use(...) | provenance | MaD:5 |
+| main.rs:37:26:37:28 | get | main.rs:13:24:13:59 | ...: Query::<...> | provenance | Src:MaD:1  |
+| main.rs:38:33:38:35 | get | main.rs:18:31:18:66 | ...: Query::<...> | provenance | Src:MaD:1  |
 models
 | 1 | Source: axum::routing::method_routing::get; Argument[0].Parameter[0..7]; remote |
-| 2 | Summary: alloc::fmt::format; Argument[0]; ReturnValue; taint |
-| 3 | Summary: core::hint::must_use; Argument[0]; ReturnValue; value |
+| 2 | Source: std::env::var; ReturnValue.Field[core::result::Result::Ok(0)]; environment |
+| 3 | Summary: <core::result::Result>::unwrap; Argument[self].Field[core::result::Result::Ok(0)]; ReturnValue; value |
+| 4 | Summary: alloc::fmt::format; Argument[0]; ReturnValue; taint |
+| 5 | Summary: core::hint::must_use; Argument[0]; ReturnValue; value |
 nodes
-| main.rs:8:24:8:59 | ...: Query::<...> | semmle.label | ...: Query::<...> |
-| main.rs:9:9:9:20 | html_content | semmle.label | html_content |
-| main.rs:9:32:9:63 | ...::format(...) | semmle.label | ...::format(...) |
-| main.rs:9:32:9:63 | ...::must_use(...) | semmle.label | ...::must_use(...) |
-| main.rs:9:32:9:63 | MacroExpr | semmle.label | MacroExpr |
-| main.rs:9:32:9:63 | { ... } | semmle.label | { ... } |
-| main.rs:10:10:10:21 | html_content | semmle.label | html_content |
-| main.rs:15:51:15:53 | get | semmle.label | get |
+| main.rs:13:24:13:59 | ...: Query::<...> | semmle.label | ...: Query::<...> |
+| main.rs:14:9:14:20 | html_content | semmle.label | html_content |
+| main.rs:14:32:14:63 | ...::format(...) | semmle.label | ...::format(...) |
+| main.rs:14:32:14:63 | ...::must_use(...) | semmle.label | ...::must_use(...) |
+| main.rs:14:32:14:63 | MacroExpr | semmle.label | MacroExpr |
+| main.rs:14:32:14:63 | { ... } | semmle.label | { ... } |
+| main.rs:15:10:15:21 | html_content | semmle.label | html_content |
+| main.rs:18:31:18:66 | ...: Query::<...> | semmle.label | ...: Query::<...> |
+| main.rs:19:10:19:60 | MacroExpr | semmle.label | MacroExpr |
+| main.rs:19:18:19:59 | ...::format(...) | semmle.label | ...::format(...) |
+| main.rs:19:18:19:59 | ...::must_use(...) | semmle.label | ...::must_use(...) |
+| main.rs:19:18:19:59 | MacroExpr | semmle.label | MacroExpr |
+| main.rs:19:18:19:59 | { ... } | semmle.label | { ... } |
+| main.rs:30:9:30:13 | value | semmle.label | value |
+| main.rs:30:17:30:29 | ...::var | semmle.label | ...::var |
+| main.rs:30:17:30:37 | ...::var(...) [Ok] | semmle.label | ...::var(...) [Ok] |
+| main.rs:30:17:30:46 | ... .unwrap() | semmle.label | ... .unwrap() |
+| main.rs:31:10:31:34 | MacroExpr | semmle.label | MacroExpr |
+| main.rs:31:18:31:33 | ...::format(...) | semmle.label | ...::format(...) |
+| main.rs:31:18:31:33 | ...::must_use(...) | semmle.label | ...::must_use(...) |
+| main.rs:31:18:31:33 | MacroExpr | semmle.label | MacroExpr |
+| main.rs:31:18:31:33 | { ... } | semmle.label | { ... } |
+| main.rs:37:26:37:28 | get | semmle.label | get |
+| main.rs:38:33:38:35 | get | semmle.label | get |
 subpaths

@@ -38,6 +38,23 @@ module Xss {
   private class ActiveThreatModelSourceAsSource extends Source, ActiveThreatModelSource { }
 
   /**
+   * A host or URL field read from a configuration type.
+   */
+  private class ConfigHostFieldBarrier extends Barrier {
+    ConfigHostFieldBarrier() {
+      exists(FieldExpr field, Struct configType, string fieldName |
+        this.asExpr() = field and
+        field.getStructField().isStructField(configType, fieldName) and
+        configType.getName().getText().regexpMatch(".*(Config|Configuration|Options|Opts|Settings).*") and
+        fieldName =
+          [
+            "external_domain", "hostname", "host_name", "base_url", "server_url", "public_url"
+          ]
+      )
+    }
+  }
+
+  /**
    * A sink for XSS from model data.
    */
   private class ModelsAsDataSink extends Sink {
