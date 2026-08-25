@@ -21,7 +21,7 @@ class PrintAstConfiguration extends string {
    * Holds if the given node should be printed.
    */
   predicate shouldPrintNode(AstNode n) {
-    not n instanceof HCLComment and
+    not n instanceof Comment and
     not n instanceof ReservedWord
   }
 }
