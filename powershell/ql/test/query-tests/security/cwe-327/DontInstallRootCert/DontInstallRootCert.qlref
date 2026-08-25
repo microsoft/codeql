@@ -1,0 +1,2 @@
+query: queries/security/cwe-327/DontInstallRootCert.ql
+postprocess: utils/test/InlineExpectationsTestQuery.ql
