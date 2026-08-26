@@ -1,0 +1,4 @@
+extractor/**/bin/*
+extractor/**/obj/*
+ql/build/
+extractor-pack/
