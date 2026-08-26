@@ -1,6 +1,28 @@
 trigger:
   - main
 
+pr:
+  - main
+
+parameters:
+  - name: target
+    type: string
+    default: dev
+    values:
+      - dev
+      - prod
+
+resources:
+  repositories:
+    - repository: templates
+      type: git
+      name: Shared/Templates
+      ref: refs/heads/main
+  pipelines:
+    - pipeline: build
+      source: BuildPipeline
+      branch: refs/heads/main
+
 pool:
   vmImage: ubuntu-latest
 strategy:
@@ -17,6 +39,13 @@ variables:
     value: initialValue
 
 steps:
+  - checkout: self
+    persistCredentials: true
+
+  - template: build-template.yml
+    parameters:
+      target: ${{ parameters.target }}
+
   - task: UsePythonVersion@0
     inputs:
       versionSpec: "$(python.version)"
@@ -31,3 +60,26 @@ steps:
       pip install pytest pytest-azurepipelines
       pytest
     displayName: "pytest"
+
+stages:
+  - stage: deploy
+    jobs:
+      - deployment: deploy_web
+        pool:
+          name: PrivatePool
+        environment: prod
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - pwsh: |
+                    ./deploy.ps1 -Target ${{ parameters.target }}
+                  displayName: "Deploy"
+
+jobs:
+  - job: lint
+    pool:
+      vmImage: windows-latest
+    steps:
+      - bash: echo "lint"
+      - powershell: Write-Host "lint"

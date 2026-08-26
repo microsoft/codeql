@@ -2,21 +2,59 @@ private import codeql.iac.YAML
 private import codeql.files.FileSystem
 
 module AzurePipelines {
+  private predicate hasPipelineBaseName(YamlDocument doc) {
+    doc.getFile().getBaseName() = ["azure-pipelines.yml", "azure-pipelines.yaml"]
+  }
+
+  private predicate hasPipelineShape(YamlMapping doc) {
+    exists(doc.lookup("steps")) or
+    exists(doc.lookup("jobs")) or
+    exists(doc.lookup("stages")) or
+    exists(doc.lookup("extends"))
+  }
+
   /**
-   * Azure DevOps Pipeline file.
+   * Holds if `doc` is a GitHub Actions workflow rather than an Azure DevOps
+   * pipeline.
+   *
+   * GitHub Actions workflows live under `.github/workflows/` and are required
+   * to declare an `on:` trigger, whereas Azure DevOps pipelines are triggered
+   * with `trigger:`/`pr:` and never use a top-level `on:` key. Both formats
+   * share `jobs:`/`steps:` keys, so without this exclusion a workflow would be
+   * misclassified as a pipeline by `hasPipelineShape`.
+   */
+  private predicate isGitHubActionsWorkflow(YamlDocument doc) {
+    doc.getFile().getRelativePath().matches("%.github/workflows/%")
+    or
+    exists(doc.(YamlMapping).lookup("on"))
+  }
+
+  /**
+   * Azure DevOps Pipeline file or referenced template.
    */
   class Document extends YamlNode, YamlDocument, YamlMapping {
     Document() {
-      // Check the filename
-      this.getFile().getBaseName() = ["azure-pipelines.yml", "azure-pipelines.yaml"]
+      this.getFile().getExtension() = ["yml", "yaml"] and
+      (hasPipelineBaseName(this) or hasPipelineShape(this)) and
+      not isGitHubActionsWorkflow(this)
     }
 
     override string toString() { result = "Azure DevOps Pipeline" }
 
     /**
+     * Gets a top-level trigger-like entry.
+     */
+    YamlValue getTrigger(string name) { result = this.lookup(name) }
+
+    /**
      * Get the pipeline pool.
      */
     Pool getPool() { result = this.lookup("pool") }
+
+    /**
+     * Gets the pipeline parameters.
+     */
+    Parameter getParameters() { result = this.lookup("parameters").getAChild() }
 
     /**
      * Get the pipeline variables.
@@ -35,7 +73,31 @@ module AzurePipelines {
     /**
      * Get the pipeline steps.
      */
-    Step getSteps() { result = this.lookup("steps").getAChild() }
+    Step getSteps() { result.getEnclosingDocument() = this }
+
+    /**
+     * Gets the pipeline stages.
+     */
+    Stage getStages() { result = this.lookup("stages").getAChild() }
+
+    /**
+     * Gets the pipeline jobs.
+     */
+    Job getJobs() {
+      result = this.lookup("jobs").getAChild()
+      or
+      result = this.getStages().getJobs()
+    }
+
+    /**
+     * Gets the pipeline repository resources.
+     */
+    RepositoryResource getRepositoryResources() { result.getEnclosingDocument() = this }
+
+    /**
+     * Gets the pipeline resources.
+     */
+    PipelineResource getPipelineResources() { result.getEnclosingDocument() = this }
 
     /**
      * Get the pipeline task steps.
@@ -49,14 +111,113 @@ module AzurePipelines {
   }
 
   /**
+   * Azure DevOps Pipeline parameter.
+   */
+  class Parameter extends YamlNode, YamlMapping {
+    Parameter() { exists(Document document | document.lookup("parameters").getChild(_) = this) }
+
+    override string toString() { result = "Parameter '" + this.getName() + "'" }
+
+    /**
+     * Gets the parameter name.
+     */
+    string getName() { result = yamlToString(this.lookup("name")) }
+
+    /**
+     * Gets the parameter type.
+     */
+    string getType() { result = yamlToString(this.lookup("type")) }
+
+    /**
+     * Gets the parameter default value.
+     */
+    YamlValue getDefault() { result = this.lookup("default") }
+
+    /**
+     * Gets an allowed value for the parameter.
+     */
+    YamlValue getAllowedValue() { result = this.lookup("values").getAChild() }
+  }
+
+  /**
+   * Azure DevOps Pipeline stage.
+   */
+  class Stage extends YamlNode, YamlMapping {
+    Stage() { exists(Document document | document.lookup("stages").getAChildNode() = this) }
+
+    override string toString() { result = "Stage '" + this.getName() + "'" }
+
+    /**
+     * Gets the stage name.
+     */
+    string getName() { result = yamlToString(this.lookup("stage")) }
+
+    /**
+     * Gets a job in the stage.
+     */
+    Job getJobs() { result = this.lookup("jobs").getAChild() }
+
+    /**
+     * Gets the stage condition.
+     */
+    YamlValue getCondition() { result = this.lookup("condition") }
+  }
+
+  /**
+   * Azure DevOps Pipeline job.
+   */
+  class Job extends YamlNode, YamlMapping {
+    Job() {
+      exists(Document document | document.lookup("jobs").getAChildNode() = this)
+      or
+      exists(Stage stage | stage.lookup("jobs").getAChildNode() = this)
+    }
+
+    override string toString() { result = "Job '" + this.getName() + "'" }
+
+    /**
+     * Gets the job name.
+     */
+    string getName() {
+      result = yamlToString(this.lookup("job"))
+      or
+      result = yamlToString(this.lookup("deployment"))
+    }
+
+    /**
+     * Gets the job pool.
+     */
+    Pool getPool() { result = this.lookup("pool") }
+
+    /**
+     * Gets a step in the job.
+     */
+    Step getSteps() { result = this.lookup("steps").getAChild() }
+
+    /**
+     * Gets the job condition.
+     */
+    YamlValue getCondition() { result = this.lookup("condition") }
+  }
+
+  /**
+   * Azure DevOps Pipeline deployment job.
+   */
+  class DeploymentJob extends Job {
+    DeploymentJob() { exists(this.lookup("deployment")) }
+  }
+
+  /**
    * Azure DevOps Pipeline pool.
    *
    * https://learn.microsoft.com/en-us/azure/devops/pipelines/yaml-schema/pool
    */
   class Pool extends YamlNode, YamlMapping {
-    private Document pipeline;
-
-    Pool() { pipeline.lookup("pool") = this }
+    Pool() {
+      exists(Document document | document.lookup("pool") = this)
+      or
+      exists(Job job | job.lookup("pool") = this)
+    }
 
     /**
      * Get the pool name.
@@ -80,9 +241,13 @@ module AzurePipelines {
    * https://learn.microsoft.com/en-us/azure/devops/pipelines/process/variables
    */
   class Variable extends YamlNode, YamlMapping {
-    private Document document;
-
-    Variable() { document.lookup("variables").getChild(_) = this }
+    Variable() {
+      exists(Document document | document.lookup("variables").getChild(_) = this)
+      or
+      exists(Stage stage | stage.lookup("variables").getChild(_) = this)
+      or
+      exists(Job job | job.lookup("variables").getChild(_) = this)
+    }
 
     override string toString() { result = "Variable '" + this.getName() + "'" }
 
@@ -103,11 +268,22 @@ module AzurePipelines {
    * https://learn.microsoft.com/en-us/azure/devops/pipelines/yaml-schema/steps
    */
   class Step extends YamlNode, YamlMapping {
-    private Document pipeline;
-
-    Step() { pipeline.lookup("steps").getAChildNode() = this }
+    Step() {
+      exists(Document document | document.lookup("steps").getAChildNode() = this)
+      or
+      exists(Job job | job.lookup("steps").getAChildNode() = this)
+    }
 
     override string toString() { result = "Azure DevOps Pipeline step" }
+
+    /**
+     * Gets the enclosing Azure DevOps Pipeline document.
+     */
+    Document getEnclosingDocument() {
+      exists(Document document | document.lookup("steps").getAChildNode() = this | result = document)
+      or
+      exists(Document document | this.getFile() = document.getFile() | result = document)
+    }
 
     /**
      * Get the step display name.
@@ -121,6 +297,16 @@ module AzurePipelines {
       exists(this.lookup("task")) and result = "task"
       or
       exists(this.lookup("script")) and result = "script"
+      or
+      exists(this.lookup("bash")) and result = "bash"
+      or
+      exists(this.lookup("powershell")) and result = "powershell"
+      or
+      exists(this.lookup("pwsh")) and result = "pwsh"
+      or
+      exists(this.lookup("checkout")) and result = "checkout"
+      or
+      exists(this.lookup("template")) and result = "template"
     }
   }
 
@@ -148,6 +334,123 @@ module AzurePipelines {
    * Azure DevOps Pipeline script step.
    */
   class Script extends Step {
-    Script() { this.getType() = "script" }
+    Script() { this.getType() = ["script", "bash", "powershell", "pwsh"] }
+
+    /**
+     * Gets the script step kind.
+     */
+    string getScriptKind() { result = this.getType() }
+
+    /**
+     * Gets the inline script content.
+     */
+    YamlValue getScriptContent() { result = this.lookup(this.getScriptKind()) }
+  }
+
+  /**
+   * Azure DevOps Pipeline checkout step.
+   */
+  class Checkout extends Step {
+    Checkout() { this.getType() = "checkout" }
+
+    /**
+     * Gets the checkout target.
+     */
+    string getRepository() { result = yamlToString(this.lookup("checkout")) }
+
+    /**
+     * Gets the persistCredentials setting.
+     */
+    YamlValue getPersistCredentials() { result = this.lookup("persistCredentials") }
+  }
+
+  /**
+   * Azure DevOps Pipeline template step.
+   */
+  class TemplateStep extends Step {
+    TemplateStep() { this.getType() = "template" }
+
+    /**
+     * Gets the referenced template path.
+     */
+    string getTemplate() { result = yamlToString(this.lookup("template")) }
+  }
+
+  /**
+   * Azure DevOps repository resource.
+   */
+  class RepositoryResource extends YamlNode, YamlMapping {
+    RepositoryResource() {
+      exists(Document document |
+        document.lookup("resources").(YamlMapping).lookup("repositories").getAChildNode() = this
+      )
+    }
+
+    override string toString() { result = "Repository resource '" + this.getAlias() + "'" }
+
+    /**
+     * Gets the enclosing Azure DevOps Pipeline document.
+     */
+    Document getEnclosingDocument() {
+      exists(Document document |
+        document.lookup("resources").(YamlMapping).lookup("repositories").getAChildNode() = this
+      |
+        result = document
+      )
+    }
+
+    /**
+     * Gets the resource alias.
+     */
+    string getAlias() { result = yamlToString(this.lookup("repository")) }
+
+    /**
+     * Gets the repository name.
+     */
+    string getName() { result = yamlToString(this.lookup("name")) }
+
+    /**
+     * Gets the referenced revision.
+     */
+    string getRef() { result = yamlToString(this.lookup("ref")) }
+  }
+
+  /**
+   * Azure DevOps pipeline resource.
+   */
+  class PipelineResource extends YamlNode, YamlMapping {
+    PipelineResource() {
+      exists(Document document |
+        document.lookup("resources").(YamlMapping).lookup("pipelines").getAChildNode() = this
+      )
+    }
+
+    override string toString() { result = "Pipeline resource '" + this.getAlias() + "'" }
+
+    /**
+     * Gets the enclosing Azure DevOps Pipeline document.
+     */
+    Document getEnclosingDocument() {
+      exists(Document document |
+        document.lookup("resources").(YamlMapping).lookup("pipelines").getAChildNode() = this
+      |
+        result = document
+      )
+    }
+
+    /**
+     * Gets the resource alias.
+     */
+    string getAlias() { result = yamlToString(this.lookup("pipeline")) }
+
+    /**
+     * Gets the source pipeline.
+     */
+    string getSource() { result = yamlToString(this.lookup("source")) }
+
+    /**
+     * Gets the branch selector.
+     */
+    string getBranch() { result = yamlToString(this.lookup("branch")) }
   }
 }

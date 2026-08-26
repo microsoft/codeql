@@ -1,0 +1,11 @@
+parameters:
+  - name: target
+    type: string
+    default: dev
+
+steps:
+  - script: echo "building ${{ parameters.target }}"
+  - task: Bash@3
+    inputs:
+      targetType: inline
+      script: echo "task script"
