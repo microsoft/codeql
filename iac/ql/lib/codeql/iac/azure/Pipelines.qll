@@ -14,12 +14,29 @@ module AzurePipelines {
   }
 
   /**
+   * Holds if `doc` is a GitHub Actions workflow rather than an Azure DevOps
+   * pipeline.
+   *
+   * GitHub Actions workflows live under `.github/workflows/` and are required
+   * to declare an `on:` trigger, whereas Azure DevOps pipelines are triggered
+   * with `trigger:`/`pr:` and never use a top-level `on:` key. Both formats
+   * share `jobs:`/`steps:` keys, so without this exclusion a workflow would be
+   * misclassified as a pipeline by `hasPipelineShape`.
+   */
+  private predicate isGitHubActionsWorkflow(YamlDocument doc) {
+    doc.getFile().getRelativePath().matches("%.github/workflows/%")
+    or
+    exists(doc.(YamlMapping).lookup("on"))
+  }
+
+  /**
    * Azure DevOps Pipeline file or referenced template.
    */
   class Document extends YamlNode, YamlDocument, YamlMapping {
     Document() {
       this.getFile().getExtension() = ["yml", "yaml"] and
-      (hasPipelineBaseName(this) or hasPipelineShape(this))
+      (hasPipelineBaseName(this) or hasPipelineShape(this)) and
+      not isGitHubActionsWorkflow(this)
     }
 
     override string toString() { result = "Azure DevOps Pipeline" }
