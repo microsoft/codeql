@@ -33,3 +33,15 @@ jobs:
       - run: |
           # NOT VULNERABLE
           echo "PR_NUMBER=$(cat pr_number.txt | head -n 1)" >> $GITHUB_ENV
+      - run: |
+          # NOT VULNERABLE
+          echo "PR_NUMBER=$(cat pr_number.txt | tr -dc '[:alnum:]')" >> $GITHUB_ENV
+      - run: |
+          # NOT VULNERABLE
+          echo "PR_NUMBER=$(cat pr_number.txt | tr -d '[:space:]')" >> $GITHUB_ENV
+      - run: |
+          # NOT VULNERABLE
+          echo "PR_NUMBER=$(cat pr_number.txt | cut -d: -f1)" >> $GITHUB_ENV
+      - run: |
+          # NOT VULNERABLE
+          echo "PR_NUMBER=$(cat pr_number.txt | sed 's/[^0-9a-z]//g')" >> $GITHUB_ENV
