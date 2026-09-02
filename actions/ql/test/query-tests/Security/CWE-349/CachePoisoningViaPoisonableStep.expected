@@ -14,6 +14,8 @@ edges
 | .github/workflows/direct_cache5.yml:17:9:21:6 | Uses Step | .github/workflows/direct_cache5.yml:21:9:22:21 | Run Step |
 | .github/workflows/direct_cache6.yml:13:9:16:6 | Uses Step | .github/workflows/direct_cache6.yml:16:9:20:6 | Uses Step |
 | .github/workflows/direct_cache6.yml:16:9:20:6 | Uses Step | .github/workflows/direct_cache6.yml:20:9:26:46 | Uses Step: cache-pip |
+| .github/workflows/direct_cache_input_gate.yml:10:9:13:6 | Uses Step | .github/workflows/direct_cache_input_gate.yml:13:9:19:2 | Uses Step |
+| .github/workflows/direct_cache_input_gate.yml:22:9:25:6 | Uses Step | .github/workflows/direct_cache_input_gate.yml:25:9:28:47 | Uses Step |
 | .github/workflows/neg_direct_cache1.yml:14:9:17:6 | Uses Step | .github/workflows/neg_direct_cache1.yml:17:9:21:6 | Uses Step |
 | .github/workflows/neg_direct_cache1.yml:17:9:21:6 | Uses Step | .github/workflows/neg_direct_cache1.yml:21:9:22:21 | Run Step |
 | .github/workflows/neg_direct_cache2.yml:14:9:17:6 | Uses Step | .github/workflows/neg_direct_cache2.yml:17:9:21:6 | Uses Step |
