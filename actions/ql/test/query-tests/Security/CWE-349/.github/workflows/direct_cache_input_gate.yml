@@ -1,0 +1,28 @@
+on:
+  pull_request_target:
+
+permissions: read-all
+
+jobs:
+  input-gated-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/cache@v4
+        if: inputs.useArtifactCache
+        with:
+          path: .
+          key: gated-${{ github.sha }}
+
+  unconditional-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/cache@v4
+        with:
+          path: .
+          key: unconditional-${{ github.sha }}
