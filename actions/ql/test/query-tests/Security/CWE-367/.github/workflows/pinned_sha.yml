@@ -1,0 +1,24 @@
+on:
+  issue_comment:
+    types: [created]
+
+permissions: write-all
+
+jobs:
+  pinned-sha:
+    if: contains(fromJSON('["MEMBER", "OWNER"]'), github.event.comment.author_association)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 0123456789abcdef0123456789abcdef01234567
+
+  mutable-ref:
+    if: contains(fromJSON('["MEMBER", "OWNER"]'), github.event.comment.author_association)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: xt0rted/pull-request-comment-branch@v2
+        id: comment-branch
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.comment-branch.outputs.head_ref }}
