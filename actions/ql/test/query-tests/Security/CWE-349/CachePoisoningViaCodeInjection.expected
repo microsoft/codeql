@@ -4,7 +4,9 @@ nodes
 | .github/workflows/code_injection1.yml:11:17:11:48 | github.event.comment.body | semmle.label | github.event.comment.body |
 | .github/workflows/code_injection2.yml:12:9:16:6 | Uses Step: modified_files | semmle.label | Uses Step: modified_files |
 | .github/workflows/code_injection2.yml:16:21:16:70 | steps.modified_files.outputs.files_modified | semmle.label | steps.modified_files.outputs.files_modified |
+| .github/workflows/code_injection_cache_requirement.yml:11:20:11:51 | github.event.comment.body | semmle.label | github.event.comment.body |
+| .github/workflows/code_injection_cache_requirement.yml:20:20:20:51 | github.event.comment.body | semmle.label | github.event.comment.body |
 | .github/workflows/neg_code_injection1.yml:11:17:11:48 | github.event.comment.body | semmle.label | github.event.comment.body |
 subpaths
 #select
-| .github/workflows/code_injection1.yml:11:17:11:48 | github.event.comment.body | .github/workflows/code_injection1.yml:11:17:11:48 | github.event.comment.body | .github/workflows/code_injection1.yml:11:17:11:48 | github.event.comment.body | Unprivileged code injection in $@, which may lead to cache poisoning ($@). | .github/workflows/code_injection1.yml:11:17:11:48 | github.event.comment.body | ${{ github.event.comment.body }} | .github/workflows/code_injection1.yml:2:3:2:15 | issue_comment | issue_comment |
+| .github/workflows/code_injection_cache_requirement.yml:20:20:20:51 | github.event.comment.body | .github/workflows/code_injection_cache_requirement.yml:20:20:20:51 | github.event.comment.body | .github/workflows/code_injection_cache_requirement.yml:20:20:20:51 | github.event.comment.body | Unprivileged code injection in $@, which may lead to cache poisoning ($@). | .github/workflows/code_injection_cache_requirement.yml:20:20:20:51 | github.event.comment.body | ${{ github.event.comment.body }} | .github/workflows/code_injection_cache_requirement.yml:2:3:2:15 | issue_comment | issue_comment |
