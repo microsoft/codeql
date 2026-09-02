@@ -1,0 +1,25 @@
+on:
+  pull_request_target:
+
+permissions: read-all
+
+jobs:
+  without-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - run: ./build.sh
+
+  with-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/cache@v4
+        with:
+          path: .
+          key: example-${{ github.sha }}
+      - run: ./build.sh
