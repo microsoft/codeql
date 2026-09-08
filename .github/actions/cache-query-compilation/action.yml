@@ -25,7 +25,7 @@ runs:
         echo "merge_base=$MERGE_BASE" >> $GITHUB_ENV
     - name: Restore cache (PR)
       if: ${{ github.event_name == 'pull_request' }}
-      uses: actions/cache/restore@v3
+      uses: actions/cache/restore@6f8efc29b200d32929f49075959781ed54ec270c # v3.5.0
       with:
         path: |
           **/.cache
@@ -37,7 +37,7 @@ runs:
           codeql-compile-${{ inputs.key }}-main-
     - name: Fill cache (only branch push)
       if: ${{ github.event_name != 'pull_request' }}
-      uses: actions/cache@v3
+      uses: actions/cache@6f8efc29b200d32929f49075959781ed54ec270c # v3.5.0
       with:
         path: |
           **/.cache
@@ -55,7 +55,7 @@ runs:
         COMBINED_CACHE_DIR: ${{ runner.temp }}/compilation-dir
     - name: Fill compilation cache directory
       id: fill-compilation-dir
-      uses: actions/github-script@v6
+      uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6.4.1
       env: 
         COMBINED_CACHE_DIR: ${{ runner.temp }}/compilation-dir
       with:
