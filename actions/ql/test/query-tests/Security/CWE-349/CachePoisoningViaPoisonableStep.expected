@@ -36,7 +36,9 @@ edges
 | .github/workflows/direct_cache6.yml:15:17:15:57 | github.event.pull_request.head.sha | .github/workflows/direct_cache6.yml:13:9:16:6 | Uses Step |
 | .github/workflows/direct_cache6.yml:16:9:20:6 | Uses Step | .github/workflows/direct_cache6.yml:20:9:26:46 | Uses Step: cache-pip |
 | .github/workflows/direct_cache_input_gate.yml:10:9:13:6 | Uses Step | .github/workflows/direct_cache_input_gate.yml:13:9:19:2 | Uses Step |
+| .github/workflows/direct_cache_input_gate.yml:12:17:12:57 | github.event.pull_request.head.sha | .github/workflows/direct_cache_input_gate.yml:10:9:13:6 | Uses Step |
 | .github/workflows/direct_cache_input_gate.yml:22:9:25:6 | Uses Step | .github/workflows/direct_cache_input_gate.yml:25:9:28:47 | Uses Step |
+| .github/workflows/direct_cache_input_gate.yml:24:17:24:57 | github.event.pull_request.head.sha | .github/workflows/direct_cache_input_gate.yml:22:9:25:6 | Uses Step |
 | .github/workflows/neg_direct_cache1.yml:14:9:17:6 | Uses Step | .github/workflows/neg_direct_cache1.yml:17:9:21:6 | Uses Step |
 | .github/workflows/neg_direct_cache1.yml:16:17:16:57 | github.event.pull_request.head.sha | .github/workflows/neg_direct_cache1.yml:14:9:17:6 | Uses Step |
 | .github/workflows/neg_direct_cache1.yml:17:9:21:6 | Uses Step | .github/workflows/neg_direct_cache1.yml:21:9:22:21 | Run Step |
@@ -59,6 +61,7 @@ edges
 | .github/workflows/neg_poisonable_step1.yml:14:9:19:6 | Uses Step | .github/workflows/neg_poisonable_step1.yml:19:9:20:30 | Run Step |
 | .github/workflows/neg_poisonable_step1.yml:17:17:17:60 | steps.comment-branch.outputs.head_sha | .github/workflows/neg_poisonable_step1.yml:14:9:19:6 | Uses Step |
 | .github/workflows/neg_poisonable_step2.yml:13:9:16:6 | Uses Step | .github/workflows/neg_poisonable_step2.yml:16:9:17:54 | Run Step |
+| .github/workflows/neg_poisonable_step2.yml:15:17:15:57 | github.event.pull_request.head.sha | .github/workflows/neg_poisonable_step2.yml:13:9:16:6 | Uses Step |
 | .github/workflows/poisonable_step1.yml:10:9:12:6 | Uses Step: comment-branch | .github/workflows/poisonable_step1.yml:12:9:15:6 | Uses Step |
 | .github/workflows/poisonable_step1.yml:12:9:15:6 | Uses Step | .github/workflows/poisonable_step1.yml:15:9:17:2 | Run Step |
 | .github/workflows/poisonable_step1.yml:14:17:14:60 | steps.comment-branch.outputs.head_sha | .github/workflows/poisonable_step1.yml:12:9:15:6 | Uses Step |
@@ -78,7 +81,11 @@ edges
 | .github/workflows/poisonable_step5.yml:17:9:22:6 | Uses Step | .github/workflows/poisonable_step5.yml:22:9:24:6 | Uses Step |
 | .github/workflows/poisonable_step5.yml:20:17:20:57 | github.event.pull_request.head.ref | .github/workflows/poisonable_step5.yml:17:9:22:6 | Uses Step |
 | .github/workflows/poisonable_step5.yml:22:9:24:6 | Uses Step | .github/workflows/poisonable_step5.yml:24:9:28:31 | Uses Step |
+| .github/workflows/poisonable_step_cache_requirement.yml:10:9:13:6 | Uses Step | .github/workflows/poisonable_step_cache_requirement.yml:13:9:15:2 | Run Step |
+| .github/workflows/poisonable_step_cache_requirement.yml:12:17:12:57 | github.event.pull_request.head.sha | .github/workflows/poisonable_step_cache_requirement.yml:10:9:13:6 | Uses Step |
+| .github/workflows/poisonable_step_cache_requirement.yml:18:9:21:6 | Uses Step | .github/workflows/poisonable_step_cache_requirement.yml:21:9:25:6 | Uses Step |
+| .github/workflows/poisonable_step_cache_requirement.yml:20:17:20:57 | github.event.pull_request.head.sha | .github/workflows/poisonable_step_cache_requirement.yml:18:9:21:6 | Uses Step |
+| .github/workflows/poisonable_step_cache_requirement.yml:21:9:25:6 | Uses Step | .github/workflows/poisonable_step_cache_requirement.yml:25:9:25:24 | Run Step |
 #select
-| .github/workflows/cache_write_capable_reusable_workflow.yml:38:9:40:2 | Run Step | .github/workflows/cache_write_capable_reusable_workflow.yml:33:22:33:43 | inputs.head_sha | .github/workflows/cache_write_capable_reusable_workflow.yml:38:9:40:2 | Run Step | Potential cache poisoning in the context of the default branch due to privilege checkout of untrusted code from $@. ($@). | .github/workflows/cache_write_capable_reusable_workflow.yml:33:22:33:43 | inputs.head_sha | inputs.head_sha | .github/workflows/cache_write_capable_reusable_workflow_caller.yml:4:3:4:19 | workflow_dispatch | workflow_dispatch |
 | .github/workflows/cache_write_capable_workflow_dispatch.yml:19:9:20:6 | Run Step | .github/workflows/cache_write_capable_workflow_dispatch.yml:15:22:15:68 | fromJSON(steps.pr.outputs.json).head.sha | .github/workflows/cache_write_capable_workflow_dispatch.yml:19:9:20:6 | Run Step | Potential cache poisoning in the context of the default branch due to privilege checkout of untrusted code from $@. ($@). | .github/workflows/cache_write_capable_workflow_dispatch.yml:15:22:15:68 | fromJSON(steps.pr.outputs.json).head.sha | fromJSON(steps.pr.outputs.json).head.sha | .github/workflows/cache_write_capable_workflow_dispatch.yml:1:5:1:21 | workflow_dispatch | workflow_dispatch |
 | .github/workflows/cache_write_capable_workflow_dispatch_validated.yml:21:9:22:6 | Run Step | .github/workflows/cache_write_capable_workflow_dispatch_validated.yml:16:22:16:56 | github.event.inputs.head_sha | .github/workflows/cache_write_capable_workflow_dispatch_validated.yml:21:9:22:6 | Run Step | Potential cache poisoning in the context of the default branch due to privilege checkout of untrusted code from $@. ($@). | .github/workflows/cache_write_capable_workflow_dispatch_validated.yml:16:22:16:56 | github.event.inputs.head_sha | github.event.inputs.head_sha | .github/workflows/cache_write_capable_workflow_dispatch_validated.yml:2:3:2:19 | workflow_dispatch | workflow_dispatch |

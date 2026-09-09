@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 0123456789abcdef0123456789abcdef01234567
+          ref: ${{ github.event.pull_request.head.sha }}
 
   mutable-ref:
     if: contains(fromJSON('["MEMBER", "OWNER"]'), github.event.comment.author_association)
