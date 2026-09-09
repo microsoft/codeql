@@ -1,0 +1,17 @@
+extensions:
+  - addsTo:
+      pack: codeql/csharp-all
+      extensible: sinkModel
+    data:
+      - ["Azure.Security.KeyVault.Keys", "KeyClient", False, "KeyClient", "(System.Uri,Azure.Core.TokenCredential,Azure.Security.KeyVault.Keys.KeyClientOptions)", "", "Argument[0]", "azure-ssrf-key-vault", "manual"]
+      - ["Azure.Security.KeyVault.Keys", "KeyClient", False, "KeyClient", "(System.Uri,Azure.Core.TokenCredential)", "", "Argument[0]", "azure-ssrf-key-vault", "manual"]
+  - addsTo:
+      pack: codeql/csharp-all
+      extensible: summaryModel
+    data:
+      - ["Azure.Security.KeyVault.Keys", "KeyClient", False, "KeyClient", "(System.Uri,Azure.Core.TokenCredential,Azure.Security.KeyVault.Keys.KeyClientOptions)", "", "Argument[0]", "Argument[this].Property[Azure.Security.KeyVault.Keys.KeyClient.VaultUri]", "value", "manual"]
+      - ["Azure.Security.KeyVault.Keys", "KeyClient", False, "KeyClient", "(System.Uri,Azure.Core.TokenCredential,Azure.Security.KeyVault.Keys.KeyClientOptions)", "", "Argument[1]", "Argument[this]", "value", "manual"]
+      - ["Azure.Security.KeyVault.Keys", "KeyClient", False, "KeyClient", "(System.Uri,Azure.Core.TokenCredential,Azure.Security.KeyVault.Keys.KeyClientOptions)", "", "Argument[2]", "Argument[this]", "value", "manual"]
+      - ["Azure.Security.KeyVault.Keys", "KeyClient", False, "KeyClient", "(System.Uri,Azure.Core.TokenCredential)", "", "Argument[0]", "Argument[this].Property[Azure.Security.KeyVault.Keys.KeyClient.VaultUri]", "value", "manual"]
+      - ["Azure.Security.KeyVault.Keys", "KeyClient", False, "KeyClient", "(System.Uri,Azure.Core.TokenCredential)", "", "Argument[1]", "Argument[this]", "value", "manual"]     
+      - ["Azure.Security.KeyVault.Keys", "KeyClient", True, "get_VaultUri", "()", "", "Argument[this].Property[Azure.Security.KeyVault.Keys.KeyClient.VaultUri]", "ReturnValue", "value", "manual"]

@@ -1,0 +1,57 @@
+edges
+| test.cs:16:34:16:42 | subdomain : String | test.cs:18:56:18:100 | $"..." : String | provenance |  |
+| test.cs:16:34:16:42 | subdomain : String | test.cs:20:64:20:108 | $"..." : String | provenance |  |
+| test.cs:16:34:16:42 | subdomain : String | test.cs:22:49:22:93 | $"..." : String | provenance |  |
+| test.cs:18:56:18:100 | $"..." : String | test.cs:18:48:18:101 | object creation of type Uri | provenance | MaD:3700 Sink:MaD:2462 |
+| test.cs:20:64:20:108 | $"..." : String | test.cs:20:56:20:109 | object creation of type Uri | provenance | MaD:3700 Sink:MaD:2462 |
+| test.cs:22:49:22:93 | $"..." : String | test.cs:22:41:22:94 | object creation of type Uri | provenance | MaD:3700 Sink:MaD:2408 |
+| test.cs:38:59:38:67 | subdomain : String | test.cs:41:31:41:75 | $"..." : String | provenance |  |
+| test.cs:41:17:41:19 | access to local variable uri : Uri | test.cs:43:72:43:74 | access to local variable uri | provenance | Sink:MaD:2462 |
+| test.cs:41:23:41:76 | object creation of type Uri : Uri | test.cs:41:17:41:19 | access to local variable uri : Uri | provenance |  |
+| test.cs:41:31:41:75 | $"..." : String | test.cs:41:23:41:76 | object creation of type Uri : Uri | provenance | MaD:3700 |
+| test.cs:79:59:79:67 | subdomain : String | test.cs:82:31:82:75 | $"..." : String | provenance |  |
+| test.cs:82:17:82:19 | access to local variable uri : Uri | test.cs:84:72:84:74 | access to local variable uri | provenance | Sink:MaD:2462 |
+| test.cs:82:23:82:76 | object creation of type Uri : Uri | test.cs:82:17:82:19 | access to local variable uri : Uri | provenance |  |
+| test.cs:82:31:82:75 | $"..." : String | test.cs:82:23:82:76 | object creation of type Uri : Uri | provenance | MaD:3700 |
+| test.cs:161:59:161:67 | subdomain : String | test.cs:164:31:164:75 | $"..." : String | provenance |  |
+| test.cs:164:17:164:19 | access to local variable uri : Uri | test.cs:166:72:166:74 | access to local variable uri | provenance | Sink:MaD:2462 |
+| test.cs:164:23:164:76 | object creation of type Uri : Uri | test.cs:164:17:164:19 | access to local variable uri : Uri | provenance |  |
+| test.cs:164:31:164:75 | $"..." : String | test.cs:164:23:164:76 | object creation of type Uri : Uri | provenance | MaD:3700 |
+| test.cs:207:59:207:67 | subdomain : String | test.cs:214:31:214:75 | $"..." : String | provenance |  |
+| test.cs:214:17:214:19 | access to local variable uri : Uri | test.cs:216:72:216:74 | access to local variable uri | provenance | Sink:MaD:2462 |
+| test.cs:214:23:214:76 | object creation of type Uri : Uri | test.cs:214:17:214:19 | access to local variable uri : Uri | provenance |  |
+| test.cs:214:31:214:75 | $"..." : String | test.cs:214:23:214:76 | object creation of type Uri : Uri | provenance | MaD:3700 |
+nodes
+| test.cs:16:34:16:42 | subdomain : String | semmle.label | subdomain : String |
+| test.cs:18:48:18:101 | object creation of type Uri | semmle.label | object creation of type Uri |
+| test.cs:18:56:18:100 | $"..." : String | semmle.label | $"..." : String |
+| test.cs:20:56:20:109 | object creation of type Uri | semmle.label | object creation of type Uri |
+| test.cs:20:64:20:108 | $"..." : String | semmle.label | $"..." : String |
+| test.cs:22:41:22:94 | object creation of type Uri | semmle.label | object creation of type Uri |
+| test.cs:22:49:22:93 | $"..." : String | semmle.label | $"..." : String |
+| test.cs:38:59:38:67 | subdomain : String | semmle.label | subdomain : String |
+| test.cs:41:17:41:19 | access to local variable uri : Uri | semmle.label | access to local variable uri : Uri |
+| test.cs:41:23:41:76 | object creation of type Uri : Uri | semmle.label | object creation of type Uri : Uri |
+| test.cs:41:31:41:75 | $"..." : String | semmle.label | $"..." : String |
+| test.cs:43:72:43:74 | access to local variable uri | semmle.label | access to local variable uri |
+| test.cs:79:59:79:67 | subdomain : String | semmle.label | subdomain : String |
+| test.cs:82:17:82:19 | access to local variable uri : Uri | semmle.label | access to local variable uri : Uri |
+| test.cs:82:23:82:76 | object creation of type Uri : Uri | semmle.label | object creation of type Uri : Uri |
+| test.cs:82:31:82:75 | $"..." : String | semmle.label | $"..." : String |
+| test.cs:84:72:84:74 | access to local variable uri | semmle.label | access to local variable uri |
+| test.cs:161:59:161:67 | subdomain : String | semmle.label | subdomain : String |
+| test.cs:164:17:164:19 | access to local variable uri : Uri | semmle.label | access to local variable uri : Uri |
+| test.cs:164:23:164:76 | object creation of type Uri : Uri | semmle.label | object creation of type Uri : Uri |
+| test.cs:164:31:164:75 | $"..." : String | semmle.label | $"..." : String |
+| test.cs:166:72:166:74 | access to local variable uri | semmle.label | access to local variable uri |
+| test.cs:207:59:207:67 | subdomain : String | semmle.label | subdomain : String |
+| test.cs:214:17:214:19 | access to local variable uri : Uri | semmle.label | access to local variable uri : Uri |
+| test.cs:214:23:214:76 | object creation of type Uri : Uri | semmle.label | object creation of type Uri : Uri |
+| test.cs:214:31:214:75 | $"..." : String | semmle.label | $"..." : String |
+| test.cs:216:72:216:74 | access to local variable uri | semmle.label | access to local variable uri |
+subpaths
+#select
+| test.cs:43:72:43:74 | access to local variable uri | test.cs:38:59:38:67 | subdomain : String | test.cs:43:72:43:74 | access to local variable uri | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | test.cs:38:59:38:67 | subdomain | a user-provided value | System.Net.WebRequest | System.Net.WebRequest |
+| test.cs:84:72:84:74 | access to local variable uri | test.cs:79:59:79:67 | subdomain : String | test.cs:84:72:84:74 | access to local variable uri | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | test.cs:79:59:79:67 | subdomain | a user-provided value | System.Net.WebRequest | System.Net.WebRequest |
+| test.cs:166:72:166:74 | access to local variable uri | test.cs:161:59:161:67 | subdomain : String | test.cs:166:72:166:74 | access to local variable uri | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | test.cs:161:59:161:67 | subdomain | a user-provided value | System.Net.WebRequest | System.Net.WebRequest |
+| test.cs:216:72:216:74 | access to local variable uri | test.cs:207:59:207:67 | subdomain : String | test.cs:216:72:216:74 | access to local variable uri | Potential server side request forgery due to $@ flowing to a constructor or method from class $@. | test.cs:207:59:207:67 | subdomain | a user-provided value | System.Net.WebRequest | System.Net.WebRequest |
