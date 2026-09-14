@@ -47,67 +47,67 @@ module AzurePipelines {
     YamlValue getTrigger(string name) { result = this.lookup(name) }
 
     /**
-     * Get the pipeline pool.
+     * Gets the pipeline pool, if any.
      */
     Pool getPool() { result = this.lookup("pool") }
 
     /**
-     * Gets the pipeline parameters.
+     * Gets a pipeline parameter, if any.
      */
-    Parameter getParameters() { result = this.lookup("parameters").getAChild() }
+    Parameter getAParameter() { result = this.lookup("parameters").getAChild() }
 
     /**
-     * Get the pipeline variables.
+     * Gets a pipeline variable, if any.
      */
-    Variable getVariables() { result = this.lookup("variables").getAChild() }
+    Variable getAVariable() { result = this.lookup("variables").getAChild() }
 
     /**
-     * Get the pipeline variable with the given name.
+     * Gets the pipeline variable with the given name, if any.
      */
     YamlValue getVariable(string name) {
-      exists(Variable var | var = this.getVariables() and var.getName() = name |
+      exists(Variable var | var = this.getAVariable() and var.getName() = name |
         result = var.getValue()
       )
     }
 
     /**
-     * Get the pipeline steps.
+     * Gets a pipeline step, if any.
      */
-    Step getSteps() { result.getEnclosingDocument() = this }
+    Step getAStep() { result.getEnclosingDocument() = this }
 
     /**
-     * Gets the pipeline stages.
+     * Gets a pipeline stage, if any.
      */
-    Stage getStages() { result = this.lookup("stages").getAChild() }
+    Stage getAStage() { result = this.lookup("stages").getAChild() }
 
     /**
-     * Gets the pipeline jobs.
+     * Gets a pipeline job, if any.
      */
-    Job getJobs() {
+    Job getAJob() {
       result = this.lookup("jobs").getAChild()
       or
-      result = this.getStages().getJobs()
+      result = this.getAStage().getAJob()
     }
 
     /**
-     * Gets the pipeline repository resources.
+     * Gets a pipeline repository resource, if any.
      */
-    RepositoryResource getRepositoryResources() { result.getEnclosingDocument() = this }
+    RepositoryResource getARepositoryResource() { result.getEnclosingDocument() = this }
 
     /**
-     * Gets the pipeline resources.
+     * Gets a pipeline resource, if any.
      */
-    PipelineResource getPipelineResources() { result.getEnclosingDocument() = this }
+    PipelineResource getAPipelineResource() { result.getEnclosingDocument() = this }
 
     /**
-     * Get the pipeline task steps.
+     * Gets a pipeline task step, if any.
      */
-    Task getTaskSteps() { result = this.getSteps().(Task) }
+    Task getATaskStep() { result = this.getAStep().(Task) }
 
     /**
-     * Get the pipeline script steps.
+     * Gets a pipeline script step, if any.
      */
-    Script getScriptSteps() { result = this.getSteps().(Script) }
+    Script getAScriptStep() { result = this.getAStep().(Script) }
   }
 
   /**
@@ -116,7 +116,7 @@ module AzurePipelines {
   class Parameter extends YamlNode, YamlMapping {
     Parameter() { exists(Document document | document.lookup("parameters").getChild(_) = this) }
 
-    override string toString() { result = "Parameter '" + this.getName() + "'" }
+    override string toString() { result = this.getName() }
 
     /**
      * Gets the parameter name.
@@ -124,19 +124,19 @@ module AzurePipelines {
     string getName() { result = yamlToString(this.lookup("name")) }
 
     /**
-     * Gets the parameter type.
+     * Gets the parameter type, if any.
      */
     string getType() { result = yamlToString(this.lookup("type")) }
 
     /**
-     * Gets the parameter default value.
+     * Gets the parameter default value, if any.
      */
     YamlValue getDefault() { result = this.lookup("default") }
 
     /**
-     * Gets an allowed value for the parameter.
+     * Gets an allowed value for the parameter, if any.
      */
-    YamlValue getAllowedValue() { result = this.lookup("values").getAChild() }
+    YamlValue getAnAllowedValue() { result = this.lookup("values").getAChild() }
   }
 
   /**
@@ -145,7 +145,7 @@ module AzurePipelines {
   class Stage extends YamlNode, YamlMapping {
     Stage() { exists(Document document | document.lookup("stages").getAChildNode() = this) }
 
-    override string toString() { result = "Stage '" + this.getName() + "'" }
+    override string toString() { result = this.getName() }
 
     /**
      * Gets the stage name.
@@ -153,12 +153,12 @@ module AzurePipelines {
     string getName() { result = yamlToString(this.lookup("stage")) }
 
     /**
-     * Gets a job in the stage.
+     * Gets a job in the stage, if any.
      */
-    Job getJobs() { result = this.lookup("jobs").getAChild() }
+    Job getAJob() { result = this.lookup("jobs").getAChild() }
 
     /**
-     * Gets the stage condition.
+     * Gets the stage condition, if any.
      */
     YamlValue getCondition() { result = this.lookup("condition") }
   }
@@ -173,7 +173,7 @@ module AzurePipelines {
       exists(Stage stage | stage.lookup("jobs").getAChildNode() = this)
     }
 
-    override string toString() { result = "Job '" + this.getName() + "'" }
+    override string toString() { result = this.getName() }
 
     /**
      * Gets the job name.
@@ -185,17 +185,17 @@ module AzurePipelines {
     }
 
     /**
-     * Gets the job pool.
+     * Gets the job pool, if any.
      */
     Pool getPool() { result = this.lookup("pool") }
 
     /**
-     * Gets a step in the job.
+     * Gets a step in the job, if any.
      */
-    Step getSteps() { result = this.lookup("steps").getAChild() }
+    Step getAStep() { result = this.lookup("steps").getAChild() }
 
     /**
-     * Gets the job condition.
+     * Gets the job condition, if any.
      */
     YamlValue getCondition() { result = this.lookup("condition") }
   }
@@ -220,19 +220,19 @@ module AzurePipelines {
     }
 
     /**
-     * Get the pool name.
+     * Gets the pool name, if any.
      */
     string getName() { result = yamlToString(this.lookup("name")) }
 
     /**
-     * Get the pool VM image.
+     * Gets the pool VM image, if any.
      */
     string getVmImage() { result = yamlToString(this.lookup("vmImage")) }
 
     /**
-     * Get the pool demands.
+     * Gets the pool demands, if any.
      */
-    string getDemands() { result = yamlToString(this.lookup("demands")) }
+    string getADemand() { result = yamlToString(this.lookup("demands")) }
   }
 
   /**
@@ -249,7 +249,7 @@ module AzurePipelines {
       exists(Job job | job.lookup("variables").getChild(_) = this)
     }
 
-    override string toString() { result = "Variable '" + this.getName() + "'" }
+    override string toString() { result = this.getName() }
 
     /**
      * Get the variable name.
@@ -257,7 +257,7 @@ module AzurePipelines {
     string getName() { result = yamlToString(this.lookup("name")) }
 
     /**
-     * Get the variable value.
+     * Gets the variable value, if any.
      */
     YamlValue getValue() { result = this.lookup("value") }
   }
@@ -274,7 +274,7 @@ module AzurePipelines {
       exists(Job job | job.lookup("steps").getAChildNode() = this)
     }
 
-    override string toString() { result = "Azure DevOps Pipeline step" }
+    override string toString() { result = this.getDisplayName() }
 
     /**
      * Gets the enclosing Azure DevOps Pipeline document.
@@ -286,12 +286,12 @@ module AzurePipelines {
     }
 
     /**
-     * Get the step display name.
+     * Gets the step display name, if any.
      */
-    string displayName() { result = yamlToString(this.lookup("displayName")) }
+    string getDisplayName() { result = yamlToString(this.lookup("displayName")) }
 
     /**
-     * Get the step type based on the presence of a `task` or `script` key.
+     * Gets the step type based on its defining key, if any.
      */
     string getType() {
       exists(this.lookup("task")) and result = "task"
@@ -327,6 +327,9 @@ module AzurePipelines {
 
     TaskInputs() { task.lookup("inputs") = this }
 
+    /**
+     * Gets the input named `name`, if any.
+     */
     YamlValue getInput(string name) { result = this.lookup(name) }
   }
 
@@ -359,7 +362,7 @@ module AzurePipelines {
     string getRepository() { result = yamlToString(this.lookup("checkout")) }
 
     /**
-     * Gets the persistCredentials setting.
+     * Gets the `persistCredentials` setting, if any.
      */
     YamlValue getPersistCredentials() { result = this.lookup("persistCredentials") }
   }
@@ -441,7 +444,7 @@ module AzurePipelines {
     string getSource() { result = yamlToString(this.lookup("source")) }
 
     /**
-     * Gets the branch selector.
+     * Gets the branch selector
      */
     string getBranch() { result = yamlToString(this.lookup("branch")) }
   }
