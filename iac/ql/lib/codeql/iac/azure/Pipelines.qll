@@ -42,7 +42,7 @@ module AzurePipelines {
     override string toString() { result = "Azure DevOps Pipeline" }
 
     /**
-     * Gets a top-level trigger-like entry.
+     * Gets the top-level trigger-like entry named `name`, if any.
      */
     YamlValue getTrigger(string name) { result = this.lookup(name) }
 
@@ -280,9 +280,9 @@ module AzurePipelines {
      * Gets the enclosing Azure DevOps Pipeline document.
      */
     Document getEnclosingDocument() {
-      exists(Document document | document.lookup("steps").getAChildNode() = this | result = document)
+      result.lookup("steps").getAChildNode() = this
       or
-      exists(Document document | this.getFile() = document.getFile() | result = document)
+      this.getFile() = result.getFile()
     }
 
     /**
@@ -392,11 +392,7 @@ module AzurePipelines {
      * Gets the enclosing Azure DevOps Pipeline document.
      */
     Document getEnclosingDocument() {
-      exists(Document document |
-        document.lookup("resources").(YamlMapping).lookup("repositories").getAChildNode() = this
-      |
-        result = document
-      )
+      result.lookup("resources").(YamlMapping).lookup("repositories").getAChildNode() = this
     }
 
     /**
@@ -431,11 +427,7 @@ module AzurePipelines {
      * Gets the enclosing Azure DevOps Pipeline document.
      */
     Document getEnclosingDocument() {
-      exists(Document document |
-        document.lookup("resources").(YamlMapping).lookup("pipelines").getAChildNode() = this
-      |
-        result = document
-      )
+      result.lookup("resources").(YamlMapping).lookup("pipelines").getAChildNode() = this
     }
 
     /**
