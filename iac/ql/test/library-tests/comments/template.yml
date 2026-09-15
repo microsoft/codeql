@@ -1,0 +1,5 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Resources:
+  # a supported YAML comment
+  ExampleBucket:
+    Type: AWS::S3::Bucket
