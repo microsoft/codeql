@@ -34,6 +34,12 @@ module Compose {
      * Returns the services defined in the Compose file.
      */
     Service getServices() { result = this.lookup("services").getAChildNode() }
+
+    YamlValue getNetworks() { result = this.lookup("networks") }
+
+    YamlValue getVolumes() { result = this.lookup("volumes") }
+
+    YamlValue getSecrets() { result = this.lookup("secrets") }
   }
 
   /**
@@ -51,8 +57,79 @@ module Compose {
      * Returns the name of the service.
      */
     string getName() {
-      result = this.lookup("container_name").toString()
-      // TODO get parent key name
+      result = yamlToString(this.lookup("container_name"))
+      or
+      exists(YamlMapping services, YamlValue key, YamlValue value |
+        services = compose.lookup("services") and
+        services.maps(key, value) and
+        value = this and
+        result = key.toString()
+      )
+    }
+
+    string getImage() { result = yamlToString(this.lookup("image")) }
+
+    YamlValue getBuild() { result = this.lookup("build") }
+
+    YamlValue getEnvironment() { result = this.lookup("environment") }
+
+    EnvironmentEntry getEnvironmentEntries() {
+      result = this.lookup("environment").(YamlSequence).getAChild()
+      or
+      result = this.lookup("environment").(YamlMapping).getAChild()
+    }
+
+    YamlValue getSecrets() { result = this.lookup("secrets") }
+
+    YamlValue getVolumes() { result = this.lookup("volumes") }
+
+    YamlValue getCapAdd() { result = this.lookup("cap_add") }
+
+    YamlValue getCapDrop() { result = this.lookup("cap_drop") }
+
+    YamlValue getPrivileged() { result = this.lookup("privileged") }
+
+    YamlValue getReadOnly() { result = this.lookup("read_only") }
+
+    YamlValue getUser() { result = this.lookup("user") }
+
+    YamlValue getPid() { result = this.lookup("pid") }
+
+    YamlValue getNetworkMode() { result = this.lookup("network_mode") }
+
+    YamlValue getDevices() { result = this.lookup("devices") }
+  }
+
+  class EnvironmentEntry extends YamlNode {
+    EnvironmentEntry() {
+      exists(Service service |
+        service.lookup("environment").(YamlSequence).getAChildNode() = this
+      )
+      or
+      exists(Service service |
+        service.lookup("environment").(YamlMapping).getAChildNode() = this
+      )
+    }
+
+    string getName() {
+      result = this.(YamlString).getValue()
+      or
+      exists(YamlMapping environment, YamlValue key, YamlValue value |
+        environment.getAChildNode() = this and
+        environment.maps(key, value) and
+        value = this and
+        result = key.toString()
+      )
+    }
+
+    YamlValue getValue() {
+      result = this.(YamlMapping).lookup("value")
+      or
+      result = this.(YamlMapping).lookup("value_from")
+      or
+      result = this.(YamlMapping).lookup("value")
+      or
+      result = this
     }
   }
 }
