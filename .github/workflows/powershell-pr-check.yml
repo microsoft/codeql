@@ -30,3 +30,57 @@ jobs:
       - name: Run QL tests
         run: |
           codeql test run --threads=0 powershell/ql/test
+
+  powershell-bazel-build:
+    name: powershell-bazel-build
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    if: github.repository == 'microsoft/codeql'
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Build extractor pack
+        shell: bash
+        # On Windows `bash` is MSYS2, which reads the `:` in `//powershell:install` as a Unix
+        # path-list separator and rewrites the label to `/powershell:install`. Excluding args
+        # prefixed with `//` leaves Bazel labels alone.
+        env:
+          MSYS2_ARG_CONV_EXCL: "//"
+        run: |
+          bazel build //powershell/...
+          # `install` resolves its destination through the BUILD file in the runfiles tree, which
+          # only leads back to the workspace where runfiles are symlinks. On Windows they are
+          # copies, so without an explicit destination the pack lands in a temporary directory.
+          bazel run //powershell:install -- --destdir "$GITHUB_WORKSPACE/powershell/extractor-pack"
+      - name: Setup CodeQL
+        uses: ./.github/actions/fetch-codeql
+        with:
+          channel: release
+      # Proves the packaged extractor runs with all its native assets on this platform.
+      - name: Smoke test the extractor
+        shell: bash
+        run: |
+          codeql test run --threads=0 --search-path powershell/extractor-pack \
+            powershell/ql/test/library-tests/ssa
+      # Windows' filesystem is case-insensitive, so two pack entries differing only in case
+      # collide on extraction. Cross-build the win64 pack here because the collision comes from
+      # RID-specific NuGet payloads and is invisible on a native Linux build.
+      - name: Check the win64 pack for case-insensitive duplicates
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        env:
+          MSYS2_ARG_CONV_EXCL: "//"
+        run: |
+          bazel run //powershell:install --@rules_dotnet//dotnet:rid=win-x64 \
+            -- --destdir "$GITHUB_WORKSPACE/powershell/extractor-pack-win"
+          duplicates="$(cd powershell/extractor-pack-win && find . -type f | tr '[:upper:]' '[:lower:]' | sort | uniq -d)"
+          if [ -n "$duplicates" ]; then
+            echo "::error::paths differing only by case in the win64 pack:"
+            echo "$duplicates"
+            exit 1
+          fi
