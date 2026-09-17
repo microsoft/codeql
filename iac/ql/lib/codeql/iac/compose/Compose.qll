@@ -100,36 +100,30 @@ module Compose {
     YamlValue getDevices() { result = this.lookup("devices") }
   }
 
-  class EnvironmentEntry extends YamlNode {
+  class EnvironmentEntry extends YamlValue {
     EnvironmentEntry() {
       exists(Service service |
-        service.lookup("environment").(YamlSequence).getAChildNode() = this
+        service.lookup("environment").(YamlSequence).getAChild() = this
       )
       or
       exists(Service service |
-        service.lookup("environment").(YamlMapping).getAChildNode() = this
+        service.lookup("environment").(YamlMapping).getAChild() = this
       )
     }
 
     string getName() {
-      result = this.(YamlString).getValue()
-      or
       exists(YamlMapping environment, YamlValue key, YamlValue value |
-        environment.getAChildNode() = this and
         environment.maps(key, value) and
         value = this and
-        result = key.toString()
+        result = yamlToString(key.(YamlString))
       )
+      or
+      result = this.(YamlString).getValue().regexpCapture("([^=]+)=.*", 1)
+      or
+      result = this.(YamlString).getValue() and
+      not result.matches("%=%")
     }
 
-    YamlValue getValue() {
-      result = this.(YamlMapping).lookup("value")
-      or
-      result = this.(YamlMapping).lookup("value_from")
-      or
-      result = this.(YamlMapping).lookup("value")
-      or
-      result = this
-    }
+    YamlValue getValue() { result = this }
   }
 }

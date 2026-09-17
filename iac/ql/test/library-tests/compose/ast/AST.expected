@@ -1,0 +1,13 @@
+documents
+| compose.yaml:1:1:18:25 | services: |
+| docker-compose.yaml:1:1:11:29 | services: |
+services
+| compose.yaml:3:5:15:23 | image: nginx:1.25 |
+| docker-compose.yaml:3:5:8:21 | image:  ... ker:1.0 |
+environment
+| compose.yaml:5:7:5:14 | PASSWORD |
+| compose.yaml:5:17:5:27 | ${PASSWORD} |
+| compose.yaml:6:7:6:11 | DEBUG |
+| compose.yaml:6:14:6:19 | "true" |
+| docker-compose.yaml:5:9:5:18 | DEBUG=true |
+| docker-compose.yaml:6:9:6:17 | API_TOKEN |

@@ -13,7 +13,8 @@ module YamlKubernetes {
     Document() {
       this.getFile().getExtension() = ["yml", "yaml"] and
       exists(this.lookup("apiVersion")) and
-      exists(this.lookup("kind"))
+      exists(this.lookup("kind")) and
+      this.lookup("kind").(YamlString).getValue() != "Chart"
     }
 
     override string toString() { result = "Kubernetes " + this.getKind() + " document" }
@@ -26,14 +27,7 @@ module YamlKubernetes {
 
     YamlMapping getSpec() { result = this.lookup("spec") }
 
-    PodSpec getPodSpec() {
-      result = this.getSpec().(PodSpec)
-      or
-      result = this.getSpec().lookup("template").(YamlMapping).lookup("spec").(PodSpec)
-      or
-      result = this.getSpec().lookup("jobTemplate").(YamlMapping).lookup("spec").(YamlMapping)
-        .lookup("template").(YamlMapping).lookup("spec").(PodSpec)
-    }
+    PodSpec getPodSpec() { result.getDocument() = this }
 
     Container getContainers() { result = this.getPodSpec().getContainers() }
 
@@ -56,9 +50,24 @@ module YamlKubernetes {
 
   class PodSpec extends YamlNode, YamlMapping {
     PodSpec() {
-      exists(Document document | document.getSpec() = this)
+      exists(Document document |
+        document.getKind() = "Pod" and
+        document.lookup("spec") = this
+      )
       or
-      exists(YamlMapping template | template.lookup("spec") = this)
+      exists(Document document |
+        document.getKind() =
+          [
+            "DaemonSet", "Deployment", "Job", "ReplicaSet", "ReplicationController", "StatefulSet",
+          ] and
+        document.lookup("spec").(YamlMapping).lookup("template").(YamlMapping).lookup("spec") = this
+      )
+      or
+      exists(Document document |
+        document.getKind() = "CronJob" and
+        document.lookup("spec").(YamlMapping).lookup("jobTemplate").(YamlMapping).lookup("spec")
+            .(YamlMapping).lookup("template").(YamlMapping).lookup("spec") = this
+      )
     }
 
     Container getContainers() { result = this.lookup("containers").(YamlSequence).getAChild() }
@@ -179,11 +188,11 @@ module YamlKubernetes {
   class Role extends Document {
     Role() { this.getKind() = ["Role", "ClusterRole"] }
 
-    Rule getRules() { result = this.getSpec().lookup("rules").(YamlSequence).getAChild() }
+    Rule getRules() { result = this.lookup("rules").(YamlSequence).getAChild() }
   }
 
   class Rule extends YamlNode, YamlMapping {
-    Rule() { exists(Role role | role.getSpec().lookup("rules").(YamlSequence).getAChildNode() = this) }
+    Rule() { exists(Role role | role.lookup("rules").(YamlSequence).getAChildNode() = this) }
 
     YamlValue getApiGroups() { result = this.lookup("apiGroups") }
 
@@ -197,15 +206,15 @@ module YamlKubernetes {
   class RoleBinding extends Document {
     RoleBinding() { this.getKind() = ["RoleBinding", "ClusterRoleBinding"] }
 
-    YamlMapping getRoleRef() { result = this.getSpec().lookup("roleRef") }
+    YamlMapping getRoleRef() { result = this.lookup("roleRef") }
 
-    Subject getSubjects() { result = this.getSpec().lookup("subjects").(YamlSequence).getAChild() }
+    Subject getSubjects() { result = this.lookup("subjects").(YamlSequence).getAChild() }
   }
 
   class Subject extends YamlNode, YamlMapping {
     Subject() {
       exists(RoleBinding binding |
-        binding.getSpec().lookup("subjects").(YamlSequence).getAChildNode() = this
+        binding.lookup("subjects").(YamlSequence).getAChildNode() = this
       )
     }
 
