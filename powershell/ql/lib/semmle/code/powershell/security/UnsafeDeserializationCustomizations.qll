@@ -103,6 +103,31 @@ module UnsafeDeserialization {
   }
 
   /**
+   * An argument to Import-Clixml or ConvertFrom-CliXml, which deserializes CLIXML
+   * and can trigger gadget chains leading to code execution.
+   */
+  class CliXmlDeserializationSink extends Sink {
+    string cmdletName;
+
+    CliXmlDeserializationSink() {
+      exists(DataFlow::CallNode call |
+        call.matchesName(cmdletName) and
+        (
+          this = call.getAnArgument()
+          or
+          this.asExpr().(CfgNodes::ExprNodes::PipelineArgumentCfgNode).getCall() =
+            call.getCallNode()
+        )
+      |
+        cmdletName = "Import-Clixml" or
+        cmdletName = "ConvertFrom-CliXml"
+      )
+    }
+
+    override string getSinkType() { result = "call to " + cmdletName }
+  }
+
+  /**
    * A BinaryFormatter deserialization method call, including Deserialize, UnsafeDeserialize,
    * and UnsafeDeserializeMethodResponse.
    */
