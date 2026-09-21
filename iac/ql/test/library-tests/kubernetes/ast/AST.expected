@@ -29,3 +29,18 @@ bindings
 | workloads.yaml:43:1:54:20 | Kubernetes ClusterRoleBinding document |
 subjects
 | workloads.yaml:52:5:54:20 | kind: ServiceAccount |
+documentContainers
+| workloads.yaml:1:1:32:29 | HelmChart Document | workloads.yaml:17:11:29:6 | name: web |
+| workloads.yaml:1:1:32:29 | Kubernetes Deployment document | workloads.yaml:17:11:29:6 | name: web |
+podContainers
+| workloads.yaml:13:7:32:29 | service ... me: web | workloads.yaml:17:11:29:6 | name: web |
+podVolumes
+| workloads.yaml:13:7:32:29 | service ... me: web | workloads.yaml:30:11:32:29 | name: config |
+containerEnvironment
+| workloads.yaml:17:11:29:6 | name: web | workloads.yaml:20:15:25:10 | name: PASSWORD |
+roleRules
+| workloads.yaml:34:1:41:27 | HelmChart Document | workloads.yaml:39:5:41:27 | apiGroups: [""] |
+| workloads.yaml:34:1:41:27 | Kubernetes ClusterRole document | workloads.yaml:39:5:41:27 | apiGroups: [""] |
+bindingSubjects
+| workloads.yaml:43:1:54:20 | HelmChart Document | workloads.yaml:52:5:54:20 | kind: ServiceAccount |
+| workloads.yaml:43:1:54:20 | Kubernetes ClusterRoleBinding document | workloads.yaml:52:5:54:20 | kind: ServiceAccount |
