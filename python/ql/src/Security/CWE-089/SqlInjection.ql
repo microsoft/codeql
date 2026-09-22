@@ -13,6 +13,7 @@
 
 import python
 import semmle.python.security.dataflow.SqlInjectionQuery
+import SqlInjectionModels
 import SqlInjectionFlow::PathGraph
 
 from SqlInjectionFlow::PathNode source, SqlInjectionFlow::PathNode sink

@@ -1,0 +1,121 @@
+#select
+| Test.py:22:47:22:71 | ControlFlowNode for Attribute() | Test.py:15:39:15:47 | ControlFlowNode for sql_query | Test.py:22:47:22:71 | ControlFlowNode for Attribute() | This SQL query depends on a $@. | Test.py:15:39:15:47 | ControlFlowNode for sql_query | user-provided value |
+| Test.py:28:47:28:55 | ControlFlowNode for sql_query | Test.py:27:48:27:56 | ControlFlowNode for sql_query | Test.py:28:47:28:55 | ControlFlowNode for sql_query | This SQL query depends on a $@. | Test.py:27:48:27:56 | ControlFlowNode for sql_query | user-provided value |
+| Test.py:32:43:32:55 | ControlFlowNode for cleaned_query | Test.py:30:48:30:56 | ControlFlowNode for sql_query | Test.py:32:43:32:55 | ControlFlowNode for cleaned_query | This SQL query depends on a $@. | Test.py:30:48:30:56 | ControlFlowNode for sql_query | user-provided value |
+| Test.py:50:43:50:51 | ControlFlowNode for sql_query | Test.py:49:33:49:41 | ControlFlowNode for sql_query | Test.py:50:43:50:51 | ControlFlowNode for sql_query | This SQL query depends on a $@. | Test.py:49:33:49:41 | ControlFlowNode for sql_query | user-provided value |
+| Test.py:72:15:72:36 | ControlFlowNode for Attribute | Test.py:69:22:69:49 | ControlFlowNode for Attribute() | Test.py:72:15:72:36 | ControlFlowNode for Attribute | This SQL query depends on a $@. | Test.py:69:22:69:49 | ControlFlowNode for Attribute() | user-provided value |
+| Test.py:76:15:76:26 | ControlFlowNode for Attribute | Test.py:93:22:93:49 | ControlFlowNode for Attribute() | Test.py:76:15:76:26 | ControlFlowNode for Attribute | This SQL query depends on a $@. | Test.py:93:22:93:49 | ControlFlowNode for Attribute() | user-provided value |
+| Test.py:102:43:102:66 | ControlFlowNode for Subscript | Test.py:102:43:102:66 | ControlFlowNode for Subscript | Test.py:102:43:102:66 | ControlFlowNode for Subscript | This SQL query depends on a $@. | Test.py:102:43:102:66 | ControlFlowNode for Subscript | user-provided value |
+| Test.py:106:15:106:35 | ControlFlowNode for Subscript | Test.py:9:19:9:25 | ControlFlowNode for ImportMember | Test.py:106:15:106:35 | ControlFlowNode for Subscript | This SQL query depends on a $@. | Test.py:9:19:9:25 | ControlFlowNode for ImportMember | user-provided value |
+| Test.py:111:43:111:64 | ControlFlowNode for Attribute | Test.py:9:19:9:25 | ControlFlowNode for ImportMember | Test.py:111:43:111:64 | ControlFlowNode for Attribute | This SQL query depends on a $@. | Test.py:9:19:9:25 | ControlFlowNode for ImportMember | user-provided value |
+| Test.py:116:43:116:60 | ControlFlowNode for Attribute() | Test.py:9:19:9:25 | ControlFlowNode for ImportMember | Test.py:116:43:116:60 | ControlFlowNode for Attribute() | This SQL query depends on a $@. | Test.py:9:19:9:25 | ControlFlowNode for ImportMember | user-provided value |
+edges
+| Test.py:9:19:9:25 | ControlFlowNode for ImportMember | Test.py:9:19:9:25 | ControlFlowNode for request | provenance |  |
+| Test.py:9:19:9:25 | ControlFlowNode for request | Test.py:106:15:106:21 | ControlFlowNode for request | provenance |  |
+| Test.py:9:19:9:25 | ControlFlowNode for request | Test.py:110:39:110:45 | ControlFlowNode for request | provenance |  |
+| Test.py:9:19:9:25 | ControlFlowNode for request | Test.py:115:38:115:44 | ControlFlowNode for request | provenance |  |
+| Test.py:15:39:15:47 | ControlFlowNode for sql_query | Test.py:16:9:16:22 | ControlFlowNode for parsed_queries | provenance | AdditionalTaintStep |
+| Test.py:16:9:16:22 | ControlFlowNode for parsed_queries | Test.py:18:13:18:24 | ControlFlowNode for parsed_query | provenance |  |
+| Test.py:18:13:18:24 | ControlFlowNode for parsed_query | Test.py:20:36:20:53 | ControlFlowNode for Attribute() | provenance | AdditionalTaintStep |
+| Test.py:20:13:20:27 | [post] ControlFlowNode for updated_queries [List element] | Test.py:22:56:22:70 | ControlFlowNode for updated_queries [List element] | provenance |  |
+| Test.py:20:36:20:53 | ControlFlowNode for Attribute() | Test.py:20:13:20:27 | [post] ControlFlowNode for updated_queries [List element] | provenance | list.append |
+| Test.py:22:56:22:70 | ControlFlowNode for updated_queries [List element] | Test.py:22:47:22:71 | ControlFlowNode for Attribute() | provenance | str.join |
+| Test.py:27:48:27:56 | ControlFlowNode for sql_query | Test.py:28:47:28:55 | ControlFlowNode for sql_query | provenance |  |
+| Test.py:30:48:30:56 | ControlFlowNode for sql_query | Test.py:31:9:31:21 | ControlFlowNode for cleaned_query | provenance | AdditionalTaintStep |
+| Test.py:31:9:31:21 | ControlFlowNode for cleaned_query | Test.py:32:43:32:55 | ControlFlowNode for cleaned_query | provenance |  |
+| Test.py:49:33:49:41 | ControlFlowNode for sql_query | Test.py:50:43:50:51 | ControlFlowNode for sql_query | provenance |  |
+| Test.py:69:5:69:18 | ControlFlowNode for encoded_config | Test.py:70:5:70:14 | ControlFlowNode for query_json | provenance |  |
+| Test.py:69:5:69:18 | ControlFlowNode for encoded_config | Test.py:70:5:70:14 | ControlFlowNode for query_json | provenance | Decoding-Base64 |
+| Test.py:69:22:69:49 | ControlFlowNode for Attribute() | Test.py:69:5:69:18 | ControlFlowNode for encoded_config | provenance |  |
+| Test.py:70:5:70:14 | ControlFlowNode for query_json | Test.py:71:5:71:9 | ControlFlowNode for query | provenance | AdditionalTaintStep |
+| Test.py:71:5:71:9 | ControlFlowNode for query | Test.py:72:15:72:36 | ControlFlowNode for Attribute | provenance | AdditionalTaintStep |
+| Test.py:75:54:75:60 | ControlFlowNode for segment | Test.py:76:15:76:26 | ControlFlowNode for Attribute | provenance | AdditionalTaintStep |
+| Test.py:79:55:79:59 | ControlFlowNode for query | Test.py:81:9:81:15 | ControlFlowNode for segment | provenance | AdditionalTaintStep |
+| Test.py:81:9:81:15 | ControlFlowNode for segment | Test.py:82:36:82:42 | ControlFlowNode for segment | provenance |  |
+| Test.py:81:9:81:15 | ControlFlowNode for segment | Test.py:86:9:86:16 | ControlFlowNode for segments | provenance | AdditionalTaintStep |
+| Test.py:82:9:82:24 | [post] ControlFlowNode for segments_by_step [Any dictionary element, List element] | Test.py:86:20:86:35 | ControlFlowNode for segments_by_step [Any dictionary element, List element] | provenance |  |
+| Test.py:82:9:82:24 | [post] ControlFlowNode for segments_by_step [List element, List element] | Test.py:86:20:86:35 | ControlFlowNode for segments_by_step [List element, List element] | provenance |  |
+| Test.py:82:9:82:24 | [post] ControlFlowNode for segments_by_step [Set element, List element] | Test.py:86:20:86:35 | ControlFlowNode for segments_by_step [Set element, List element] | provenance |  |
+| Test.py:82:9:82:27 | [post] ControlFlowNode for Subscript [List element] | Test.py:82:9:82:24 | [post] ControlFlowNode for segments_by_step [Any dictionary element, List element] | provenance |  |
+| Test.py:82:9:82:27 | [post] ControlFlowNode for Subscript [List element] | Test.py:82:9:82:24 | [post] ControlFlowNode for segments_by_step [List element, List element] | provenance |  |
+| Test.py:82:9:82:27 | [post] ControlFlowNode for Subscript [List element] | Test.py:82:9:82:24 | [post] ControlFlowNode for segments_by_step [Set element, List element] | provenance |  |
+| Test.py:82:36:82:42 | ControlFlowNode for segment | Test.py:82:9:82:27 | [post] ControlFlowNode for Subscript [List element] | provenance | list.append |
+| Test.py:86:9:86:16 | ControlFlowNode for segments | Test.py:87:13:87:19 | ControlFlowNode for segment | provenance |  |
+| Test.py:86:9:86:16 | ControlFlowNode for segments [List element] | Test.py:87:24:87:31 | ControlFlowNode for segments [List element] | provenance |  |
+| Test.py:86:20:86:35 | ControlFlowNode for segments_by_step [Any dictionary element, List element] | Test.py:86:20:86:41 | ControlFlowNode for Subscript [List element] | provenance |  |
+| Test.py:86:20:86:35 | ControlFlowNode for segments_by_step [List element, List element] | Test.py:86:20:86:41 | ControlFlowNode for Subscript [List element] | provenance |  |
+| Test.py:86:20:86:35 | ControlFlowNode for segments_by_step [Set element, List element] | Test.py:86:20:86:41 | ControlFlowNode for Subscript [List element] | provenance |  |
+| Test.py:86:20:86:41 | ControlFlowNode for Subscript [List element] | Test.py:86:9:86:16 | ControlFlowNode for segments [List element] | provenance |  |
+| Test.py:87:13:87:19 | ControlFlowNode for segment | Test.py:88:55:88:61 | ControlFlowNode for segment | provenance |  |
+| Test.py:87:24:87:31 | ControlFlowNode for segments [List element] | Test.py:87:13:87:19 | ControlFlowNode for segment | provenance |  |
+| Test.py:88:55:88:61 | ControlFlowNode for segment | Test.py:75:54:75:60 | ControlFlowNode for segment | provenance |  |
+| Test.py:93:5:93:18 | ControlFlowNode for encoded_config | Test.py:94:5:94:14 | ControlFlowNode for job_config | provenance |  |
+| Test.py:93:5:93:18 | ControlFlowNode for encoded_config | Test.py:94:5:94:14 | ControlFlowNode for job_config | provenance | Decoding-Base64 |
+| Test.py:93:22:93:49 | ControlFlowNode for Attribute() | Test.py:93:5:93:18 | ControlFlowNode for encoded_config | provenance |  |
+| Test.py:94:5:94:14 | ControlFlowNode for job_config | Test.py:95:5:95:10 | ControlFlowNode for config | provenance | AdditionalTaintStep |
+| Test.py:95:5:95:10 | ControlFlowNode for config | Test.py:96:5:96:14 | ControlFlowNode for query_json | provenance | AdditionalTaintStep |
+| Test.py:96:5:96:14 | ControlFlowNode for query_json | Test.py:97:5:97:9 | ControlFlowNode for query | provenance | AdditionalTaintStep |
+| Test.py:97:5:97:9 | ControlFlowNode for query | Test.py:98:41:98:45 | ControlFlowNode for query | provenance |  |
+| Test.py:98:41:98:45 | ControlFlowNode for query | Test.py:79:55:79:59 | ControlFlowNode for query | provenance |  |
+| Test.py:106:15:106:21 | ControlFlowNode for request | Test.py:106:15:106:35 | ControlFlowNode for Subscript | provenance | AdditionalTaintStep |
+| Test.py:110:5:110:9 | ControlFlowNode for query | Test.py:111:43:111:64 | ControlFlowNode for Attribute | provenance | AdditionalTaintStep |
+| Test.py:110:39:110:45 | ControlFlowNode for request | Test.py:110:5:110:9 | ControlFlowNode for query | provenance | AdditionalTaintStep |
+| Test.py:115:5:115:16 | ControlFlowNode for parsed_query | Test.py:116:43:116:60 | ControlFlowNode for Attribute() | provenance | AdditionalTaintStep |
+| Test.py:115:38:115:44 | ControlFlowNode for request | Test.py:115:5:115:16 | ControlFlowNode for parsed_query | provenance | AdditionalTaintStep |
+nodes
+| Test.py:9:19:9:25 | ControlFlowNode for ImportMember | semmle.label | ControlFlowNode for ImportMember |
+| Test.py:9:19:9:25 | ControlFlowNode for request | semmle.label | ControlFlowNode for request |
+| Test.py:15:39:15:47 | ControlFlowNode for sql_query | semmle.label | ControlFlowNode for sql_query |
+| Test.py:16:9:16:22 | ControlFlowNode for parsed_queries | semmle.label | ControlFlowNode for parsed_queries |
+| Test.py:18:13:18:24 | ControlFlowNode for parsed_query | semmle.label | ControlFlowNode for parsed_query |
+| Test.py:20:13:20:27 | [post] ControlFlowNode for updated_queries [List element] | semmle.label | [post] ControlFlowNode for updated_queries [List element] |
+| Test.py:20:36:20:53 | ControlFlowNode for Attribute() | semmle.label | ControlFlowNode for Attribute() |
+| Test.py:22:47:22:71 | ControlFlowNode for Attribute() | semmle.label | ControlFlowNode for Attribute() |
+| Test.py:22:56:22:70 | ControlFlowNode for updated_queries [List element] | semmle.label | ControlFlowNode for updated_queries [List element] |
+| Test.py:27:48:27:56 | ControlFlowNode for sql_query | semmle.label | ControlFlowNode for sql_query |
+| Test.py:28:47:28:55 | ControlFlowNode for sql_query | semmle.label | ControlFlowNode for sql_query |
+| Test.py:30:48:30:56 | ControlFlowNode for sql_query | semmle.label | ControlFlowNode for sql_query |
+| Test.py:31:9:31:21 | ControlFlowNode for cleaned_query | semmle.label | ControlFlowNode for cleaned_query |
+| Test.py:32:43:32:55 | ControlFlowNode for cleaned_query | semmle.label | ControlFlowNode for cleaned_query |
+| Test.py:49:33:49:41 | ControlFlowNode for sql_query | semmle.label | ControlFlowNode for sql_query |
+| Test.py:50:43:50:51 | ControlFlowNode for sql_query | semmle.label | ControlFlowNode for sql_query |
+| Test.py:69:5:69:18 | ControlFlowNode for encoded_config | semmle.label | ControlFlowNode for encoded_config |
+| Test.py:69:22:69:49 | ControlFlowNode for Attribute() | semmle.label | ControlFlowNode for Attribute() |
+| Test.py:70:5:70:14 | ControlFlowNode for query_json | semmle.label | ControlFlowNode for query_json |
+| Test.py:71:5:71:9 | ControlFlowNode for query | semmle.label | ControlFlowNode for query |
+| Test.py:72:15:72:36 | ControlFlowNode for Attribute | semmle.label | ControlFlowNode for Attribute |
+| Test.py:75:54:75:60 | ControlFlowNode for segment | semmle.label | ControlFlowNode for segment |
+| Test.py:76:15:76:26 | ControlFlowNode for Attribute | semmle.label | ControlFlowNode for Attribute |
+| Test.py:79:55:79:59 | ControlFlowNode for query | semmle.label | ControlFlowNode for query |
+| Test.py:81:9:81:15 | ControlFlowNode for segment | semmle.label | ControlFlowNode for segment |
+| Test.py:82:9:82:24 | [post] ControlFlowNode for segments_by_step [Any dictionary element, List element] | semmle.label | [post] ControlFlowNode for segments_by_step [Any dictionary element, List element] |
+| Test.py:82:9:82:24 | [post] ControlFlowNode for segments_by_step [List element, List element] | semmle.label | [post] ControlFlowNode for segments_by_step [List element, List element] |
+| Test.py:82:9:82:24 | [post] ControlFlowNode for segments_by_step [Set element, List element] | semmle.label | [post] ControlFlowNode for segments_by_step [Set element, List element] |
+| Test.py:82:9:82:27 | [post] ControlFlowNode for Subscript [List element] | semmle.label | [post] ControlFlowNode for Subscript [List element] |
+| Test.py:82:36:82:42 | ControlFlowNode for segment | semmle.label | ControlFlowNode for segment |
+| Test.py:86:9:86:16 | ControlFlowNode for segments | semmle.label | ControlFlowNode for segments |
+| Test.py:86:9:86:16 | ControlFlowNode for segments [List element] | semmle.label | ControlFlowNode for segments [List element] |
+| Test.py:86:20:86:35 | ControlFlowNode for segments_by_step [Any dictionary element, List element] | semmle.label | ControlFlowNode for segments_by_step [Any dictionary element, List element] |
+| Test.py:86:20:86:35 | ControlFlowNode for segments_by_step [List element, List element] | semmle.label | ControlFlowNode for segments_by_step [List element, List element] |
+| Test.py:86:20:86:35 | ControlFlowNode for segments_by_step [Set element, List element] | semmle.label | ControlFlowNode for segments_by_step [Set element, List element] |
+| Test.py:86:20:86:41 | ControlFlowNode for Subscript [List element] | semmle.label | ControlFlowNode for Subscript [List element] |
+| Test.py:87:13:87:19 | ControlFlowNode for segment | semmle.label | ControlFlowNode for segment |
+| Test.py:87:24:87:31 | ControlFlowNode for segments [List element] | semmle.label | ControlFlowNode for segments [List element] |
+| Test.py:88:55:88:61 | ControlFlowNode for segment | semmle.label | ControlFlowNode for segment |
+| Test.py:93:5:93:18 | ControlFlowNode for encoded_config | semmle.label | ControlFlowNode for encoded_config |
+| Test.py:93:22:93:49 | ControlFlowNode for Attribute() | semmle.label | ControlFlowNode for Attribute() |
+| Test.py:94:5:94:14 | ControlFlowNode for job_config | semmle.label | ControlFlowNode for job_config |
+| Test.py:95:5:95:10 | ControlFlowNode for config | semmle.label | ControlFlowNode for config |
+| Test.py:96:5:96:14 | ControlFlowNode for query_json | semmle.label | ControlFlowNode for query_json |
+| Test.py:97:5:97:9 | ControlFlowNode for query | semmle.label | ControlFlowNode for query |
+| Test.py:98:41:98:45 | ControlFlowNode for query | semmle.label | ControlFlowNode for query |
+| Test.py:102:43:102:66 | ControlFlowNode for Subscript | semmle.label | ControlFlowNode for Subscript |
+| Test.py:106:15:106:21 | ControlFlowNode for request | semmle.label | ControlFlowNode for request |
+| Test.py:106:15:106:35 | ControlFlowNode for Subscript | semmle.label | ControlFlowNode for Subscript |
+| Test.py:110:5:110:9 | ControlFlowNode for query | semmle.label | ControlFlowNode for query |
+| Test.py:110:39:110:45 | ControlFlowNode for request | semmle.label | ControlFlowNode for request |
+| Test.py:111:43:111:64 | ControlFlowNode for Attribute | semmle.label | ControlFlowNode for Attribute |
+| Test.py:115:5:115:16 | ControlFlowNode for parsed_query | semmle.label | ControlFlowNode for parsed_query |
+| Test.py:115:38:115:44 | ControlFlowNode for request | semmle.label | ControlFlowNode for request |
+| Test.py:116:43:116:60 | ControlFlowNode for Attribute() | semmle.label | ControlFlowNode for Attribute() |
+subpaths
