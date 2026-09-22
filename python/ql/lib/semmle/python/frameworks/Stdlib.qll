@@ -1262,18 +1262,11 @@ module StdlibPrivate {
   API::Node subprocess() { result = API::moduleImport("subprocess") }
 
   private predicate isExplicitShellCommand(string executable, string commandSwitch) {
-    exists(string shell |
-      shell in ["sh", "bash", "dash", "zsh"] and
-      (
-        executable = shell
-        or
-        exists(StringLiteral executableLiteral |
-          executable = executableLiteral.getText() and
-          executable.regexpMatch("^/(?:[^/]+/)*" + shell + "$")
-        )
-      ) and
-      commandSwitch = "-c"
-    )
+    executable in [
+        "sh", "/bin/sh", "/usr/bin/sh", "bash", "/bin/bash", "/usr/bin/bash", "dash", "/bin/dash",
+        "/usr/bin/dash", "zsh", "/bin/zsh", "/usr/bin/zsh"
+      ] and
+    commandSwitch = "-c"
     or
     executable in ["cmd", "cmd.exe"] and
     commandSwitch in ["/c", "/C"]

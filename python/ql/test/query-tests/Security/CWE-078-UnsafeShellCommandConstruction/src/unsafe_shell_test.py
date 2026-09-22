@@ -70,6 +70,9 @@ async def explicit_shell_command_operands(name): # $ Source
     python_code = "print(" + name + ")"
     subprocess.Popen(["python", "-c", python_code])
 
+    custom_path_command = "ping " + name
+    subprocess.Popen(["/opt/tools/bash", "-c", custom_path_command])
+
     positional_argument = "ping " + name
     subprocess.Popen(["bash", "-c", "echo fixed", positional_argument])
 

@@ -130,6 +130,7 @@ subprocess.Popen(["<progname>", "-c", "vuln"], executable="/bin/bash")  # $ getC
 subprocess.Popen(["bash", "-c", "constant", "not-command"])  # $ getCommand="bash" getCommand="constant"
 subprocess.Popen(["python", "-c", "not-shell-command"])  # $ getCommand="python"
 subprocess.Popen(["unknown-shell", "-c", "not-shell-command"])  # $ getCommand="unknown-shell"
+subprocess.Popen(["/opt/tools/bash", "-c", "not-shell-command"])  # $ getCommand="/opt/tools/bash"
 subprocess.Popen(["bash", "-x", "not-shell-command"])  # $ getCommand="bash"
 
 if UNKNOWN:
@@ -178,6 +179,7 @@ asyncio.run(asyncio.create_subprocess_exec("sh", "-c", "vuln"))  # $ getCommand=
 asyncio.run(subprocess.create_subprocess_exec("/bin/bash", "-c", "vuln"))  # $ getCommand="/bin/bash" getCommand="vuln" getAPathArgument="/bin/bash"
 asyncio.run(asyncio.create_subprocess_exec("cmd.exe", "/C", "vuln"))  # $ getCommand="cmd.exe" getCommand="vuln" getAPathArgument="cmd.exe"
 asyncio.run(asyncio.create_subprocess_exec("python", "-c", "not-shell-command"))  # $ getCommand="python" getAPathArgument="python"
+asyncio.run(asyncio.create_subprocess_exec("/opt/tools/bash", "-c", "not-shell-command"))  # $ getCommand="/opt/tools/bash" getAPathArgument="/opt/tools/bash"
 asyncio.run(asyncio.create_subprocess_exec("bash", "-c", "constant", "not-command"))  # $ getCommand="bash" getCommand="constant" getAPathArgument="bash"
 
 loop = asyncio.new_event_loop()

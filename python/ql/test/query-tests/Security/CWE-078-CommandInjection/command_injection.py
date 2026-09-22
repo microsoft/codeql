@@ -112,6 +112,11 @@ async def explicit_shell_command_operands():
         command,
     ])
     subprocess.Popen([
+        "/opt/tools/bash", # $ result=OK
+        "-c",
+        command,
+    ])
+    subprocess.Popen([
         "bash", # $ result=OK
         "-c",
         "echo fixed", # $ result=OK
