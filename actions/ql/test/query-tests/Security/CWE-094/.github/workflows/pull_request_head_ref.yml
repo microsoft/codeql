@@ -1,0 +1,25 @@
+name: Pull request head ref
+
+on:
+  pull_request:
+
+jobs:
+  direct-interpolation:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "${{ github.head_ref }}"
+      - shell: pwsh
+        run: Write-Host "${{ github.head_ref }}"
+
+  environment-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: printf '%s\n' "$HEAD_REF"
+
+  metadata-only:
+    runs-on: ubuntu-latest
+    name: Check ${{ github.head_ref }}
+    steps:
+      - run: echo safe

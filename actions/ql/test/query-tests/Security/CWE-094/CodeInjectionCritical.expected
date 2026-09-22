@@ -412,6 +412,8 @@ nodes
 | .github/workflows/merge_group_code_injection.yml:10:21:10:47 | toJSON(github.event) | semmle.label | toJSON(github.event) |
 | .github/workflows/merge_group_code_injection.yml:12:21:12:60 | github.event.merge_group.head_ref | semmle.label | github.event.merge_group.head_ref |
 | .github/workflows/priv_pull_request.yml:14:21:14:57 | github.event.pull_request.body | semmle.label | github.event.pull_request.body |
+| .github/workflows/pull_request_head_ref.yml:10:21:10:42 | github.head_ref | semmle.label | github.head_ref |
+| .github/workflows/pull_request_head_ref.yml:12:27:12:48 | github.head_ref | semmle.label | github.head_ref |
 | .github/workflows/pull_request_review.yml:7:19:7:56 | github.event.pull_request.title | semmle.label | github.event.pull_request.title |
 | .github/workflows/pull_request_review.yml:8:19:8:55 | github.event.pull_request.body | semmle.label | github.event.pull_request.body |
 | .github/workflows/pull_request_review.yml:9:19:9:61 | github.event.pull_request.head.label | semmle.label | github.event.pull_request.head.label |

@@ -40,7 +40,7 @@ class GitHubCtxSource extends RemoteFlowSource {
       flag = "branch"
     |
       event = e.getATriggerEvent().getName() and
-      event = "pull_request_target"
+      event = ["pull_request", "pull_request_target"]
       or
       not exists(e.getATriggerEvent()) and
       event = "unknown"
