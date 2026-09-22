@@ -105,25 +105,32 @@ subprocess.run(["executable", "arg0"])  # $ getCommand="executable"
 ########################################
 # actively using known shell as the executable
 
-subprocess.Popen(["/bin/sh", "-c", "vuln"])  # $ getCommand="/bin/sh" MISSING: getCommand="vuln"
-subprocess.Popen(["/bin/bash", "-c", "vuln"])  # $ getCommand="/bin/bash" MISSING: getCommand="vuln"
-subprocess.Popen(["/bin/dash", "-c", "vuln"])  # $ getCommand="/bin/dash" MISSING: getCommand="vuln"
-subprocess.Popen(["/bin/zsh", "-c", "vuln"])  # $ getCommand="/bin/zsh" MISSING: getCommand="vuln"
+subprocess.Popen(["/bin/sh", "-c", "vuln"])  # $ getCommand="/bin/sh" getCommand="vuln"
+subprocess.Popen(["/usr/bin/bash", "-c", "vuln"])  # $ getCommand="/usr/bin/bash" getCommand="vuln"
+subprocess.Popen(["/bin/dash", "-c", "vuln"])  # $ getCommand="/bin/dash" getCommand="vuln"
+subprocess.Popen(["/bin/zsh", "-c", "vuln"])  # $ getCommand="/bin/zsh" getCommand="vuln"
 
-subprocess.Popen(["sh", "-c", "vuln"])  # $ getCommand="sh" MISSING: getCommand="vuln"
-subprocess.Popen(["bash", "-c", "vuln"])  # $ getCommand="bash" MISSING: getCommand="vuln"
-subprocess.Popen(["dash", "-c", "vuln"])  # $ getCommand="dash" MISSING: getCommand="vuln"
-subprocess.Popen(["zsh", "-c", "vuln"])  # $ getCommand="zsh" MISSING: getCommand="vuln"
+subprocess.Popen(["sh", "-c", "vuln"])  # $ getCommand="sh" getCommand="vuln"
+subprocess.call(["bash", "-c", "vuln"])  # $ getCommand="bash" getCommand="vuln"
+subprocess.check_call(["dash", "-c", "vuln"])  # $ getCommand="dash" getCommand="vuln"
+subprocess.check_output(["zsh", "-c", "vuln"])  # $ getCommand="zsh" getCommand="vuln"
+subprocess.run(["bash", "-c", "vuln"])  # $ getCommand="bash" getCommand="vuln"
 
 # Check that we don't consider ANY argument a command injection sink
 subprocess.Popen(["sh", "/bin/python"])  # $ getCommand="sh"
 
-subprocess.Popen(["cmd.exe", "/c", "vuln"])  # $ getCommand="cmd.exe" MISSING: getCommand="vuln"
-subprocess.Popen(["cmd.exe", "/C", "vuln"])  # $ getCommand="cmd.exe" MISSING: getCommand="vuln"
-subprocess.Popen(["cmd", "/c", "vuln"])  # $ getCommand="cmd" MISSING: getCommand="vuln"
-subprocess.Popen(["cmd", "/C", "vuln"])  # $ getCommand="cmd" MISSING: getCommand="vuln"
+subprocess.Popen(["cmd.exe", "/c", "vuln"])  # $ getCommand="cmd.exe" getCommand="vuln"
+subprocess.Popen(["cmd.exe", "/C", "vuln"])  # $ getCommand="cmd.exe" getCommand="vuln"
+subprocess.Popen(["cmd", "/c", "vuln"])  # $ getCommand="cmd" getCommand="vuln"
+subprocess.Popen(["cmd", "/C", "vuln"])  # $ getCommand="cmd" getCommand="vuln"
 
-subprocess.Popen(["<progname>", "-c", "vuln"], executable="/bin/bash")  # $ getCommand="/bin/bash" MISSING: getCommand="vuln"
+subprocess.Popen(["<progname>", "-c", "vuln"], executable="/bin/bash")  # $ getCommand="/bin/bash" getCommand="vuln"
+
+# Only the operand immediately following the command switch is shell interpreted.
+subprocess.Popen(["bash", "-c", "constant", "not-command"])  # $ getCommand="bash" getCommand="constant"
+subprocess.Popen(["python", "-c", "not-shell-command"])  # $ getCommand="python"
+subprocess.Popen(["unknown-shell", "-c", "not-shell-command"])  # $ getCommand="unknown-shell"
+subprocess.Popen(["bash", "-x", "not-shell-command"])  # $ getCommand="bash"
 
 if UNKNOWN:
     os.execl("/bin/sh", "<progname>", "-c", "vuln")  # $ getCommand="/bin/sh" getAPathArgument="/bin/sh" MISSING: getCommand="vuln"
@@ -167,6 +174,11 @@ from asyncio import subprocess
 
 asyncio.run(asyncio.create_subprocess_exec("executable", "arg0"))  # $ getCommand="executable" getAPathArgument="executable"
 asyncio.run(subprocess.create_subprocess_exec("executable", "arg0"))  # $ getCommand="executable" getAPathArgument="executable"
+asyncio.run(asyncio.create_subprocess_exec("sh", "-c", "vuln"))  # $ getCommand="sh" getCommand="vuln" getAPathArgument="sh"
+asyncio.run(subprocess.create_subprocess_exec("/bin/bash", "-c", "vuln"))  # $ getCommand="/bin/bash" getCommand="vuln" getAPathArgument="/bin/bash"
+asyncio.run(asyncio.create_subprocess_exec("cmd.exe", "/C", "vuln"))  # $ getCommand="cmd.exe" getCommand="vuln" getAPathArgument="cmd.exe"
+asyncio.run(asyncio.create_subprocess_exec("python", "-c", "not-shell-command"))  # $ getCommand="python" getAPathArgument="python"
+asyncio.run(asyncio.create_subprocess_exec("bash", "-c", "constant", "not-command"))  # $ getCommand="bash" getCommand="constant" getAPathArgument="bash"
 
 loop = asyncio.new_event_loop()
 loop.run_until_complete(loop.subprocess_exec(asyncio.SubprocessProtocol, "executable", "arg0")) # $ getCommand="executable" getAPathArgument="executable"

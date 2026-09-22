@@ -51,3 +51,28 @@ def intentional(command):
 import shlex
 def unsafe_shell_sanitized(name):
     os.system("ping " + shlex.quote(name)) # $ result=OK - sanitized
+
+import asyncio
+
+async def explicit_shell_command_operands(name): # $ Source
+    popen_command = "ping " + name # $ Alert result=BAD
+    subprocess.Popen(["/bin/bash", "-c", popen_command])
+
+    run_command = "ping " + name # $ Alert result=BAD
+    subprocess.run(["cmd.exe", "/c", run_command])
+
+    asyncio_command = "ping " + name # $ Alert result=BAD
+    await asyncio.create_subprocess_exec("sh", "-c", asyncio_command)
+
+    ordinary_argument = "ping " + name
+    subprocess.Popen(["sh", ordinary_argument])
+
+    python_code = "print(" + name + ")"
+    subprocess.Popen(["python", "-c", python_code])
+
+    positional_argument = "ping " + name
+    subprocess.Popen(["bash", "-c", "echo fixed", positional_argument])
+
+    executable = "bash" if unknownValue else "sh"
+    dynamic_executable_command = "ping " + name
+    subprocess.Popen([executable, "-c", dynamic_executable_command])

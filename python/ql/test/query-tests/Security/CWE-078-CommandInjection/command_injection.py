@@ -78,3 +78,49 @@ def restricted_characters():
     path = request.args.get('path', '')
     if re.match(r'^[a-zA-Z0-9_-]+$', path):
         os.system("ls " + path) # $ Alert SPURIOUS: result=BAD
+
+
+import asyncio
+
+@app.route("/explicit-shell-command-operands")
+async def explicit_shell_command_operands():
+    command = request.args.get("command", "")
+
+    subprocess.Popen([
+        "/bin/bash", # $ result=OK
+        "-c",
+        command, # $ Alert result=BAD
+    ])
+    subprocess.run([
+        "cmd.exe", # $ result=OK
+        "/c",
+        command, # $ Alert result=BAD
+    ])
+    await asyncio.create_subprocess_exec(
+        "sh", # $ result=OK
+        "-c",
+        command, # $ Alert result=BAD
+    )
+
+    subprocess.Popen([
+        "sh", # $ result=OK
+        command,
+    ])
+    subprocess.Popen([
+        "python", # $ result=OK
+        "-c",
+        command,
+    ])
+    subprocess.Popen([
+        "bash", # $ result=OK
+        "-c",
+        "echo fixed", # $ result=OK
+        command,
+    ])
+
+    executable = "bash" if UNKNOWN else "sh"
+    subprocess.Popen([
+        executable, # $ result=OK
+        "-c",
+        command,
+    ])

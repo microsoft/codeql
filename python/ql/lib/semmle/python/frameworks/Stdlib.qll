@@ -1261,19 +1261,35 @@ module StdlibPrivate {
   /** Gets a reference to the `subprocess` module. */
   API::Node subprocess() { result = API::moduleImport("subprocess") }
 
+  private predicate isExplicitShellCommand(string executable, string commandSwitch) {
+    exists(string shell |
+      shell in ["sh", "bash", "dash", "zsh"] and
+      (
+        executable = shell
+        or
+        exists(StringLiteral executableLiteral |
+          executable = executableLiteral.getText() and
+          executable.regexpMatch("^/(?:[^/]+/)*" + shell + "$")
+        )
+      ) and
+      commandSwitch = "-c"
+    )
+    or
+    executable in ["cmd", "cmd.exe"] and
+    commandSwitch in ["/c", "/C"]
+  }
+
   /**
    * A call to `subprocess.Popen` or helper functions (call, check_call, check_output, run, getoutput, getstatusoutput)
    * See https://docs.python.org/3.8/library/subprocess.html#subprocess.Popen
    * ref: https://docs.python.org/3/library/subprocess.html#legacy-shell-invocation-functions
    */
   private class SubprocessPopenCall extends SystemCommandExecution::Range, API::CallNode {
+    private string name;
+
     SubprocessPopenCall() {
-      exists(string name |
-        name in [
-            "Popen", "call", "check_call", "check_output", "run", "getoutput", "getstatusoutput"
-          ] and
-        this = subprocess().getMember(name).getACall()
-      )
+      name in ["Popen", "call", "check_call", "check_output", "run", "getoutput", "getstatusoutput"] and
+      this = subprocess().getMember(name).getACall()
     }
 
     /** Gets the API-node for the `args` argument, if any. */
@@ -1296,10 +1312,28 @@ module StdlibPrivate {
     /** Gets the API-node for the `executable` argument, if any. */
     private API::Node get_executable_arg() { result = this.getParameter(2, "executable") }
 
+    private string getExplicitShellExecutable(SequenceNode args) {
+      not exists(this.get_executable_arg()) and
+      result = args.getElement(0).getNode().(StringLiteral).getText()
+      or
+      result = this.get_executable_arg().getAValueReachingSink().asExpr().(StringLiteral).getText()
+    }
+
+    private DataFlow::Node getExplicitShellCommand() {
+      exists(SequenceNode args |
+        name in ["Popen", "call", "check_call", "check_output", "run"] and
+        args = this.get_args_arg().asSink().asCfgNode() and
+        this.get_shell_arg_value() = false and
+        isExplicitShellCommand(this.getExplicitShellExecutable(args),
+          args.getElement(1).getNode().(StringLiteral).getText()) and
+        result.asCfgNode() = args.getElement(2)
+      )
+    }
+
     override DataFlow::Node getCommand() {
-      // TODO: Track arguments ("args" and "shell")
-      // TODO: Handle using `args=["sh", "-c", <user-input>]`
       result = this.get_executable_arg().asSink()
+      or
+      result = this.getExplicitShellCommand()
       or
       exists(DataFlow::Node arg_args, boolean shell |
         arg_args = this.get_args_arg().asSink() and
@@ -1332,6 +1366,8 @@ module StdlibPrivate {
     override predicate isShellInterpreted(DataFlow::Node arg) {
       arg = [this.get_executable_arg(), this.get_args_arg()].asSink() and
       this.get_shell_arg_value() = true
+      or
+      arg = this.getExplicitShellCommand()
     }
   }
 
@@ -5017,12 +5053,24 @@ module StdlibPrivate {
               .getACall()
       }
 
-      override DataFlow::Node getCommand() { result = this.getParameter(0, "program").asSink() }
+      private DataFlow::Node getExplicitShellCommand() {
+        isExplicitShellCommand(this.getArg(0).asExpr().(StringLiteral).getText(),
+          this.getArg(1).asExpr().(StringLiteral).getText()) and
+        result = this.getArg(2)
+      }
 
-      override DataFlow::Node getAPathArgument() { result = this.getCommand() }
+      override DataFlow::Node getCommand() {
+        result = this.getParameter(0, "program").asSink()
+        or
+        result = this.getExplicitShellCommand()
+      }
+
+      override DataFlow::Node getAPathArgument() {
+        result = this.getParameter(0, "program").asSink()
+      }
 
       override predicate isShellInterpreted(DataFlow::Node arg) {
-        none() // this is a safe API.
+        arg = this.getExplicitShellCommand()
       }
     }
 
