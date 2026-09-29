@@ -1,0 +1,2 @@
+# an unsupported YAML comment that should be ignored
+foo: bar

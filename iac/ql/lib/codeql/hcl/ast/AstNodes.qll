@@ -100,12 +100,12 @@ class HclAstNode extends THclAstNode {
  * }
  * ```
  */
-class Comment extends HclAstNode, TComment {
+class HCLComment extends HclAstNode, TComment {
   private HCL::Comment comment;
 
-  override string getAPrimaryQlClass() { result = "Comment" }
+  override string getAPrimaryQlClass() { result = "HCLComment" }
 
-  Comment() { this = TComment(comment) }
+  HCLComment() { this = TComment(comment) }
 
   /** Gets the textual contents of the comment. */
   string getContents() { result = comment.getValue() }

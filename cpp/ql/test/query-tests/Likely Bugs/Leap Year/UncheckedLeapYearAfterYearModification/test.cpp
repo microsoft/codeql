@@ -419,10 +419,10 @@ void AntiPattern_unchecked_filetime_conversion2a()
 	GetSystemTime(&st);
 
 	// BUG - UncheckedLeapYearAfterYearModification
-	st.wYear += 2; // $ Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	st.wYear += 2; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 
 	// BUG - UncheckedReturnValueForTimeFunctions
-	SystemTimeToFileTime(&st, &ft); // $ Alert[cpp/leap-year/unchecked-return-value-for-time-conversion-function]
+	SystemTimeToFileTime(&st, &ft); // $ Alert[cpp/microsoft/public/leap-year/unchecked-return-value-for-time-conversion-function]
 }
 
 /**
@@ -437,10 +437,10 @@ void AntiPattern_unchecked_filetime_conversion2b()
 	GetSystemTime(&st);
 
 	// BUG - UncheckedLeapYearAfterYearModification
-	st.wYear++; // $ Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	st.wYear++; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 
 	// BUG - UncheckedReturnValueForTimeFunctions
-	SystemTimeToFileTime(&st, &ft); // $ Alert[cpp/leap-year/unchecked-return-value-for-time-conversion-function]
+	SystemTimeToFileTime(&st, &ft); // $ Alert[cpp/microsoft/public/leap-year/unchecked-return-value-for-time-conversion-function]
 }
 
 /**
@@ -453,10 +453,10 @@ void AntiPattern_unchecked_filetime_conversion2b(SYSTEMTIME* st)
 	FILETIME ft;
 
 	// BUG - UncheckedLeapYearAfterYearModification
-	st->wYear++; // $ Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	st->wYear++; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 
 	// BUG - UncheckedReturnValueForTimeFunctions
-	SystemTimeToFileTime(st, &ft); // $ Alert[cpp/leap-year/unchecked-return-value-for-time-conversion-function]
+	SystemTimeToFileTime(st, &ft); // $ Alert[cpp/microsoft/public/leap-year/unchecked-return-value-for-time-conversion-function]
 }
 
 /**
@@ -678,7 +678,7 @@ void AntiPattern_IncorrectGuard(int yearsToAdd)
 	GetSystemTime(&st);
 
 	// BUG - UncheckedLeapYearAfterYearModification
-	st.wYear += yearsToAdd; // $ Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	st.wYear += yearsToAdd; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 
 	// Incorrect Guard
 	if (st.wMonth == 2 && st.wDay == 29)
@@ -810,12 +810,12 @@ void test(int x)
 
 	// BUG - UncheckedLeapYearAfterYearModification
 	// Positive Case - Anti-pattern 1: [year +-n, month, day]
-	timeinfo.tm_year = x + timeinfo.tm_year;	// $ Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	timeinfo.tm_year = x + timeinfo.tm_year;	// $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 
 	st.wYear = x;
 	// BUG - UncheckedLeapYearAfterYearModification
 	// Positive Case - Anti-pattern 1: [year +-n, month, day]
-	st.wYear = x + st.wYear;  // $ Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	st.wYear = x + st.wYear;  // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 }
 
 /**
@@ -948,9 +948,9 @@ void tp_intermediaryVar(struct timespec now, struct logtime &timestamp_remote)
 		GetSystemTime(&st);
 
 		// BUG - UncheckedLeapYearAfterYearModification
-		st.wYear = st.wYear + 1; // $ Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+		st.wYear = st.wYear + 1; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 
-		SystemTimeToFileTime(&st, &ft); // $ Alert[cpp/leap-year/unchecked-return-value-for-time-conversion-function]
+		SystemTimeToFileTime(&st, &ft); // $ Alert[cpp/microsoft/public/leap-year/unchecked-return-value-for-time-conversion-function]
 	}
 
 	/**
@@ -966,9 +966,9 @@ void tp_intermediaryVar(struct timespec now, struct logtime &timestamp_remote)
 		GetSystemTime(&st);
 
 		// BUG - UncheckedLeapYearAfterYearModification
-		st.wYear++; // $ Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+		st.wYear++; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 
-		SystemTimeToFileTime(&st, &ft); // $ Alert[cpp/leap-year/unchecked-return-value-for-time-conversion-function]
+		SystemTimeToFileTime(&st, &ft); // $ Alert[cpp/microsoft/public/leap-year/unchecked-return-value-for-time-conversion-function]
 	}
 
 	/**
@@ -1048,11 +1048,11 @@ void fp_daymonth_guard(){
     // FALSE POSITIVE: year is incremented but month is checked and day corrected
 	// in a ternary operation. It may be possible to fix this with a more sophisticated
 	// data flow analysis.
-	st.wYear++; // $ SPURIOUS: Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	st.wYear++; // $ SPURIOUS: Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 
 	st.wDay = st.wMonth == 2 && st.wDay == 29 ? 28 : st.wDay;
 
-	SystemTimeToFileTime(&st, &ft); // $ Alert[cpp/leap-year/unchecked-return-value-for-time-conversion-function]
+	SystemTimeToFileTime(&st, &ft); // $ Alert[cpp/microsoft/public/leap-year/unchecked-return-value-for-time-conversion-function]
 }
 
 void increment_arg(WORD &x){
@@ -1068,11 +1068,11 @@ void fn_year_set_through_out_arg(){
 	SYSTEMTIME st;
 	GetSystemTime(&st);
 	// BAD, year incremented without check
-	increment_arg(st.wYear); // $ Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	increment_arg(st.wYear); // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 
 	// GetSystemTime(&st);
 	// Bad, year incremented without check
-	increment_arg_by_pointer(&st.wYear); // $ Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	increment_arg_by_pointer(&st.wYear); // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 }
 
 
@@ -1126,7 +1126,7 @@ typedef struct _TIME_FIELDS {
 
 void
 tp_ptime(PTIME_FIELDS ptm){
-	ptm->Year = ptm->Year - 1; // $ Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	ptm->Year = ptm->Year - 1; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 }
 
 
@@ -1177,7 +1177,7 @@ void leap_year_checked_raw_false_positive2(WORD year, WORD offset, WORD day){
 
 	year += offset; // $ Source
 
-	tmp.tm_year = year; // $ Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	tmp.tm_year = year; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 
 }
 
@@ -1216,7 +1216,7 @@ void inverted_leap_year_check(WORD year, WORD offset, WORD day){
 		day = 28;
 	}
 
-	tmp.tm_year = year + offset; // $ Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	tmp.tm_year = year + offset; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 }
 
 
@@ -1231,7 +1231,7 @@ void simplified_leap_year_check1(WORD year, WORD offset){
 	}
 
 	// Modified after check, could be dangerous
-	tmp.tm_year = year + offset; // $ Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	tmp.tm_year = year + offset; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 }
 
 void simplified_leap_year_check2(WORD year, WORD offset){
@@ -1245,7 +1245,7 @@ void simplified_leap_year_check2(WORD year, WORD offset){
 	}
 
 	// Modified after check, could be dangerous
-	tmp.tm_year = year + offset;  // $ Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	tmp.tm_year = year + offset;  // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 }
 
 void simplified_leap_year_check3(WORD year, WORD offset){
@@ -1259,7 +1259,7 @@ void simplified_leap_year_check3(WORD year, WORD offset){
 	}
 
 	// Modified after check, could be dangerous
-	tmp.wYear = year + offset; // $ Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	tmp.wYear = year + offset; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 }
 
 void simplified_leap_year_check4(WORD year, WORD offset){
@@ -1273,13 +1273,13 @@ void simplified_leap_year_check4(WORD year, WORD offset){
 	}
 
 	// Modified after check, could be dangerous
-	tmp.wYear = year + offset;  // $ Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	tmp.wYear = year + offset;  // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 }
 
 void bad_simplified_leap_year_check1(WORD year, WORD offset){
 	struct tm tmp;
 
-	tmp.tm_year = year + offset; // $ Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	tmp.tm_year = year + offset; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 
 	// incorrect logic, should negate the %4 result
 	bool isLeap = ((tmp.tm_year + 1900) % 4) && ((tmp.tm_year + 1900) % 100 || !((tmp.tm_year + 1900) % 400));
@@ -1291,7 +1291,7 @@ void bad_simplified_leap_year_check1(WORD year, WORD offset){
 void bad_simplified_leap_year_check2(WORD year, WORD offset){
 	struct tm tmp;
 
-	tmp.tm_year = year + offset; // $ Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	tmp.tm_year = year + offset; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 
 
 	// incorrect logic, should not negate the %4 result
@@ -1304,7 +1304,7 @@ void bad_simplified_leap_year_check2(WORD year, WORD offset){
 void bad_simplified_leap_year_check3(WORD year, WORD offset){
 	SYSTEMTIME tmp;
 
-	tmp.wYear = year + offset; // $ Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	tmp.wYear = year + offset; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 
 	// incorrect logic, should negate the %4 result
 	bool isLeap = (tmp.wYear % 4) && (tmp.wYear % 100 || !(tmp.wYear % 400));
@@ -1316,7 +1316,7 @@ void bad_simplified_leap_year_check3(WORD year, WORD offset){
 void bad_simplified_leap_year_check4(WORD year, WORD offset){
 	SYSTEMTIME tmp;
 
-	tmp.wYear = year + offset; // $ Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	tmp.wYear = year + offset; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 
 
 	// incorrect logic, should not negate the %4 result
@@ -1358,7 +1358,7 @@ void indirect_time_conversion_check(WORD year, WORD offset){
 void set_time(WORD year, WORD month, WORD day){
 	SYSTEMTIME tmp;
 
-	tmp.wYear = year; // $ Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	tmp.wYear = year; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 	tmp.wMonth = month;
 	tmp.wDay = day;
 }
@@ -1492,7 +1492,7 @@ void modification_after_conversion1(tm timeinfo){
 	// and never reassigned to another struct.
 	WORD year = timeinfo.tm_year + 1900;
 
-	year += 1; // $ MISSING: Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	year += 1; // $ MISSING: Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 }
 
 WORD get_civil_year(tm timeinfo){
@@ -1504,7 +1504,7 @@ void modification_after_conversion2(tm timeinfo){
 	// This case shows a false negative where the year might be used and it is incorrectly modified,
 	// and never reassigned to another struct.
 	WORD year = get_civil_year(timeinfo);
-	year += 1; // $ MISSING: Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	year += 1; // $ MISSING: Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 }
 
 void modification_after_conversion_saved_to_other_time_struct1(tm timeinfo){
@@ -1518,7 +1518,7 @@ void modification_after_conversion_saved_to_other_time_struct1(tm timeinfo){
 	SYSTEMTIME s;
 	// FALSE NEGATIVE: missing this because the conversion happens locally before
 	// the year adjustment, which seems as though it is part of a conversion itself
-	s.wYear = year; // $ MISSING: Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	s.wYear = year; // $ MISSING: Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 }
 
 
@@ -1532,7 +1532,7 @@ void modification_after_conversion_saved_to_other_time_struct2(tm timeinfo){
 	year += 1; // $ Source
 
 	SYSTEMTIME s;
-	s.wYear = year; // $ Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	s.wYear = year; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 }
 
 void modification_after_conversion_saved_to_other_time_struct3(tm timeinfo){
@@ -1546,7 +1546,7 @@ void modification_after_conversion_saved_to_other_time_struct3(tm timeinfo){
 	SYSTEMTIME s;
 	// FALSE NEGATIVE: missing this because the conversion happens locally before
 	// the year adjustment, which seems as though it is part of a conversion itself
-	s.wYear = year; // $ MISSING: Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	s.wYear = year; // $ MISSING: Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 }
 
 
@@ -1558,11 +1558,11 @@ void year_saved_to_variable_then_modified1(tm timeinfo){
 	// NOTE: should we even try to detect cases like this?
 	// Our current rationale is that a year in a struct is more dangerous than a year in isolation
 	// A year in isolation is harder to interpret
-	year += 1; // MISSING: $ Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	year += 1; // MISSING: $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 }
 
 void modification_before_conversion1(tm timeinfo){
-	timeinfo.tm_year += 1; // $ Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	timeinfo.tm_year += 1; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 	// convert a tm year into a civil year, then modify after conversion
 	// This case shows a false negative where the year might be used and it is incorrectly modified,
 	// and never reassigned to another struct.
@@ -1570,7 +1570,7 @@ void modification_before_conversion1(tm timeinfo){
 }
 
 void modification_before_conversion2(tm timeinfo){
-	timeinfo.tm_year += 1; // $ Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	timeinfo.tm_year += 1; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 	// convert a tm year into a civil year, then modify after conversion
 	// This case shows a false negative where the year might be used and it is incorrectly modified,
 	// and never reassigned to another struct.
@@ -1649,7 +1649,7 @@ void odd_leap_year_check1(tm timeinfo){
 }
 
 void odd_leap_year_check2(tm timeinfo){
-	timeinfo.tm_year += 1; // $ SPURIOUS: Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	timeinfo.tm_year += 1; // $ SPURIOUS: Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 
 	// Using an odd sytle of checking divisible by 4 presumably as an optimization trick
 	// but also check unrelated conditions on the year as an optimization to rule out irrelevant years
@@ -1661,7 +1661,7 @@ void odd_leap_year_check2(tm timeinfo){
 }
 
 void odd_leap_year_check3(tm timeinfo){
-	timeinfo.tm_year += 1; // $ SPURIOUS: Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	timeinfo.tm_year += 1; // $ SPURIOUS: Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 
 	// Using an odd sytle of checking divisible by 4 presumably as an optimization trick
 	// but also check unrelated conditions on the year as an optimization to rule out irrelevant years
@@ -1694,7 +1694,7 @@ void odd_leap_year_check5(tm timeinfo){
 
 
 void date_adjusted_through_mkgmtime(tm timeinfo){
-	timeinfo.tm_year += 1; // $ SPURIOUS: Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	timeinfo.tm_year += 1; // $ SPURIOUS: Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 
 	// Using an odd sytle of checking divisible by 4 presumably as an optimization trick
 	// but also check unrelated conditions on the year as an optimization to rule out irrelevant years
@@ -1770,7 +1770,7 @@ void assumed_maketime_conversion1(tm timeinfo)
 
 
 void bad_leap_year_check_logic1(tm timeinfo){
-	timeinfo.tm_year += 1; // $ Alert[cpp/leap-year/unchecked-after-arithmetic-year-modification]
+	timeinfo.tm_year += 1; // $ Alert[cpp/microsoft/public/leap-year/unchecked-after-arithmetic-year-modification]
 
 	WORD year = get_civil_year(timeinfo);
 

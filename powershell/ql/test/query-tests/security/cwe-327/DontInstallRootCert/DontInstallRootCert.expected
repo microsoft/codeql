@@ -1,0 +1,3 @@
+| test.ps1:2:1:2:94 | Call to import-certificate | This call adds a certificate to the root certificate store, which weakens security for all applications on the machine. |
+| test.ps1:5:1:5:96 | Call to import-pfxcertificate | This call adds a certificate to the root certificate store, which weakens security for all applications on the machine. |
+| test.ps1:8:1:8:94 | Call to import-certificate | This call adds a certificate to the root certificate store, which weakens security for all applications on the machine. |
