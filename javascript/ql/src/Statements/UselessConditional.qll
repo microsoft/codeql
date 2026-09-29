@@ -1,5 +1,6 @@
 /**
  * Provides predicates for working with useless conditionals.
+ * This comment exercises the changed-library unit-test workflow.
  */
 
 import javascript
