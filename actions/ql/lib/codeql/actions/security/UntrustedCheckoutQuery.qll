@@ -315,6 +315,11 @@ class ActionsSHACheckout extends SHACheckoutStep instanceof UsesStep {
   }
 }
 
+/**
+ * Holds if `reference` is recognized as an immutable commit SHA through its
+ * expression, producer, propagated job output, reusable-workflow input name,
+ * or authorization-wrapper JSON path.
+ */
 private predicate isRecognizedSHAReference(Expression reference) {
   containsHeadSHA(reference.getExpression())
   or
@@ -482,6 +487,11 @@ private predicate isRunCheckoutReference(
   )
 }
 
+/**
+ * Holds if `condition` checks a pull request or issue author association and
+ * identifies trusted associations, either directly or by enumerating all
+ * untrusted association values.
+ */
 bindingset[condition]
 private predicate hasTrustedAuthorAssociation(string condition) {
   exists(string normalized |
