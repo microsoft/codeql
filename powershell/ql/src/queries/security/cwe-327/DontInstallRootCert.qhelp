@@ -1,0 +1,38 @@
+<!DOCTYPE qhelp PUBLIC "-//Semmle//qhelp//EN" "qhelp.dtd">
+<qhelp>
+  <overview>
+    <p>
+      Adding certificates to the system root certificate store (e.g.,
+      <code>Cert:\LocalMachine\Root</code>) weakens security for all applications running on
+      the same machine. Any certificate in the root store is trusted as a certificate authority,
+      which means a malicious or compromised certificate could be used to intercept encrypted
+      communications or impersonate trusted services for all users on the system.
+    </p>
+  </overview>
+  <recommendation>
+    <p>
+      Instead of importing certificates into the root store, use an application-specific or
+      user-specific certificate store such as <code>Cert:\CurrentUser\My</code> or
+      <code>Cert:\LocalMachine\My</code>. If root trust is genuinely required, ensure the
+      operation is restricted to controlled environments and the certificate is removed after use.
+    </p>
+  </recommendation>
+  <example>
+    <p>
+      The following example imports a certificate directly into the root store, weakening security
+      for all applications on the system:
+    </p>
+    <sample src="examples/DontInstallRootCertBad.ps1" />
+
+    <p>
+      The following example imports the certificate into a user-specific store, limiting the
+      scope of trust:
+    </p>
+    <sample src="examples/DontInstallRootCertGood.ps1" />
+  </example>
+  <references>
+    <li>Microsoft: <a href="https://learn.microsoft.com/en-us/powershell/module/pki/import-certificate">Import-Certificate</a>.</li>
+    <li>Microsoft: <a href="https://learn.microsoft.com/en-us/powershell/module/pki/import-pfxcertificate">Import-PfxCertificate</a>.</li>
+    <li>CWE-327: <a href="https://cwe.mitre.org/data/definitions/327.html">Use of a Broken or Risky Cryptographic Algorithm</a>.</li>
+  </references>
+</qhelp>

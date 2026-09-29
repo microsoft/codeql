@@ -1,10 +1,12 @@
-name: microsoft-sdl/powershell-queries
+name: microsoft/powershell-queries
 version: 0.0.1
 groups:
   - powershell
   - microsoft-all
   - queries
+suites: codeql-suites
 extractor: powershell
+defaultSuiteFile: codeql-suites/powershell-code-scanning.qls
 dependencies:
   microsoft/powershell-all: ${workspace}
   codeql/suite-helpers: ${workspace}

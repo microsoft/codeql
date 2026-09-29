@@ -367,8 +367,6 @@ module API {
 
     Node methodEdge(string name) { none() }
 
-    Node instanceEdge() { none() }
-
     final predicate isImplicit() { not this.isExplicit(_) }
 
     predicate isExplicit(DataFlow::Node node) { none() }
@@ -423,26 +421,6 @@ module API {
         name = call.getLowerCaseName() and
         implicitCmdlet(prefix, name)
       )
-    }
-  }
-
-  class NewObjectTypeNameNode extends AbstractTypeNameNode, Impl::MkNewObjectTypeNameNode {
-    NewObjectTypeNameNode() { this = Impl::MkNewObjectTypeNameNode(prefix) }
-
-    final override Node getSuccessor(string name) {
-      result = Impl::MkNewObjectTypeNameNode(prefix + "." + name)
-    }
-
-    final override Node instanceEdge() {
-      exists(DataFlow::ObjectCreationNode creation |
-        prefix = creation.getLowerCaseConstructedTypeName() and
-        Specific::needsNewObjectTypeNameNode(creation, prefix) and
-        result = getForwardStartNode(creation)
-      )
-    }
-
-    final override predicate isExplicit(DataFlow::Node node) {
-      Specific::needsNewObjectTypeNameNode(node, prefix)
     }
   }
 
@@ -539,7 +517,6 @@ module API {
       MkMethodAccessNode(DataFlow::CallNode call) or
       MkExplicitTypeNameNode(string prefix) { Specific::needsExplicitTypeNameNode(_, prefix) } or
       MkImplicitTypeNameNode(string prefix) { Specific::needsImplicitTypeNameNode(prefix) } or
-      MkNewObjectTypeNameNode(string prefix) { Specific::needsNewObjectTypeNameNode(_, prefix) } or
       MkForwardNode(DataFlow::LocalSourceNode node, TypeTracker t) { isReachable(node, t) } or
       /** Intermediate node for following backward data flow. */
       MkBackwardNode(DataFlow::LocalSourceNode node, TypeTracker t) { isReachable(node, t) } or
@@ -721,8 +698,6 @@ module API {
         pred = getForwardEndNode(call.getQualifier()) and
         succ = getForwardStartNode(call)
       )
-      or
-      pred.(TypeNameNode).instanceEdge() = succ
     }
 
     cached

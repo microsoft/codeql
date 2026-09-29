@@ -101,16 +101,6 @@ predicate needsImplicitTypeNameNode(string component) {
   )
 }
 
-predicate needsNewObjectTypeNameNode(DataFlow::ObjectCreationNode creation, string component) {
-  creation.asExpr().getExpr() instanceof DotNetObjectCreation and
-  exists(string type, int index |
-    type = creation.getLowerCaseConstructedTypeName() and
-    index = [0 .. strictcount(type.indexOf("."))] and
-    component =
-      strictconcat(int i, string s | s = type.splitAt(".", i) and i <= index | s, "." order by i)
-  )
-}
-
 /** Gets a Powershell-specific interpretation of the given `type`. */
 API::Node getExtraNodeFromType(string rawType) {
   exists(string type, string suffix, DataFlow::TypeNameNode typeName |

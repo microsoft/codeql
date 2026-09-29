@@ -57,6 +57,28 @@ class DeclarationWithGetSetAccessors extends DeclarationWithAccessors, TopLevelE
   /** Gets the `set` accessor of this declaration, if any. */
   Setter getSetter() { result = this.getAnAccessor() }
 
+  /** Gets the target accessor of this declaration when used in a read context, if any. */
+  Accessor getReadTarget() {
+    result = this.getGetter()
+    or
+    not exists(this.getGetter()) and
+    result = this.getOverridee().getReadTarget()
+  }
+
+  /** Gets the target accessor of this declaration when used in a write context, if any. */
+  Accessor getWriteTarget() {
+    result = this.getSetter()
+    or
+    not exists(this.getSetter()) and
+    result = this.getOverridee().getWriteTarget()
+    or
+    result =
+      any(Getter g |
+        g = this.getReadTarget() and
+        g.getAnnotatedReturnType().isRef()
+      )
+  }
+
   override DeclarationWithGetSetAccessors getOverridee() {
     result = DeclarationWithAccessors.super.getOverridee()
   }
@@ -195,6 +217,7 @@ class Property extends DeclarationWithGetSetAccessors, @property {
     result = DeclarationWithGetSetAccessors.super.getAnUltimateImplementor()
   }
 
+  pragma[nomagic]
   override PropertyAccess getAnAccess() { result.getTarget() = this }
 
   override Location getALocation() { property_location(this.getUnboundDeclaration(), result) }
@@ -304,6 +327,7 @@ class Indexer extends DeclarationWithGetSetAccessors, Parameterizable, @indexer 
     indexers(this, _, _, getTypeRef(result), _)
   }
 
+  pragma[nomagic]
   override IndexerAccess getAnAccess() { result.getTarget() = this }
 
   /**

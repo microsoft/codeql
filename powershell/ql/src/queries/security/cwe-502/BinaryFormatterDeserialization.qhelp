@@ -4,19 +4,28 @@
 <qhelp>
 <overview>
 
-<p>Using <code>BinaryFormatter</code> to deserialize an object from untrusted input may result in security problems, such
-as denial of service or remote code execution.</p>
+<p><code>BinaryFormatter</code> is unsafe for deserialization and should not be used, even when
+the data is produced locally. This query is an API-use warning: it reports calls to
+<code>BinaryFormatter</code> deserialization methods without proving that the serialized data is
+attacker-controlled.</p>
+
+<p>When attacker-controlled data is known to flow into a deserializer, the
+<code>powershell/microsoft/public/unsafe-deserialization</code> query reports that higher-confidence
+data-flow result.</p>
 
 </overview>
 <recommendation>
 
-<p>Avoid using <code>BinaryFormatter</code>.</p>
+<p>Avoid using <code>BinaryFormatter</code>. Prefer serializers that do not permit arbitrary type
+instantiation, and validate or authenticate any serialized data before deserializing it.</p>
 
 </recommendation>
 <example>
 
 <p>In this example, a string is deserialized using a
-<code>BinaryFormatter</code>. <code>BinaryFormatter</code> is an easily exploited deserializer.</p>
+<code>BinaryFormatter</code>. <code>BinaryFormatter</code> is an easily exploited deserializer. If the
+string is attacker-controlled, this is also reported by the taint-tracking unsafe
+deserialization query.</p>
 
 <sample src="examples/BinaryFormatterDeserialization.ps1" />
 

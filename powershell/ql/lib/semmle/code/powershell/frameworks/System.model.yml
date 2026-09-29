@@ -1,6 +1,11 @@
 extensions:
   - addsTo:
       pack: microsoft/powershell-all
+      extensible: summaryModel
+    data:
+      - ["system.random", "Method[nextbytes]", "Argument[this]", "Argument[0]", "taint"]
+  - addsTo:
+      pack: microsoft/powershell-all
       extensible: sourceModel
     data:
       - ["system.console!", "Method[read].ReturnValue", "stdin"]
@@ -10,3 +15,9 @@ extensions:
       - ["system.environment!", "Method[getcommandlineargs].ReturnValue", "command-line"]
       - ["system.environment!", "Method[getenvironmentvariable].ReturnValue", "environment"]
       - ["system.environment!", "Method[getenvironmentvariables].ReturnValue", "environment"]
+
+  - addsTo:
+      pack: microsoft/powershell-all
+      extensible: summaryModel
+    data:
+      - ["system.convert!", "Method[frombase64string]", "Argument[0]", "ReturnValue", "taint"]

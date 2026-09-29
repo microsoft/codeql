@@ -219,7 +219,7 @@ private class ValidatingCallableThrowing extends Callable {
         forall(TryStmt try | try.getEnclosingCallable() = this | not throw.getParent+() = try) and
         // If there exists a control block that guards against misuse
         bv.asBooleanValue() = false and
-        g.controlsNode(throw.getAControlFlowNode(), bv)
+        g.controlsNode(throw.getControlFlowNode(), bv)
       )
     )
   }
@@ -286,7 +286,7 @@ class DirectWrapperSantizierMethod extends AbstractWrapperSanitizerMethod {
           exists(GuardValue bv |
             // If there exists a control block that guards against misuse
             bv.asBooleanValue() = true and
-            g.controlsNode(ret.getAControlFlowNode(), bv)
+            g.controlsNode(ret.getControlFlowNode(), bv)
           )
           or
           // Or if the function returns the resultant of the guard call

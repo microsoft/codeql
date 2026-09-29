@@ -1,0 +1,7 @@
+| test.ps1:22:3:22:47 | Call to invoke-webrequest | This downloads an artifact without verifying its integrity (e.g. a hash or signature check). |
+| test.ps1:40:3:40:103 | Call to invoke-webrequest | This downloads an artifact without verifying its integrity (e.g. a hash or signature check). |
+| test.ps1:45:3:45:89 | Call to iwr | This downloads an artifact without verifying its integrity (e.g. a hash or signature check). |
+| test.ps1:66:3:66:95 | Call to downloadfile | This downloads an artifact without verifying its integrity (e.g. a hash or signature check). |
+| test.ps1:71:3:71:118 | Call to downloadfile | This downloads an artifact without verifying its integrity (e.g. a hash or signature check). |
+| test.ps1:76:3:76:116 | Call to start-bitstransfer | This downloads an artifact without verifying its integrity (e.g. a hash or signature check). |
+| test.ps1:81:3:81:91 | Call to curl | This downloads an artifact without verifying its integrity (e.g. a hash or signature check). |

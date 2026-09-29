@@ -570,34 +570,75 @@ class ToStringCallNode extends CallNode {
 }
 
 /** A use of a type name, viewed as a node in a data flow graph. */
-class TypeNameNode extends ExprNode {
-  override CfgNodes::ExprNodes::TypeNameExprCfgNode n;
-
-  override CfgNodes::ExprNodes::TypeNameExprCfgNode getExprNode() { result = n }
+abstract private class TypeNameNodeImpl extends ExprNode {
+  private predicate parseName(string namespace, string typename) {
+    exists(string fullName | fullName = this.getPossiblyQualifiedName() |
+      if fullName.matches("%.%")
+      then
+        namespace = fullName.regexpCapture("([a-zA-Z0-9\\.]+)\\.([a-zA-Z0-9]+)", 1) and
+        typename = fullName.regexpCapture("([a-zA-Z0-9\\.]+)\\.([a-zA-Z0-9]+)", 2)
+      else (
+        namespace = "" and
+        typename = fullName
+      )
+    )
+  }
 
   bindingset[result]
   pragma[inline_late]
-  string getAName() { result = n.getAName() }
+  string getAName() { this.parseName(_, result.toLowerCase()) }
 
-  string getLowerCaseName() { result = n.getLowerCaseName() }
+  string getLowerCaseName() { this.parseName(_, result) }
 
-  predicate isQualified() { n.isQualified() }
+  predicate isQualified() { this.getNamespace() != "" }
 
   predicate hasQualifiedName(string namespace, string typename) {
-    n.hasQualifiedName(namespace, typename)
+    this.isQualified() and
+    this.parseName(namespace, typename)
   }
 
-  string getNamespace() { result = n.getNamespace() }
+  string getNamespace() { this.parseName(result, _) }
 
-  string getPossiblyQualifiedName() { result = n.getPossiblyQualifiedName() }
+  abstract string getPossiblyQualifiedName();
+}
+
+/** A use of a type name, viewed as a node in a data flow graph. */
+final class TypeNameNode = TypeNameNodeImpl;
+
+private class TypeNameExprNode extends TypeNameNodeImpl {
+  override CfgNodes::ExprNodes::TypeNameExprCfgNode n;
+
+  final override CfgNodes::ExprNodes::TypeNameExprCfgNode getExprNode() { result = n }
+
+  override string getPossiblyQualifiedName() { result = n.getPossiblyQualifiedName() }
+}
+
+private class StringTypeNameNode extends TypeNameNodeImpl {
+  override CfgNodes::ExprNodes::StringLiteralExprCfgNode n;
+
+  StringTypeNameNode() {
+    exists(CfgNodes::ExprNodes::ObjectCreationCfgNode creation |
+      creation.getExpr() instanceof DotNetObjectCreation and
+      n = creation.getConstructedTypeExpr()
+    )
+  }
+
+  final override CfgNodes::ExprNodes::StringLiteralExprCfgNode getExprNode() { result = n }
+
+  override string getPossiblyQualifiedName() { result = n.getValueString().toLowerCase() }
 }
 
 /** A use of a qualified type name, viewed as a node in a data flow graph. */
-class QualifiedTypeNameNode extends TypeNameNode {
-  override CfgNodes::ExprNodes::QualifiedTypeNameExprCfgNode n;
-
-  final override CfgNodes::ExprNodes::QualifiedTypeNameExprCfgNode getExprNode() { result = n }
+abstract class QualifiedTypeNameNodeImpl extends TypeNameNodeImpl {
+  QualifiedTypeNameNodeImpl() { this.isQualified() }
 }
+
+/** A use of a qualified type name, viewed as a node in a data flow graph. */
+final class QualifiedTypeNameNode = QualifiedTypeNameNodeImpl;
+
+private class QualifiedTypeNameExprNode extends QualifiedTypeNameNodeImpl, TypeNameExprNode { }
+
+private class QualifiedStringTypeNameNode extends QualifiedTypeNameNodeImpl, StringTypeNameNode { }
 
 /** A use of an automatic variable, viewed as a node in a data flow graph. */
 class AutomaticVariableNode extends ExprNode {

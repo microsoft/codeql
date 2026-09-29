@@ -513,10 +513,10 @@ module Make<InlineExpectationsTestSig Impl> {
 /**
  * RegEx pattern to match a comment containing one or more expected results. The comment must have
  * `$` as its first non-whitespace character. Any subsequent character
- * is treated as part of the expected results, except that the comment may contain a `//` sequence
- * to treat the remainder of the line as a regular (non-interpreted) comment.
+ * is treated as part of the expected results, except that the comment may contain a `//` or `#`
+ * sequence to treat the remainder of the line as a regular (non-interpreted) comment.
  */
-private string expectationCommentPattern() { result = "\\s*\\$ ((?:[^/]|/[^/])*)(?://.*)?" }
+private string expectationCommentPattern() { result = "\\s*\\$ ((?:[^/]|/[^/])*)(?:(//|#).*)?" }
 
 /**
  * The possible columns in an expectation comment. The `TDefaultColumn` branch represents the first
@@ -597,7 +597,7 @@ private string mainResultSet() { result = ["#select", "problems"] }
  * foo();      // $ Alert[rust/unreachable-code]
  * ```
  *
- * In the example above, the `$ Alert[rust/unused-value]` commment is only taken
+ * In the example above, the `$ Alert[rust/unused-value]` comment is only taken
  * into account in the test for the query with ID `rust/unused-value`, and vice
  * versa for the `$ Alert[rust/unreachable-code]` comment.
  *

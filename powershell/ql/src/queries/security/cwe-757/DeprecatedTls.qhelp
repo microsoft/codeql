@@ -20,16 +20,20 @@
     <p>
       Use TLS 1.2 or TLS 1.3 for all secure communications. TLS 1.3 is preferred as it removes
       support for legacy cryptographic features and provides improved performance. When configuring
-      <code>SecurityProtocolType</code>, use <code>Tls12</code> or <code>Tls13</code>.
+      <code>SecurityProtocolType</code>, use <code>Tls12</code> or <code>Tls13</code>. Removing
+      deprecated protocol flags from an existing configuration is safe and should be kept as a
+      hardening measure.
     </p>
   </recommendation>
   <example>
     <p>
-      In the following example, the script enables the deprecated SSL 3.0 and TLS 1.0 protocols:
+      In the following example, the script enables deprecated SSL 3.0, TLS 1.0, and TLS 1.1
+      protocols, including in a protocol combination:
     </p>
     <sample src="examples/DeprecatedTls/DeprecatedTlsBad.ps1" />
     <p>
-      The following example shows the corrected code using TLS 1.2:
+      The following example shows the corrected code using TLS 1.2 and TLS 1.3, and also shows how
+      to remove deprecated protocol flags from an existing configuration:
     </p>
     <sample src="examples/DeprecatedTls/DeprecatedTlsGood.ps1" />
   </example>

@@ -1,0 +1,62 @@
+<!DOCTYPE qhelp PUBLIC
+  "-//Semmle//qhelp//EN"
+  "qhelp.dtd">
+
+<qhelp>
+
+  <overview>
+    <p>
+      Downloading an artifact (such as an executable, installer, archive, or script) and then
+      using it without verifying its integrity allows an attacker who can tamper with the artifact
+      to execute arbitrary code on the machine. Even when the artifact is retrieved from a trusted
+      source such as GitHub over HTTPS, the contents can still be replaced through a compromised
+      account, a malicious release asset, a poisoned cache or mirror, or a man-in-the-middle attack.
+    </p>
+    <p>
+      Without an integrity check, there is no guarantee that the bytes that were downloaded are the
+      bytes that were intended, so the downloaded artifact must not be trusted.
+    </p>
+  </overview>
+
+  <recommendation>
+    <p>
+      Verify the integrity of every downloaded artifact before using it. Compute a cryptographic hash
+      of the downloaded file with <code>Get-FileHash</code> and compare it against a known-good hash
+      that is obtained through a trusted, out-of-band channel (for example, the signed release notes
+      or a published checksum file). Only use the artifact when the computed hash matches the expected
+      value; otherwise, discard it and fail. Where available, prefer verifying a digital signature of
+      the artifact in addition to, or instead of, a plain hash comparison.
+    </p>
+  </recommendation>
+
+  <example>
+    <p>
+      In the following example, an executable is downloaded from GitHub and then run directly. Because
+      the artifact is never verified, a tampered download is executed without detection.
+    </p>
+    <sample src="examples/powershell/DownloadWithoutIntegrityCheckBad.ps1" />
+
+    <p>
+      In the following example, the downloaded artifact's SHA-256 hash is compared against the expected
+      value before it is used. The artifact is removed and an error is raised if the integrity check
+      fails, so a tampered download is never executed.
+    </p>
+    <sample src="examples/powershell/DownloadWithoutIntegrityCheckGood.ps1" />
+  </example>
+
+  <references>
+    <li>
+      Common Weakness Enumeration:
+      <a href="https://cwe.mitre.org/data/definitions/494.html">CWE-494: Download of Code Without Integrity Check</a>.
+    </li>
+    <li>
+      Common Weakness Enumeration:
+      <a href="https://cwe.mitre.org/data/definitions/829.html">CWE-829: Inclusion of Functionality from Untrusted Control Sphere</a>.
+    </li>
+    <li>
+      Microsoft Learn:
+      <a href="https://learn.microsoft.com/powershell/module/microsoft.powershell.utility/get-filehash">Get-FileHash</a>.
+    </li>
+  </references>
+
+</qhelp>

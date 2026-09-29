@@ -95,8 +95,7 @@ private module Cached {
     ) and
     model = ""
     or
-    FlowSummaryImpl::Private::Steps::summaryLocalStep(nodeFrom.(FlowSummaryNode).getSummaryNode(),
-      nodeTo.(FlowSummaryNode).getSummaryNode(), false, model)
+    FlowSummaryImpl::Private::Steps::summaryLocalStep(nodeFrom, nodeTo, false, model)
   }
 
   cached

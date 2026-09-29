@@ -1,3 +1,62 @@
+## 7.3.0
+
+### New Features
+
+* Added taint modeling for OData action parameter binding (`Microsoft.AspNet.OData`/`Microsoft.AspNetCore.OData`). Values cast, `as`-converted, or type-tested out of `ODataActionParameters`, and entities tracked by `Delta<T>` (via `GetInstance`, `Patch`, `Put`, `CopyChangedValues`, and `CopyUnchangedValues`), now taint the members of the target type.
+
+### Minor Analysis Improvements
+
+* In `build-mode: none`, project and solution restoration is now always attempted using the feeds available.
+* C# analysis with build mode `none` now lists unreachable explicitly configured NuGet feeds in both the extraction warning and the tool status page note. This makes it easier to identify feeds that may cause dependencies to be missing from the analysis.
+* Improved ASP.NET Core MVC controller and action discovery to more closely match runtime behavior, including application parts, endpoint mappings, inherited actions, and controller and action exclusions. Service-injected action parameters are no longer modeled as remote input.
+
+## 7.2.0
+
+### New Features
+
+* Added the `AdditionalTaintStep` extension point (`semmle.code.csharp.dataflow.FlowSteps`). Extend this class to add additional taint steps that apply to all taint-tracking configurations.
+
+### Major Analysis Improvements
+
+* Simplified and streamlined the use of NuGet sources when downloading dependencies. In fallback scenarios and specialized package downloads, NuGet sources are now passed directly to `dotnet restore` via the CLI. Furthermore, no `nuget.config` files are created for fallback scenarios, and private registries are used when attempting to download missing packages that were not restored as part of the normal `dotnet restore` process.
+
+## 7.1.2
+
+No user-facing changes.
+
+## 7.1.1
+
+No user-facing changes.
+
+## 7.1.0
+
+### Major Analysis Improvements
+
+* Simplified and streamlined the use of NuGet sources when downloading dependencies via `[mono] nuget.exe` in `build-mode: none`: NuGet sources are now supplied via the `-Source` flag instead of moving or creating `nuget.config` files in the checked-out repository, private registries are used if configured, and only reachable feeds are used when NuGet feed checking is enabled (the default).
+
+## 7.0.0
+
+### Breaking Changes
+
+* Renamed types related to *operation* expressions. The QL classes `BinaryArithmeticOperation`, `BinaryBitwiseOperation`, and `BinaryLogicalOperation` now include compound assignments; for example, `BinaryArithmeticOperation` now includes `a += b`.
+
+### Major Analysis Improvements
+
+* Added Razor Page handler method parameters (e.g., `OnGet`, `OnPost`, `OnPostAsync`) as remote flow sources, enabling security queries such as `cs/sql-injection` to detect vulnerabilities in `PageModel` subclasses.
+
+### Minor Analysis Improvements
+
+* Improved property and indexer call target resolution for partially overridden properties and indexers.
+* Improved extraction of range-access expressions on spans and strings (for example, `a[0..3]`). These expressions are now extracted as `Slice` (span) or `Substring` (string) calls.
+* Improved call target resolution for ref-return properties and indexers.
+
+## 6.0.2
+
+### Minor Analysis Improvements
+
+* Full support for C# 14 / .NET 10. All new language features are now supported by the extractor. The QL library and data flow analysis now support the new C# 14 language constructs and include generated Models as Data (MaD) models for the .NET 10 runtime.
+* C# 14: Added support for user-defined instance increment/decrement operators.
+
 ## 6.0.1
 
 No user-facing changes.

@@ -179,8 +179,7 @@ module LocalFlow {
     FlowSummaryNode nodeFrom, FlowSummaryNode nodeTo, FlowSummaryImpl::Public::SummarizedCallable c,
     string model
   ) {
-    FlowSummaryImpl::Private::Steps::summaryLocalStep(nodeFrom.getSummaryNode(),
-      nodeTo.getSummaryNode(), true, model) and
+    FlowSummaryImpl::Private::Steps::summaryLocalStep(nodeFrom, nodeTo, true, model) and
     c = nodeFrom.getSummarizedCallable()
   }
 
@@ -189,8 +188,7 @@ module LocalFlow {
     or
     nodeFrom =
       unique(FlowSummaryNode n1 |
-        FlowSummaryImpl::Private::Steps::summaryLocalStep(n1.getSummaryNode(),
-          nodeTo.(FlowSummaryNode).getSummaryNode(), true, _)
+        FlowSummaryImpl::Private::Steps::summaryLocalStep(n1, nodeTo, true, _)
       )
   }
 }
@@ -738,10 +736,12 @@ class FlowSummaryNode extends NodeImpl, TFlowSummaryNode {
   override CfgScope getCfgScope() { none() }
 
   override DataFlowCallable getEnclosingCallable() {
-    result.asLibraryCallable() = this.getSummarizedCallable()
+    result = this.getSummaryNode().getEnclosingCallable()
   }
 
-  override EmptyLocation getLocationImpl() { any() }
+  override Location getLocationImpl() { result = this.getSummaryNode().getLocation() }
+
+  override predicate nodeIsHidden() { this.getSummaryNode().isHidden() }
 
   override string toStringImpl() { result = this.getSummaryNode().toString() }
 }
@@ -933,8 +933,7 @@ predicate jumpStep(Node pred, Node succ) {
     def.definesAt(pred.(EnvVarNode).getVariable(), any(EntryBasicBlock entry), -1)
   )
   or
-  FlowSummaryImpl::Private::Steps::summaryJumpStep(pred.(FlowSummaryNode).getSummaryNode(),
-    succ.(FlowSummaryNode).getSummaryNode())
+  FlowSummaryImpl::Private::Steps::summaryJumpStep(pred, succ)
 }
 
 private predicate arrayExprStore(Node node1, ContentSet cs, Node node2, CfgNodes::ExprCfgNode e) {

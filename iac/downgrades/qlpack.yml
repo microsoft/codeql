@@ -1,0 +1,7 @@
+name: microsoft/iac-downgrades
+groups:
+  - iac
+  - microsoft-all
+downgrades: .
+library: true
+warnOnImplicitThis: true

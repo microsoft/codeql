@@ -2,3 +2,7 @@
 | test.ps1:9:47:9:77 | tls | Use of deprecated protocol TLS 1.0. Use TLS 1.2 or TLS 1.3 instead. |
 | test.ps1:12:47:12:79 | tls11 | Use of deprecated protocol TLS 1.1. Use TLS 1.2 or TLS 1.3 instead. |
 | test.ps1:15:54:15:91 | tls | Use of deprecated protocol TLS 1.0. Use TLS 1.2 or TLS 1.3 instead. |
+| test.ps1:18:48:18:78 | tls | Use of deprecated protocol TLS 1.0. Use TLS 1.2 or TLS 1.3 instead. |
+| test.ps1:21:96:21:126 | tls | Use of deprecated protocol TLS 1.0. Use TLS 1.2 or TLS 1.3 instead. |
+| test.ps1:24:86:24:118 | tls11 | Use of deprecated protocol TLS 1.1. Use TLS 1.2 or TLS 1.3 instead. |
+| test.ps1:27:17:27:66 | tls | Use of deprecated protocol TLS 1.0. Use TLS 1.2 or TLS 1.3 instead. |

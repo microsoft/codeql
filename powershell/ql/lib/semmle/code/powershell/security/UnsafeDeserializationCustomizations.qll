@@ -27,11 +27,6 @@ module UnsafeDeserialization {
     abstract string getSinkType();
   }
 
-  /**
-   * A sanitizer for Unsafe Deserialization vulnerabilities.
-   */
-  abstract class Sanitizer extends DataFlow::Node { }
-
   /** A source of user input, considered as a flow source for unsafe deserialization. */
   class FlowSourceAsSource extends Source instanceof SourceNode {
     override string getSourceType() { result = SourceNode.super.getSourceType() }
@@ -42,14 +37,16 @@ module UnsafeDeserialization {
    * (lowercase) matches `fullTypeName`. Handles both `New-Object TypeName` and
    * `[TypeName]::new()` patterns.
    */
-  private predicate objectCreationMatchesType(
-    DataFlow::ObjectCreationNode ocn, string fullTypeName
-  ) {
+  private predicate objectCreationMatchesType(DataFlow::ObjectCreationNode ocn, string fullTypeName) {
     // New-Object TypeName: getLowerCaseConstructedTypeName() returns the full qualified name
     ocn.getLowerCaseConstructedTypeName() = fullTypeName
     or
     // [TypeName]::new(): access the qualifier TypeNameExpr for the full qualified name
-    ocn.getExprNode().getExpr().(ConstructorCall).getQualifier().(TypeNameExpr)
+    ocn.getExprNode()
+        .getExpr()
+        .(ConstructorCall)
+        .getQualifier()
+        .(TypeNameExpr)
         .getPossiblyQualifiedName() = fullTypeName
   }
 
@@ -106,19 +103,27 @@ module UnsafeDeserialization {
   }
 
   /**
-   * An argument to a BinaryFormatter deserialization method call, including
-   * Deserialize, UnsafeDeserialize, and UnsafeDeserializeMethodResponse.
+   * A BinaryFormatter deserialization method call, including Deserialize, UnsafeDeserialize,
+   * and UnsafeDeserializeMethodResponse.
+   */
+  class BinaryFormatterDeserializeCall extends DataFlow::CallNode {
+    BinaryFormatterDeserializeCall() {
+      exists(DataFlow::ObjectCreationNode ocn |
+        this.getQualifier().getALocalSource() = ocn and
+        objectCreationMatchesType(ocn,
+          "system.runtime.serialization.formatters.binary.binaryformatter") and
+        this.getLowerCaseName() =
+          ["deserialize", "unsafedeserialize", "unsafedeserializemethodresponse"]
+      )
+    }
+  }
+
+  /**
+   * An input argument to a BinaryFormatter deserialization method call.
    */
   class BinaryFormatterDeserializeSink extends Sink {
     BinaryFormatterDeserializeSink() {
-      exists(DataFlow::ObjectCreationNode ocn, DataFlow::CallNode cn |
-        cn.getQualifier().getALocalSource() = ocn and
-        objectCreationMatchesType(ocn,
-          "system.runtime.serialization.formatters.binary.binaryformatter") and
-        cn.getLowerCaseName() =
-          ["deserialize", "unsafedeserialize", "unsafedeserializemethodresponse"] and
-        cn.getAnArgument() = this
-      )
+      exists(BinaryFormatterDeserializeCall cn | cn.getAnArgument() = this)
     }
 
     override string getSinkType() { result = "call to BinaryFormatter.Deserialize" }
@@ -167,9 +172,7 @@ module UnsafeDeserialization {
       )
     }
 
-    override string getSinkType() {
-      result = "call to [" + typeName + "]::" + methodName
-    }
+    override string getSinkType() { result = "call to [" + typeName + "]::" + methodName }
   }
 
   /**

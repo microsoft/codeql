@@ -1,0 +1,85 @@
+trigger:
+  - main
+
+pr:
+  - main
+
+parameters:
+  - name: target
+    type: string
+    default: dev
+    values:
+      - dev
+      - prod
+
+resources:
+  repositories:
+    - repository: templates
+      type: git
+      name: Shared/Templates
+      ref: refs/heads/main
+  pipelines:
+    - pipeline: build
+      source: BuildPipeline
+      branch: refs/heads/main
+
+pool:
+  vmImage: ubuntu-latest
+strategy:
+  matrix:
+    Python38:
+      python.version: "3.8"
+    Python39:
+      python.version: "3.9"
+    Python310:
+      python.version: "3.10"
+
+variables:
+  - name: one
+    value: initialValue
+
+steps:
+  - checkout: self
+    persistCredentials: true
+
+  - template: build-template.yml
+    parameters:
+      target: ${{ parameters.target }}
+
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: "$(python.version)"
+    displayName: "Use Python $(python.version)"
+
+  - script: |
+      python -m pip install --upgrade pip
+      pip install -r requirements.txt
+    displayName: "Install dependencies"
+
+  - script: |
+      pip install pytest pytest-azurepipelines
+      pytest
+    displayName: "pytest"
+
+stages:
+  - stage: deploy
+    jobs:
+      - deployment: deploy_web
+        pool:
+          name: PrivatePool
+        environment: prod
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - pwsh: |
+                    ./deploy.ps1 -Target ${{ parameters.target }}
+                  displayName: "Deploy"
+
+jobs:
+  - job: lint
+    pool:
+      vmImage: windows-latest
+    steps:
+      - bash: echo "lint"
+      - powershell: Write-Host "lint"

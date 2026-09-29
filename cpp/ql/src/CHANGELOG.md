@@ -1,3 +1,37 @@
+## 1.8.3
+
+### Minor Analysis Improvements
+
+* The `cpp/leap-year/unsafe-array-for-days-of-the-year` query ("Unsafe array for days of the year") no longer reports an alert on the `__PRETTY_FUNCTION__` variable (and related variables) when the enclosing function has a signature that is exactly 364 characters.
+
+## 1.8.2
+
+No user-facing changes.
+
+## 1.8.1
+
+No user-facing changes.
+
+## 1.8.0
+
+### Query Metadata Changes
+
+* Added the tag `external/cwe/cwe-762` to `cpp/new-free-mismatch`, and removed the tag `external/cwe/cwe-401`. This better matches the behavior of the query.
+
+## 1.7.0
+
+### Query Metadata Changes
+
+* Added the tags `external/cwe/cwe-073` and `external/cwe/cwe-078` to `cpp/uncontrolled-process-operation`.
+
+## 1.6.5
+
+No user-facing changes.
+
+## 1.6.4
+
+No user-facing changes.
+
 ## 1.6.3
 
 ### Minor Analysis Improvements

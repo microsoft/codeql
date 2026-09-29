@@ -54,18 +54,31 @@ impl Captures {
         self.captures.entry(key).or_default().push(id);
     }
 
-    pub fn map_captures(&mut self, kind: &str, f: &mut impl FnMut(Id) -> Id) {
-        if let Some(ids) = self.captures.get_mut(kind) {
-            for id in ids {
-                *id = f(*id);
+    /// Apply a fallible function to every captured id, replacing each id
+    /// with the results. A function returning an empty vector removes
+    /// the capture; returning multiple ids splices them into the
+    /// capture's value list (suitable for `*`/`+` captures). Captures
+    /// whose name appears in `skip` are left untouched. Stops and
+    /// returns the error on the first failure.
+    ///
+    /// Used by the `rule!` macro's auto-translate prefix to translate
+    /// every capture except those marked `@@name` (raw).
+    pub fn try_map_captures_except<E>(
+        &mut self,
+        skip: &[&str],
+        mut f: impl FnMut(Id) -> Result<Vec<Id>, E>,
+    ) -> Result<(), E> {
+        for (name, ids) in self.captures.iter_mut() {
+            if skip.contains(name) {
+                continue;
             }
+            let mut new_ids = Vec::with_capacity(ids.len());
+            for &id in ids.iter() {
+                new_ids.extend(f(id)?);
+            }
+            *ids = new_ids;
         }
-    }
-    pub fn map_captures_to(&mut self, from: &str, to: &'static str, f: &mut impl FnMut(Id) -> Id) {
-        if let Some(from_ids) = self.captures.get(from) {
-            let new_values = from_ids.iter().copied().map(f).collect();
-            self.captures.insert(to, new_values);
-        }
+        Ok(())
     }
 
     pub fn merge(&mut self, other: &Captures) {

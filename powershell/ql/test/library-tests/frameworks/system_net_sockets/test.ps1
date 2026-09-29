@@ -18,3 +18,25 @@ $receiveTask = $udpClient.ReceiveAsync() # $ type="remote flow source"
 
 $webclient = [System.Net.WebClient]::new()
 $data = $webclient.DownloadData("https://example.com/data.txt") # $ type="remote flow source"
+
+$positionalWebClient = New-Object System.Net.WebClient
+$positionalData = $positionalWebClient.DownloadData("https://example.com/data.txt") # $ type="remote flow source"
+
+$quotedWebClient = New-Object "System.Net.WebClient"
+$quotedData = $quotedWebClient.DownloadData("https://example.com/data.txt") # $ type="remote flow source"
+
+$namedWebClient = New-Object -TypeName System.Net.WebClient
+$namedData = $namedWebClient.DownloadData("https://example.com/data.txt") # $ type="remote flow source"
+
+$partialWebClient = New-Object Net.WebClient
+$partialData = $partialWebClient.DownloadData("https://example.com/data.txt") # $ type="remote flow source"
+
+$unqualifiedWebClient = New-Object WebClient
+$unqualifiedData = $unqualifiedWebClient.DownloadData("https://example.com/data.txt") # $ type="remote flow source"
+
+$mixedCaseWebClient = New-Object sYsTeM.nEt.WeBcLiEnT
+$mixedCaseData = $mixedCaseWebClient.DownloadData("https://example.com/data.txt") # $ type="remote flow source"
+
+$dynamicWebClientType = "System.Net.WebClient"
+$dynamicWebClient = New-Object -TypeName $dynamicWebClientType
+$dynamicData = $dynamicWebClient.DownloadData("https://example.com/data.txt") # $ MISSING: type="remote flow source"

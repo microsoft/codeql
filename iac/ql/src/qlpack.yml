@@ -1,0 +1,11 @@
+name: microsoft/iac-queries
+version: 0.0.1
+groups:
+  - iac
+  - microsoft-all
+  - queries
+extractor: iac
+dependencies:
+  microsoft/iac-all: ${workspace}
+  codeql/suite-helpers: ${workspace}
+warnOnImplicitThis: true

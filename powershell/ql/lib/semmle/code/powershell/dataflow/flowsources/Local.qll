@@ -59,7 +59,11 @@ private class ExternalCommandLineArgumentSource extends CommandLineArgumentSourc
  * A data flow source that represents the parameters of the `Main` method of a program.
  */
 private class MainMethodArgumentSource extends CommandLineArgumentSource {
-  MainMethodArgumentSource() { this.asParameter().getFunction() instanceof TopLevelFunction }
+  MainMethodArgumentSource() {
+    this.asParameter().getFunction() instanceof TopLevelFunction and
+    not this.asParameter() instanceof PipelineParameter and
+    not this.asParameter() instanceof PipelineByPropertyNameParameter
+  }
 }
 
 /**
