@@ -109,3 +109,9 @@ jobs:
             startsWith(inputs.node, 'v14.')
           )
         run: echo "Test 22 should not be printed"
+      - name: Escaped template expression
+        if: $${{ inputs.enabled }}
+        run: echo "Template expression is evaluated by another framework"
+      - name: Escaped template expression with prefix
+        if: generated-$${{ inputs.environment }}
+        run: echo "Template expression is evaluated by another framework"
