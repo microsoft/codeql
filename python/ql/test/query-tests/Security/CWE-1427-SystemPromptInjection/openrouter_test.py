@@ -15,7 +15,7 @@ def get_input_openrouter():
         messages=[
             {
                 "role": "system",
-                "content": "Talk like a " + persona,  # $ Alert[py/system-prompt-injection]
+                "content": "Talk like a " + persona,  # $ Alert[py/microsoft/prompt-injection]
             },
             {
                 "role": "user",
@@ -26,7 +26,7 @@ def get_input_openrouter():
 
     response = client.responses.send(
         model="openai/gpt-4.1",
-        instructions="Talk like a " + persona,  # $ Alert[py/system-prompt-injection]
+        instructions="Talk like a " + persona,  # $ Alert[py/microsoft/prompt-injection]
         input=query,
     )
 
@@ -38,7 +38,7 @@ def get_input_openrouter():
                 "type": "function",
                 "function": {
                     "name": "lookup",
-                    "description": "Talk like a " + persona,  # $ Alert[py/system-prompt-injection]
+                    "description": "Talk like a " + persona,  # $ Alert[py/microsoft/prompt-injection]
                 },
             }
         ],

@@ -17,7 +17,7 @@ def get_input_anthropic():
         messages=[
             {
                 "role": "user",
-                "content": query,  # $ Alert[py/user-prompt-injection]
+                "content": query,  # $ Alert[py/microsoft/user-prompt-injection]
             }
         ],
     )
@@ -26,6 +26,6 @@ def get_input_anthropic():
     response2 = client.completions.create(
         model="claude-2.1",
         max_tokens_to_sample=256,
-        prompt="\n\nHuman: " + query + "\n\nAssistant:",  # $ Alert[py/user-prompt-injection]
+        prompt="\n\nHuman: " + query + "\n\nAssistant:",  # $ Alert[py/microsoft/user-prompt-injection]
     )
     print(response2)

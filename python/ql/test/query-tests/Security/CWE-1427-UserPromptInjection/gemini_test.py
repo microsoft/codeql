@@ -12,7 +12,7 @@ def get_input_gemini():
 
     response1 = client.models.generate_content(
         model="gemini-2.0-flash",
-        contents=query,  # $ Alert[py/user-prompt-injection]
+        contents=query,  # $ Alert[py/microsoft/user-prompt-injection]
     )
 
     response2 = client.models.generate_content(
@@ -22,25 +22,25 @@ def get_input_gemini():
                 "role": "user",
                 "parts": [
                     {
-                        "text": query  # $ Alert[py/user-prompt-injection]
+                        "text": query  # $ Alert[py/microsoft/user-prompt-injection]
                     }
                 ]
             }
-        ],  # $ Alert[py/user-prompt-injection]
+        ],  # $ Alert[py/microsoft/user-prompt-injection]
     )
 
     chat = client.chats.create(model="gemini-2.0-flash")
-    response3 = chat.send_message("Tell me about " + query)  # $ Alert[py/user-prompt-injection]
+    response3 = chat.send_message("Tell me about " + query)  # $ Alert[py/microsoft/user-prompt-injection]
 
     response4 = client.models.edit_image(
         model="imagen-3.0-capability-001",
-        prompt=query,  # $ Alert[py/user-prompt-injection]
+        prompt=query,  # $ Alert[py/microsoft/user-prompt-injection]
     )
 
     cache = client.caches.create(
         model="gemini-2.0-flash",
         config=types.CreateCachedContentConfig(
-            contents=query,  # $ Alert[py/user-prompt-injection]
+            contents=query,  # $ Alert[py/microsoft/user-prompt-injection]
         ),
     )
     print(response1, response2, response3, response4, cache)

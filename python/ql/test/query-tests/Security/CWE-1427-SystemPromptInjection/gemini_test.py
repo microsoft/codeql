@@ -18,7 +18,7 @@ def get_input_gemini():
                 "role": "model",
                 "parts": [
                     {
-                        "text": "I am " + persona  # $ Alert[py/system-prompt-injection]
+                        "text": "I am " + persona  # $ Alert[py/microsoft/prompt-injection]
                     }
                 ]
             },
@@ -32,7 +32,7 @@ def get_input_gemini():
             }
         ],
         config=types.GenerateContentConfig(
-            system_instruction="Talk like " + persona,  # $ Alert[py/system-prompt-injection]
+            system_instruction="Talk like " + persona,  # $ Alert[py/microsoft/prompt-injection]
         ),
     )
     print(response1)
@@ -40,7 +40,7 @@ def get_input_gemini():
     cache = client.caches.create(
         model="gemini-2.0-flash",
         config=types.CreateCachedContentConfig(
-            system_instruction="Talk like " + persona,  # $ Alert[py/system-prompt-injection]
+            system_instruction="Talk like " + persona,  # $ Alert[py/microsoft/prompt-injection]
         ),
     )
     print(cache)
@@ -53,7 +53,7 @@ async def get_input_gemini_live():
     async with client.aio.live.connect(
         model="gemini-2.0-flash",
         config=types.LiveConnectConfig(
-            system_instruction="Talk like " + persona,  # $ Alert[py/system-prompt-injection]
+            system_instruction="Talk like " + persona,  # $ Alert[py/microsoft/prompt-injection]
         ),
     ) as session:
         print(session)
@@ -67,7 +67,7 @@ def get_input_gemini_tool():
         function_declarations=[
             types.FunctionDeclaration(
                 name="lookup",
-                description="Talk like " + persona,  # $ Alert[py/system-prompt-injection]
+                description="Talk like " + persona,  # $ Alert[py/microsoft/prompt-injection]
             )
         ]
     )

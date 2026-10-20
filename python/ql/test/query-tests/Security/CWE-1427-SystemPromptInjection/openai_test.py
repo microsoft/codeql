@@ -14,16 +14,16 @@ async def get_input_openai():
     role = request.args.get("role")
 
     response1 = client.responses.create(
-        instructions="Talks like a " + persona,  # $ Alert[py/system-prompt-injection]
+        instructions="Talks like a " + persona,  # $ Alert[py/microsoft/prompt-injection]
         input=query,
     )
 
     response2 = client.responses.create(
-        instructions="Talks like a " + persona,  # $ Alert[py/system-prompt-injection]
+        instructions="Talks like a " + persona,  # $ Alert[py/microsoft/prompt-injection]
         input=[
             {
                 "role": "developer",
-                "content": "Talk like a " + persona  # $ Alert[py/system-prompt-injection]
+                "content": "Talk like a " + persona  # $ Alert[py/microsoft/prompt-injection]
             },
             {
                 "role": "user",
@@ -41,7 +41,7 @@ async def get_input_openai():
         messages=[
             {
                 "role": "developer",
-                "content": "Talk like a " + persona  # $ Alert[py/system-prompt-injection]
+                "content": "Talk like a " + persona  # $ Alert[py/microsoft/prompt-injection]
             },
             {
                 "role": "user",
@@ -58,7 +58,7 @@ async def get_input_openai():
         messages=[
             {
                 "role": "system",
-                "content": "Talk like a " + persona  # $ Alert[py/system-prompt-injection]
+                "content": "Talk like a " + persona  # $ Alert[py/microsoft/prompt-injection]
             },
             {
                 "role": "user",
@@ -70,17 +70,17 @@ async def get_input_openai():
     assistant = client.beta.assistants.create(
         name="Test Agent",
         model="gpt-4.1",
-        instructions="Talks like a " + persona  # $ Alert[py/system-prompt-injection]
+        instructions="Talks like a " + persona  # $ Alert[py/microsoft/prompt-injection]
     )
 
     session = client.beta.realtime.sessions.create(
-        instructions="Talks like a " + persona  # $ Alert[py/system-prompt-injection]
+        instructions="Talks like a " + persona  # $ Alert[py/microsoft/prompt-injection]
     )
 
     message = client.beta.threads.messages.create(
         thread_id="thread_123",
         role="assistant",
-        content="Always behave like a " + persona,  # $ Alert[py/system-prompt-injection]
+        content="Always behave like a " + persona,  # $ Alert[py/microsoft/prompt-injection]
     )
 
     chat_tool = client.chat.completions.create(
@@ -91,7 +91,7 @@ async def get_input_openai():
                 "type": "function",
                 "function": {
                     "name": "lookup",
-                    "description": "Talk like a " + persona,  # $ Alert[py/system-prompt-injection]
+                    "description": "Talk like a " + persona,  # $ Alert[py/microsoft/prompt-injection]
                 },
             }
         ],
@@ -104,7 +104,7 @@ async def get_input_openai():
             {
                 "type": "function",
                 "name": "lookup",
-                "description": "Talk like a " + persona,  # $ Alert[py/system-prompt-injection]
+                "description": "Talk like a " + persona,  # $ Alert[py/microsoft/prompt-injection]
             }
         ],
     )

@@ -11,25 +11,25 @@ def get_input_agent():
 
     tool = FunctionTool(
         name="lookup",
-        description="Look up reference material about " + topic,  # $ Alert[py/system-prompt-injection]
+        description="Look up reference material about " + topic,  # $ Alert[py/microsoft/prompt-injection]
         params_json_schema={},
         on_invoke_tool=lambda ctx, args: "...",
     )
 
-    @function_tool(description_override="Look up material about " + topic)  # $ Alert[py/system-prompt-injection]
+    @function_tool(description_override="Look up material about " + topic)  # $ Alert[py/microsoft/prompt-injection]
     def lookup(arg: str) -> str:
         return "..."
 
     agent = Agent(
         name="Assistant",
-        instructions="This prompt is customized for " + persona,  # $ Alert[py/system-prompt-injection]
-        handoff_description="Hands off to " + persona,  # $ Alert[py/system-prompt-injection]
+        instructions="This prompt is customized for " + persona,  # $ Alert[py/microsoft/prompt-injection]
+        handoff_description="Hands off to " + persona,  # $ Alert[py/microsoft/prompt-injection]
         tools=[tool],
     )
 
     agent_tool = agent.as_tool(
         tool_name="assistant",
-        tool_description="Delegates to " + persona,  # $ Alert[py/system-prompt-injection]
+        tool_description="Delegates to " + persona,  # $ Alert[py/microsoft/prompt-injection]
     )
     print(agent_tool)
 
@@ -38,7 +38,7 @@ def get_input_agent():
         [
             {
                 "role": "system",
-                "content": "Behave like " + persona,  # $ Alert[py/system-prompt-injection]
+                "content": "Behave like " + persona,  # $ Alert[py/microsoft/prompt-injection]
             },
             {
                 "role": "user",

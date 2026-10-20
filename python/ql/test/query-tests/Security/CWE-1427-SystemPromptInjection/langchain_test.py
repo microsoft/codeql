@@ -14,7 +14,7 @@ def get_input_langchain():
 
     result = model.invoke(
         [
-            SystemMessage(content="Talk like a " + persona),  # $ Alert[py/system-prompt-injection]
+            SystemMessage(content="Talk like a " + persona),  # $ Alert[py/microsoft/prompt-injection]
             HumanMessage(content=query),
         ]
     )
@@ -27,7 +27,7 @@ def get_input_langchain_create_agent():
 
     persona = request.args.get("persona")
 
-    create_agent("gpt-4.1", system_prompt="Talk like a " + persona)  # $ Alert[py/system-prompt-injection]
+    create_agent("gpt-4.1", system_prompt="Talk like a " + persona)  # $ Alert[py/microsoft/prompt-injection]
 
 
 @app.route("/langchain-tool")
@@ -39,26 +39,26 @@ def get_input_langchain_tool():
     Tool(
         "lookup",
         lambda x: x,
-        "Talk like a " + persona,  # $ Alert[py/system-prompt-injection]
+        "Talk like a " + persona,  # $ Alert[py/microsoft/prompt-injection]
     )
 
     Tool.from_function(
         lambda x: x,
         "lookup",
-        "Talk like a " + persona,  # $ Alert[py/system-prompt-injection]
+        "Talk like a " + persona,  # $ Alert[py/microsoft/prompt-injection]
     )
 
     StructuredTool(
         name="lookup",
-        description="Talk like a " + persona,  # $ Alert[py/system-prompt-injection]
+        description="Talk like a " + persona,  # $ Alert[py/microsoft/prompt-injection]
     )
 
     StructuredTool.from_function(
         lambda x: x,
         name="lookup",
-        description="Talk like a " + persona,  # $ Alert[py/system-prompt-injection]
+        description="Talk like a " + persona,  # $ Alert[py/microsoft/prompt-injection]
     )
 
-    @tool(description="Talk like a " + persona)  # $ Alert[py/system-prompt-injection]
+    @tool(description="Talk like a " + persona)  # $ Alert[py/microsoft/prompt-injection]
     def lookup(arg: str) -> str:
         return arg

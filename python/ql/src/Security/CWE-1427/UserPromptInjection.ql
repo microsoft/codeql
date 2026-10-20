@@ -6,7 +6,7 @@
  * @problem.severity warning
  * @security-severity 5.0
  * @precision low
- * @id py/user-prompt-injection
+ * @id py/microsoft/user-prompt-injection
  * @tags security
  *       external/cwe/cwe-1427
  */

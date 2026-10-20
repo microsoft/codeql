@@ -14,11 +14,11 @@ async def get_input_anthropic():
     response1 = client.messages.create(
         model="claude-sonnet-4-20250514",
         max_tokens=256,
-        system="Talk like " + persona,  # $ Alert[py/system-prompt-injection]
+        system="Talk like " + persona,  # $ Alert[py/microsoft/prompt-injection]
         messages=[
             {
                 "role": "assistant",
-                "content": "I am " + persona,  # $ Alert[py/system-prompt-injection]
+                "content": "I am " + persona,  # $ Alert[py/microsoft/prompt-injection]
             },
             {
                 "role": "user",
@@ -30,7 +30,7 @@ async def get_input_anthropic():
     response2 = client.messages.stream(
         model="claude-sonnet-4-20250514",
         max_tokens=256,
-        system="Talk like " + persona,  # $ Alert[py/system-prompt-injection]
+        system="Talk like " + persona,  # $ Alert[py/microsoft/prompt-injection]
         messages=[
             {
                 "role": "user",
@@ -42,7 +42,7 @@ async def get_input_anthropic():
     response3 = client.beta.messages.create(
         model="claude-sonnet-4-20250514",
         max_tokens=256,
-        system="Talk like " + persona,  # $ Alert[py/system-prompt-injection]
+        system="Talk like " + persona,  # $ Alert[py/microsoft/prompt-injection]
         messages=[
             {
                 "role": "user",
@@ -54,13 +54,13 @@ async def get_input_anthropic():
     agent = client.beta.agents.create(
         model="claude-sonnet-4-20250514",
         name="assistant",
-        system="Talk like " + persona,  # $ Alert[py/system-prompt-injection]
+        system="Talk like " + persona,  # $ Alert[py/microsoft/prompt-injection]
     )
 
     client.beta.agents.update(
         agent_id=agent.id,
         version=1,
-        system="Talk like " + persona,  # $ Alert[py/system-prompt-injection]
+        system="Talk like " + persona,  # $ Alert[py/microsoft/prompt-injection]
     )
 
     tool_response = client.messages.create(
@@ -70,7 +70,7 @@ async def get_input_anthropic():
         tools=[
             {
                 "name": "lookup",
-                "description": "Talk like " + persona,  # $ Alert[py/system-prompt-injection]
+                "description": "Talk like " + persona,  # $ Alert[py/microsoft/prompt-injection]
                 "input_schema": {"type": "object", "properties": {}},
             }
         ],

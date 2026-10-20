@@ -13,7 +13,7 @@ async def get_input_openai():
 
     response1 = client.responses.create(
         instructions="Talks like a " + persona,
-        input=query,  # $ Alert[py/user-prompt-injection]
+        input=query,  # $ Alert[py/microsoft/user-prompt-injection]
     )
 
     response2 = client.responses.create(
@@ -24,9 +24,9 @@ async def get_input_openai():
             },
             {
                 "role": "user",
-                "content": query,  # $ Alert[py/user-prompt-injection]
+                "content": query,  # $ Alert[py/microsoft/user-prompt-injection]
             }
-        ]  # $ Alert[py/user-prompt-injection]
+        ]  # $ Alert[py/microsoft/user-prompt-injection]
     )
 
     completion1 = client.chat.completions.create(
@@ -37,31 +37,31 @@ async def get_input_openai():
             },
             {
                 "role": "user",
-                "content": query,  # $ Alert[py/user-prompt-injection]
+                "content": query,  # $ Alert[py/microsoft/user-prompt-injection]
             },
             {
                 "role": role,
-                "content": query,  # $ Alert[py/user-prompt-injection]
+                "content": query,  # $ Alert[py/microsoft/user-prompt-injection]
             }
         ]
     )
 
     completion2 = client.completions.create(
         model="gpt-3.5-turbo-instruct",
-        prompt="Summarize: " + query,  # $ Alert[py/user-prompt-injection]
+        prompt="Summarize: " + query,  # $ Alert[py/microsoft/user-prompt-injection]
     )
 
     image = client.images.generate(
-        prompt="A picture of " + query,  # $ Alert[py/user-prompt-injection]
+        prompt="A picture of " + query,  # $ Alert[py/microsoft/user-prompt-injection]
     )
 
     video = client.videos.create(
         model="sora-2",
-        prompt="A video of " + query,  # $ Alert[py/user-prompt-injection]
+        prompt="A video of " + query,  # $ Alert[py/microsoft/user-prompt-injection]
     )
 
     message = client.beta.threads.messages.create(
         thread_id="thread_123",
         role="user",
-        content="Please summarize " + query,  # $ Alert[py/user-prompt-injection]
+        content="Please summarize " + query,  # $ Alert[py/microsoft/user-prompt-injection]
     )
