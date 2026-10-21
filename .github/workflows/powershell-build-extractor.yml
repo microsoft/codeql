@@ -1,0 +1,31 @@
+name: Build PowerShell Extractor
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Build PowerShell Extractor
+        shell: pwsh
+        working-directory: powershell
+        run: |
+          ./build-linux64.ps1 -cliFolder out
+          ./build-osx64.ps1 -cliFolder out
+          ./build-win64.ps1 -cliFolder out
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: powershell-extractor
+          path: powershell/out
