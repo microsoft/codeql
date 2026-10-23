@@ -1,0 +1,10 @@
+name: microsoft/xpp-tests
+version: 0.0.1
+groups:
+  - xpp
+  - test
+dependencies:
+  microsoft/xpp-all: ${workspace}
+extractor: xpp
+tests: .
+warnOnImplicitThis: true
