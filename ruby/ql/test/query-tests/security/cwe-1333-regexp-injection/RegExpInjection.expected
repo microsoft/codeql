@@ -1,3 +1,16 @@
+#select
+| RegExpInjection.rb:5:13:5:21 | /#{...}/ | RegExpInjection.rb:4:12:4:17 | call to params | RegExpInjection.rb:5:13:5:21 | /#{...}/ | This regular expression depends on a $@. | RegExpInjection.rb:4:12:4:17 | call to params | user-provided value |
+| RegExpInjection.rb:11:13:11:27 | /foo#{...}bar/ | RegExpInjection.rb:10:12:10:17 | call to params | RegExpInjection.rb:11:13:11:27 | /foo#{...}bar/ | This regular expression depends on a $@. | RegExpInjection.rb:10:12:10:17 | call to params | user-provided value |
+| RegExpInjection.rb:17:24:17:27 | name | RegExpInjection.rb:16:12:16:17 | call to params | RegExpInjection.rb:17:24:17:27 | name | This regular expression depends on a $@. | RegExpInjection.rb:16:12:16:17 | call to params | user-provided value |
+| RegExpInjection.rb:23:24:23:33 | ... + ... | RegExpInjection.rb:22:12:22:17 | call to params | RegExpInjection.rb:23:24:23:33 | ... + ... | This regular expression depends on a $@. | RegExpInjection.rb:22:12:22:17 | call to params | user-provided value |
+| RegExpInjection.rb:55:28:55:37 | ... + ... | RegExpInjection.rb:54:12:54:17 | call to params | RegExpInjection.rb:55:28:55:37 | ... + ... | This regular expression depends on a $@. | RegExpInjection.rb:54:12:54:17 | call to params | user-provided value |
+| RegExpInjection.rb:61:26:61:29 | name | RegExpInjection.rb:60:12:60:17 | call to params | RegExpInjection.rb:61:26:61:29 | name | This regular expression depends on a $@. | RegExpInjection.rb:60:12:60:17 | call to params | user-provided value |
+| RegExpInjection.rb:66:26:66:29 | name | RegExpInjection.rb:65:12:65:17 | call to params | RegExpInjection.rb:66:26:66:29 | name | This regular expression depends on a $@. | RegExpInjection.rb:65:12:65:17 | call to params | user-provided value |
+| RegExpInjection.rb:71:35:71:38 | name | RegExpInjection.rb:70:12:70:17 | call to params | RegExpInjection.rb:71:35:71:38 | name | This regular expression depends on a $@. | RegExpInjection.rb:70:12:70:17 | call to params | user-provided value |
+| RegExpInjection.rb:76:45:76:48 | name | RegExpInjection.rb:75:12:75:17 | call to params | RegExpInjection.rb:76:45:76:48 | name | This regular expression depends on a $@. | RegExpInjection.rb:75:12:75:17 | call to params | user-provided value |
+| RegExpInjection.rb:81:26:81:40 | call to [] | RegExpInjection.rb:80:12:80:17 | call to params | RegExpInjection.rb:81:26:81:40 | call to [] | This regular expression depends on a $@. | RegExpInjection.rb:80:12:80:17 | call to params | user-provided value |
+| RegExpInjection.rb:87:26:87:33 | patterns | RegExpInjection.rb:85:12:85:17 | call to params | RegExpInjection.rb:87:26:87:33 | patterns | This regular expression depends on a $@. | RegExpInjection.rb:85:12:85:17 | call to params | user-provided value |
+| RegExpInjection.rb:93:26:93:34 | * ... | RegExpInjection.rb:91:12:91:17 | call to params | RegExpInjection.rb:93:26:93:34 | * ... | This regular expression depends on a $@. | RegExpInjection.rb:91:12:91:17 | call to params | user-provided value |
 edges
 | RegExpInjection.rb:4:5:4:8 | name | RegExpInjection.rb:5:13:5:21 | /#{...}/ | provenance | AdditionalTaintStep |
 | RegExpInjection.rb:4:12:4:17 | call to params | RegExpInjection.rb:4:12:4:24 | ...[...] | provenance |  |
@@ -18,6 +31,35 @@ edges
 | RegExpInjection.rb:54:12:54:17 | call to params | RegExpInjection.rb:54:12:54:24 | ...[...] | provenance |  |
 | RegExpInjection.rb:54:12:54:24 | ...[...] | RegExpInjection.rb:54:5:54:8 | name | provenance |  |
 | RegExpInjection.rb:55:34:55:37 | name | RegExpInjection.rb:55:28:55:37 | ... + ... | provenance |  |
+| RegExpInjection.rb:60:5:60:8 | name | RegExpInjection.rb:61:26:61:29 | name | provenance |  |
+| RegExpInjection.rb:60:12:60:17 | call to params | RegExpInjection.rb:60:12:60:24 | ...[...] | provenance |  |
+| RegExpInjection.rb:60:12:60:24 | ...[...] | RegExpInjection.rb:60:5:60:8 | name | provenance |  |
+| RegExpInjection.rb:65:5:65:8 | name | RegExpInjection.rb:66:26:66:29 | name | provenance |  |
+| RegExpInjection.rb:65:12:65:17 | call to params | RegExpInjection.rb:65:12:65:24 | ...[...] | provenance |  |
+| RegExpInjection.rb:65:12:65:24 | ...[...] | RegExpInjection.rb:65:5:65:8 | name | provenance |  |
+| RegExpInjection.rb:70:5:70:8 | name | RegExpInjection.rb:71:35:71:38 | name | provenance |  |
+| RegExpInjection.rb:70:12:70:17 | call to params | RegExpInjection.rb:70:12:70:24 | ...[...] | provenance |  |
+| RegExpInjection.rb:70:12:70:24 | ...[...] | RegExpInjection.rb:70:5:70:8 | name | provenance |  |
+| RegExpInjection.rb:75:5:75:8 | name | RegExpInjection.rb:76:45:76:48 | name | provenance |  |
+| RegExpInjection.rb:75:12:75:17 | call to params | RegExpInjection.rb:75:12:75:24 | ...[...] | provenance |  |
+| RegExpInjection.rb:75:12:75:24 | ...[...] | RegExpInjection.rb:75:5:75:8 | name | provenance |  |
+| RegExpInjection.rb:80:5:80:8 | name | RegExpInjection.rb:81:36:81:39 | name | provenance |  |
+| RegExpInjection.rb:80:12:80:17 | call to params | RegExpInjection.rb:80:12:80:24 | ...[...] | provenance |  |
+| RegExpInjection.rb:80:12:80:24 | ...[...] | RegExpInjection.rb:80:5:80:8 | name | provenance |  |
+| RegExpInjection.rb:81:36:81:39 | name | RegExpInjection.rb:81:26:81:40 | call to [] | provenance |  |
+| RegExpInjection.rb:85:5:85:8 | name | RegExpInjection.rb:86:26:86:29 | name | provenance |  |
+| RegExpInjection.rb:85:12:85:17 | call to params | RegExpInjection.rb:85:12:85:24 | ...[...] | provenance |  |
+| RegExpInjection.rb:85:12:85:24 | ...[...] | RegExpInjection.rb:85:5:85:8 | name | provenance |  |
+| RegExpInjection.rb:86:5:86:12 | patterns : Array [element 1] | RegExpInjection.rb:87:26:87:33 | patterns | provenance |  |
+| RegExpInjection.rb:86:16:86:30 | call to [] : Array [element 1] | RegExpInjection.rb:86:5:86:12 | patterns : Array [element 1] | provenance |  |
+| RegExpInjection.rb:86:26:86:29 | name | RegExpInjection.rb:86:16:86:30 | call to [] : Array [element 1] | provenance |  |
+| RegExpInjection.rb:91:5:91:8 | name | RegExpInjection.rb:92:26:92:29 | name | provenance |  |
+| RegExpInjection.rb:91:12:91:17 | call to params | RegExpInjection.rb:91:12:91:24 | ...[...] | provenance |  |
+| RegExpInjection.rb:91:12:91:24 | ...[...] | RegExpInjection.rb:91:5:91:8 | name | provenance |  |
+| RegExpInjection.rb:92:5:92:12 | patterns : Array [element 1] | RegExpInjection.rb:93:27:93:34 | patterns : Array [element 1] | provenance |  |
+| RegExpInjection.rb:92:16:92:30 | call to [] : Array [element 1] | RegExpInjection.rb:92:5:92:12 | patterns : Array [element 1] | provenance |  |
+| RegExpInjection.rb:92:26:92:29 | name | RegExpInjection.rb:92:16:92:30 | call to [] : Array [element 1] | provenance |  |
+| RegExpInjection.rb:93:27:93:34 | patterns : Array [element 1] | RegExpInjection.rb:93:26:93:34 | * ... | provenance |  |
 nodes
 | RegExpInjection.rb:4:5:4:8 | name | semmle.label | name |
 | RegExpInjection.rb:4:12:4:17 | call to params | semmle.label | call to params |
@@ -41,10 +83,40 @@ nodes
 | RegExpInjection.rb:54:12:54:24 | ...[...] | semmle.label | ...[...] |
 | RegExpInjection.rb:55:28:55:37 | ... + ... | semmle.label | ... + ... |
 | RegExpInjection.rb:55:34:55:37 | name | semmle.label | name |
+| RegExpInjection.rb:60:5:60:8 | name | semmle.label | name |
+| RegExpInjection.rb:60:12:60:17 | call to params | semmle.label | call to params |
+| RegExpInjection.rb:60:12:60:24 | ...[...] | semmle.label | ...[...] |
+| RegExpInjection.rb:61:26:61:29 | name | semmle.label | name |
+| RegExpInjection.rb:65:5:65:8 | name | semmle.label | name |
+| RegExpInjection.rb:65:12:65:17 | call to params | semmle.label | call to params |
+| RegExpInjection.rb:65:12:65:24 | ...[...] | semmle.label | ...[...] |
+| RegExpInjection.rb:66:26:66:29 | name | semmle.label | name |
+| RegExpInjection.rb:70:5:70:8 | name | semmle.label | name |
+| RegExpInjection.rb:70:12:70:17 | call to params | semmle.label | call to params |
+| RegExpInjection.rb:70:12:70:24 | ...[...] | semmle.label | ...[...] |
+| RegExpInjection.rb:71:35:71:38 | name | semmle.label | name |
+| RegExpInjection.rb:75:5:75:8 | name | semmle.label | name |
+| RegExpInjection.rb:75:12:75:17 | call to params | semmle.label | call to params |
+| RegExpInjection.rb:75:12:75:24 | ...[...] | semmle.label | ...[...] |
+| RegExpInjection.rb:76:45:76:48 | name | semmle.label | name |
+| RegExpInjection.rb:80:5:80:8 | name | semmle.label | name |
+| RegExpInjection.rb:80:12:80:17 | call to params | semmle.label | call to params |
+| RegExpInjection.rb:80:12:80:24 | ...[...] | semmle.label | ...[...] |
+| RegExpInjection.rb:81:26:81:40 | call to [] | semmle.label | call to [] |
+| RegExpInjection.rb:81:36:81:39 | name | semmle.label | name |
+| RegExpInjection.rb:85:5:85:8 | name | semmle.label | name |
+| RegExpInjection.rb:85:12:85:17 | call to params | semmle.label | call to params |
+| RegExpInjection.rb:85:12:85:24 | ...[...] | semmle.label | ...[...] |
+| RegExpInjection.rb:86:5:86:12 | patterns : Array [element 1] | semmle.label | patterns : Array [element 1] |
+| RegExpInjection.rb:86:16:86:30 | call to [] : Array [element 1] | semmle.label | call to [] : Array [element 1] |
+| RegExpInjection.rb:86:26:86:29 | name | semmle.label | name |
+| RegExpInjection.rb:87:26:87:33 | patterns | semmle.label | patterns |
+| RegExpInjection.rb:91:5:91:8 | name | semmle.label | name |
+| RegExpInjection.rb:91:12:91:17 | call to params | semmle.label | call to params |
+| RegExpInjection.rb:91:12:91:24 | ...[...] | semmle.label | ...[...] |
+| RegExpInjection.rb:92:5:92:12 | patterns : Array [element 1] | semmle.label | patterns : Array [element 1] |
+| RegExpInjection.rb:92:16:92:30 | call to [] : Array [element 1] | semmle.label | call to [] : Array [element 1] |
+| RegExpInjection.rb:92:26:92:29 | name | semmle.label | name |
+| RegExpInjection.rb:93:26:93:34 | * ... | semmle.label | * ... |
+| RegExpInjection.rb:93:27:93:34 | patterns : Array [element 1] | semmle.label | patterns : Array [element 1] |
 subpaths
-#select
-| RegExpInjection.rb:5:13:5:21 | /#{...}/ | RegExpInjection.rb:4:12:4:17 | call to params | RegExpInjection.rb:5:13:5:21 | /#{...}/ | This regular expression depends on a $@. | RegExpInjection.rb:4:12:4:17 | call to params | user-provided value |
-| RegExpInjection.rb:11:13:11:27 | /foo#{...}bar/ | RegExpInjection.rb:10:12:10:17 | call to params | RegExpInjection.rb:11:13:11:27 | /foo#{...}bar/ | This regular expression depends on a $@. | RegExpInjection.rb:10:12:10:17 | call to params | user-provided value |
-| RegExpInjection.rb:17:24:17:27 | name | RegExpInjection.rb:16:12:16:17 | call to params | RegExpInjection.rb:17:24:17:27 | name | This regular expression depends on a $@. | RegExpInjection.rb:16:12:16:17 | call to params | user-provided value |
-| RegExpInjection.rb:23:24:23:33 | ... + ... | RegExpInjection.rb:22:12:22:17 | call to params | RegExpInjection.rb:23:24:23:33 | ... + ... | This regular expression depends on a $@. | RegExpInjection.rb:22:12:22:17 | call to params | user-provided value |
-| RegExpInjection.rb:55:28:55:37 | ... + ... | RegExpInjection.rb:54:12:54:17 | call to params | RegExpInjection.rb:55:28:55:37 | ... + ... | This regular expression depends on a $@. | RegExpInjection.rb:54:12:54:17 | call to params | user-provided value |

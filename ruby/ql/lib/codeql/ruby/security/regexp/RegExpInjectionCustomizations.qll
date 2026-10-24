@@ -58,6 +58,17 @@ module RegExpInjection {
   }
 
   /**
+   * An argument of a call to `Regexp.union`, considered as a flow sink.
+   * This conservatively includes strings, which `Regexp.union` escapes,
+   * as well as regular expressions and the single-array argument form.
+   */
+  class RegExpUnionAsSink extends Sink {
+    RegExpUnionAsSink() {
+      this = API::getTopLevelMember("Regexp").getAMethodCall("union").getArgument(_)
+    }
+  }
+
+  /**
    * A comparison with a constant string, considered as a sanitizer-guard.
    */
   class StringConstCompareAsSanitizer extends Sanitizer, StringConstCompareBarrier { }
