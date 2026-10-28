@@ -3,3 +3,6 @@ contentVersion: "1.0.0.0"
 resources:
   - type: Microsoft.Storage/storageAccounts
     name: samplestorage
+steps:
+  - checkout: self
+    persistCredentials: true

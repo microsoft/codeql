@@ -1,0 +1,51 @@
+steps:
+  - checkout: self
+    persistCredentials: true # BAD
+  - checkout: tools
+    persistCredentials: "true" # BAD
+  - checkout: git://Project/Repository
+    persistCredentials: 'TRUE' # BAD
+  - checkout: self
+    persistCredentials: TRUE # BAD
+  - checkout: self
+    persistCredentials: false # GOOD
+  - checkout: self
+    persistCredentials: "false" # GOOD
+  - checkout: self # GOOD: default is not persisted
+  - checkout: none
+    persistCredentials: true # GOOD: no checkout
+  - checkout: self
+    persistCredentials: ${{ parameters.persist }} # GOOD: unresolved
+  - checkout: self
+    persistCredentials: $(persist) # GOOD: unresolved
+  - checkout: self
+    persistCredentials: $[variables.persist] # GOOD: unresolved
+  - checkout: self
+    persistCredentials: 1 # GOOD: not literal true
+  - checkout: self
+    persistCredentials: null # GOOD
+  - checkout: self
+    persistCredentials: "not true" # GOOD
+  - checkout: ""
+    persistCredentials: true # GOOD: no repository
+  - checkout: ${{ parameters.repository }}
+    persistCredentials: true # GOOD: unresolved target
+  - checkout: self
+    persistCredentials:
+      enabled: true # GOOD: not a scalar
+  - task: Example@1
+    inputs:
+      checkout: self
+      persistCredentials: true # GOOD: task input, not a checkout step
+  - script: echo "persistCredentials: true" # GOOD
+  - template: nested-steps.yaml
+    parameters:
+      checkout: self
+      persistCredentials: true # GOOD: template argument, not a step
+  - bash: ./build.sh
+---
+# An ARM-shaped document in the same file must not borrow the first document's guard.
+$schema: https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#
+steps:
+  - checkout: self
+    persistCredentials: true # GOOD: excluded ARM document

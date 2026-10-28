@@ -22,6 +22,18 @@ query predicate adopipelineScript(AzurePipelines::Script n) { any() }
 
 query predicate adopipelineCheckout(AzurePipelines::Checkout n) { any() }
 
+query predicate adopipelinePersistedCredentials(AzurePipelines::Checkout n) {
+  n.persistsCredentials()
+}
+
+query predicate adopipelineJobStep(AzurePipelines::Job job, AzurePipelines::Step step) {
+  step = job.getAStep()
+}
+
+query predicate adopipelineStepDocument(AzurePipelines::Step step, AzurePipelines::Document doc) {
+  doc = step.getEnclosingDocument()
+}
+
 query predicate adopipelineTemplateStep(AzurePipelines::TemplateStep n) { any() }
 
 query predicate adopipelineRepositoryResource(AzurePipelines::RepositoryResource n) { any() }

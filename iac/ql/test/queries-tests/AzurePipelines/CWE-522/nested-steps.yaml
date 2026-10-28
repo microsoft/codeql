@@ -1,0 +1,18 @@
+parameters:
+  - name: persist
+    type: boolean
+    default: true
+steps:
+  - ${{ if parameters.persist }}:
+      - checkout: self
+        persistCredentials: true # BAD
+  - ${{ elseif eq(parameters.persist, false) }}:
+      - checkout: tools
+        persistCredentials: "True" # BAD
+  - ${{ else }}:
+      - checkout: self
+        persistCredentials: false # GOOD
+  - ${{ each repository in parameters.repositories }}:
+      - ${{ if ne(repository, '') }}:
+          - checkout: self
+            persistCredentials: true # BAD

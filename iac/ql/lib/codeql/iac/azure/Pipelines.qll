@@ -2,6 +2,44 @@ private import codeql.iac.YAML
 private import codeql.files.FileSystem
 
 module AzurePipelines {
+  private YamlSequence getAnInsertedSequence(YamlMapping wrapper) {
+    exists(YamlString key |
+      wrapper.maps(key, result) and
+      key.getValue().regexpMatch("\\$\\{\\{\\s*(if\\s+.*|elseif\\s+.*|else|each\\s+.*)\\s*\\}\\}")
+    )
+  }
+
+  // Expand template control structures without assuming their conditions are true.
+  private YamlValue getAnExpandedSequenceElement(YamlSequence sequence) {
+    result = sequence.getAChild() and
+    not exists(getAnInsertedSequence(result.(YamlMapping)))
+    or
+    exists(YamlMapping wrapper, YamlSequence nested |
+      wrapper = sequence.getAChild() and
+      nested = getAnInsertedSequence(wrapper) and
+      result = getAnExpandedSequenceElement(nested)
+    )
+  }
+
+  private YamlMapping getADeploymentHook(Job job) {
+    exists(YamlMapping strategy |
+      job instanceof DeploymentJob and
+      strategy = job.lookup("strategy").(YamlMapping).lookup(["runOnce", "rolling", "canary"])
+    |
+      result = strategy.lookup(["preDeploy", "deploy", "routeTraffic", "postRouteTraffic"])
+      or
+      result = strategy.lookup("on").(YamlMapping).lookup(["failure", "success"])
+    )
+  }
+
+  private predicate isStepSequence(YamlSequence sequence) {
+    sequence = any(Document document).lookup("steps")
+    or
+    sequence = any(Job job).lookup("steps")
+    or
+    sequence = getADeploymentHook(_).lookup("steps")
+  }
+
   private predicate hasPipelineBaseName(YamlDocument doc) {
     doc.getFile().getBaseName() = ["azure-pipelines.yml", "azure-pipelines.yaml"]
   }
@@ -78,13 +116,15 @@ module AzurePipelines {
     /**
      * Gets a pipeline stage, if any.
      */
-    Stage getAStage() { result = this.lookup("stages").getAChild() }
+    Stage getAStage() {
+      result = getAnExpandedSequenceElement(this.lookup("stages").(YamlSequence))
+    }
 
     /**
      * Gets a pipeline job, if any.
      */
     Job getAJob() {
-      result = this.lookup("jobs").getAChild()
+      result = getAnExpandedSequenceElement(this.lookup("jobs").(YamlSequence))
       or
       result = this.getAStage().getAJob()
     }
@@ -143,7 +183,9 @@ module AzurePipelines {
    * Azure DevOps Pipeline stage.
    */
   class Stage extends YamlNode, YamlMapping {
-    Stage() { exists(Document document | document.lookup("stages").getAChildNode() = this) }
+    Stage() {
+      this = getAnExpandedSequenceElement(any(Document document).lookup("stages").(YamlSequence))
+    }
 
     override string toString() { result = this.getName() }
 
@@ -155,7 +197,7 @@ module AzurePipelines {
     /**
      * Gets a job in the stage, if any.
      */
-    Job getAJob() { result = this.lookup("jobs").getAChild() }
+    Job getAJob() { result = getAnExpandedSequenceElement(this.lookup("jobs").(YamlSequence)) }
 
     /**
      * Gets the stage condition, if any.
@@ -168,9 +210,9 @@ module AzurePipelines {
    */
   class Job extends YamlNode, YamlMapping {
     Job() {
-      exists(Document document | document.lookup("jobs").getAChildNode() = this)
+      this = getAnExpandedSequenceElement(any(Document document).lookup("jobs").(YamlSequence))
       or
-      exists(Stage stage | stage.lookup("jobs").getAChildNode() = this)
+      this = getAnExpandedSequenceElement(any(Stage stage).lookup("jobs").(YamlSequence))
     }
 
     override string toString() { result = this.getName() }
@@ -190,9 +232,14 @@ module AzurePipelines {
     Pool getPool() { result = this.lookup("pool") }
 
     /**
-     * Gets a step in the job, if any.
+     * Gets a step in the job, including deployment lifecycle hooks and template
+     * control structures, if any.
      */
-    Step getAStep() { result = this.lookup("steps").getAChild() }
+    Step getAStep() {
+      result = getAnExpandedSequenceElement(this.lookup("steps").(YamlSequence))
+      or
+      result = getAnExpandedSequenceElement(getADeploymentHook(this).lookup("steps").(YamlSequence))
+    }
 
     /**
      * Gets the job condition, if any.
@@ -269,9 +316,7 @@ module AzurePipelines {
    */
   class Step extends YamlNode, YamlMapping {
     Step() {
-      exists(Document document | document.lookup("steps").getAChildNode() = this)
-      or
-      exists(Job job | job.lookup("steps").getAChildNode() = this)
+      this = getAnExpandedSequenceElement(any(YamlSequence sequence | isStepSequence(sequence)))
     }
 
     override string toString() { result = this.getDisplayName() }
@@ -279,11 +324,7 @@ module AzurePipelines {
     /**
      * Gets the enclosing Azure DevOps Pipeline document.
      */
-    Document getEnclosingDocument() {
-      result.lookup("steps").getAChildNode() = this
-      or
-      this.getFile() = result.getFile()
-    }
+    Document getEnclosingDocument() { result = this.getDocument() }
 
     /**
      * Gets the step display name, if any.
@@ -365,6 +406,18 @@ module AzurePipelines {
      * Gets the `persistCredentials` setting, if any.
      */
     YamlValue getPersistCredentials() { result = this.lookup("persistCredentials") }
+
+    /**
+     * Holds if checkout explicitly enables credential persistence with a literal
+     * `true` value. Expressions and other unresolved values are not evaluated.
+     */
+    predicate persistsCredentials() {
+      exists(YamlScalar setting |
+        setting = this.getPersistCredentials() and
+        (setting instanceof YamlBool or setting instanceof YamlString) and
+        setting.getValue().toLowerCase() = "true"
+      )
+    }
   }
 
   /**

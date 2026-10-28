@@ -1,0 +1,25 @@
+jobs:
+  - job: build
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+      - checkout: self
+        persistCredentials: true # BAD
+      - bash: ./build.sh
+  - ${{ if eq(parameters.run, true) }}:
+      - job: conditional
+        steps:
+          - checkout: tools
+            persistCredentials: true # BAD
+---
+stages:
+  - ${{ if eq(parameters.run, true) }}:
+      - stage: release
+        jobs:
+          - ${{ each target in parameters.targets }}:
+              - job: publish
+                pool: PrivatePool
+                steps:
+                  - checkout: self
+                    persistCredentials: true # BAD
+                  - pwsh: ./publish.ps1

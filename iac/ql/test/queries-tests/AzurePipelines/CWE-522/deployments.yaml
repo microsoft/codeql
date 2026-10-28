@@ -1,0 +1,47 @@
+jobs:
+  - deployment: once
+    environment: test
+    strategy:
+      runOnce:
+        preDeploy:
+          steps:
+            - checkout: self
+              persistCredentials: true # BAD
+        deploy:
+          steps:
+            - checkout: self
+              persistCredentials: true # BAD
+        routeTraffic:
+          steps:
+            - checkout: self
+              persistCredentials: true # BAD
+        postRouteTraffic:
+          steps:
+            - checkout: self
+              persistCredentials: true # BAD
+        on:
+          failure:
+            steps:
+              - checkout: self
+                persistCredentials: true # BAD
+          success:
+            steps:
+              - checkout: self
+                persistCredentials: false # GOOD
+  - deployment: rolling
+    environment: test
+    strategy:
+      rolling:
+        deploy:
+          steps:
+            - checkout: tools
+              persistCredentials: true # BAD
+  - deployment: canary
+    environment: test
+    strategy:
+      canary:
+        deploy:
+          steps:
+            - ${{ if eq(parameters.run, true) }}:
+                - checkout: self
+                  persistCredentials: true # BAD

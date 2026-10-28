@@ -1,0 +1,15 @@
+on: push
+jobs:
+  build:
+    steps:
+      - checkout: self
+        persistCredentials: true # GOOD: not ADO
+---
+$schema: https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#
+steps:
+  - checkout: self
+    persistCredentials: true # GOOD: ARM
+---
+parameters:
+  checkout: self
+  persistCredentials: true # GOOD: not a pipeline step
