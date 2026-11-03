@@ -1,0 +1,8 @@
+| azure-pipelines.yml:2:11:3:99 | \| | This download uses GitHub's floating 'latest' release. Pin the artifact version and enforce integrity verification before use. |
+| azure-pipelines.yml:5:17:7:46 | \| | This download uses GitHub's floating 'latest' release. Pin the artifact version and enforce integrity verification before use. |
+| azure-pipelines.yml:9:11:11:88 | \| | This download uses GitHub's floating 'latest' release. Pin the artifact version and enforce integrity verification before use. |
+| azure-pipelines.yml:13:13:15:77 | \| | This download uses GitHub's floating 'latest' release. Pin the artifact version and enforce integrity verification before use. |
+| azure-pipelines.yml:20:15:21:98 | \| | This download uses GitHub's floating 'latest' release. Pin the artifact version and enforce integrity verification before use. |
+| azure-pipelines.yml:26:15:27:97 | \| | This download uses GitHub's floating 'latest' release. Pin the artifact version and enforce integrity verification before use. |
+| azure-pipelines.yml:31:15:31:103 | curl.ex ... ool.zip | This download uses GitHub's floating 'latest' release. Pin the artifact version and enforce integrity verification before use. |
+| azure-pipelines.yml:77:19:78:129 | \| | This download uses GitHub's floating 'latest' release. Pin the artifact version and enforce integrity verification before use. |

@@ -1,0 +1,7 @@
+{
+  "steps": [
+    {
+      "bash": "curl https://github.com/example/tool/releases/latest/download/tool.tar.gz"
+    }
+  ]
+}

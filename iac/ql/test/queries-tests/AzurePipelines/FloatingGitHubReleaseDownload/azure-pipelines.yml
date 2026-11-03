@@ -1,0 +1,78 @@
+steps:
+  - bash: |
+      curl -fL https://github.com/example/tool/releases/latest/download/tool.tar.gz -o tool.tar.gz
+
+  - powershell: |
+      Invoke-WebRequest -Uri 'https://github.com/example/tool/releases/latest/download/tool.zip' -OutFile tool.zip
+      Get-FileHash tool.zip -Algorithm SHA256
+
+  - pwsh: |
+      & curl.exe -L `
+        'https://GitHub.com/example/tool/releases/latest/download/tool.zip' -o tool.zip
+
+  - script: |
+      wget \
+        https://github.com/example/tool/releases/latest/download/tool.tar.gz
+
+  - task: PowerShell@2
+    inputs:
+      targetType: inline
+      script: |
+        iwr 'https://github.com/example/tool/releases/latest/download/tool.zip' -OutFile tool.zip
+
+  - task: Bash@3
+    inputs:
+      targetType: inline
+      script: |
+        wget -O tool.tar.gz https://github.com/example/tool/releases/latest/download/tool.tar.gz
+
+  - task: CmdLine@2
+    inputs:
+      script: curl.exe -L https://github.com/example/tool/releases/latest/download/tool.zip -o tool.zip
+
+  - bash: |
+      curl -fL https://github.com/example/tool/releases/download/v1.2.3/tool.tar.gz -o tool.tar.gz
+
+  - bash: |
+      # curl https://github.com/example/tool/releases/latest/download/tool.tar.gz
+      echo 'curl https://github.com/example/tool/releases/latest/download/tool.tar.gz'
+      printf '%s\n' 'https://github.com/example/tool/releases/latest/download/tool.tar.gz'
+
+  - powershell: |
+      Write-Host "Invoke-WebRequest https://github.com/example/tool/releases/latest/download/tool.zip"
+
+  - bash: |
+      curl https://github.com.example.invalid/example/tool/releases/latest/download/tool.tar.gz
+      curl https://example.invalid/github.com/example/tool/releases/latest/download/tool.tar.gz
+      curl https://example.invalid/?url=https://github.com/example/tool/releases/latest/download/tool.tar.gz
+      curl https://example.invalid/tool.tar.gz; echo https://github.com/example/tool/releases/latest/download/tool.tar.gz
+      curl https://example.invalid/tool.tar.gz | echo https://github.com/example/tool/releases/latest/download/tool.tar.gz
+
+  - task: PowerShell@2
+    inputs:
+      targetType: filePath
+      filePath: download.ps1
+      script: Invoke-WebRequest https://github.com/example/tool/releases/latest/download/tool.zip
+
+  - task: Bash@3
+    inputs:
+      targetType: filePath
+      filePath: download.sh
+      script: curl https://github.com/example/tool/releases/latest/download/tool.tar.gz
+
+  - task: OtherTask@1
+    inputs:
+      script: curl https://github.com/example/tool/releases/latest/download/tool.tar.gz
+
+  - bash: |
+      curl https://api.github.com/repos/example/tool/releases/latest
+      curl https://github.com/example/tool/releases/latest
+    displayName: curl https://github.com/example/tool/releases/latest/download/tool.tar.gz
+
+stages:
+  - stage: Build
+    jobs:
+      - job: Download
+        steps:
+          - pwsh: |
+              Start-BitsTransfer -Source https://github.com/example/tool/releases/latest/download/tool.zip -Destination tool.zip

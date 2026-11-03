@@ -1,0 +1,58 @@
+<!DOCTYPE qhelp PUBLIC
+  "-//Semmle//qhelp//EN"
+  "qhelp.dtd">
+<qhelp>
+  <overview>
+    <p>
+      A GitHub release URL containing <code>/releases/latest/download/</code> can resolve to
+      different artifacts over time. An Azure DevOps pipeline that downloads from this URL
+      can consume a different release without a corresponding change to the pipeline.
+    </p>
+    <p>
+      This query identifies literal floating release URLs in download command lines within
+      inline Azure DevOps script steps and inline PowerShell, Bash, and CmdLine task inputs.
+      It recognizes curl, wget, Invoke-WebRequest, Invoke-RestMethod, Start-BitsTransfer,
+      and their listed aliases or executable names.
+      Detection is text-based, not an analysis of shell execution or artifact data flow.
+      URLs assembled through variables, external scripts, and other task types are not
+      covered. A finding does not establish that the artifact is executed or lacks
+      integrity verification. A separate hash or signature check does not suppress a
+      floating-reference finding.
+    </p>
+  </overview>
+  <recommendation>
+    <p>
+      Replace the floating URL with an explicitly selected version. Version selection alone
+      does not establish integrity: a versioned release asset or tag can still be changed.
+      Verify the downloaded artifact against a trusted expected SHA-256 or stronger hash,
+      or an appropriate trusted signature, and fail before consuming the artifact if
+      verification fails. Where required by the organization's build policy, use internally
+      validated and hosted artifacts instead of direct external downloads.
+    </p>
+  </recommendation>
+  <example>
+    <p>
+      This pipeline downloads whichever release is currently marked as latest:
+    </p>
+    <pre><![CDATA[
+steps:
+  - bash: |
+      curl -fL https://github.com/example/tool/releases/latest/download/tool.tar.gz -o tool.tar.gz
+]]></pre>
+    <p>
+      An explicit release URL such as
+      <code>https://github.com/example/tool/releases/download/v1.2.3/tool.tar.gz</code>
+      avoids floating version selection, but still requires integrity verification before use.
+    </p>
+  </example>
+  <references>
+    <li>
+      GitHub Docs:
+      <a href="https://docs.github.com/en/repositories/releasing-projects-on-github/linking-to-releases">Linking to releases</a>.
+    </li>
+    <li>
+      Common Weakness Enumeration:
+      <a href="https://cwe.mitre.org/data/definitions/829.html">CWE-829: Inclusion of Functionality from Untrusted Control Sphere</a>.
+    </li>
+  </references>
+</qhelp>
