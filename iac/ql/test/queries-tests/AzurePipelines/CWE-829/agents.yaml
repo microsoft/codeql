@@ -1,0 +1,167 @@
+pr: [main]
+pool: PrivatePool
+steps:
+  - bash: ./build.sh # BAD
+  - bash: ./release.sh # GOOD
+    condition: ne(variables['Build.Reason'], 'PullRequest')
+  - bash: ./disabled.sh # GOOD
+    condition: false
+  - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+      - bash: ./release.sh # GOOD
+jobs:
+  - job: inherited
+    steps:
+      - task: Npm@1 # BAD
+        inputs:
+          command: install
+  - job: hosted
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+      - script: ./build.sh # GOOD
+  - job: unknown
+    pool: $(pool)
+    steps:
+      - script: ./build.sh # GOOD
+  - job: server
+    pool: server
+    steps:
+      - task: ManualValidation@1 # GOOD
+  - deployment: deploy
+    environment: test
+    strategy:
+      runOnce:
+        deploy:
+          pool:
+            vmImage: ubuntu-latest
+          steps:
+            - pwsh: ./deploy.ps1 # GOOD: hook overrides job
+        preDeploy:
+          steps:
+            - pwsh: ./prepare.ps1 # BAD
+stages:
+  - stage: hosted
+    pool:
+      vmImage: ubuntu-latest
+    jobs:
+      - job: hosted
+        steps:
+          - script: ./build.sh # GOOD
+      - job: private
+        pool:
+          name: BuildPool
+        steps:
+          - script: ./build.sh # BAD
+  - stage: notPr
+    condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+    jobs:
+      - job: release
+        steps:
+          - script: ./release.sh # GOOD
+---
+pr: none
+pool: PrivatePool
+steps:
+  - script: ./build.sh # GOOD
+---
+pool: PrivatePool
+steps:
+  - script: ./build.sh # GOOD: omitted PR is unknown
+---
+pr:
+  branches:
+    include: [main]
+pool:
+  demands: Agent.OS -equals Windows_NT
+steps:
+  - powershell: ./build.ps1 # BAD
+---
+pr: "*"
+pool:
+  name: Azure Pipelines
+steps:
+  - bash: ./build.sh # GOOD
+---
+pr: "*"
+pool: {}
+steps:
+  - bash: ./build.sh # GOOD
+---
+pr:
+  branches:
+    include: []
+pool: PrivatePool
+steps:
+  - bash: ./build.sh # GOOD
+---
+pr:
+  branches:
+    exclude: ["*"]
+pool: PrivatePool
+steps:
+  - bash: ./build.sh # GOOD
+---
+$schema: https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#
+pr: "*"
+pool: PrivatePool
+steps:
+  - bash: ./build.sh # GOOD
+---
+pool: PrivatePool
+jobs:
+  - job: onlyPr
+    condition: eq(variables['Build.Reason'], 'PullRequest')
+    steps:
+      - script: ./build.sh # BAD
+  - job: onlyFork
+    condition: eq(variables['System.PullRequest.IsFork'], true)
+    steps:
+      - script: ./build.sh # BAD
+  - job: onlyCi
+    condition: eq(variables['Build.Reason'], 'IndividualCI')
+    steps:
+      - script: ./build.sh # GOOD
+---
+pr: "*"
+pool:
+  name: PrivatePool
+  vmImage: $(image)
+steps:
+  - bash: ./build.sh # GOOD: unknown hosted-image selection
+---
+pr: "*"
+pool:
+  demands: $(demands)
+steps:
+  - bash: ./build.sh # GOOD: unresolved pool
+---
+pr: "*"
+pool:
+  name: PrivatePool
+jobs:
+  - job: unknownOverride
+    pool: {}
+    steps:
+      - bash: ./build.sh # GOOD: override blocks inheritance
+---
+pr: "*"
+pool:
+  vmImage: ubuntu-latest
+jobs:
+  - deployment: rolling
+    environment: test
+    strategy:
+      rolling:
+        deploy:
+          pool: PrivatePool
+          steps:
+            - bash: ./deploy.sh # BAD: hook override
+  - deployment: canary
+    environment: test
+    strategy:
+      canary:
+        on:
+          failure:
+            pool: PrivatePool
+            steps:
+              - bash: ./recover.sh # BAD: failure-hook override

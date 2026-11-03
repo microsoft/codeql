@@ -1,0 +1,33 @@
+<!DOCTYPE qhelp PUBLIC "-//Semmle//qhelp//EN" "qhelp.dtd">
+<qhelp>
+  <overview>
+    <p>Running pull request-controlled scripts or build code on private agents
+    can expose persistent workspaces, credentials, and network access to contributors.
+    This query requires an explicitly enabled YAML PR trigger or a simple
+    PR/fork-only condition, an executable step,
+    and an explicit private pool name or literal private-agent demand.</p>
+    <p>Pool selection respects pipeline, stage, job, and deployment-hook overrides,
+    including scalar pool names. Hosted image declarations, the Azure Pipelines
+    hosted pool, server jobs, and unknown or computed pools are not classified as
+    private. Omitted PR triggers and organization-level branch policies are not inferred.</p>
+    <p>Literal false and selected simple Build.Reason conditions that exclude PR
+    execution are recognized. Equality checks for a PullRequest build reason or
+    a true System.PullRequest.IsFork value also establish explicit PR evidence.
+    General condition evaluation, runtime approvals,
+    external template expansion, container trust, and fork-policy settings are not
+    modeled. A result indicates a PR execution path, not proof that forks are
+    enabled or that every contributor is malicious. Only in-scope YAML is analyzed.</p>
+  </overview>
+  <recommendation>
+    <p>Use isolated disposable agents for PR validation. Keep private agents with
+    persistent credentials or privileged network access out of contributor-controlled
+    execution paths. If private agents are required, isolate their state, minimize
+    permissions, and enforce a reviewed trust boundary before privileged work.
+    Checkout or workspace cleanup alone does not establish that boundary.</p>
+  </recommendation>
+  <references>
+    <li>Microsoft Learn: <a href="https://learn.microsoft.com/en-us/azure/devops/pipelines/yaml-schema/pool">Pool definition and precedence</a>.</li>
+    <li>Microsoft Learn: <a href="https://learn.microsoft.com/en-us/azure/devops/pipelines/security/misc">Other security considerations</a>.</li>
+    <li>Common Weakness Enumeration: <a href="https://cwe.mitre.org/data/definitions/829.html">CWE-829: Inclusion of Functionality from Untrusted Control Sphere</a>.</li>
+  </references>
+</qhelp>
