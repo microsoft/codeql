@@ -1,0 +1,4 @@
+steps:
+  - ${{ if eq(parameters.run, true) }}:
+      - template: remote.yaml@nested
+  - template: local/child.yaml

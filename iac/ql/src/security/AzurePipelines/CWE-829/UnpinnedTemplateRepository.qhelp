@@ -1,0 +1,26 @@
+<!DOCTYPE qhelp PUBLIC "-//Semmle//qhelp//EN" "qhelp.dtd">
+<qhelp>
+  <overview>
+    <p>External templates become executable pipeline configuration. A branch, tag,
+    or omitted repository revision can resolve to different content on a later run.
+    This query reports repository resources used by a template reference whose
+    revision is not a full 40-character Git commit SHA.</p>
+    <p>    It follows literal local includes across extracted pipeline-shaped YAML files, including
+    relative and repository-root paths, and supports step, job, stage, variable,
+    and extends references. Unused resources and <code>@self</code> are not reported.
+    Computed revisions are reported as unresolved, not proved mutable.
+    Direct parameter references with a nonempty allowed-value list containing
+    only full commit SHAs are accepted. A SHA default alone is not a constraint.
+    Other expressions and external repository contents are not evaluated.
+    Conditional includes are analyzed structurally. Only in-scope YAML is analyzed.</p>
+  </overview>
+  <recommendation>
+    <p>Pin the repository resource's <code>ref</code> to a reviewed full commit SHA
+    and update it through code review. Tags are references, not cryptographic
+    identities; their protection depends on repository policy.</p>
+  </recommendation>
+  <references>
+    <li>Microsoft Learn: <a href="https://learn.microsoft.com/en-us/azure/devops/pipelines/process/templates#store-templates-in-other-repositories">Store templates in other repositories</a>.</li>
+    <li>Common Weakness Enumeration: <a href="https://cwe.mitre.org/data/definitions/829.html">CWE-829: Inclusion of Functionality from Untrusted Control Sphere</a>.</li>
+  </references>
+</qhelp>

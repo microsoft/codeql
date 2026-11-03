@@ -1,0 +1,90 @@
+parameters:
+  - name: commit
+    type: string
+    values:
+      - 1234567890abcdef1234567890abcdef12345678
+      - ABCDEF1234567890ABCDEF1234567890ABCDEF12
+  - name: mixed
+    type: string
+    values:
+      - 1234567890abcdef1234567890abcdef12345678
+      - main
+  - name: defaultOnly
+    type: string
+    default: 1234567890abcdef1234567890abcdef12345678
+resources:
+  repositories:
+    - repository: omitted # BAD
+      name: Org/Omitted
+    - repository: branch # BAD
+      name: Org/Branch
+      ref: refs/heads/main
+    - repository: tag # BAD
+      name: Org/Tag
+      ref: refs/tags/v1
+    - repository: computed # BAD
+      name: Org/Computed
+      ref: ${{ parameters.revision }}
+    - repository: pinned # GOOD
+      name: Org/Pinned
+      ref: 1234567890abcdef1234567890abcdef12345678
+    - repository: unused # GOOD
+      name: Org/Unused
+    - repository: short # BAD
+      name: Org/Short
+      ref: abcdef123
+    - repository: nested # BAD
+      name: Org/Nested
+      ref: main
+    - repository: self # GOOD
+      name: Org/Self
+      ref: main
+    - repository: constrained # GOOD
+      name: Org/Constrained
+      ref: ${{ parameters.commit }}
+    - repository: mixed # BAD
+      name: Org/Mixed
+      ref: ${{ parameters.mixed }}
+    - repository: defaultOnly # BAD
+      name: Org/DefaultOnly
+      ref: ${{ parameters.defaultOnly }}
+    - repository: upper # GOOD
+      name: Org/Upper
+      ref: ABCDEF1234567890ABCDEF1234567890ABCDEF12
+    - repository: rootOnly # BAD
+      name: Org/RootOnly
+      ref: main
+    - repository: selfLocal # BAD
+      name: Org/SelfLocal
+      ref: main
+extends:
+  template: base.yaml@omitted
+variables:
+  - template: vars.yaml@branch
+stages:
+  - template: stages.yaml@tag
+jobs:
+  - template: jobs.yaml@computed
+steps:
+  - template: steps.yaml@pinned
+  - template: steps.yaml@short
+  - template: steps.yaml@self
+  - template: steps.yaml@constrained
+  - template: steps.yaml@mixed
+  - template: steps.yaml@defaultOnly
+  - template: steps.yaml@upper
+  - template: local/child.yaml
+  - template: /local/child.yaml
+  - template: /root-child.yaml
+  - template: self-child.yaml@self
+  - task: Example@1
+    inputs:
+      template: fake.yaml@unused
+---
+$schema: https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#
+resources:
+  repositories:
+    - repository: arm # GOOD
+      name: Org/Arm
+steps:
+  - template: steps.yaml@arm

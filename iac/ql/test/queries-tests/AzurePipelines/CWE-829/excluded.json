@@ -1,0 +1,13 @@
+{
+  "pr": "*",
+  "pool": "PrivatePool",
+  "resources": {
+    "repositories": [
+      { "repository": "json", "name": "Org/Json" }
+    ]
+  },
+  "steps": [
+    { "template": "steps.yaml@json" },
+    { "script": "./build.sh" }
+  ]
+}

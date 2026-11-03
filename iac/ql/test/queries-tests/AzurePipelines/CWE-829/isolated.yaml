@@ -1,0 +1,14 @@
+resources:
+  repositories:
+    - repository: nested # GOOD: reference in another pipeline is not an include edge
+      name: Org/Unrelated
+steps:
+  - script: echo "No template use"
+---
+on: push
+resources:
+  repositories:
+    - repository: github # GOOD: not ADO
+      name: Org/GitHub
+steps:
+  - template: steps.yaml@github

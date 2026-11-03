@@ -1,0 +1,10 @@
+| azure-pipelines.yaml:17:7:19:4 | Repository resource 'omitted' | Template repository 'omitted' (Org/Omitted) uses revision '(omitted; defaults to refs/heads/main)' that is not proven to be an immutable commit SHA. |
+| azure-pipelines.yaml:19:7:22:4 | Repository resource 'branch' | Template repository 'branch' (Org/Branch) uses revision 'refs/heads/main' that is not proven to be an immutable commit SHA. |
+| azure-pipelines.yaml:22:7:25:4 | Repository resource 'tag' | Template repository 'tag' (Org/Tag) uses revision 'refs/tags/v1' that is not proven to be an immutable commit SHA. |
+| azure-pipelines.yaml:25:7:28:4 | Repository resource 'computed' | Template repository 'computed' (Org/Computed) uses revision '${{ parameters.revision }}' that is not proven to be an immutable commit SHA. |
+| azure-pipelines.yaml:33:7:36:4 | Repository resource 'short' | Template repository 'short' (Org/Short) uses revision 'abcdef123' that is not proven to be an immutable commit SHA. |
+| azure-pipelines.yaml:36:7:39:4 | Repository resource 'nested' | Template repository 'nested' (Org/Nested) uses revision 'main' that is not proven to be an immutable commit SHA. |
+| azure-pipelines.yaml:45:7:48:4 | Repository resource 'mixed' | Template repository 'mixed' (Org/Mixed) uses revision '${{ parameters.mixed }}' that is not proven to be an immutable commit SHA. |
+| azure-pipelines.yaml:48:7:51:4 | Repository resource 'defaultOnly' | Template repository 'defaultOnly' (Org/DefaultOnly) uses revision '${{ parameters.defaultOnly }}' that is not proven to be an immutable commit SHA. |
+| azure-pipelines.yaml:54:7:57:4 | Repository resource 'rootOnly' | Template repository 'rootOnly' (Org/RootOnly) uses revision 'main' that is not proven to be an immutable commit SHA. |
+| azure-pipelines.yaml:57:7:59:16 | Repository resource 'selfLocal' | Template repository 'selfLocal' (Org/SelfLocal) uses revision 'main' that is not proven to be an immutable commit SHA. |
