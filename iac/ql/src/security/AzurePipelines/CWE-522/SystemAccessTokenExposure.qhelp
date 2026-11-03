@@ -1,0 +1,29 @@
+<!DOCTYPE qhelp PUBLIC "-//Semmle//qhelp//EN" "qhelp.dtd">
+<qhelp>
+  <overview>
+    <p><code>System.AccessToken</code> is the pipeline job's authentication token.
+    Direct expansion into inline scripts, executable task inputs, or artifact
+    publication inputs exposes it to receiving code. Mapping it into the
+    environment of an executable step also grants that code access.
+    Log masking does not restrict what a receiving process can do with it.</p>
+    <p>This query covers direct case-insensitive macro expansion in YAML,
+    script and command task inputs, execution-step environments, and publication
+    paths. It does not prove that a file or artifact contains the token or that
+    token use is malicious. Variable aliases, shell environment references, and
+    cross-job flow are not evaluated. Known non-execution task authentication
+    mappings, such as a Docker login, are not reported solely for containing
+    the token. Unknown task input semantics are not inferred.</p>
+  </overview>
+  <recommendation>
+    <p>Avoid interpolating the token into script text or command arguments.
+    When authentication is necessary, limit its permissions and repository scope,
+    isolate the trusted authentication operation from repository-controlled code,
+    and avoid publishing credentials. Environment mapping is preferable to
+    command-line interpolation but still grants the receiving script access;
+    review whether that script needs the token.</p>
+  </recommendation>
+  <references>
+    <li>Microsoft Learn: <a href="https://learn.microsoft.com/en-us/azure/devops/pipelines/build/variables#systemaccesstoken">System.AccessToken</a>.</li>
+    <li>Common Weakness Enumeration: <a href="https://cwe.mitre.org/data/definitions/522.html">CWE-522: Insufficiently Protected Credentials</a>.</li>
+  </references>
+</qhelp>

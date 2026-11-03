@@ -1,0 +1,80 @@
+steps:
+  - script: echo $(System.AccessToken) # BAD
+  - bash: ./build.sh --token "$(system.accesstoken)" # BAD
+  - powershell: Set-Content token.txt "$(System.AccessToken)" # BAD
+  - pwsh: ./publish.ps1
+    env:
+      TOKEN: $(System.AccessToken) # BAD
+  - task: Bash@3
+    inputs:
+      targetType: inline
+      script: echo $(System.AccessToken) # BAD
+  - task: PowerShell@2
+    inputs:
+      arguments: -Token $(System.AccessToken) # BAD
+  - task: AzureCLI@2
+    inputs:
+      scriptLocation: inlineScript
+      inlineScript: az example --token $(System.AccessToken) # BAD
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: $(System.AccessToken) # BAD
+  - publish: $(System.AccessToken) # BAD
+  - task: Docker@2
+    inputs:
+      command: login
+      containerRegistry: connection
+    env:
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken) # GOOD: narrow task use
+  - task: Unknown@1
+    inputs:
+      token: $(System.AccessToken) # GOOD: unknown semantics
+  - script: echo $(NotSystem.AccessToken) # GOOD
+  - script: echo '$SYSTEM_ACCESSTOKEN' # GOOD: indirect, not modeled
+  - script: echo token
+    displayName: $(System.AccessToken) # GOOD: not executable input
+  - template: example.yaml
+    parameters:
+      token: $(System.AccessToken) # GOOD: indirect, not modeled
+  - task: PowerShell@2
+    inputs:
+      targetType: inline
+      script: Write-Host $(System.AccessToken) # BAD
+      filePath: $(System.AccessToken) # GOOD: inactive file input
+  - task: Bash@3
+    inputs:
+      targetType: filePath
+      filePath: build.sh
+      script: echo $(System.AccessToken) # GOOD: inactive inline input
+      arguments: --token $(System.AccessToken) # BAD
+  - task: AzurePowerShell@5
+    inputs:
+      ScriptType: InlineScript
+      Inline: Write-Host $(System.AccessToken) # BAD
+  - task: Npm@1
+    inputs:
+      command: custom
+      customCommand: run build -- --token $(System.AccessToken) # BAD
+  - task: PythonScript@0
+    inputs:
+      scriptSource: inline
+      script: print("$(System.AccessToken)") # BAD
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: $(System.AccessToken) # BAD
+  - task: CmdLine@2
+    inputs:
+      script: echo $(System.AccessToken) # BAD
+  - task: DotNetCoreCLI@2
+    inputs:
+      arguments: --token $(System.AccessToken) # BAD
+---
+$schema: https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#
+steps:
+  - script: echo $(System.AccessToken) # GOOD: ARM
+---
+on: push
+jobs:
+  build:
+    steps:
+      - script: echo $(System.AccessToken) # GOOD: GitHub Actions

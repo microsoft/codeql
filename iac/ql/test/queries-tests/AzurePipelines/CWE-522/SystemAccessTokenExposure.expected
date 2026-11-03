@@ -1,0 +1,17 @@
+| token.yaml:2:13:2:38 | echo $( ... sToken) | System.AccessToken is passed directly to inline script. The receiving code can use the token even when logs mask its value. |
+| token.yaml:3:11:3:52 | ./build ... token)" | System.AccessToken is passed directly to inline script. The receiving code can use the token even when logs mask its value. |
+| token.yaml:4:17:4:61 | Set-Con ... Token)" | System.AccessToken is passed directly to inline script. The receiving code can use the token even when logs mask its value. |
+| token.yaml:7:14:7:34 | $(Syste ... sToken) | System.AccessToken is passed directly to execution-step environment. The receiving code can use the token even when logs mask its value. |
+| token.yaml:11:15:11:40 | echo $( ... sToken) | System.AccessToken is passed directly to task script. The receiving code can use the token even when logs mask its value. |
+| token.yaml:14:18:14:45 | -Token  ... sToken) | System.AccessToken is passed directly to task arguments. The receiving code can use the token even when logs mask its value. |
+| token.yaml:18:21:18:60 | az exam ... sToken) | System.AccessToken is passed directly to task inlineScript. The receiving code can use the token even when logs mask its value. |
+| token.yaml:21:22:21:42 | $(Syste ... sToken) | System.AccessToken is passed directly to artifact publication input. The receiving code can use the token even when logs mask its value. |
+| token.yaml:22:14:22:34 | $(Syste ... sToken) | System.AccessToken is passed directly to artifact publication input. The receiving code can use the token even when logs mask its value. |
+| token.yaml:42:15:42:46 | Write-H ... sToken) | System.AccessToken is passed directly to task script. The receiving code can use the token even when logs mask its value. |
+| token.yaml:49:18:49:46 | --token ... sToken) | System.AccessToken is passed directly to task arguments. The receiving code can use the token even when logs mask its value. |
+| token.yaml:53:15:53:46 | Write-H ... sToken) | System.AccessToken is passed directly to task Inline. The receiving code can use the token even when logs mask its value. |
+| token.yaml:57:22:57:63 | run bui ... sToken) | System.AccessToken is passed directly to task customCommand. The receiving code can use the token even when logs mask its value. |
+| token.yaml:61:15:61:44 | print(" ... oken)") | System.AccessToken is passed directly to task script. The receiving code can use the token even when logs mask its value. |
+| token.yaml:64:19:64:39 | $(Syste ... sToken) | System.AccessToken is passed directly to artifact publication input. The receiving code can use the token even when logs mask its value. |
+| token.yaml:67:15:67:40 | echo $( ... sToken) | System.AccessToken is passed directly to task script. The receiving code can use the token even when logs mask its value. |
+| token.yaml:70:18:70:46 | --token ... sToken) | System.AccessToken is passed directly to task arguments. The receiving code can use the token even when logs mask its value. |
