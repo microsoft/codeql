@@ -1,4 +1,10 @@
 #select
+| CabZipSlip.cs:11:49:11:58 | access to property Path | CabZipSlip.cs:11:49:11:58 | access to property Path : String | CabZipSlip.cs:12:26:12:36 | access to local variable destination | Unsanitized archive entry, which may contain '..', is used in a $@. | CabZipSlip.cs:12:26:12:36 | access to local variable destination | file system operation |
+| CabZipSlip.cs:17:49:17:62 | access to property FullName | CabZipSlip.cs:17:49:17:62 | access to property FullName : String | CabZipSlip.cs:18:28:18:38 | access to local variable destination | Unsanitized archive entry, which may contain '..', is used in a $@. | CabZipSlip.cs:18:28:18:38 | access to local variable destination | file system operation |
+| CabZipSlip.cs:23:49:23:58 | access to property Path | CabZipSlip.cs:23:49:23:58 | access to property Path : String | CabZipSlip.cs:24:31:24:41 | access to local variable destination | Unsanitized archive entry, which may contain '..', is used in a $@. | CabZipSlip.cs:24:31:24:41 | access to local variable destination | file system operation |
+| CabZipSlip.cs:29:66:29:79 | access to property FullName | CabZipSlip.cs:29:66:29:79 | access to property FullName : String | CabZipSlip.cs:30:28:30:38 | access to local variable destination | Unsanitized archive entry, which may contain '..', is used in a $@. | CabZipSlip.cs:30:28:30:38 | access to local variable destination | file system operation |
+| CabZipSlip.cs:35:49:35:58 | access to property Path | CabZipSlip.cs:35:49:35:58 | access to property Path : String | CabZipSlip.cs:41:31:41:41 | access to parameter destination | Unsanitized archive entry, which may contain '..', is used in a $@. | CabZipSlip.cs:41:31:41:41 | access to parameter destination | file system operation |
+| CabZipSlip.cs:46:49:46:62 | access to property FullName | CabZipSlip.cs:46:49:46:62 | access to property FullName : String | CabZipSlip.cs:47:28:47:38 | access to local variable destination | Unsanitized archive entry, which may contain '..', is used in a $@. | CabZipSlip.cs:47:28:47:38 | access to local variable destination | file system operation |
 | ZipSlip.cs:15:61:15:74 | access to property FullName | ZipSlip.cs:15:61:15:74 | access to property FullName : String | ZipSlip.cs:31:41:31:52 | access to local variable destFilePath | Unsanitized archive entry, which may contain '..', is used in a $@. | ZipSlip.cs:31:41:31:52 | access to local variable destFilePath | file system operation |
 | ZipSlip.cs:15:61:15:74 | access to property FullName | ZipSlip.cs:15:61:15:74 | access to property FullName : String | ZipSlip.cs:39:45:39:73 | access to local variable destFilePath_notCanonicalized | Unsanitized archive entry, which may contain '..', is used in a $@. | ZipSlip.cs:39:45:39:73 | access to local variable destFilePath_notCanonicalized | file system operation |
 | ZipSlip.cs:18:53:18:66 | access to property FullName | ZipSlip.cs:18:53:18:66 | access to property FullName : String | ZipSlip.cs:23:41:23:52 | access to local variable destFileName | Unsanitized archive entry, which may contain '..', is used in a $@. | ZipSlip.cs:23:41:23:52 | access to local variable destFileName | file system operation |
@@ -11,10 +17,38 @@
 | ZipSlip.cs:305:80:305:93 | access to property FullName | ZipSlip.cs:305:80:305:93 | access to property FullName : String | ZipSlip.cs:308:37:308:53 | access to local variable destinationOnDisk | Unsanitized archive entry, which may contain '..', is used in a $@. | ZipSlip.cs:308:37:308:53 | access to local variable destinationOnDisk | file system operation |
 | ZipSlipBad.cs:9:59:9:72 | access to property FullName | ZipSlipBad.cs:9:59:9:72 | access to property FullName : String | ZipSlipBad.cs:10:29:10:40 | access to local variable destFileName | Unsanitized archive entry, which may contain '..', is used in a $@. | ZipSlipBad.cs:10:29:10:40 | access to local variable destFileName | file system operation |
 edges
+| CabZipSlip.cs:11:16:11:26 | access to local variable destination : String | CabZipSlip.cs:12:26:12:36 | access to local variable destination | provenance |  |
+| CabZipSlip.cs:11:30:11:71 | call to method Combine : String | CabZipSlip.cs:11:16:11:26 | access to local variable destination : String | provenance |  |
+| CabZipSlip.cs:11:49:11:58 | access to property Path : String | CabZipSlip.cs:11:30:11:71 | call to method Combine : String | provenance | Config |
+| CabZipSlip.cs:11:49:11:58 | access to property Path : String | CabZipSlip.cs:11:30:11:71 | call to method Combine : String | provenance | MaD:2 |
+| CabZipSlip.cs:17:16:17:26 | access to local variable destination : String | CabZipSlip.cs:18:28:18:38 | access to local variable destination | provenance |  |
+| CabZipSlip.cs:17:30:17:63 | call to method Combine : String | CabZipSlip.cs:17:16:17:26 | access to local variable destination : String | provenance |  |
+| CabZipSlip.cs:17:49:17:62 | access to property FullName : String | CabZipSlip.cs:17:30:17:63 | call to method Combine : String | provenance | Config |
+| CabZipSlip.cs:17:49:17:62 | access to property FullName : String | CabZipSlip.cs:17:30:17:63 | call to method Combine : String | provenance | MaD:1 |
+| CabZipSlip.cs:23:16:23:26 | access to local variable destination : String | CabZipSlip.cs:24:31:24:41 | access to local variable destination | provenance |  |
+| CabZipSlip.cs:23:30:23:71 | call to method Combine : String | CabZipSlip.cs:23:16:23:26 | access to local variable destination : String | provenance |  |
+| CabZipSlip.cs:23:49:23:58 | access to property Path : String | CabZipSlip.cs:23:30:23:71 | call to method Combine : String | provenance | Config |
+| CabZipSlip.cs:23:49:23:58 | access to property Path : String | CabZipSlip.cs:23:30:23:71 | call to method Combine : String | provenance | MaD:2 |
+| CabZipSlip.cs:29:16:29:26 | access to local variable destination : String | CabZipSlip.cs:30:28:30:38 | access to local variable destination | provenance |  |
+| CabZipSlip.cs:29:30:29:81 | call to method GetFullPath : String | CabZipSlip.cs:29:16:29:26 | access to local variable destination : String | provenance |  |
+| CabZipSlip.cs:29:47:29:80 | call to method Combine : String | CabZipSlip.cs:29:30:29:81 | call to method GetFullPath : String | provenance | Config |
+| CabZipSlip.cs:29:47:29:80 | call to method Combine : String | CabZipSlip.cs:29:30:29:81 | call to method GetFullPath : String | provenance | MaD:3 |
+| CabZipSlip.cs:29:66:29:79 | access to property FullName : String | CabZipSlip.cs:29:47:29:80 | call to method Combine : String | provenance | Config |
+| CabZipSlip.cs:29:66:29:79 | access to property FullName : String | CabZipSlip.cs:29:47:29:80 | call to method Combine : String | provenance | MaD:1 |
+| CabZipSlip.cs:35:16:35:26 | access to local variable destination : String | CabZipSlip.cs:36:20:36:30 | access to local variable destination : String | provenance |  |
+| CabZipSlip.cs:35:30:35:71 | call to method Combine : String | CabZipSlip.cs:35:16:35:26 | access to local variable destination : String | provenance |  |
+| CabZipSlip.cs:35:49:35:58 | access to property Path : String | CabZipSlip.cs:35:30:35:71 | call to method Combine : String | provenance | Config |
+| CabZipSlip.cs:35:49:35:58 | access to property Path : String | CabZipSlip.cs:35:30:35:71 | call to method Combine : String | provenance | MaD:2 |
+| CabZipSlip.cs:36:20:36:30 | access to local variable destination : String | CabZipSlip.cs:39:43:39:53 | destination : String | provenance |  |
+| CabZipSlip.cs:39:43:39:53 | destination : String | CabZipSlip.cs:41:31:41:41 | access to parameter destination | provenance |  |
+| CabZipSlip.cs:46:16:46:26 | access to local variable destination : String | CabZipSlip.cs:47:28:47:38 | access to local variable destination | provenance |  |
+| CabZipSlip.cs:46:30:46:63 | call to method Combine : String | CabZipSlip.cs:46:16:46:26 | access to local variable destination : String | provenance |  |
+| CabZipSlip.cs:46:49:46:62 | access to property FullName : String | CabZipSlip.cs:46:30:46:63 | call to method Combine : String | provenance | Config |
+| CabZipSlip.cs:46:49:46:62 | access to property FullName : String | CabZipSlip.cs:46:30:46:63 | call to method Combine : String | provenance | MaD:1 |
 | ZipSlip.cs:15:24:15:40 | access to local variable fullPath_relative : String | ZipSlip.cs:30:71:30:87 | access to local variable fullPath_relative : String | provenance |  |
 | ZipSlip.cs:15:44:15:75 | call to method GetFullPath : String | ZipSlip.cs:15:24:15:40 | access to local variable fullPath_relative : String | provenance |  |
 | ZipSlip.cs:15:61:15:74 | access to property FullName : String | ZipSlip.cs:15:44:15:75 | call to method GetFullPath : String | provenance | Config |
-| ZipSlip.cs:15:61:15:74 | access to property FullName : String | ZipSlip.cs:15:44:15:75 | call to method GetFullPath : String | provenance | MaD:2 |
+| ZipSlip.cs:15:61:15:74 | access to property FullName : String | ZipSlip.cs:15:44:15:75 | call to method GetFullPath : String | provenance | MaD:3 |
 | ZipSlip.cs:18:24:18:49 | access to local variable file_badDirectoryTraversal : String | ZipSlip.cs:19:43:19:68 | access to local variable file_badDirectoryTraversal : String | provenance |  |
 | ZipSlip.cs:18:53:18:66 | access to property FullName : String | ZipSlip.cs:18:24:18:49 | access to local variable file_badDirectoryTraversal : String | provenance |  |
 | ZipSlip.cs:19:43:19:68 | access to local variable file_badDirectoryTraversal : String | ZipSlip.cs:22:71:22:96 | access to local variable file_badDirectoryTraversal : String | provenance |  |
@@ -51,7 +85,7 @@ edges
 | ZipSlip.cs:305:24:305:40 | access to local variable destinationOnDisk : String | ZipSlip.cs:307:44:307:60 | access to local variable destinationOnDisk : String | provenance |  |
 | ZipSlip.cs:305:44:305:95 | call to method GetFullPath : String | ZipSlip.cs:305:24:305:40 | access to local variable destinationOnDisk : String | provenance |  |
 | ZipSlip.cs:305:61:305:94 | call to method Combine : String | ZipSlip.cs:305:44:305:95 | call to method GetFullPath : String | provenance | Config |
-| ZipSlip.cs:305:61:305:94 | call to method Combine : String | ZipSlip.cs:305:44:305:95 | call to method GetFullPath : String | provenance | MaD:2 |
+| ZipSlip.cs:305:61:305:94 | call to method Combine : String | ZipSlip.cs:305:44:305:95 | call to method GetFullPath : String | provenance | MaD:3 |
 | ZipSlip.cs:305:80:305:93 | access to property FullName : String | ZipSlip.cs:305:61:305:94 | call to method Combine : String | provenance | Config |
 | ZipSlip.cs:305:80:305:93 | access to property FullName : String | ZipSlip.cs:305:61:305:94 | call to method Combine : String | provenance | MaD:1 |
 | ZipSlip.cs:307:44:307:60 | access to local variable destinationOnDisk : String | ZipSlip.cs:308:37:308:53 | access to local variable destinationOnDisk | provenance |  |
@@ -61,8 +95,36 @@ edges
 | ZipSlipBad.cs:9:59:9:72 | access to property FullName : String | ZipSlipBad.cs:9:31:9:73 | call to method Combine : String | provenance | MaD:1 |
 models
 | 1 | Summary: System.IO; Path; false; Combine; (System.String,System.String); ; Argument[1]; ReturnValue; taint; manual |
-| 2 | Summary: System.IO; Path; false; GetFullPath; (System.String); ; Argument[0]; ReturnValue; taint; manual |
+| 2 | Summary: System.IO; Path; false; Combine; (System.String,System.String,System.String); ; Argument[1]; ReturnValue; taint; manual |
+| 3 | Summary: System.IO; Path; false; GetFullPath; (System.String); ; Argument[0]; ReturnValue; taint; manual |
 nodes
+| CabZipSlip.cs:11:16:11:26 | access to local variable destination : String | semmle.label | access to local variable destination : String |
+| CabZipSlip.cs:11:30:11:71 | call to method Combine : String | semmle.label | call to method Combine : String |
+| CabZipSlip.cs:11:49:11:58 | access to property Path : String | semmle.label | access to property Path : String |
+| CabZipSlip.cs:12:26:12:36 | access to local variable destination | semmle.label | access to local variable destination |
+| CabZipSlip.cs:17:16:17:26 | access to local variable destination : String | semmle.label | access to local variable destination : String |
+| CabZipSlip.cs:17:30:17:63 | call to method Combine : String | semmle.label | call to method Combine : String |
+| CabZipSlip.cs:17:49:17:62 | access to property FullName : String | semmle.label | access to property FullName : String |
+| CabZipSlip.cs:18:28:18:38 | access to local variable destination | semmle.label | access to local variable destination |
+| CabZipSlip.cs:23:16:23:26 | access to local variable destination : String | semmle.label | access to local variable destination : String |
+| CabZipSlip.cs:23:30:23:71 | call to method Combine : String | semmle.label | call to method Combine : String |
+| CabZipSlip.cs:23:49:23:58 | access to property Path : String | semmle.label | access to property Path : String |
+| CabZipSlip.cs:24:31:24:41 | access to local variable destination | semmle.label | access to local variable destination |
+| CabZipSlip.cs:29:16:29:26 | access to local variable destination : String | semmle.label | access to local variable destination : String |
+| CabZipSlip.cs:29:30:29:81 | call to method GetFullPath : String | semmle.label | call to method GetFullPath : String |
+| CabZipSlip.cs:29:47:29:80 | call to method Combine : String | semmle.label | call to method Combine : String |
+| CabZipSlip.cs:29:66:29:79 | access to property FullName : String | semmle.label | access to property FullName : String |
+| CabZipSlip.cs:30:28:30:38 | access to local variable destination | semmle.label | access to local variable destination |
+| CabZipSlip.cs:35:16:35:26 | access to local variable destination : String | semmle.label | access to local variable destination : String |
+| CabZipSlip.cs:35:30:35:71 | call to method Combine : String | semmle.label | call to method Combine : String |
+| CabZipSlip.cs:35:49:35:58 | access to property Path : String | semmle.label | access to property Path : String |
+| CabZipSlip.cs:36:20:36:30 | access to local variable destination : String | semmle.label | access to local variable destination : String |
+| CabZipSlip.cs:39:43:39:53 | destination : String | semmle.label | destination : String |
+| CabZipSlip.cs:41:31:41:41 | access to parameter destination | semmle.label | access to parameter destination |
+| CabZipSlip.cs:46:16:46:26 | access to local variable destination : String | semmle.label | access to local variable destination : String |
+| CabZipSlip.cs:46:30:46:63 | call to method Combine : String | semmle.label | call to method Combine : String |
+| CabZipSlip.cs:46:49:46:62 | access to property FullName : String | semmle.label | access to property FullName : String |
+| CabZipSlip.cs:47:28:47:38 | access to local variable destination | semmle.label | access to local variable destination |
 | ZipSlip.cs:15:24:15:40 | access to local variable fullPath_relative : String | semmle.label | access to local variable fullPath_relative : String |
 | ZipSlip.cs:15:44:15:75 | call to method GetFullPath : String | semmle.label | call to method GetFullPath : String |
 | ZipSlip.cs:15:61:15:74 | access to property FullName : String | semmle.label | access to property FullName : String |

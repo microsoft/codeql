@@ -414,6 +414,24 @@ class ArchiveEntryFullName extends Source {
 }
 
 /**
+ * An access to the `Path` or `FullName` property of a CAB or DTF archive entry.
+ * These implementations strip directory components from `Name`, so it is not a source.
+ */
+class ArchiveEntryPath extends Source {
+  ArchiveEntryPath() {
+    exists(PropertyAccess pa |
+      pa.getTarget()
+          .hasFullyQualifiedName([
+              "Microsoft.SharePoint.Utilities.Cab.CabinetFileInfo",
+              "Microsoft.Deployment.Compression.ArchiveFileInfo",
+              "WixToolset.Dtf.Compression.ArchiveFileInfo"
+            ], ["Path", "FullName"]) and
+      this = DataFlow::exprNode(pa)
+    )
+  }
+}
+
+/**
  * Argument to extract to file extension method
  */
 class SinkCompressionExtractToFileArgument extends Sink {
