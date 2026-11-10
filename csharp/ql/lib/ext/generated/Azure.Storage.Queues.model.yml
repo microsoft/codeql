@@ -1,0 +1,22 @@
+# THIS FILE IS AN AUTO-GENERATED MODELS AS DATA FILE. DO NOT EDIT.
+extensions:
+  - addsTo:
+      pack: codeql/csharp-all
+      extensible: summaryModel
+    data:
+      - ["Azure.Storage.Queues", "QueueClient", False, "QueueClient", "(System.String,System.String,Azure.Storage.Queues.QueueClientOptions)", "", "Argument[1]", "Argument[this].SyntheticField[Azure.Storage.Queues.QueueClient._name]", "value", "dfc-generated"]
+      - ["Azure.Storage.Queues", "QueueClient", False, "QueueClient", "(System.Uri,Azure.Storage.StorageSharedKeyCredential,Azure.Storage.Queues.QueueClientOptions)", "", "Argument[1].Property[Azure.Storage.StorageSharedKeyCredential.AccountName]", "Argument[this].SyntheticField[Azure.Storage.Queues.QueueClient._accountName]", "value", "dfc-generated"]
+      - ["Azure.Storage.Queues", "QueueClient", True, "GetParentQueueServiceClientCore", "()", "", "Argument[this]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Storage.Queues", "QueueClient", True, "get_AccountName", "()", "", "Argument[this].SyntheticField[Azure.Storage.Queues.QueueClient._accountName]", "ReturnValue", "value", "dfc-generated"]
+      - ["Azure.Storage.Queues", "QueueClient", True, "get_MessagesUri", "()", "", "Argument[this]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Storage.Queues", "QueueClient", True, "get_Name", "()", "", "Argument[this].SyntheticField[Azure.Storage.Queues.QueueClient._name]", "ReturnValue", "value", "dfc-generated"]
+      - ["Azure.Storage.Queues", "QueueClient", True, "get_Uri", "()", "", "Argument[this]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Storage.Queues", "QueueServiceClient", False, "QueueServiceClient", "(System.Uri,Azure.Storage.StorageSharedKeyCredential,Azure.Storage.Queues.QueueClientOptions)", "", "Argument[1].Property[Azure.Storage.StorageSharedKeyCredential.AccountName]", "Argument[this].SyntheticField[Azure.Storage.Queues.QueueServiceClient._accountName]", "value", "dfc-generated"]
+      - ["Azure.Storage.Queues", "QueueServiceClient", True, "GetQueues", "(Azure.Storage.Queues.Models.QueueTraits,System.String,System.Threading.CancellationToken)", "", "Argument[1]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Storage.Queues", "QueueServiceClient", True, "GetQueues", "(Azure.Storage.Queues.Models.QueueTraits,System.String,System.Threading.CancellationToken)", "", "Argument[this]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Storage.Queues", "QueueServiceClient", True, "GetQueuesAsync", "(Azure.Storage.Queues.Models.QueueTraits,System.String,System.Threading.CancellationToken)", "", "Argument[1]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Storage.Queues", "QueueServiceClient", True, "GetQueuesAsync", "(Azure.Storage.Queues.Models.QueueTraits,System.String,System.Threading.CancellationToken)", "", "Argument[this]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Storage.Queues", "QueueServiceClient", True, "get_AccountName", "()", "", "Argument[this].SyntheticField[Azure.Storage.Queues.QueueServiceClient._accountName]", "ReturnValue", "value", "dfc-generated"]
+      - ["Azure.Storage.Queues", "QueueServiceClient", True, "get_Uri", "()", "", "Argument[this]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Storage.Queues", "QueueUriBuilder", False, "QueueUriBuilder", "(System.Uri)", "", "Argument[0]", "Argument[this]", "taint", "df-generated"]
+      - ["Azure.Storage.Queues", "QueueUriBuilder", False, "ToUri", "()", "", "Argument[this]", "ReturnValue", "taint", "df-generated"]

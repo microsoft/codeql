@@ -1,0 +1,21 @@
+semmle-extractor-options: /nostdlib /noconfig
+semmle-extractor-options: --load-sources-from-project:${testdir}/../../../resources/stubs/_frameworks/Microsoft.NETCore.App/Microsoft.NETCore.App.csproj
+semmle-extractor-options: --load-sources-from-project:${testdir}/../../../resources/stubs/_frameworks/Microsoft.AspNetCore.App/Microsoft.AspNetCore.App.csproj
+semmle-extractor-options: --load-sources-from-project:${testdir}/../../../resources/stubs/System.Runtime.InteropServices/4.3.0/System.Runtime.InteropServices.csproj
+semmle-extractor-options: ${testdir}/../../../resources/stubs/System.Web.cs
+semmle-extractor-options: ${testdir}/../../../resources/stubs/Azure.Core/1.35.0/Azure.Core.cs
+semmle-extractor-options: ${testdir}/../../../resources/stubs/Azure.Identity/1.10.4/Azure.Identity.cs
+semmle-extractor-options: ${testdir}/../../../resources/stubs/Azure.Security.KeyVault.Secrets/4.5.0/Azure.Security.KeyVault.Secrets.cs
+semmle-extractor-options: ${testdir}/../../../resources/stubs/Azure.Storage.Blobs/12.19.1/Azure.Storage.Blobs.cs
+semmle-extractor-options: ${testdir}/../../../resources/stubs/Azure.Storage.Blobs.ChangeFeed/12.0.0-preview.54/Azure.Storage.Blobs.ChangeFeed.cs
+semmle-extractor-options: ${testdir}/../../../resources/stubs/Azure.Storage.Common/12.18.1/Azure.Storage.Common.cs
+semmle-extractor-options: ${testdir}/../../../resources/stubs/Azure.Storage.Files.DataLake/12.22.0/Azure.Storage.Files.DataLake.cs
+semmle-extractor-options: ${testdir}/../../../resources/stubs/Azure.Storage.Files.Shares/12.22.0/Azure.Storage.Files.Shares.cs
+semmle-extractor-options: ${testdir}/../../../resources/stubs/Azure.Storage.Queues/12.22.0/Azure.Storage.Queues.cs
+semmle-extractor-options: ${testdir}/../../../resources/stubs/Microsoft.Azure.Storage.Blobs/11.2.3/Microsoft.Azure.Storage.Blob.cs
+semmle-extractor-options: ${testdir}/../../../resources/stubs/Microsoft.Azure.Storage.Common/11.2.3/Microsoft.Azure.Storage.Common.cs
+semmle-extractor-options: ${testdir}/../../../resources/stubs/System.Memory.Data/1.0.2/System.Memory.Data.cs
+
+
+
+

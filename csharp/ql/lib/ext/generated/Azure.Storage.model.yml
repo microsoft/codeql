@@ -1,0 +1,13 @@
+# THIS FILE IS AN AUTO-GENERATED MODELS AS DATA FILE. DO NOT EDIT.
+extensions:
+  - addsTo:
+      pack: codeql/csharp-all
+      extensible: summaryModel
+    data:
+      - ["Azure.Storage", "BlobTestExtensions", False, "ToBlobHttpHeaders", "(Azure.Storage.Test.Shared.HttpHeaderParameters)", "", "Argument[0]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Storage", "BlobTestExtensions", False, "ToBlobRequestConditions", "(Azure.RequestConditions)", "", "Argument[0]", "ReturnValue", "taint", "df-generated"]
+      - ["Azure.Storage", "SampleTest", False, "Randomize", "(System.String)", "", "Argument[0]", "ReturnValue", "taint", "dfc-generated"]
+      - ["Azure.Storage", "StorageSharedKeyCredential", False, "StorageSharedKeyCredential", "(System.String,System.String)", "", "Argument[0]", "Argument[this].Property[Azure.Storage.StorageSharedKeyCredential.AccountName]", "value", "dfc-generated"]
+      - ["Azure.Storage", "TestExtensions", False, "FirstAsync<T>", "(System.Collections.Generic.IAsyncEnumerable<T>)", "", "Argument[0].Element", "ReturnValue.Property[System.Threading.Tasks.Task`1.Result]", "value", "dfc-generated"]
+      - ["Azure.Storage", "TestExtensions", False, "ToHttp", "(System.Uri)", "", "Argument[0]", "ReturnValue", "taint", "dfc-generated"]
+      - ["Azure.Storage", "TestExtensions", False, "ToListAsync<T>", "(System.Collections.Generic.IAsyncEnumerable<T>)", "", "Argument[0].Element", "ReturnValue.Property[System.Threading.Tasks.Task`1.Result].Element", "value", "dfc-generated"]
