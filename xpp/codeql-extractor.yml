@@ -1,0 +1,12 @@
+name: "xpp"
+display_name: "X++"
+version: 0.0.1
+column_kind: "utf16"
+legacy_qltest_extraction: true
+build_modes:
+  - none
+file_types:
+  - name: xpp
+    display_name: X++ metadata objects
+    extensions:
+      - .xml

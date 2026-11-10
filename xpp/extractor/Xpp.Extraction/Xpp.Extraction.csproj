@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Xpp.Extraction</RootNamespace>
+    <AssemblyName>Xpp.Extraction</AssemblyName>
+  </PropertyGroup>
+
+  <!--
+    The X++ parser and its AST ship in Microsoft.Dynamics.AX.Platform.CompilerPackage, which is
+    proprietary and is not committed. Point XppCompilerPackage (or the XPP_COMPILER_PACKAGE
+    environment variable) at an extracted copy.
+  -->
+  <PropertyGroup>
+    <XppCompilerPackage Condition="'$(XppCompilerPackage)' == ''">$(XPP_COMPILER_PACKAGE)</XppCompilerPackage>
+  </PropertyGroup>
+
+  <Target Name="CheckXppCompilerPackage" BeforeTargets="BeforeBuild"
+          Condition="'$(XppCompilerPackage)' == ''">
+    <Error Text="Set XPP_COMPILER_PACKAGE to an extracted Microsoft.Dynamics.AX.Platform.CompilerPackage." />
+  </Target>
+
+  <ItemGroup>
+    <Reference Include="Microsoft.Dynamics.AX.Framework.Xlnt.XppCore">
+      <HintPath>$(XppCompilerPackage)/Microsoft.Dynamics.AX.Framework.Xlnt.XppCore.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Microsoft.Dynamics.AX.Framework.Xlnt.XppParser">
+      <HintPath>$(XppCompilerPackage)/Microsoft.Dynamics.AX.Framework.Xlnt.XppParser.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- Some AST properties are typed by enums declared here, such as CompilerVisibility. -->
+    <Reference Include="Microsoft.Dynamics.AX.Metadata.Core">
+      <HintPath>$(XppCompilerPackage)/Microsoft.Dynamics.AX.Metadata.Core.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>
