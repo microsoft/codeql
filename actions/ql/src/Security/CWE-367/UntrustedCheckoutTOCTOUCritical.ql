@@ -22,6 +22,10 @@ from MutableRefCheckoutStep checkout, PoisonableStep step, Event event
 where
   // the checked-out code may lead to arbitrary code execution
   checkout.getAFollowingStep() = step and
+  // a SHA checkout is immutable and cannot be changed after authorization
+  not checkout instanceof SHACheckoutStep and
+  // trusted author/repository restrictions remove attacker control of the ref
+  not isTrustedCheckoutPath(checkout, event) and
   // the checkout occurs in a privileged context
   inPrivilegedContext(checkout, event) and
   // the mutable checkout step is protected by an Insufficient access check
