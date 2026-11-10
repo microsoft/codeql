@@ -371,7 +371,7 @@ private module MsSql {
   }
 
   /** A call to a MsSql query method. */
-  private class QueryCall extends DatabaseAccess, DataFlow::MethodCallNode {
+  private class QueryCall extends DatabaseAccess, DataFlow::CallNode {
     QueryCall() { this = queryable().getMember(["query", "batch"]).getACall() }
 
     override DataFlow::Node getAResult() {
