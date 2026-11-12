@@ -7,9 +7,11 @@
 | ExactCallable.cs:43:17:43:39 | call to method M | M | SecondLevelImpl |
 | ExactCallable.cs:46:17:46:35 | call to method M | M | OnlyStaticClass |
 | ExactCallable.cs:49:17:49:30 | call to method AlphaFactory | AlphaFactory | MainClass |
+| ExactCallable.cs:49:17:49:34 | call to method M | M | ImplAlpha |
 | ExactCallable.cs:52:17:52:29 | call to method BetaFactory | BetaFactory | MainClass |
 | ExactCallable.cs:52:17:52:33 | call to method M | M | ImplBeta |
 | ExactCallable.cs:55:17:55:34 | call to method InterfaceFactory | InterfaceFactory | MainClass |
+| ExactCallable.cs:55:17:55:38 | call to method M | M | ImplAlpha |
 | ExactCallable.cs:58:17:58:24 | call to method M | M | ImplAlpha |
 | ExactCallable.cs:61:17:61:24 | call to method M | M | Tests`1 |
 | ExactCallable.cs:64:17:64:19 | call to method M | M | Tests`1 |

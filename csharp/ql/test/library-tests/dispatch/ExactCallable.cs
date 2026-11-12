@@ -45,13 +45,13 @@ namespace Test
                 // Expect call to OnlyStaticClass.M().
                 OnlyStaticClass.M();
 
-                // Expect no detected calls as correct implementation cannot be determined (could be ImplAlpha or SecondLevelImpl).
+                // Expect call to ImplAlpha.M() from the concrete factory result.
                 AlphaFactory().M();
 
                 // Expect call to ImplBeta.M().
                 BetaFactory().M();
 
-                // Expect no detected calls as correct implementation cannot be determined.
+                // Expect call to ImplAlpha.M() from the concrete factory result.
                 InterfaceFactory().M();
 
                 // Expect call to ImplAlpha.M()

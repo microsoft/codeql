@@ -27,7 +27,7 @@ class CabZipSlip
     public static void LegacyFullNameWithoutContainment(LegacyCabEntry entry, string root)
     {
         string destination = Path.GetFullPath(Path.Combine(root, entry.FullName)); // $ Alert=cab4
-        using (File.Create(destination)) { } // $ Sink=cab4
+        using (File.Create(destination)) { } // $ Sink=cab4 $ Sink=cabGetter
     }
 
     public static void InheritedPathThroughHelper(CabEntry entry, string root)
@@ -99,23 +99,26 @@ namespace Microsoft.SharePoint.Utilities.Cab
         internal string Path { get; }
         public string Name { get; }
         public string FullName { get; }
+
+        public override string ToString() => this.FullName; // $ Alert=cabToString
     }
 }
 
 namespace Microsoft.Deployment.Compression
 {
-    public abstract class ArchiveFileInfo
+    public abstract class ArchiveFileInfo : FileSystemInfo
     {
         protected ArchiveFileInfo(string filePath)
         {
             this.Path = System.IO.Path.GetDirectoryName(filePath);
             this.Name = System.IO.Path.GetFileName(filePath);
-            this.FullName = filePath;
         }
 
         public string Path { get; }
-        public string Name { get; }
-        public string FullName { get; }
+        public override string Name { get; }
+        public override string FullName => System.IO.Path.Combine(this.Path, this.Name); // $ Alert=cabGetter
+        public override bool Exists => true;
+        public override void Delete() { }
     }
 }
 

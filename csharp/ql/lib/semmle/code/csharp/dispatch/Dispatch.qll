@@ -710,7 +710,43 @@ private module Internal {
     )
     or
     not e instanceof DynamicMemberAccess and
-    result = getASourceType(e, isExact)
+    (
+      result = getAGuardedType(e) and isExact = false
+      or
+      not exists(getAGuardedType(e)) and
+      result = getASourceType(e, isExact)
+    )
+  }
+
+  private Type getATypeTestType(Expr condition, Expr e) {
+    exists(IsExpr test, BaseSsa::SsaDefinition def |
+      test = condition and
+      test.getExpr() = def.getARead() and
+      e = def.getARead() and
+      result = test.getPattern().(TypePatternExpr).getCheckedType()
+    )
+    or
+    exists(LogicalOrExpr disjunction |
+      disjunction = condition and
+      exists(getATypeTestType(disjunction.getLeftOperand(), e)) and
+      exists(getATypeTestType(disjunction.getRightOperand(), e)) and
+      result = getATypeTestType(disjunction.getAnOperand(), e)
+    )
+    or
+    exists(LogicalAndExpr conjunction |
+      conjunction = condition and
+      result = getATypeTestType(conjunction.getAnOperand(), e)
+    )
+  }
+
+  private Type getAGuardedType(Expr e) {
+    exists(IfStmt branch, ControlFlowNode guardNode |
+      result = getATypeTestType(branch.getCondition(), e) and
+      e.getParent+() = branch.getThen() and
+      e.getEnclosingCallable() = branch.getEnclosingCallable() and
+      guardNode.asExpr() = branch.getCondition().getAChild*() and
+      guardNode.dominates(e.getControlFlowNode())
+    )
   }
 
   /**
@@ -743,7 +779,19 @@ private module Internal {
     }
 
     private predicate stepExpr(Expr pred, Expr succ) {
-      Steps::stepOpen(pred, succ) and
+      (
+        Steps::stepOpen(pred, succ)
+        or
+        exists(MethodCall call, Method target |
+          succ = call and
+          target = call.getTarget().getUnboundDeclaration() and
+          target.fromSource() and
+          not target instanceof OverridableCallable and
+          not target.isAsync() and
+          target.canReturn(pred) and
+          not pred instanceof NullLiteral
+        )
+      ) and
       // Do not step through down casts
       not downCast(succ) and
       // Only step when we may learn more about the actual type
@@ -770,11 +818,67 @@ private module Internal {
       }
 
       Type getType(boolean isExact) {
-        result = this.getType() and
-        if this instanceof ObjectCreation or this instanceof BaseAccess
-        then isExact = true
-        else isExact = false
+        (
+          result = getAModeledResultType(this, isExact)
+          or
+          not exists(getAModeledResultType(this, _)) and
+          result = this.getType() and
+          if this instanceof ObjectCreation or this instanceof BaseAccess
+          then isExact = true
+          else isExact = false
+        )
       }
+    }
+
+    private predicate registryValueType(Type t) {
+      t.hasFullyQualifiedName("System", ["String", "Int32", "Int64"])
+      or
+      t.(ArrayType).getElementType().hasFullyQualifiedName("System", ["Byte", "String"])
+    }
+
+    private predicate wmiValueType(Type t) {
+      t.hasFullyQualifiedName("System",
+        [
+          "String", "Boolean", "Byte", "SByte", "Int16", "UInt16", "Int32", "UInt32", "Int64",
+          "UInt64", "Single", "Double", "Char"
+        ])
+      or
+      t.hasFullyQualifiedName("System.Management", "ManagementBaseObject")
+    }
+
+    private Type getAModeledResultType(Expr e, boolean isExact) {
+      exists(MethodCall call |
+        call = e and
+        call.getTarget().hasFullyQualifiedName("Microsoft.Win32.RegistryKey", "GetValue")
+      |
+        registryValueType(result) and isExact = true
+        or
+        // A missing value can return an arbitrary caller-supplied default.
+        result = call.getArgument(1).getType() and
+        not call.getArgument(1) instanceof NullLiteral and
+        isExact = false
+      )
+      or
+      (
+        e.(IndexerRead)
+            .getTarget()
+            .hasFullyQualifiedName("System.Management.ManagementBaseObject", "Item")
+        or
+        e.(MethodCall)
+            .getTarget()
+            .hasFullyQualifiedName("System.Management.ManagementBaseObject", "GetPropertyValue")
+      ) and
+      (wmiValueType(result) or wmiValueType(result.(ArrayType).getElementType())) and
+      isExact = false
+      or
+      e.(IndexerRead)
+          .getTarget()
+          .hasFullyQualifiedName("System.Data.OleDb.OleDbConnectionStringBuilder", "Item") and
+      e.(ElementAccess).getIndex(0).getValue().toLowerCase() in [
+          "data source", "provider", "file name", "persist security info", "ole db services"
+        ] and
+      result.hasFullyQualifiedName("System", ["String", "Boolean", "Int32"]) and
+      isExact = true
     }
 
     private class Sink extends Expr {
