@@ -1,0 +1,22 @@
+# THIS FILE IS AN AUTO-GENERATED MODELS AS DATA FILE. DO NOT EDIT.
+extensions:
+  - addsTo:
+      pack: codeql/csharp-all
+      extensible: summaryModel
+    data:
+      - ["Azure.Data.Tables.Models", "TableAccessPolicy", False, "TableAccessPolicy", "(System.Nullable<System.DateTimeOffset>,System.Nullable<System.DateTimeOffset>,System.String)", "", "Argument[0]", "Argument[this].Property[Azure.Data.Tables.Models.TableAccessPolicy.StartsOn]", "value", "dfc-generated"]
+      - ["Azure.Data.Tables.Models", "TableAccessPolicy", False, "TableAccessPolicy", "(System.Nullable<System.DateTimeOffset>,System.Nullable<System.DateTimeOffset>,System.String)", "", "Argument[1]", "Argument[this].Property[Azure.Data.Tables.Models.TableAccessPolicy.ExpiresOn]", "value", "dfc-generated"]
+      - ["Azure.Data.Tables.Models", "TableAccessPolicy", False, "TableAccessPolicy", "(System.Nullable<System.DateTimeOffset>,System.Nullable<System.DateTimeOffset>,System.String)", "", "Argument[2]", "Argument[this].Property[Azure.Data.Tables.Models.TableAccessPolicy.Permission]", "value", "dfc-generated"]
+      - ["Azure.Data.Tables.Models", "TableAnalyticsLoggingSettings", False, "TableAnalyticsLoggingSettings", "(System.String,System.Boolean,System.Boolean,System.Boolean,Azure.Data.Tables.TableRetentionPolicy)", "", "Argument[0]", "Argument[this].Property[Azure.Data.Tables.Models.TableAnalyticsLoggingSettings.Version]", "value", "dfc-generated"]
+      - ["Azure.Data.Tables.Models", "TableCorsRule", False, "TableCorsRule", "(System.String,System.String,System.String,System.String,System.Int32)", "", "Argument[0]", "Argument[this].Property[Azure.Data.Tables.Models.TableCorsRule.AllowedOrigins]", "value", "dfc-generated"]
+      - ["Azure.Data.Tables.Models", "TableCorsRule", False, "TableCorsRule", "(System.String,System.String,System.String,System.String,System.Int32)", "", "Argument[1]", "Argument[this].Property[Azure.Data.Tables.Models.TableCorsRule.AllowedMethods]", "value", "dfc-generated"]
+      - ["Azure.Data.Tables.Models", "TableCorsRule", False, "TableCorsRule", "(System.String,System.String,System.String,System.String,System.Int32)", "", "Argument[2]", "Argument[this].Property[Azure.Data.Tables.Models.TableCorsRule.AllowedHeaders]", "value", "dfc-generated"]
+      - ["Azure.Data.Tables.Models", "TableCorsRule", False, "TableCorsRule", "(System.String,System.String,System.String,System.String,System.Int32)", "", "Argument[3]", "Argument[this].Property[Azure.Data.Tables.Models.TableCorsRule.ExposedHeaders]", "value", "dfc-generated"]
+      - ["Azure.Data.Tables.Models", "TableErrorCode", False, "TableErrorCode", "(System.String)", "", "Argument[0]", "Argument[this].SyntheticField[Azure.Data.Tables.Models.TableErrorCode._value]", "value", "dfc-generated"]
+      - ["Azure.Data.Tables.Models", "TableErrorCode", False, "ToString", "()", "", "Argument[this].SyntheticField[Azure.Data.Tables.Models.TableErrorCode._value]", "ReturnValue", "value", "dfc-generated"]
+      - ["Azure.Data.Tables.Models", "TableGeoReplicationStatus", False, "TableGeoReplicationStatus", "(System.String)", "", "Argument[0]", "Argument[this].SyntheticField[Azure.Data.Tables.Models.TableGeoReplicationStatus._value]", "value", "dfc-generated"]
+      - ["Azure.Data.Tables.Models", "TableGeoReplicationStatus", False, "ToString", "()", "", "Argument[this].SyntheticField[Azure.Data.Tables.Models.TableGeoReplicationStatus._value]", "ReturnValue", "value", "dfc-generated"]
+      - ["Azure.Data.Tables.Models", "TableItem", False, "TableItem", "(System.String)", "", "Argument[0]", "Argument[this].Property[Azure.Data.Tables.Models.TableItem.Name]", "value", "dfc-generated"]
+      - ["Azure.Data.Tables.Models", "TableModelFactory", False, "TableGeoReplicationInfo", "(Azure.Data.Tables.Models.TableGeoReplicationStatus,System.DateTimeOffset)", "", "Argument[1]", "ReturnValue.Property[Azure.Data.Tables.Models.TableGeoReplicationInfo.LastSyncedOn]", "value", "dfc-generated"]
+      - ["Azure.Data.Tables.Models", "TableModelFactory", False, "TableItem", "(System.String,System.String,System.String,System.String)", "", "Argument[0]", "ReturnValue.Property[Azure.Data.Tables.Models.TableItem.Name]", "value", "dfc-generated"]
+      - ["Azure.Data.Tables.Models", "TableSignedIdentifier", False, "TableSignedIdentifier", "(System.String,Azure.Data.Tables.Models.TableAccessPolicy)", "", "Argument[0]", "Argument[this].Property[Azure.Data.Tables.Models.TableSignedIdentifier.Id]", "value", "dfc-generated"]

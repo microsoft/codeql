@@ -1,6 +1,15 @@
 extensions:
   - addsTo:
       pack: codeql/csharp-all
+      extensible: sinkModel
+    data:
+      - ["System.Net", "WebRequest", False, "Create", "(System.String)", "", "Argument[0]", "ssrf", "manual"]
+      - ["System.Net", "WebRequest", False, "Create", "(System.Uri)", "", "Argument[0]", "ssrf", "manual"]
+      - ["System.Net", "WebRequest", False, "CreateHttp", "(System.String)", "", "Argument[0]", "ssrf", "manual"]
+      - ["System.Net", "WebRequest", False, "CreateHttp", "(System.Uri)", "", "Argument[0]", "ssrf", "manual"]
+      - ["System.Net", "HttpWebRequest", False, "Create", "(System.Uri)", "", "Argument[0]", "ssrf", "manual"]
+  - addsTo:
+      pack: codeql/csharp-all
       extensible: summaryModel
     data:
       - ["System.Net", "Cookie", False, "get_Value", "()", "", "Argument[this]", "ReturnValue", "taint", "manual"]

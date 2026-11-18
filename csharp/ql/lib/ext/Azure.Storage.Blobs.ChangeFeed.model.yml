@@ -1,0 +1,29 @@
+extensions:
+  - addsTo:
+      pack: codeql/csharp-all
+      extensible: sinkModel
+    data:
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedClient", False, "BlobChangeFeedClient", "(System.String)", "", "Argument[0]", "azure-ssrf-storage", "manual"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedClient", False, "BlobChangeFeedClient", "(System.String,Azure.Storage.Blobs.BlobClientOptions,Azure.Storage.Blobs.ChangeFeed.BlobChangeFeedClientOptions)", "", "Argument[0]", "azure-ssrf-storage", "manual"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedClient", False, "BlobChangeFeedClient", "(System.Uri,Azure.AzureSasCredential,Azure.Storage.Blobs.BlobClientOptions,Azure.Storage.Blobs.ChangeFeed.BlobChangeFeedClientOptions)", "", "Argument[0]", "azure-ssrf-storage", "manual"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedClient", False, "BlobChangeFeedClient", "(System.Uri,Azure.Core.TokenCredential,Azure.Storage.Blobs.BlobClientOptions,Azure.Storage.Blobs.ChangeFeed.BlobChangeFeedClientOptions)", "", "Argument[0]", "azure-ssrf-storage", "manual"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedClient", False, "BlobChangeFeedClient", "(System.Uri,Azure.Storage.Blobs.BlobClientOptions,Azure.Storage.Blobs.ChangeFeed.BlobChangeFeedClientOptions)", "", "Argument[0]", "azure-ssrf-storage", "manual"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedClient", False, "BlobChangeFeedClient", "(System.Uri,Azure.Storage.StorageSharedKeyCredential,Azure.Storage.Blobs.BlobClientOptions,Azure.Storage.Blobs.ChangeFeed.BlobChangeFeedClientOptions)", "", "Argument[0]", "azure-ssrf-storage", "manual"]
+  - addsTo:
+      pack: codeql/csharp-all
+      extensible: summaryModel
+    data:
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedClient", False, "BlobChangeFeedClient", "(System.String)", "", "Argument[0]", "Argument[this]", "taint", "manual"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedClient", False, "BlobChangeFeedClient", "(System.String,Azure.Storage.Blobs.BlobClientOptions,Azure.Storage.Blobs.ChangeFeed.BlobChangeFeedClientOptions)", "", "Argument[0]", "Argument[this]", "taint", "manual"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedClient", False, "BlobChangeFeedClient", "(System.String,Azure.Storage.Blobs.BlobClientOptions,Azure.Storage.Blobs.ChangeFeed.BlobChangeFeedClientOptions)", "", "Argument[1]", "Argument[this]", "taint", "manual"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedClient", False, "BlobChangeFeedClient", "(System.Uri,Azure.AzureSasCredential,Azure.Storage.Blobs.BlobClientOptions,Azure.Storage.Blobs.ChangeFeed.BlobChangeFeedClientOptions)", "", "Argument[0]", "Argument[this]", "taint", "manual"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedClient", False, "BlobChangeFeedClient", "(System.Uri,Azure.AzureSasCredential,Azure.Storage.Blobs.BlobClientOptions,Azure.Storage.Blobs.ChangeFeed.BlobChangeFeedClientOptions)", "", "Argument[1]", "Argument[this]", "taint", "manual"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedClient", False, "BlobChangeFeedClient", "(System.Uri,Azure.AzureSasCredential,Azure.Storage.Blobs.BlobClientOptions,Azure.Storage.Blobs.ChangeFeed.BlobChangeFeedClientOptions)", "", "Argument[2]", "Argument[this]", "taint", "manual"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedClient", False, "BlobChangeFeedClient", "(System.Uri,Azure.Core.TokenCredential,Azure.Storage.Blobs.BlobClientOptions,Azure.Storage.Blobs.ChangeFeed.BlobChangeFeedClientOptions)", "", "Argument[0]", "Argument[this]", "taint", "manual"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedClient", False, "BlobChangeFeedClient", "(System.Uri,Azure.Core.TokenCredential,Azure.Storage.Blobs.BlobClientOptions,Azure.Storage.Blobs.ChangeFeed.BlobChangeFeedClientOptions)", "", "Argument[1]", "Argument[this]", "taint", "manual"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedClient", False, "BlobChangeFeedClient", "(System.Uri,Azure.Core.TokenCredential,Azure.Storage.Blobs.BlobClientOptions,Azure.Storage.Blobs.ChangeFeed.BlobChangeFeedClientOptions)", "", "Argument[2]", "Argument[this]", "taint", "manual"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedClient", False, "BlobChangeFeedClient", "(System.Uri,Azure.Storage.Blobs.BlobClientOptions,Azure.Storage.Blobs.ChangeFeed.BlobChangeFeedClientOptions)", "", "Argument[0]", "Argument[this]", "taint", "manual"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedClient", False, "BlobChangeFeedClient", "(System.Uri,Azure.Storage.Blobs.BlobClientOptions,Azure.Storage.Blobs.ChangeFeed.BlobChangeFeedClientOptions)", "", "Argument[1]", "Argument[this]", "taint", "manual"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedClient", False, "BlobChangeFeedClient", "(System.Uri,Azure.Storage.StorageSharedKeyCredential,Azure.Storage.Blobs.BlobClientOptions,Azure.Storage.Blobs.ChangeFeed.BlobChangeFeedClientOptions)", "", "Argument[0]", "Argument[this]", "taint", "manual"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedClient", False, "BlobChangeFeedClient", "(System.Uri,Azure.Storage.StorageSharedKeyCredential,Azure.Storage.Blobs.BlobClientOptions,Azure.Storage.Blobs.ChangeFeed.BlobChangeFeedClientOptions)", "", "Argument[2]", "Argument[this]", "taint", "manual"]
+      - ["Azure.Storage.Blobs.ChangeFeed", "BlobChangeFeedClient", False, "BlobChangeFeedClient", "(System.Uri,Azure.Storage.StorageSharedKeyCredential,Azure.Storage.Blobs.BlobClientOptions,Azure.Storage.Blobs.ChangeFeed.BlobChangeFeedClientOptions)", "", "Argument[1]", "Argument[this]", "taint", "manual"]
