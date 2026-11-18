@@ -17,6 +17,8 @@ import codeql.actions.security.ControlChecks
 from If i
 where
   not i instanceof ControlCheck and
+  // exclude escaped template expressions ($${{ }}) used in composite actions/templates
+  not i.getCondition().matches("%$${{%") and
   (
     i.getCondition().matches("%${{%") and
     (
