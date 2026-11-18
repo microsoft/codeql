@@ -11,6 +11,8 @@
 | mssql2.js:13:15:13:66 | 'create ...  table' |
 | mssql2.js:22:24:22:43 | 'select 1 as number' |
 | mssql2.js:29:30:29:81 | 'create ...  table' |
+| mssql4.js:6:32:6:43 | 'SELECT 123' |
+| mssql4.js:7:33:7:74 | 'CREATE ... FROM t' |
 | mssql-types.ts:7:31:7:42 | 'SELECT 123' |
 | mysql1.js:13:18:13:43 | 'SELECT ... lution' |
 | mysql1.js:18:18:22:1 | {\\n    s ... vid']\\n} |
