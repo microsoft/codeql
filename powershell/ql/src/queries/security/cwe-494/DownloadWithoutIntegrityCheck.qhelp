@@ -6,15 +6,29 @@
 
   <overview>
     <p>
-      Downloading an artifact (such as an executable, installer, archive, or script) and then
-      using it without verifying its integrity allows an attacker who can tamper with the artifact
-      to execute arbitrary code on the machine. Even when the artifact is retrieved from a trusted
-      source such as GitHub over HTTPS, the contents can still be replaced through a compromised
-      account, a malicious release asset, a poisoned cache or mirror, or a man-in-the-middle attack.
+      An attacker who can influence a downloaded executable, installer, module, assembly, or script
+      can execute code when that artifact is run or loaded without effective verification.
+      This query requires both an insecure or explicitly modeled remotely controlled origin and
+      a downstream code-execution or code-loading operation.
     </p>
     <p>
-      Without an integrity check, there is no guarantee that the bytes that were downloaded are the
-      bytes that were intended, so the downloaded artifact must not be trusted.
+      Plain HTTP downloads are analyzed under an on-path-attacker threat model. Remote-input
+      models can also identify downloads whose entire URL comes from an inbound request.
+      Ordinary function parameters, environment variables, and generic HTTPS download responses
+      are not automatically considered attacker controlled.
+    </p>
+    <p>
+      Fixed HTTPS origins, download-only and extraction-only operations, and ordinary configuration
+      retrieval are outside this query's strict scope. These exclusions are not proof that the
+      corresponding operations are safe. Hostname substrings and build, test, or dependency paths
+      are not used to establish severity or trust.
+    </p>
+    <p>
+      The query tracks modeled file copies, moves, renames, file reads and writes, and archive members
+      constructed below an extraction directory. File lifecycle and verification paths are evaluated
+      within a control-flow scope; custom filesystem wrappers and runtime-computed paths may not be
+      resolved. Findings identify high-impact candidates, not a guarantee of high severity in every
+      deployment.
     </p>
   </overview>
 
@@ -27,12 +41,27 @@
       value; otherwise, discard it and fail. Where available, prefer verifying a digital signature of
       the artifact in addition to, or instead of, a plain hash comparison.
     </p>
+    <p>
+      Computing or logging a hash is not an integrity check by itself. Compare the complete digest
+      against a trusted expected value, and ensure that a mismatch stops execution before the artifact
+      is installed, loaded, extracted, or run. An optional check, a swallowed exception, or a check
+      performed only after the artifact has been used does not provide this protection.
+    </p>
+    <p>
+      Signature verification must also establish the intended publisher. For Authenticode, check
+      that the signature is valid and that the signer certificate matches a trusted pinned
+      certificate thumbprint. Modeled native checks include GPG with a fixed
+      <code>--assert-signer</code> fingerprint and Cosign blob verification with fixed certificate
+      identity and OIDC issuer. The native verifier's successful exit code must be enforced before
+      use; merely invoking a signature tool or inspecting its output does not verify the artifact.
+      A constant path to a public-key file alone does not establish that the key is trusted.
+    </p>
   </recommendation>
 
   <example>
     <p>
-      In the following example, an executable is downloaded from GitHub and then run directly. Because
-      the artifact is never verified, a tampered download is executed without detection.
+      In the following example, an executable is downloaded over HTTP and then run directly.
+      An on-path attacker can replace the executable, which is never verified.
     </p>
     <sample src="examples/powershell/DownloadWithoutIntegrityCheckBad.ps1" />
 
@@ -56,6 +85,14 @@
     <li>
       Microsoft Learn:
       <a href="https://learn.microsoft.com/powershell/module/microsoft.powershell.utility/get-filehash">Get-FileHash</a>.
+    </li>
+    <li>
+      GnuPG:
+      <a href="https://gnupg.org/documentation/manuals/gnupg/GPG-Configuration-Options.html">GPG configuration options</a>.
+    </li>
+    <li>
+      Sigstore:
+      <a href="https://docs.sigstore.dev/cosign/verifying/verify/">Verifying signatures</a>.
     </li>
   </references>
 
