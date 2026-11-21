@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>XppLanguageBasics</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class XppLanguageBasics
+{
+    int             counter;
+    str             label;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>controlFlow</Name>
+				<Source><![CDATA[
+    public static int controlFlow(int _limit)
+    {
+        int i;
+        int total;
+        ;
+        for (i = 1; i <= _limit; i++)
+        {
+            if (i > 5)
+            {
+                total += i;
+            }
+            else
+            {
+                total -= i;
+            }
+        }
+
+        while (total > 100)
+        {
+            total = total div 2;
+        }
+
+        switch (total)
+        {
+            case 0:
+                total = 1;
+                break;
+
+            case 1, 2:
+                total = 3;
+                break;
+
+            default:
+                total = -1;
+                break;
+        }
+
+        return total;
+    }
+]]></Source>
+			</Method>
+			<Method>
+				<Name>databaseAccess</Name>
+				<Source><![CDATA[
+    public static void databaseAccess(str _account)
+    {
+        CustTable custTable;
+        ;
+        while select custTable
+            where custTable.AccountNum == _account
+        {
+            info(custTable.AccountNum);
+        }
+
+        select firstonly custTable;
+
+        try
+        {
+            ttsbegin;
+            custTable.insert();
+            ttscommit;
+        }
+        catch (Exception::Error)
+        {
+            ttsabort;
+            error('insert failed');
+        }
+    }
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>
